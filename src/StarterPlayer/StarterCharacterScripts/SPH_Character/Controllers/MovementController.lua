@@ -6,39 +6,40 @@ local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local State = require(script.Parent.CharacterState)
 
-local MovementController = {}
+local MovementController = {
+    -- state vars
+    targetWalkSpeed = config.walkSpeed,
+    tempWalkSpeed = config.walkSpeed,
+    lean = 0,
+    vehicleSeated = false,
+    canJump = true,
+    moving = false,
+    baseCharacterHipHeight = 0,
+    moveAnim = nil,
 
--- State Variables
-MovementController.targetWalkSpeed = config.walkSpeed
-MovementController.tempWalkSpeed = config.walkSpeed
-MovementController.lean = 0
-MovementController.vehicleSeated = false
-MovementController.canJump = true
-MovementController.moving = false
-MovementController.baseCharacterHipHeight = 0
-MovementController.moveAnim = nil
+    -- init vars
+    humanoid = nil,
+    humanoidRootPart = nil,
+    rootJoint = nil,
+    rigType = nil,
+    depthOfField = nil,
+    crouchIdleAnim = nil,
+    crouchMoveAnim = nil,
+    proneIdleAnim = nil,
+    proneMoveAnim = nil,
+    script = nil,
 
--- References assigned during Initialization
-MovementController.humanoid = nil
-MovementController.humanoidRootPart = nil
-MovementController.rootJoint = nil
-MovementController.rigType = nil
-MovementController.depthOfField = nil
-MovementController.crouchIdleAnim = nil
-MovementController.crouchMoveAnim = nil
-MovementController.proneIdleAnim = nil
-MovementController.proneMoveAnim = nil
-MovementController.script = nil
+    -- Callbacks
+    ToggleAiming = nil,
+    ChangeHoldStance = nil,
+    PlayAnimation = nil,
+    StopAnimation = nil,
+    PlayCharSound = nil,
+    playerLean = nil,
+    ChangeDoF = nil,
+    CancelFiring = nil,
+}
 
--- Callbacks
-MovementController.ToggleAiming = nil
-MovementController.ChangeHoldStance = nil
-MovementController.PlayAnimation = nil
-MovementController.StopAnimation = nil
-MovementController.PlayCharSound = nil
-MovementController.playerLean = nil
-MovementController.ChangeDoF = nil
-MovementController.CancelFiring = nil
 
 local function LerpNumber(number, target, speed)
 	return number + (target - number) * speed
