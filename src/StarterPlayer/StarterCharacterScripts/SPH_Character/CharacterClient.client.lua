@@ -44,6 +44,7 @@ local bulletHandler = require(modules.BulletHandler)
 local callbacks = require(assets.Mods)
 local State = require(script.Parent:WaitForChild("Controllers"):WaitForChild("CharacterState"))
 local InputController = require(script.Parent:WaitForChild("Controllers"):WaitForChild("InputController"))
+local ViewmodelController = require(script.Parent:WaitForChild("Controllers"):WaitForChild("ViewmodelController"))
 
 bulletHandler.Initialize(player)
 
@@ -59,11 +60,6 @@ rayParams.IgnoreWater = true
 rayParams.RespectCanCollide = true
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 rayParams.FilterDescendantsInstances = {character,camera,shellFolder}
-
-local swaySpring = springMod.new()
-local moveSpring = springMod.new()
-local recoilSpring = springMod.new()
-local gunRecoilSpring = springMod.new()
 
 local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")
 local switchWeapon = bridgeNet.CreateBridge("SwitchWeapon")
@@ -83,7 +79,6 @@ local playerLean = bridgeNet.CreateBridge("PlayerLean")
 
 local fpThreshold = 0.6
 
-local rollAngle = 0
 local cameraRollAngle = 0
 local targetWalkSpeed = config.walkSpeed
 local tempWalkSpeed = targetWalkSpeed
@@ -141,15 +136,7 @@ local currentWepStats = nil -- Current weapon stats (switches between primary an
 local offset, freeLook, moving
 local freeLookOffset = CFrame.new()
 local freeLookRotation = CFrame.new()
-local aimingOffset = CFrame.new()
-local aimTarget = CFrame.new()
 local aimFOVTarget = camera.FieldOfView
-
-local headRotationEventCooldown = 0
-
-local pushbackOffset = 0
-
-local hipRotation = Vector2.zero
 
 local storageCFrame = CFrame.new(1000000,0,0) -- This is used for moving the viewmodel super far away.
 -- Doing this to the viewmodel allows animations to be loaded, played, etc, while still having it out of view.
@@ -196,7 +183,6 @@ local lean = 0
 local cameraLeanRotation = 0
 -- local aimSensitivity = player:GetAttribute("SavedAimSensitivity") or config.defaultAimSensitivity
 local aimSensitivity = 1
-local proneViewmodelOffset = 0
 
 local laserDotUI = assets.HUD.LaserDotUI:Clone()
 local laserDotPoint = Instance.new("Attachment")
@@ -928,10 +914,6 @@ local function ResetHead()
 	viewmodelVisible = false
 end
 
-local function GetSineOffset(addition:number)
-	return math.sin(tick() * addition * 1.3) * 0.3
-end
-
 local function LerpNumber(number:number, target:number, speed:number)
 	return number + (target-number) * speed
 end
@@ -973,180 +955,6 @@ local function ToggleAiming(toggle)
 	end
 end
 
-local recoilUpdateCD = 0
-local fps = 0
-
--- Update the viewmodel's CFrame
-local function UpdateViewmodelPosition(dt:number)
-	fps = 1 / dt
-
-	recoilUpdateCD -= dt
-
-	-- Move the viewmodel to the camera's CFrame position and add the gun's offset
-	animBase.CFrame = CFrame.new((camera.CFrame * offset).Position)
-
-	-- Check if freelook is on and don't rotate the viewmodel if it is
-	if not freeLook then
-		animBase.CFrame *= camera.CFrame - camera.CFrame.Position
-	else
-		animBase.CFrame *= freeLookRotation
-	end
-
-	-- Move gunmodel up while prone
-	if State.stance == 2 then
-		proneViewmodelOffset = LerpNumber(proneViewmodelOffset,0.2,0.1)
-	else
-		proneViewmodelOffset = LerpNumber(proneViewmodelOffset,0,0.1)
-	end
-	animBase.CFrame *= CFrame.new(0,proneViewmodelOffset,0)
-
-	-- Freelook recovery
-	local freelookRecovery = 0.2
-	freeLookOffset = freeLookOffset:Lerp(CFrame.new(),freelookRecovery * dt * 60)
-	animBase.CFrame *= freeLookOffset:Inverse()
-
-	---- Aiming
-	--local aimPart = State.gunModel:FindFirstChild("AimPart"..sightIndex) or State.gunModel.AimPart
-	--aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
-	--if State.aiming then
-	--	aimingOffset = aimingOffset:Lerp(aimTarget,(0.7 / State.wepStats.aimTime) * 0.3 * dt * 60)
-	--else
-	--	aimingOffset = aimingOffset:Lerp(CFrame.new(),(0.7 / State.wepStats.aimTime) * 0.3 * dt * 60)
-	--end
-	--animBase.CFrame *= aimingOffset
-
-	-- Aiming
-	local aimPart = State.gunModel:FindFirstChild("AimPart"..sightIndex) or State.gunModel.AimPart
-	-- DD_SPH Gunsmith: multiple aimparts on attachments
-	if State.attStats.aimParts then
-		if State.attStats.aimParts["AimPart"..sightIndex] then
-			aimPart = State.gunModel[State.attStats.aimParts["AimPart"..sightIndex]]:FindFirstChild("AimPart"..sightIndex)
-		end
-	end
-	-- </DD_SPH>
-	aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
-
-	-- DD_SPH gunsmith: Adjusting aim time based on attstats.
-	local aimTime = State.wepStats.aimTime
-	if State.attStats.aimTime then aimTime *= State.attStats.aimTime end
-
-	if State.aiming then
-		aimingOffset = aimingOffset:Lerp(aimTarget,(0.7 / aimTime) * 0.3 * dt * 60)
-	else
-		aimingOffset = aimingOffset:Lerp(CFrame.new(),(0.7 / aimTime) * 0.3 * dt * 60)
-	end
-	animBase.CFrame *= aimingOffset
-	-- </DD_SPH>
-
-	-- Check if gun is too close to a wall
-	--local rayDistance = (animBase.CFrame.Position - State.gunModel.Grip.Muzzle.WorldCFrame.Position).Magnitude + 1
-	local rayDistance = State.wepStats.gunLength
-
-	if State.attStats.gunLength then rayDistance += State.attStats.gunLength end -- DD_SPH Gunsmith: Adding gun length
-	local originCFrame = State.firstPerson and animBase.CFrame or weaponRig.AnimBase.CFrame
-	local newRay = workspace:Raycast(originCFrame.Position,originCFrame.LookVector * rayDistance,rayParams)
-	if newRay then
-		local distance = rayDistance - (animBase.CFrame.Position - newRay.Position).Magnitude
-		if config.pushBackViewmodel and distance > 0 then
-			local tempDist = distance
-			if blocked then tempDist /= 2 end
-			pushbackOffset = LerpNumber(pushbackOffset,tempDist,0.2 * 60 * dt)
-		else
-			pushbackOffset = LerpNumber(pushbackOffset,0,0.2 * 60 * dt)
-		end
-
-		if config.raiseGunAtWall then
-
-			if distance >= State.wepStats.maxPushback then
-				if not blocked then
-					ChangeHoldStance(0)
-					PlayAnimation(State.wepStats.holdUpAnim,{looped = true, priority = Enum.AnimationPriority.Action,transSpeed = 0.3})
-					blocked = true
-					if State.aiming then ToggleAiming(false) end
-				end
-			elseif blocked then
-				StopAnimation(State.wepStats.holdUpAnim,0.3)
-				blocked = false
-				if aimHeld and not State.aiming and State.firstPerson then
-					ToggleAiming(true)
-				end
-			end
-		end
-	else
-		if blocked then
-			StopAnimation(State.wepStats.holdUpAnim,0.3)
-		end
-		blocked = false
-		if aimHeld and not State.aiming and State.firstPerson and not State.sprinting then
-			ToggleAiming(true)
-		end
-
-		pushbackOffset = LerpNumber(pushbackOffset,0,0.2 * 60 * dt)
-	end
-	animBase.CFrame *= CFrame.new(0,0,pushbackOffset)
-
-	-- Update strafing roll
-	local relativeVelocity = humanoidRootPart.CFrame:VectorToObjectSpace(humanoidRootPart.Velocity)
-	local targetRollAngle = 0
-	if not State.aiming then targetRollAngle = math.clamp(-relativeVelocity.X, -config.maxStrafeRoll, config.maxStrafeRoll) end
-	if config.cameraTilting then targetRollAngle /= 2 end
-	rollAngle = LerpNumber(rollAngle, targetRollAngle, 0.07 * dt * 60)
-	animBase.CFrame *= CFrame.Angles(0, 0, math.rad(rollAngle))
-
-	local mouseDelta = userInputService:GetMouseDelta()
-
-	-- Update hipfire movement
-	local tempHipRotation = hipRotation
-	if config.hipfireMove and (not State.aiming or State.aiming and config.offCenterAiming) then
-		local maxX = config.hipfireMoveX
-		local maxY = config.hipfireMoveY
-		if State.aiming then
-			maxX /= 4
-			maxY /= 4
-		end
-		local xRotation = math.clamp(tempHipRotation.X - mouseDelta.X * config.hipfireMoveSpeed * dt * 60,-maxX,maxX)
-		local yRotation = math.clamp(tempHipRotation.Y - mouseDelta.Y * config.hipfireMoveSpeed * dt * 60,-maxY,maxY)
-		tempHipRotation = Vector2.new(xRotation,yRotation)
-		hipRotation = tempHipRotation
-	else
-		hipRotation = hipRotation:Lerp(Vector2.zero,0.3)
-	end
-	animBase.CFrame *= CFrame.Angles(math.rad(hipRotation.Y),math.rad(hipRotation.X),0)
-
-	-- Update rotational sway
-	swaySpring:shove(Vector3.new(-mouseDelta.X / 500, mouseDelta.Y / 200, 0))
-	local updatedSway = swaySpring:update(dt)
-	animBase.CFrame *= CFrame.new(updatedSway.X, updatedSway.Y, 0)
-
-	-- Update breathing
-	local tickTime = tick() * 0.15
-	local tempDist = config.breathingDist
-	if State.aiming then tempDist *= config.breathingAimMultiplier end
-	animBase.CFrame *= CFrame.new(tempDist * math.sin(tickTime * config.breathingSpeed / 2), tempDist * math.sin(tickTime * config.breathingSpeed), 0)
-
-	-- Update recoil
-	local recoilStats = State.wepStats.recoil
-	local gunRecoil = State.wepStats.gunRecoil
-
-	local updatedRecoil = recoilSpring.Position
-	local updatedGunRecoil = gunRecoilSpring:update(dt)
-	if recoilUpdateCD <= 0 then
-		recoilUpdateCD = 1 / 60
-		local currentFPS = 1 / dt
-		local dtMult = (currentFPS / 60) - 1
-		dtMult = dtMult / 2
-		updatedRecoil = recoilSpring:update(0.016 + (0.016 * dtMult))
-	end
-
-	animBase.CFrame *= CFrame.Angles(math.rad(updatedGunRecoil.X), math.rad(updatedGunRecoil.Y), 0)
-	animBase.CFrame *= CFrame.new(0,0,updatedGunRecoil.Z)
-	camera.CFrame *= CFrame.Angles(math.rad(updatedRecoil.X),math.rad(updatedRecoil.Y),math.rad(updatedRecoil.Z))
-
-	-- Viewmodel visibility
-	if not viewmodelVisible then
-		animBase.CFrame *= storageCFrame
-	end
-end
 
 local function ChangeDoF(fInt,fDist,fRad,nInt)
 	tweenService:Create(depthOfField,TweenInfo.new(0.2),{
@@ -1505,6 +1313,18 @@ local function HandleInput(actionName, inputState, inputObject)
 	end
 end
 
+ViewmodelController.Initialize({
+	animBase = animBase,
+	camera = camera,
+	humanoidRootPart = humanoidRootPart,
+	weaponRig = weaponRig,
+	rayParams = rayParams,
+	ChangeHoldStance = ChangeHoldStance,
+	PlayAnimation = PlayAnimation,
+	StopAnimation = StopAnimation,
+	ToggleAiming = ToggleAiming
+})
+
 InputController.ActionFired = HandleInput
 InputController.BindCharacterInputs()
 
@@ -1686,7 +1506,7 @@ character.ChildAdded:Connect(function(newChild)
 		-- Reset variables
 		State.reloading = false
 		userInputService.MouseIconEnabled = false
-		hipRotation = Vector2.zero
+		ViewmodelController.ResetHipRotation()
 		equipping = true
 		blocked = false
 		laserEnabled = false
@@ -1698,10 +1518,10 @@ character.ChildAdded:Connect(function(newChild)
 		-- Setup new gun
 		State.equipped = newChild
 		State.wepStats = require(State.equipped.SPH_Weapon.WeaponStats)
-		recoilSpring.Damping = State.wepStats.recoil.damping
-		recoilSpring.Speed = State.wepStats.recoil.speed
-		gunRecoilSpring.Damping = State.wepStats.gunRecoil.damping
-		gunRecoilSpring.Speed = State.wepStats.gunRecoil.speed
+		ViewmodelController.recoilSpring.Damping = State.wepStats.recoil.damping
+		ViewmodelController.recoilSpring.Speed = State.wepStats.recoil.speed
+		ViewmodelController.gunRecoilSpring.Damping = State.wepStats.gunRecoil.damping
+		ViewmodelController.gunRecoilSpring.Speed = State.wepStats.gunRecoil.speed
 		offset = State.wepStats.viewmodelOffset
 		aimFOVTarget = State.wepStats.aimFovDefault or defaultFOV
 		freeLookOffset = CFrame.new()
@@ -1744,13 +1564,13 @@ character.ChildAdded:Connect(function(newChild)
 
 		-- DD_SPH Gunsmith: Adjust recoil springs based on attachments
 		if State.attStats.recoil then
-			recoilSpring.Damping *= State.attStats.recoil.damping
-			recoilSpring.Speed *= State.attStats.recoil.speed
+			ViewmodelController.recoilSpring.Damping *= State.attStats.recoil.damping
+			ViewmodelController.recoilSpring.Speed *= State.attStats.recoil.speed
 		end
 
 		if State.attStats.gunRecoil then
-			gunRecoilSpring.Damping *= State.attStats.gunRecoil.damping
-			gunRecoilSpring.Speed *= State.attStats.gunRecoil.speed
+			ViewmodelController.gunRecoilSpring.Damping *= State.attStats.gunRecoil.damping
+			ViewmodelController.gunRecoilSpring.Speed *= State.attStats.gunRecoil.speed
 		end
 
 		--
@@ -2067,7 +1887,7 @@ runService.Heartbeat:Connect(function(dt:number)
 				horzRecoil /= 2
 			end
 
-			recoilSpring:shove(Vector3.new(vertRecoil, math.random(-horzRecoil,horzRecoil),recoilStats.camShake))
+			ViewmodelController.recoilSpring:shove(Vector3.new(vertRecoil, math.random(-horzRecoil,horzRecoil),recoilStats.camShake))
 
 			recoilStats = currentStats.gunRecoil
 			vertRecoil = recoilStats.vertical
@@ -2090,7 +1910,7 @@ runService.Heartbeat:Connect(function(dt:number)
 				horzRecoil /= 3
 			end
 
-			gunRecoilSpring:shove(Vector3.new(vertRecoil, math.random(-horzRecoil,horzRecoil),recoilStats.punchMultiplier))
+			ViewmodelController.gunRecoilSpring:shove(Vector3.new(vertRecoil, math.random(-horzRecoil,horzRecoil),recoilStats.punchMultiplier))
 
 			-- Shell ejection (UBGL doesn't eject shells)
 			if curFireMode ~= fireModes.Manual and curFireMode ~= fireModes.UBGL then
@@ -2247,6 +2067,7 @@ runService.Heartbeat:Connect(function(dt:number)
 	end
 end)
 
+local headRotationEventCooldown = 0
 runService.RenderStepped:Connect(function(dt:number)
 	if math.ceil(1 / dt) < 5 then -- Skip the render stepped function if FPS is lower than 5 to avoid stuttering issues
 		print(warnPrefix.."RenderStepped skipped due to low framerate.")
@@ -2488,7 +2309,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			end
 
 			-- Update recoil and movement springs
-			UpdateViewmodelPosition(dt)
+			freeLookOffset, blocked = ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeLookRotation, freeLookOffset, sightIndex, blocked, aimHeld, viewmodelVisible)
 
 			-- DD_SPH Bipod
 			if State.gunModel.Grip:FindFirstChild("Bipod") then -- factory
@@ -2605,28 +2426,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			viewmodelVisible = false
 		end
 
-		-- Update movement sway
-		local tempDampening = config.bobDampening
-		local difference = tempDampening - (tempDampening / (tempWalkSpeed / config.walkSpeed))
-		difference /= 2
-		tempDampening -= difference
-		if State.aiming then tempDampening *= config.aimBobDampening end
-
-		local tempBobSpeed = config.bobSpeed
-		tempBobSpeed *= tempWalkSpeed / config.walkSpeed
-
-		if not humanoid.Sit then
-			local moveSway = Vector3.new(GetSineOffset(tempBobSpeed),GetSineOffset(tempBobSpeed / 2),GetSineOffset(tempBobSpeed / 2))
-			moveSpring:shove(moveSway / tempDampening * humanoidRootPart.Velocity.Magnitude / tempDampening * dt * 60)
-		end
-
-		local updatedMoveSway = moveSpring:update(dt)
-		animBase.CFrame = animBase.CFrame:ToWorldSpace(CFrame.new(updatedMoveSway.Y, updatedMoveSway.X, 0) * CFrame.Angles(updatedMoveSway.Y * 0.3,0,updatedMoveSway.Y * 0.8))
-
-		-- Camera movement sway
-		if config.cameraMovement and (State.firstPerson and not humanoid.Sit) and not vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
-			camera.CFrame *= CFrame.Angles(math.rad(updatedMoveSway.X / config.cameraBobDampening), math.rad(updatedMoveSway.Y / config.cameraBobDampening), 0)
-		end
+		ViewmodelController.UpdateMovementSway(dt, tempWalkSpeed, vehicleSeated)
 
 		-- Update sights
 		for _, sight:BasePart in ipairs(sights) do
