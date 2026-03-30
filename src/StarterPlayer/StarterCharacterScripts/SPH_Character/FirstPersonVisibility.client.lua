@@ -32,9 +32,12 @@ if config.firstPersonBody then
 	end
 
 	RunService.RenderStepped:Connect(function(dt)
+		debug.profilebegin("FP_BodyUpdate")
 		if not Character:FindFirstChild("Torso") and not Character:FindFirstChild("UpperTorso") or dead or vehicleSeated then
+			debug.profileend()
 			return
 		elseif Character:FindFirstChild("Head") and Character.Head.LocalTransparencyModifier == 0 then
+			debug.profileend()
 			return
 		end
 		
@@ -119,6 +122,7 @@ if config.firstPersonBody then
 				end
 			end
 		end
+		debug.profileend()
 	end)
 	
 	humanoid.Seated:Connect(function(seated, seatPart)
