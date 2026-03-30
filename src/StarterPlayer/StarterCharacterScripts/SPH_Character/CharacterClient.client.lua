@@ -45,6 +45,7 @@ local callbacks = require(assets.Mods)
 local State = require(script.Parent:WaitForChild("Controllers"):WaitForChild("CharacterState"))
 local InputController = require(script.Parent:WaitForChild("Controllers"):WaitForChild("InputController"))
 local ViewmodelController = require(script.Parent:WaitForChild("Controllers"):WaitForChild("ViewmodelController"))
+local MovementController = require(script.Parent:WaitForChild("Controllers"):WaitForChild("MovementController"))
 
 bulletHandler.Initialize(player)
 
@@ -80,8 +81,6 @@ local playerLean = bridgeNet.CreateBridge("PlayerLean")
 local fpThreshold = 0.6
 
 local cameraRollAngle = 0
-local targetWalkSpeed = config.walkSpeed
-local tempWalkSpeed = targetWalkSpeed
 
 local depthOfField = game.Lighting:FindFirstChild("SPH_DoF") or (config.blurEffects and Instance.new("DepthOfFieldEffect",game.Lighting))
 if depthOfField then depthOfField.Name = "SPH_DoF" end
@@ -99,7 +98,6 @@ local flashlightEnabled = false
 local canBipod = false -- DD_SPH: Bipod
 local bipodEnabled = false -- DD_SPH: Bipod
 local bipodRayIgnore = {character}
-local vehicleSeated = false
 local ejected = true
 local cancelReload = false
 local chambering = false
@@ -133,7 +131,7 @@ local ubglAmmo = nil -- Separate ammo pool for UBGL
 local currentWepStats = nil -- Current weapon stats (switches between primary and UBGL)
 -- [UBGL END] - Fire Modes with UBGL Integration
 
-local offset, freeLook, moving
+local offset, freeLook
 local freeLookOffset = CFrame.new()
 local freeLookRotation = CFrame.new()
 local aimFOVTarget = camera.FieldOfView
@@ -166,8 +164,6 @@ local proneMoveAnim:AnimationTrack = humanoid.Animator:LoadAnimation(animations.
 proneMoveAnim.Looped = true
 proneMoveAnim.Priority = Enum.AnimationPriority.Movement
 
-local moveAnim
-
 local loadedAnims = {}
 
 local xHead, yHead, zHead
@@ -179,7 +175,6 @@ local sights = {}
 
 local sightIndex = 1
 
-local lean = 0
 local cameraLeanRotation = 0
 -- local aimSensitivity = player:GetAttribute("SavedAimSensitivity") or config.defaultAimSensitivity
 local aimSensitivity = 1
@@ -393,13 +388,6 @@ local function PlayCharSound(soundType)
 		debris:AddItem(newSound,newSound.TimeLength)
 		playCharSound:Fire(soundType)
 	end
-end
-
-local function ChangeLean(newLean)
-	if not config.canLean then return end -- Return if the player can't lean
-	if newLean ~= lean then PlayCharSound("Lean") end
-	lean = newLean
-	playerLean:Fire(newLean)
 end
 
 local function MoveBolt(direction:CFrame,silent:boolean)
@@ -965,113 +953,6 @@ local function ChangeDoF(fInt,fDist,fRad,nInt)
 	}):Play()
 end
 
--- Toggle spring speed
-local function ToggleSprint(toggle:boolean)
-	State.sprinting = toggle
-	character:SetAttribute("Sprinting", toggle)
-	if toggle then
-		if State.aiming then ToggleAiming(false) end
-		ChangeHoldStance(0)
-		userInputService.MouseDeltaSensitivity = 1
-		holdingM1 = false
-		PlayAnimation(State.wepStats.sprintAnim,{looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.2})
-
-		if depthOfField then
-			ChangeDoF(0,6,0,0.3)
-		end
-	elseif State.wepStats then
-		StopAnimation(State.wepStats.sprintAnim,0.2)
-
-		if depthOfField then
-			ChangeDoF(0,0,0,0)
-		end
-	end
-end
-
--- Update target walk speed
--- This function is here in case the speed needs to be modified for whatever reason
-local function ChangeWalkSpeed(newSpeed)
-	targetWalkSpeed = newSpeed
-end
-
-local baseCharacterHipHeight = player.Character:WaitForChild("Humanoid").HipHeight -- DD_SPH: Gets player's character's hipheight
-
-local function ChangeStance(change)
-	local number = State.stance + change
-	local targetCharacterHeight = 0 -- DD_SPH: TargetCharacterHeight adjusts for rigtype
-
-	-- Correct number if it's too low or too high
-	if number < 0 then
-		number = 0
-	elseif number > 2 then
-		number = 2
-	end
-
-	local preMove = false
-	if moveAnim then
-		preMove = moveAnim.IsPlaying
-	end
-
-	if number == 0 then -- Walking
-		script.Parent.MovementLeaning:SetAttribute("DisableLean", false)
-		if moveAnim then moveAnim:Stop(config.stanceChangeTime) end
-		moveAnim = nil
-		crouchIdleAnim:Stop(config.stanceChangeTime)
-		ChangeWalkSpeed(config.walkSpeed)
-
-		if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Rig check!
-			targetCharacterHeight = 0
-		else
-			targetCharacterHeight = baseCharacterHipHeight
-		end
-
-		tweenService:Create(humanoid,TweenInfo.new(config.stanceChangeTime),{HipHeight = targetCharacterHeight}):Play() -- DD_SPH: Use targetCharacterHeight instead of 0
-		PlayCharSound("Uncrouch")
-	elseif number == 1 then -- Crouching
-		script.Parent.MovementLeaning:SetAttribute("DisableLean", false)
-		if moveAnim then moveAnim:Stop(config.stanceChangeTime) end
-		moveAnim = crouchMoveAnim
-		if moving then moveAnim:Play(config.stanceChangeTime) end
-		proneIdleAnim:Stop(config.stanceChangeTime)
-		crouchIdleAnim:Play(config.stanceChangeTime)
-		ChangeWalkSpeed(config.crouchSpeed)
-
-		if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Rig check!
-			targetCharacterHeight = 0
-		else
-			targetCharacterHeight = baseCharacterHipHeight
-		end
-
-		tweenService:Create(humanoid,TweenInfo.new(config.stanceChangeTime),{HipHeight = targetCharacterHeight}):Play() -- DD_SPH: Use targetCharacterHeight instead of 0
-		if State.stance == 0 then
-			PlayCharSound("Crouch")
-		elseif State.stance == 2 then
-			PlayCharSound("Unprone")
-		end
-	elseif number == 2 then -- Prone
-		ChangeLean(0)
-		script.Parent.MovementLeaning:SetAttribute("DisableLean", true)
-		if moveAnim then moveAnim:Stop(config.stanceChangeTime) end
-		moveAnim = proneMoveAnim
-		crouchIdleAnim:Stop(config.stanceChangeTime)
-		proneIdleAnim:Play(config.stanceChangeTime)
-		ChangeWalkSpeed(config.proneSpeed)
-
-		if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Rig check!
-			targetCharacterHeight = -2
-		else
-			targetCharacterHeight = baseCharacterHipHeight * 0.5
-		end
-
-		tweenService:Create(humanoid,TweenInfo.new(config.stanceChangeTime * 1.5),{HipHeight = targetCharacterHeight}):Play() -- DD_SPH: Use targetCharacterHeight instead of 0
-		PlayCharSound("Prone")
-	end
-
-	if preMove and moveAnim then moveAnim:Play() end
-
-	State.stance = number
-end
-
 local function HandleInput(actionName, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	local inputEnded = Enum.UserInputState.End
@@ -1079,40 +960,40 @@ local function HandleInput(actionName, inputState, inputObject)
 
 	if actionName == "SPH_Sprint" then -- Sprint hold
 		sprintHeld = inputState == inputBegan
-		if sprintHeld and State.stance < 2 and moving then -- Begin State.sprinting
-			if State.stance == 1 then ChangeStance(-1) end
-			if State.equipped and moving then ToggleSprint(true) end
-			ChangeWalkSpeed(config.sprintSpeed)
-			ChangeLean(0)
+		if sprintHeld and State.stance < 2 and MovementController.moving then -- Begin State.sprinting
+			if State.stance == 1 then MovementController.ChangeStance(-1) end
+			if State.equipped and MovementController.moving then MovementController.ToggleSprint(true) end
+			MovementController.ChangeWalkSpeed(config.sprintSpeed)
+			MovementController.ChangeLean(0)
 		elseif State.stance == 0 then -- End State.sprinting
-			ToggleSprint(false)
-			ChangeWalkSpeed(config.walkSpeed)
+			MovementController.ToggleSprint(false)
+			MovementController.ChangeWalkSpeed(config.walkSpeed)
 		end
 	elseif inputState == inputBegan then -- Other inputs
 
 		if actionName == "SPH_StanceLower" and inputState == inputBegan and State.stance < 2 and not humanoid.Sit then -- Lower State.stance
 			if not config.canProne and State.stance == 1 then return end -- If the player is crouched and unable to prone then return
-			ChangeStance(1)
-			if State.sprinting then ToggleSprint(false) end
+			MovementController.ChangeStance(1)
+			if State.sprinting then MovementController.ToggleSprint(false) end
 
 
 		elseif actionName == "SPH_StanceRaise" and inputState == inputBegan and State.stance > 0 then -- Raise State.stance
-			ChangeStance(-1)
+			MovementController.ChangeStance(-1)
 
 
 		elseif actionName == "SPH_LeanLeft" and inputState == inputBegan and State.stance < 2 and not State.sprinting and not humanoid.Sit then -- Lean left
-			if lean == -1 then
-				ChangeLean(0)
+			if MovementController.lean == -1 then
+				MovementController.ChangeLean(0)
 			else
-				ChangeLean(-1)
+				MovementController.ChangeLean(-1)
 			end
 
 
 		elseif actionName == "SPH_LeanRight" and inputState == inputBegan and State.stance < 2 and not State.sprinting and not humanoid.Sit then -- Lean right
-			if lean == 1 then
-				ChangeLean(0)
+			if MovementController.lean == 1 then
+				MovementController.ChangeLean(0)
 			else
-				ChangeLean(1)
+				MovementController.ChangeLean(1)
 			end
 		end
 	end
@@ -1187,8 +1068,8 @@ local function HandleInput(actionName, inputState, inputObject)
 			if not userInputService.TouchEnabled and not config.toggleAiming then -- Hold State.aiming
 				if inputState == inputBegan and State.firstPerson and not freeLook and not blocked then
 					aimHeld = true
-					ToggleSprint(false)
-					if State.stance == 0 then ChangeWalkSpeed(config.walkSpeed) end
+					MovementController.ToggleSprint(false)
+					if State.stance == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
 					ToggleAiming(true)
 				elseif not State.sprinting and State.aiming then -- Not State.aiming
 					aimHeld = false
@@ -1197,8 +1078,8 @@ local function HandleInput(actionName, inputState, inputObject)
 			elseif inputState == inputBegan then -- Mobile and toggle State.aiming
 				if State.firstPerson and not freeLook and not blocked and not State.aiming then
 					aimHeld = true
-					ToggleSprint(false)
-					if State.stance == 0 then ChangeWalkSpeed(config.walkSpeed) end
+					MovementController.ToggleSprint(false)
+					if State.stance == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
 					ToggleAiming(true)
 				else
 					aimHeld = false
@@ -1313,6 +1194,27 @@ local function HandleInput(actionName, inputState, inputObject)
 	end
 end
 
+MovementController.Initialize({
+	humanoid = humanoid,
+	humanoidRootPart = humanoidRootPart,
+	rootJoint = rootJoint,
+	rigType = rigType,
+	depthOfField = depthOfField,
+	script = script,
+	crouchIdleAnim = crouchIdleAnim,
+	crouchMoveAnim = crouchMoveAnim,
+	proneIdleAnim = proneIdleAnim,
+	proneMoveAnim = proneMoveAnim,
+	ToggleAiming = ToggleAiming,
+	ChangeHoldStance = ChangeHoldStance,
+	PlayAnimation = PlayAnimation,
+	StopAnimation = StopAnimation,
+	PlayCharSound = PlayCharSound,
+	playerLean = playerLean,
+	ChangeDoF = ChangeDoF,
+	CancelFiring = function() holdingM1 = false end
+})
+
 ViewmodelController.Initialize({
 	animBase = animBase,
 	camera = camera,
@@ -1415,12 +1317,6 @@ function Unequip(tool) -- Unequip a gun (Does not remove it from the player's ch
 	laserBeamTP.Enabled = false
 
 	InputController.UnbindGunInputs()
-end
-
-local function GetRotationBetween(u, v, axis)
-	local dot, uxv = u:Dot(v), u:Cross(v)
-	if (dot < -0.99999) then return CFrame.fromAxisAngle(axis, math.pi) end
-	return CFrame.new(0, 0, 0, uxv.x, uxv.y, uxv.z, 1 + dot)
 end
 
 local function SetAttachment(weapon, attachmentSlot, weaponAttachment, parentPart) -- DD_SPH Gunsmith: Setting attachment models for the viewmodel weapon
@@ -1605,7 +1501,7 @@ character.ChildAdded:Connect(function(newChild)
 
 		InputController.BindGunInputs(State.firstPerson)
 
-		ToggleSprint(sprintHeld)
+		MovementController.ToggleSprint(sprintHeld)
 		EquipAnim()
 		IdleAnim()
 
@@ -2067,6 +1963,11 @@ runService.Heartbeat:Connect(function(dt:number)
 	end
 end)
 
+local function GetRotationBetween(u, v, axis)
+	local dot, uxv = u:Dot(v), u:Cross(v)
+	if (dot < -0.99999) then return CFrame.fromAxisAngle(axis, math.pi) end
+	return CFrame.new(0, 0, 0, uxv.x, uxv.y, uxv.z, 1 + dot)
+end
 local headRotationEventCooldown = 0
 runService.RenderStepped:Connect(function(dt:number)
 	if math.ceil(1 / dt) < 5 then -- Skip the render stepped function if FPS is lower than 5 to avoid stuttering issues
@@ -2077,7 +1978,7 @@ runService.RenderStepped:Connect(function(dt:number)
 	headRotationEventCooldown -= dt
 
 	-- Limit camera rotation
-	if (humanoid.Sit and not vehicleSeated and State.firstPerson or freeLook) and config.cameraLimitInSeats then
+	if (humanoid.Sit and not MovementController.vehicleSeated and State.firstPerson or freeLook) and config.cameraLimitInSeats then
 		local cameraCFrame = humanoidRootPart.CFrame:ToObjectSpace(camera.CFrame)
 		local x, y, z = cameraCFrame:ToOrientation()
 		local a = camera.CFrame.Position.X
@@ -2184,19 +2085,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			cameraOffsetTarget = Vector3.zero
 		end
 
-		-- Check if player is moving
-		if moveAnim then moveAnim:AdjustSpeed(humanoid.WalkSpeed / 6) end
-		if humanoid.MoveDirection.Magnitude > 0 and not moving then
-			moving = true
-			if moveAnim then moveAnim:Play(config.stanceChangeTime) end
-		elseif humanoid.MoveDirection.Magnitude <= 0 then
-			moving = false
-			if State.sprinting then
-				ToggleSprint(false)
-				ChangeWalkSpeed(config.walkSpeed)
-			end
-			if moveAnim then moveAnim:Stop(config.stanceChangeTime) end
-		end
+		MovementController.UpdateRender(dt)
 
 		-- First person body offset
 
@@ -2228,10 +2117,10 @@ runService.RenderStepped:Connect(function(dt:number)
 			end
 
 			-- Lean offset
-			if lean < 0 then
+			if MovementController.lean < 0 then
 				xOffset = -1
 				yOffset += -0.2
-			elseif lean > 0 then
+			elseif MovementController.lean > 0 then
 				xOffset = 1
 				yOffset += -0.2
 			end
@@ -2259,17 +2148,17 @@ runService.RenderStepped:Connect(function(dt:number)
 			end
 
 			-- Lean offset
-			if lean < 0 then
+			if MovementController.lean < 0 then
 				xOffset = -1
 				yOffset += -0.2 --rev
-			elseif lean > 0 then
+			elseif MovementController.lean > 0 then
 				xOffset = 1
 				yOffset += -0.2 --rev
 			end
 
 		end --</DD_SPH>
 
-		if not vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
+		if not MovementController.vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
 			-- Update camera offset
 			if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Different offsets for different rigs
 				cameraOffsetTarget = Vector3.new(xOffset,yOffset,zOffset)
@@ -2281,12 +2170,12 @@ runService.RenderStepped:Connect(function(dt:number)
 			-- Update leaning offset
 			-- DD_SPH: Rig Check!
 			if rigType ~= Enum.HumanoidRigType.R15 then
-				rootJoint.C1 = rootJoint.C1:Lerp(CFrame.new(-xOffset / 2,0,0) * CFrame.Angles(math.rad(90),math.rad(180) + math.rad(17 * lean),0),0.1 * dt * 60)
+				rootJoint.C1 = rootJoint.C1:Lerp(CFrame.new(-xOffset / 2,0,0) * CFrame.Angles(math.rad(90),math.rad(180) + math.rad(17 * MovementController.lean),0),0.1 * dt * 60)
 			else
-				rootJoint.C1 = rootJoint.C1:Lerp(CFrame.new(-xOffset / 2,0,0) * CFrame.Angles(math.rad(0),math.rad(0), math.rad(0) + math.rad(17 * lean)),0.1 * dt * 60)
+				rootJoint.C1 = rootJoint.C1:Lerp(CFrame.new(-xOffset / 2,0,0) * CFrame.Angles(math.rad(0),math.rad(0), math.rad(0) + math.rad(17 * MovementController.lean)),0.1 * dt * 60)
 			end
 			-- </DD_SPH>
-			cameraLeanRotation = LerpNumber(cameraLeanRotation,15 * -lean, 0.1)
+			cameraLeanRotation = LerpNumber(cameraLeanRotation,15 * -MovementController.lean, 0.1)
 			camera.CFrame *= CFrame.Angles(0,0,math.rad(cameraLeanRotation))
 
 			-- Camera tilt
@@ -2305,7 +2194,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			if State.firstPerson and not viewmodelVisible then
 				-- Player switched to first person
 				RefreshViewmodel()
-				ToggleSprint(sprintHeld)
+				MovementController.ToggleSprint(sprintHeld)
 			end
 
 			-- Update recoil and movement springs
@@ -2426,7 +2315,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			viewmodelVisible = false
 		end
 
-		ViewmodelController.UpdateMovementSway(dt, tempWalkSpeed, vehicleSeated)
+		ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, MovementController.vehicleSeated)
 
 		-- Update sights
 		for _, sight:BasePart in ipairs(sights) do
@@ -2447,17 +2336,6 @@ runService.RenderStepped:Connect(function(dt:number)
 		end
 	end
 
-	tempWalkSpeed = targetWalkSpeed
-
-	if script:GetAttribute("WalkspeedOverrideToggle") then -- Override walkspeed
-		tempWalkSpeed = script:GetAttribute("WalkspeedOverride")
-	end
-
-	if humanoid.Health < 30 and config.lowHealthEffects then
-		tempWalkSpeed *= humanoid.Health / 30
-	end
-
-	humanoid.WalkSpeed = LerpNumber(humanoid.WalkSpeed, tempWalkSpeed, 0.2 * dt * 60)
 
 	-- Prone angle
 	if State.stance == 2 and config.proneAngle then
@@ -2479,6 +2357,25 @@ runService.RenderStepped:Connect(function(dt:number)
 			--print(rotateToFloorCFrame.UpVector)
 			local goalCF = rotateToFloorCFrame * humanoidRootPart.CFrame
 			--wedge.CFrame = wedge.CFrame:Lerp(goalCF, 5 * dt).Rotation + wedge.CFrame.Position
+		end
+	end
+end)
+
+runService.Heartbeat:Connect(function(dt:number)
+	MovementController.UpdateHeartbeat(dt)
+
+	if State.stance == 2 and config.proneAngle then
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = {character}
+		params.IgnoreWater = true
+		params.RespectCanCollide = true
+
+		local rayResult = workspace:Raycast(humanoidRootPart.Position, Vector3.new(0, -2, 0), params)
+		if rayResult and rayResult.Instance then
+			local dot, uxv = humanoidRootPart.CFrame.UpVector:Dot(rayResult.Normal), humanoidRootPart.CFrame.UpVector:Cross(rayResult.Normal)
+			local rotateToFloorCFrame = (dot < -0.99999) and CFrame.fromAxisAngle(Vector3.new(1,0,0), math.pi) or CFrame.new(0, 0, 0, uxv.x, uxv.y, uxv.z, 1 + dot)
+			rootJoint.C0 *= CFrame.Angles(rotateToFloorCFrame.X, rotateToFloorCFrame.Y, rotateToFloorCFrame.Z)
 		end
 	end
 end)
@@ -2507,45 +2404,29 @@ end
 humanoid.Seated:Connect(function(seated, seatPart)
 	if seated then -- In a seat
 		InputController.UnbindCharacterInputs()
-		ToggleSprint(false)
-		ChangeLean(0)
+		MovementController.ToggleSprint(false)
+		MovementController.ChangeLean(0)
 		if State.stance == 1 then
-			ChangeStance(-1)
+			MovementController.ChangeStance(-1)
 		elseif State.stance == 2 then
-			ChangeStance(-1)
-			ChangeStance(-1)
+			MovementController.ChangeStance(-1)
+			MovementController.ChangeStance(-1)
 		end
 
 		if seatPart:IsA("VehicleSeat") then
-			vehicleSeated = true
+			MovementController.vehicleSeated = true
 			if State.equipped then
 				humanoid:UnequipTools()
 			end
 		else
-			vehicleSeated = false
+			MovementController.vehicleSeated = false
 		end
 	else -- Exiting a seat
 		InputController.BindCharacterInputs()
-		vehicleSeated = false
+		MovementController.vehicleSeated = false
 	end
 end)
 
-local canJump = true
-
 InputController.JumpRequested = function()
-	if humanoid.Sit then
-		character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-	elseif State.stance == 0 then
-		if character.Humanoid.FloorMaterial == Enum.Material.Air then return end
-		if canJump then
-			canJump = false
-			character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-			task.wait(config.jumpCooldown)
-			canJump = true
-		else
-			character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-		end
-	else
-		character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-	end
+	MovementController.Jump()
 end
