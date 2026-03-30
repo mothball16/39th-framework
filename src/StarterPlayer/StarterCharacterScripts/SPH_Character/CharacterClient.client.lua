@@ -42,6 +42,7 @@ local hitFX = require(modules.HitFX)
 local shellEjection = require(modules.ShellEjection)
 local bulletHandler = require(modules.BulletHandler)
 local callbacks = require(assets.Mods)
+local State = require(script.Parent:WaitForChild("Controllers"):WaitForChild("CharacterState"))
 local InputController = require(script.Parent:WaitForChild("Controllers"):WaitForChild("InputController"))
 
 bulletHandler.Initialize(player)
@@ -92,9 +93,7 @@ if depthOfField then depthOfField.Name = "SPH_DoF" end
 
 local holdingM1 = false
 local cycled = true
-local firstPerson = false
 local equipping = false
-local dead = false
 local canFire = true
 local viewmodelVisible = false
 local blocked = false
@@ -139,7 +138,7 @@ local ubglAmmo = nil -- Separate ammo pool for UBGL
 local currentWepStats = nil -- Current weapon stats (switches between primary and UBGL)
 -- [UBGL END] - Fire Modes with UBGL Integration
 
-local equipped, wepStats, sprinting, gunModel, gunAmmo, reloading, aiming, offset, freeLook, moving
+local offset, freeLook, moving
 local freeLookOffset = CFrame.new()
 local freeLookRotation = CFrame.new()
 local aimingOffset = CFrame.new()
@@ -164,7 +163,6 @@ end
 -- </DD_SPH>
 
 -- Preload movement animations
-local stance = 0
 local crouchIdleAnim:AnimationTrack = humanoid.Animator:LoadAnimation(animations.Crouch_Idle)
 crouchIdleAnim.Looped = true
 crouchIdleAnim.Priority = Enum.AnimationPriority.Idle
@@ -299,13 +297,13 @@ local lastGunModel -- DD_SPH: Catch against reload swapping (starting reload on 
 
 -- DD_SPH Gunsmith
 local gunsmith = require(modules.Gunsmith)
-local attStats = gunsmith.attStats
+State.attStats = gunsmith.attStats
 
 --local function PlayRepSound(soundName)
---	if not dead then
---		local soundToPlay = gunModel.Grip:FindFirstChild(soundName)
---		if soundToPlay and equipped then
---			if firstPerson then
+--	if not State.dead then
+--		local soundToPlay = State.gunModel.Grip:FindFirstChild(soundName)
+--		if soundToPlay and State.equipped then
+--			if State.firstPerson then
 --				soundToPlay:Play()
 --			else
 --				local soundToPlay = soundToPlay:Clone()
@@ -313,39 +311,39 @@ local attStats = gunsmith.attStats
 --				soundToPlay:Play()
 --				debris:AddItem(soundToPlay,soundToPlay.TimeLength)
 --			end
---			playSound:Fire(soundName, firstPerson)
+--			playSound:Fire(soundName, State.firstPerson)
 --		end
 --	end
 --end
 
 -- [UBGL START] - Enhanced Sound System for UBGL
 local function PlayRepSound(soundName)
-	if not dead and wepStats then -- Add wepStats nil check
+	if not State.dead and State.wepStats then -- Add State.wepStats nil check
 		local soundToPlay
 		-- Check if we're in UBGL mode and need to use UBGL sounds
-		if curFireMode == fireModes.UBGL and wepStats.hasUBGL then
+		if curFireMode == fireModes.UBGL and State.wepStats.hasUBGL then
 			-- Try to find UBGL-specific sound first
-			soundToPlay = gunModel.Grip:FindFirstChild("UBGL_" .. soundName)
+			soundToPlay = State.gunModel.Grip:FindFirstChild("UBGL_" .. soundName)
 			if not soundToPlay then
 				-- Fallback to regular sound
-				soundToPlay = gunModel.Grip:FindFirstChild(soundName)
+				soundToPlay = State.gunModel.Grip:FindFirstChild(soundName)
 				-- DD_SPH Gunsmith: New Fire Sound for client
-				if attStats.newFireSound and soundName == "Fire" then
-					soundToPlay = gunModel[attStats.newMuzzleDevice].Main.Fire
+				if State.attStats.newFireSound and soundName == "Fire" then
+					soundToPlay = State.gunModel[State.attStats.newMuzzleDevice].Main.Fire
 				end
 				-- </DD_SPH>
 			end
 		else
-			soundToPlay = gunModel.Grip:FindFirstChild(soundName)
+			soundToPlay = State.gunModel.Grip:FindFirstChild(soundName)
 			-- DD_SPH Gunsmith: New Fire Sound for client
-			if attStats.newFireSound and soundName == "Fire" then
-				soundToPlay = gunModel[attStats.newMuzzleDevice].Main.Fire
+			if State.attStats.newFireSound and soundName == "Fire" then
+				soundToPlay = State.gunModel[State.attStats.newMuzzleDevice].Main.Fire
 			end
 			-- </DD_SPH>
 		end
 
-		if soundToPlay and equipped then
-			if firstPerson then
+		if soundToPlay and State.equipped then
+			if State.firstPerson then
 				soundToPlay:Play()
 			else
 				local soundToPlay = soundToPlay:Clone()
@@ -353,49 +351,49 @@ local function PlayRepSound(soundName)
 				soundToPlay:Play()
 				debris:AddItem(soundToPlay,soundToPlay.TimeLength)
 			end
-			playSound:Fire(soundName, firstPerson)
+			playSound:Fire(soundName, State.firstPerson)
 		end
 	end
 end
 -- [UBGL END] - Enhanced Sound System for UBGL
 
 --local function IsLoaded()
---	return not wepStats.openBolt and equipped.Chambered.Value or wepStats.openBolt and gunAmmo.MagAmmo.Value > 0
+--	return not State.wepStats.openBolt and State.equipped.Chambered.Value or State.wepStats.openBolt and State.gunAmmo.MagAmmo.Value > 0
 --end
 
 -- [UBGL START] - UBGL Helper Functions
 -- Get current weapon stats based on fire mode
 local function GetCurrentWepStats()
-	if curFireMode == fireModes.UBGL and wepStats.hasUBGL then
-		return wepStats.getStatsForMode(4)
+	if curFireMode == fireModes.UBGL and State.wepStats.hasUBGL then
+		return State.wepStats.getStatsForMode(4)
 	else
-		return wepStats
+		return State.wepStats
 	end
 end
 
 -- Check if weapon is loaded based on current fire mode
 local function IsLoaded()
 	local currentStats = GetCurrentWepStats()
-	if curFireMode == fireModes.UBGL and wepStats.hasUBGL then
+	if curFireMode == fireModes.UBGL and State.wepStats.hasUBGL then
 		-- UBGL uses separate ammo pool
 		return ubglAmmo and ubglAmmo.Value > 0
 	else
 		-- Primary weapon ammo
-		return not currentStats.openBolt and equipped.Chambered.Value or currentStats.openBolt and gunAmmo.MagAmmo.Value > 0
+		return not currentStats.openBolt and State.equipped.Chambered.Value or currentStats.openBolt and State.gunAmmo.MagAmmo.Value > 0
 	end
 end
 
 -- Get appropriate muzzle point based on fire mode
 local function GetMuzzlePoint(gunModel)
-	if curFireMode == fireModes.UBGL and wepStats.hasUBGL then
+	if curFireMode == fireModes.UBGL and State.wepStats.hasUBGL then
 		-- Use UBGL muzzle
-		local ubglMuzzle = gunModel.Grip:FindFirstChild("UBGLMuzzle")
+		local ubglMuzzle = State.gunModel.Grip:FindFirstChild("UBGLMuzzle")
 		if ubglMuzzle then
 			return ubglMuzzle
 		end
 	end
 	-- Default to primary weapon muzzle
-	return gunModel.Grip.Muzzle
+	return State.gunModel.Grip.Muzzle
 end
 -- [UBGL END] - UBGL Helper Functions
 
@@ -419,39 +417,39 @@ local function ChangeLean(newLean)
 end
 
 local function MoveBolt(direction:CFrame,silent:boolean)
-	bulletHandler.MoveBolt(gunModel,wepStats,direction,gunAmmo.MagAmmo.Value)
-	bulletHandler.MoveBolt(weaponRig.Weapon:FindFirstChildWhichIsA("Model"),wepStats,direction,gunAmmo.MagAmmo.Value)
-	if gunAmmo.MagAmmo.Value <= 0 and not silent then
+	bulletHandler.MoveBolt(State.gunModel,State.wepStats,direction,State.gunAmmo.MagAmmo.Value)
+	bulletHandler.MoveBolt(weaponRig.Weapon:FindFirstChildWhichIsA("Model"),State.wepStats,direction,State.gunAmmo.MagAmmo.Value)
+	if State.gunAmmo.MagAmmo.Value <= 0 and not silent then
 		PlayRepSound("Empty")
 	end
-	moveBolt:Fire(direction,gunAmmo.MagAmmo.Value)
+	moveBolt:Fire(direction,State.gunAmmo.MagAmmo.Value)
 end
 
 local function ToggleADS(toggle)
-	--if wepStats and wepStats.ADSEnabled then
-	if (wepStats and wepStats.ADSEnabled) or (attStats and attStats.ADSEnabled) then -- DD_SPH: checks for attstats ADS
+	--if State.wepStats and State.wepStats.ADSEnabled then
+	if (State.wepStats and State.wepStats.ADSEnabled) or (State.attStats and State.attStats.ADSEnabled) then -- DD_SPH: checks for attstats ADS
 		local ADSTween
-		--if wepStats.aimTime then
-		--	ADSTween = TweenInfo.new(wepStats.aimTime / 20,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false,wepStats.aimTime / 20)
+		--if State.wepStats.aimTime then
+		--	ADSTween = TweenInfo.new(State.wepStats.aimTime / 20,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false,State.wepStats.aimTime / 20)
 		--else
 		--	ADSTween = TweenInfo.new(0.2,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false,0.2)
 		--end
 
 		-- DD_SPH Gunsmith: Adjusting aim time
 		local aimingTime
-		if wepStats.aimTime then
-			aimingTime = wepStats.aimTime / 20
+		if State.wepStats.aimTime then
+			aimingTime = State.wepStats.aimTime / 20
 		else
 			aimingTime = 0.2
 		end
-		if attStats.aimTime then
-			aimingTime *= attStats.aimTime
+		if State.attStats.aimTime then
+			aimingTime *= State.attStats.aimTime
 		end
 		ADSTween = TweenInfo.new(aimingTime,Enum.EasingStyle.Linear,Enum.EasingDirection.Out,0,false,aimingTime)
 		-- </DD_SPH>
 
 		if not toggle then
-			for _, child in pairs(gunModel:GetDescendants()) do -- DD_SPH Gunsmith: Changed to GetDescendants to cover attachments
+			for _, child in pairs(State.gunModel:GetDescendants()) do -- DD_SPH Gunsmith: Changed to GetDescendants to cover attachments
 				if child.Name == "REG" then
 					tweenService:Create(child, ADSTween, {Transparency = 0}):Play()
 				elseif child.Name == "ADS" then
@@ -459,7 +457,7 @@ local function ToggleADS(toggle)
 				end
 			end
 		elseif toggle then
-			for _, child in pairs(gunModel:GetDescendants()) do -- DD_SPH Gunsmith: Changed to GetDescendants to cover attachments
+			for _, child in pairs(State.gunModel:GetDescendants()) do -- DD_SPH Gunsmith: Changed to GetDescendants to cover attachments
 				if child.Name == "REG" then
 					tweenService:Create(child, ADSTween, {Transparency = 1}):Play()
 				elseif child.Name == "ADS" then
@@ -491,11 +489,11 @@ end
 
 local function EjectShell()
 	ejected = true
-	if wepStats.shellEject then
-		if firstPerson then
-			shellEjection.ejectShell(player,equipped,gunModel)
+	if State.wepStats.shellEject then
+		if State.firstPerson then
+			shellEjection.ejectShell(player,State.equipped,State.gunModel)
 		else
-			shellEjection.ejectShell(player,equipped,weaponRig.Weapon:FindFirstChildWhichIsA("Model"))
+			shellEjection.ejectShell(player,State.equipped,weaponRig.Weapon:FindFirstChildWhichIsA("Model"))
 		end
 	end
 end
@@ -523,7 +521,7 @@ local function SwitchFireMode()
 	repeat
 		curFireMode += 1
 		if curFireMode > 4 then curFireMode = 0 break end
-	until wepStats.fireSwitch[curFireMode]
+	until State.wepStats.fireSwitch[curFireMode]
 	switchFireMode:Fire(curFireMode)
 end
 
@@ -548,27 +546,27 @@ local function PlayAnimation(animName:string, parameters:table, animType:string,
 		-- Keyframe names
 		newAnim.KeyframeReached:Connect(function(keyframeName)
 
-			if gunModel.Grip:FindFirstChild(keyframeName) then
+			if State.gunModel.Grip:FindFirstChild(keyframeName) then
 				PlayRepSound(keyframeName)
 			end
 
 			if keyframeName == "MagIn" then
 
 				-- Auto chamber code
-				if equipped and (not equipped.Chambered.Value or wepStats.openBolt) and wepStats.autoChamber then
-					reloading = true
+				if State.equipped and (not State.equipped.Chambered.Value or State.wepStats.openBolt) and State.wepStats.autoChamber then
+					State.reloading = true
 					local animNameToPlay
-					if equipped.BoltReady.Value then
-						animNameToPlay = wepStats.boltChamber
+					if State.equipped.BoltReady.Value then
+						animNameToPlay = State.wepStats.boltChamber
 					else
-						animNameToPlay = wepStats.boltClose
+						animNameToPlay = State.wepStats.boltClose
 					end
 					StopAnimation(animName,0.4)
 					PlayAnimation(animNameToPlay,{priority = Enum.AnimationPriority.Action2,transSpeed = 0.05})
 				end
 
 				-- Bullet visibility
-				local bulletHandlerPart = wepStats.bulletHandler and gunModel:FindFirstChild(wepStats.bulletHolder)
+				local bulletHandlerPart = State.wepStats.bulletHandler and State.gunModel:FindFirstChild(State.wepStats.bulletHolder)
 				if bulletHandlerPart then
 					for _, child in bulletHandlerPart:GetChildren() do
 						if child:IsA("BasePart") and string.sub(child.Name, 1, 6) == "Bullet" then
@@ -578,45 +576,45 @@ local function PlayAnimation(animName:string, parameters:table, animType:string,
 				end
 
 				repReload:Fire()
-				--reloading = false
+				--State.reloading = false
 
-				if wepStats.magType > 1 then
+				if State.wepStats.magType > 1 then
 					newAnim.DidLoop:Once(function()
 						StopAnimation(animName)
 					end)
 				end
 			elseif keyframeName == "ShellInsert" or keyframeName == "BulletInsert" then
-				if cancelReload then -- Should reloading be canceled?
+				if cancelReload then -- Should State.reloading be canceled?
 					cancelReload = false
 					newAnim.Looped = false
 					newAnim.Stopped:Once(function()
-						if not equipped then return end
+						if not State.equipped then return end
 						StopAnimation(newAnim.Name)
-						if not equipped.BoltReady.Value or wepStats.openBolt then
-							PlayAnimation(wepStats.boltClose,{priority = Enum.AnimationPriority.Action2})
+						if not State.equipped.BoltReady.Value or State.wepStats.openBolt then
+							PlayAnimation(State.wepStats.boltClose,{priority = Enum.AnimationPriority.Action2})
 						else
-							reloading = false
+							State.reloading = false
 						end
 					end)
-				elseif gunAmmo.MagAmmo.Value + 1 >= gunAmmo.MagAmmo.MaxValue or gunAmmo.ArcadeAmmoPool.Value - 1 <= 0 then
+				elseif State.gunAmmo.MagAmmo.Value + 1 >= State.gunAmmo.MagAmmo.MaxValue or State.gunAmmo.ArcadeAmmoPool.Value - 1 <= 0 then
 					newAnim.DidLoop:Once(function()
-						if not equipped then return end
+						if not State.equipped then return end
 						StopAnimation(newAnim.Name)
-						if not equipped.BoltReady.Value or wepStats.operationType == 3 or wepStats.openBolt then
-							PlayAnimation(wepStats.boltClose,{priority = Enum.AnimationPriority.Action2})
+						if not State.equipped.BoltReady.Value or State.wepStats.operationType == 3 or State.wepStats.openBolt then
+							PlayAnimation(State.wepStats.boltClose,{priority = Enum.AnimationPriority.Action2})
 						else
-							reloading = false
+							State.reloading = false
 						end
 					end)
-				elseif wepStats.openBolt then
-					--PlayAnimation(wepStats.boltClose,{priority = Enum.AnimationPriority.Action2})
-					--print(gunAmmo.MagAmmo.Value, gunAmmo.ArcadeAmmoPool.Value)
+				elseif State.wepStats.openBolt then
+					--PlayAnimation(State.wepStats.boltClose,{priority = Enum.AnimationPriority.Action2})
+					--print(State.gunAmmo.MagAmmo.Value, State.gunAmmo.ArcadeAmmoPool.Value)
 				end
 
 				-- Bullet visibility
-				local bulletHandlerPart = wepStats.bulletHolder and gunModel:FindFirstChild(wepStats.bulletHolder)
+				local bulletHandlerPart = State.wepStats.bulletHolder and State.gunModel:FindFirstChild(State.wepStats.bulletHolder)
 				if bulletHandlerPart then
-					local bulletNumber = gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value
+					local bulletNumber = State.gunAmmo.MagAmmo.MaxValue - State.gunAmmo.MagAmmo.Value
 					local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
 					if tempBulletPart then
 						tempBulletPart.Transparency = 0
@@ -625,47 +623,47 @@ local function PlayAnimation(animName:string, parameters:table, animType:string,
 
 				repReload:Fire()
 			elseif keyframeName == "ClipInsertEnd" then
-				local ammoNeeded = gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value
-				--local clipSize = wepStats.clipSize or wepStats.magazineCapacity
-				local clipSize = wepStats.clipSize or attStats.magazineCapacity or wepStats.magazineCapacity -- DD_SPH Gunsmith
+				local ammoNeeded = State.gunAmmo.MagAmmo.MaxValue - State.gunAmmo.MagAmmo.Value
+				--local clipSize = State.wepStats.clipSize or State.wepStats.magazineCapacity
+				local clipSize = State.wepStats.clipSize or State.attStats.magazineCapacity or State.wepStats.magazineCapacity -- DD_SPH Gunsmith
 				--if ammoNeeded > 0 then
 				--	StopAnimation(newAnim.Name)
 				--	if ammoNeeded >= clipSize then
-				--		PlayAnimation(wepStats.clipReloadAnim,{looped = true,speed = wepStats.reloadSpeedModifier,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17})
+				--		PlayAnimation(State.wepStats.clipReloadAnim,{looped = true,speed = State.wepStats.reloadSpeedModifier,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17})
 				--	else
-				--		PlayAnimation(wepStats.reloadAnim,{speed = wepStats.reloadSpeedModifier,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload")
+				--		PlayAnimation(State.wepStats.reloadAnim,{speed = State.wepStats.reloadSpeedModifier,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload")
 				--	end
 				--end
 
-				local animSpeed = wepStats.reloadSpeedModifier -- DD_SPH Gunsmith
-				if attStats.reloadSpeedModifier then animSpeed *= attStats.reloadSpeedModifier end
+				local animSpeed = State.wepStats.reloadSpeedModifier -- DD_SPH Gunsmith
+				if State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
 
 				if ammoNeeded > 0 then
 					StopAnimation(newAnim.Name)
 					if ammoNeeded >= clipSize then
-						PlayAnimation(wepStats.clipReloadAnim,{looped = true,speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17}) -- DD_SPH Gunsmith: added animSpeed
+						PlayAnimation(State.wepStats.clipReloadAnim,{looped = true,speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17}) -- DD_SPH Gunsmith: added animSpeed
 					else
-						PlayAnimation(wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload") -- DD_SPH Gunsmith: added animSpeed
+						PlayAnimation(State.wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload") -- DD_SPH Gunsmith: added animSpeed
 					end
 				end
 
 				--StopAnimation(newAnim.Name)
-				--PlayAnimation(wepStats.reloadAnim,{speed = wepStats.reloadSpeedModifier,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload")
-				--PlayAnimation(wepStats.clipReloadAnim,{looped = true,speed = wepStats.reloadSpeedModifier,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17})
+				--PlayAnimation(State.wepStats.reloadAnim,{speed = State.wepStats.reloadSpeedModifier,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload")
+				--PlayAnimation(State.wepStats.clipReloadAnim,{looped = true,speed = State.wepStats.reloadSpeedModifier,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17})
 			elseif keyframeName == "ClipInsert" then
 				repReload:Fire()
 			elseif keyframeName == "SlideRelease" or keyframeName == "BoltClose" then
 				repChamber:Fire()
-				reloading = false
+				State.reloading = false
 				MoveBolt(CFrame.new(),true)
-			elseif keyframeName == "SlidePull" and equipped.Chambered.Value then
+			elseif keyframeName == "SlidePull" and State.equipped.Chambered.Value then
 				EjectShell()
 			elseif keyframeName == "Equip" then
 				--equipping = false
-				--if firstPerson then viewmodelVisible = true end
+				--if State.firstPerson then viewmodelVisible = true end
 
-				--local projectile = gunModel:FindFirstChild(wepStats.projectile)
-				--if not IsLoaded() and projectile and wepStats.projectile ~= "Bullet" then
+				--local projectile = State.gunModel:FindFirstChild(State.wepStats.projectile)
+				--if not IsLoaded() and projectile and State.wepStats.projectile ~= "Bullet" then
 				--	projectile.LocalTransparencyModifier = 1
 				--	for _, child in ipairs(projectile:GetDescendants()) do
 				--		if child:IsA("BasePart") then
@@ -673,11 +671,11 @@ local function PlayAnimation(animName:string, parameters:table, animType:string,
 				--		end
 				--	end
 				--end
-			elseif keyframeName == "Switch" and not reloading then
+			elseif keyframeName == "Switch" and not State.reloading then
 				SwitchFireMode()
 			elseif keyframeName == "MagGrab" then
-				if gunModel and wepStats.projectile ~= "Bullet" and gunModel:FindFirstChild(wepStats.projectile) then
-					local projectile = gunModel:FindFirstChild(wepStats.projectile)
+				if State.gunModel and State.wepStats.projectile ~= "Bullet" and State.gunModel:FindFirstChild(State.wepStats.projectile) then
+					local projectile = State.gunModel:FindFirstChild(State.wepStats.projectile)
 					projectile.LocalTransparencyModifier = 0
 					for _, child in ipairs(projectile:GetDescendants()) do
 						if child:IsA("BasePart") then
@@ -685,7 +683,7 @@ local function PlayAnimation(animName:string, parameters:table, animType:string,
 						end
 					end
 					local thirdPersonGunModel = GetThirdPersonGunModel()
-					local projectile = thirdPersonGunModel:FindFirstChild(wepStats.projectile)
+					local projectile = thirdPersonGunModel:FindFirstChild(State.wepStats.projectile)
 					projectile.LocalTransparencyModifier = 0
 					for _, child in ipairs(projectile:GetDescendants()) do
 						if child:IsA("BasePart") then
@@ -705,11 +703,11 @@ local function PlayAnimation(animName:string, parameters:table, animType:string,
 		newAnim.Stopped:Connect(function()
 			if animType == "Equip" then
 				--equipping = false
-				--if firstPerson then viewmodelVisible = true end
+				--if State.firstPerson then viewmodelVisible = true end
 			elseif animType == "Reload" then
-				reloading = false
-				if wepStats and gunModel and gunModel:FindFirstChild(wepStats.projectile) and equipped.Chambered.Value then
-					local projectile = gunModel:FindFirstChild(wepStats.projectile)
+				State.reloading = false
+				if State.wepStats and State.gunModel and State.gunModel:FindFirstChild(State.wepStats.projectile) and State.equipped.Chambered.Value then
+					local projectile = State.gunModel:FindFirstChild(State.wepStats.projectile)
 					projectile.LocalTransparencyModifier = 0
 					for _, child in ipairs(projectile:GetDescendants()) do
 						if child:IsA("BasePart") then
@@ -742,7 +740,7 @@ local function PlayAnimation(animName:string, parameters:table, animType:string,
 end
 
 local function ChangeHoldStance(newStance)
-	if aiming then return end
+	if State.aiming then return end
 	if holdStance == newStance and holdAnim then
 		StopAnimation(holdAnim.Name, 0.3)
 		holdAnim = nil
@@ -755,12 +753,12 @@ local function ChangeHoldStance(newStance)
 		end
 
 		local animToPlay
-		if holdStance == 1 and wepStats.holdUpAnim then
-			animToPlay = wepStats.holdUpAnim
-		elseif holdStance == 2 and wepStats.patrolAnim then
-			animToPlay = wepStats.patrolAnim
-		elseif holdStance == 3 and wepStats.holdDownAnim then
-			animToPlay = wepStats.holdDownAnim
+		if holdStance == 1 and State.wepStats.holdUpAnim then
+			animToPlay = State.wepStats.holdUpAnim
+		elseif holdStance == 2 and State.wepStats.patrolAnim then
+			animToPlay = State.wepStats.patrolAnim
+		elseif holdStance == 3 and State.wepStats.holdDownAnim then
+			animToPlay = State.wepStats.holdDownAnim
 		end
 
 		if animToPlay then
@@ -774,14 +772,14 @@ end
 
 local function ChamberAnim()
 	local animNameToPlay
-	if equipped.BoltReady.Value or curFireMode == fireModes.Manual then
-		animNameToPlay = wepStats.boltChamber
+	if State.equipped.BoltReady.Value or curFireMode == fireModes.Manual then
+		animNameToPlay = State.wepStats.boltChamber
 	else
-		animNameToPlay = wepStats.boltClose
+		animNameToPlay = State.wepStats.boltClose
 	end
 
 	if animNameToPlay then
-		reloading = true
+		State.reloading = true
 		chambering = true
 		ChangeHoldStance(0)
 
@@ -793,18 +791,18 @@ local function ChamberAnim()
 end
 
 local function IdleAnim()
-	PlayAnimation(wepStats.idleAnim,{looped = true, priority = Enum.AnimationPriority.Idle})
+	PlayAnimation(State.wepStats.idleAnim,{looped = true, priority = Enum.AnimationPriority.Idle})
 end
 
 local function EquipAnim()
 	--equipping = true
-	PlayAnimation(wepStats.equipAnim,{priority = Enum.AnimationPriority.Action2},"Equip")
+	PlayAnimation(State.wepStats.equipAnim,{priority = Enum.AnimationPriority.Action2},"Equip")
 
 	task.wait(0.1)
-	if firstPerson then viewmodelVisible = true end
-	if not wepStats then return end -- DD_SPH: catching against errors
-	local projectile = gunModel:FindFirstChild(wepStats.projectile)
-	if (wepStats.openBolt or not equipped.Chambered.Value) and projectile and wepStats.projectile ~= "Bullet" then
+	if State.firstPerson then viewmodelVisible = true end
+	if not State.wepStats then return end -- DD_SPH: catching against errors
+	local projectile = State.gunModel:FindFirstChild(State.wepStats.projectile)
+	if (State.wepStats.openBolt or not State.equipped.Chambered.Value) and projectile and State.wepStats.projectile ~= "Bullet" then
 		projectile.LocalTransparencyModifier = 1
 		for _, child in ipairs(projectile:GetDescendants()) do
 			if child:IsA("BasePart") then
@@ -815,49 +813,49 @@ local function EquipAnim()
 end
 
 local function ReloadAnim()
-	if not equipped then return end
+	if not State.equipped then return end
 
 	cancelReload = false
 
 	ChangeHoldStance(0)
-	reloading = true
+	State.reloading = true
 
-	local animSpeed = wepStats.reloadSpeedModifier -- DD_SPH gunsmith: Setting animspeed based on attstats
-	if attStats.reloadSpeedModifier then animSpeed *= attStats.reloadSpeedModifier end
+	local animSpeed = State.wepStats.reloadSpeedModifier -- DD_SPH gunsmith: Setting animspeed based on attstats
+	if State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
 
 	-- [UBGL START] - UBGL Reload System
 	-- Check if we're in UBGL mode
-	if curFireMode == fireModes.UBGL and wepStats.hasUBGL then
+	if curFireMode == fireModes.UBGL and State.wepStats.hasUBGL then
 		-- UBGL reload - simple single grenade reload
-		local ubglStats = wepStats.getStatsForMode(4)
+		local ubglStats = State.wepStats.getStatsForMode(4)
 		if ubglStats.reloadAnim then
 			PlayAnimation(ubglStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload") -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
 		else
 			-- Fallback to primary weapon reload if no UBGL reload animation
-			PlayAnimation(wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload") -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
+			PlayAnimation(State.wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload") -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
 		end
 		return
 	end
 	-- [UBGL END] - UBGL Reload System
 
 
-	if wepStats.operationType == 3 or (wepStats.operationType == 2 and gunAmmo.MagAmmo.Value <= 0 and not equipped.Chambered.Value) then
-		local boltOpenTrack = PlayAnimation(wepStats.boltOpen,{speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
+	if State.wepStats.operationType == 3 or (State.wepStats.operationType == 2 and State.gunAmmo.MagAmmo.Value <= 0 and not State.equipped.Chambered.Value) then
+		local boltOpenTrack = PlayAnimation(State.wepStats.boltOpen,{speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
 		if not boltOpenTrack then
-			warn(warnPrefix.."To use operation type "..wepStats.operationType..", a 'boltOpen' animation is required.")
-			reloading = false
+			warn(warnPrefix.."To use operation type "..State.wepStats.operationType..", a 'boltOpen' animation is required.")
+			State.reloading = false
 			return
 		end
 		boltOpenTrack.Stopped:Once(function()
-			if wepStats.magType == 3
-				--and (gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value) >= (wepStats.clipSize or wepStats.magazineCapacity)
-				--and gunAmmo.ArcadeAmmoPool.Value >= (wepStats.clipSize or wepStats.magazineCapacity) then then
-				and (gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value) >= (wepStats.clipSize or attStats.magazineCapacity or wepStats.magazineCapacity)
-				and gunAmmo.ArcadeAmmoPool.Value >= (wepStats.clipSize or attStats.magazineCapacity or wepStats.magazineCapacity) then
+			if State.wepStats.magType == 3
+				--and (State.gunAmmo.MagAmmo.MaxValue - State.gunAmmo.MagAmmo.Value) >= (State.wepStats.clipSize or State.wepStats.magazineCapacity)
+				--and State.gunAmmo.ArcadeAmmoPool.Value >= (State.wepStats.clipSize or State.wepStats.magazineCapacity) then then
+				and (State.gunAmmo.MagAmmo.MaxValue - State.gunAmmo.MagAmmo.Value) >= (State.wepStats.clipSize or State.attStats.magazineCapacity or State.wepStats.magazineCapacity)
+				and State.gunAmmo.ArcadeAmmoPool.Value >= (State.wepStats.clipSize or State.attStats.magazineCapacity or State.wepStats.magazineCapacity) then
 				-- Clip insert
-				local clipReloadTrack = PlayAnimation(wepStats.clipReloadAnim,{looped = true,speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17}) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
+				local clipReloadTrack = PlayAnimation(State.wepStats.clipReloadAnim,{looped = true,speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17}) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
 				--clipReloadTrack.Stopped:Once(function()
-				--	if gunAmmo.MagAmmo.Value + 1 < gunAmmo.MagAmmo.MaxValue and gunAmmo.ArcadeAmmoPool.Value > 0 then
+				--	if State.gunAmmo.MagAmmo.Value + 1 < State.gunAmmo.MagAmmo.MaxValue and State.gunAmmo.ArcadeAmmoPool.Value > 0 then
 				--		ReloadAnim()
 				--	end
 				--end)
@@ -866,19 +864,19 @@ local function ReloadAnim()
 				--end)
 			else
 				-- Bullet insert
-				if lastGunModel and lastGunModel.Name ~= gunModel.Name then return end -- DD_SPH: Check against reload swapping
-				local bulletInsert = PlayAnimation(wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17,looped = true},"Reload") -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
-				if wepStats.magType > 1 then bulletInsert.Looped = true end
+				if lastGunModel and lastGunModel.Name ~= State.gunModel.Name then return end -- DD_SPH: Check against reload swapping
+				local bulletInsert = PlayAnimation(State.wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17,looped = true},"Reload") -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
+				if State.wepStats.magType > 1 then bulletInsert.Looped = true end
 			end
 		end)
 	else
-		PlayAnimation(wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload") -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
+		PlayAnimation(State.wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload") -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
 	end
 end
 
 -- Makes the viewmodel visible and refreshes its appearance
 local function RefreshViewmodel()
-	if firstPerson and not equipping then
+	if State.firstPerson and not equipping then
 		viewmodelVisible = true
 	end
 
@@ -942,9 +940,9 @@ local function ToggleAiming(toggle)
 	character:SetAttribute("Aiming", toggle)
 	if toggle then
 		ChangeHoldStance(0)
-		aiming = true
-		--if wepStats.ADSEnabled and wepStats.ADSEnabled[sightIndex] then
-		if (attStats.ADSEnabled and attStats.ADSEnabled[sightIndex]) or (wepStats.ADSEnabled and wepStats.ADSEnabled[sightIndex]) then -- DD_SPH Gunsmith: ADS enabling
+		State.aiming = true
+		--if State.wepStats.ADSEnabled and State.wepStats.ADSEnabled[sightIndex] then
+		if (State.attStats.ADSEnabled and State.attStats.ADSEnabled[sightIndex]) or (State.wepStats.ADSEnabled and State.wepStats.ADSEnabled[sightIndex]) then -- DD_SPH Gunsmith: ADS enabling
 			ToggleADS(true)
 		else
 			ToggleADS(false)
@@ -952,19 +950,19 @@ local function ToggleAiming(toggle)
 		userInputService.MouseDeltaSensitivity = aimSensitivity
 		PlayRepSound("AimUp")
 
-		--tweenService:Create(camera,TweenInfo.new(wepStats.aimTime),{FieldOfView = wepStats.aimFovDefault or defaultFOV}):Play()
+		--tweenService:Create(camera,TweenInfo.new(State.wepStats.aimTime),{FieldOfView = State.wepStats.aimFovDefault or defaultFOV}):Play()
 
 		if not config.lockFirstPerson then
 			player.CameraMode = Enum.CameraMode.LockFirstPerson
 		end
 	else
-		aiming = false
+		State.aiming = false
 		ToggleADS(false)
 		userInputService.MouseDeltaSensitivity = 1
 		PlayRepSound("AimDown")
 		local aimOutTime
-		if wepStats then
-			aimOutTime = wepStats.aimTime / 2
+		if State.wepStats then
+			aimOutTime = State.wepStats.aimTime / 2
 		else
 			aimOutTime = 0.3
 		end
@@ -995,7 +993,7 @@ local function UpdateViewmodelPosition(dt:number)
 	end
 
 	-- Move gunmodel up while prone
-	if stance == 2 then
+	if State.stance == 2 then
 		proneViewmodelOffset = LerpNumber(proneViewmodelOffset,0.2,0.1)
 	else
 		proneViewmodelOffset = LerpNumber(proneViewmodelOffset,0,0.1)
@@ -1008,31 +1006,31 @@ local function UpdateViewmodelPosition(dt:number)
 	animBase.CFrame *= freeLookOffset:Inverse()
 
 	---- Aiming
-	--local aimPart = gunModel:FindFirstChild("AimPart"..sightIndex) or gunModel.AimPart
+	--local aimPart = State.gunModel:FindFirstChild("AimPart"..sightIndex) or State.gunModel.AimPart
 	--aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
-	--if aiming then
-	--	aimingOffset = aimingOffset:Lerp(aimTarget,(0.7 / wepStats.aimTime) * 0.3 * dt * 60)
+	--if State.aiming then
+	--	aimingOffset = aimingOffset:Lerp(aimTarget,(0.7 / State.wepStats.aimTime) * 0.3 * dt * 60)
 	--else
-	--	aimingOffset = aimingOffset:Lerp(CFrame.new(),(0.7 / wepStats.aimTime) * 0.3 * dt * 60)
+	--	aimingOffset = aimingOffset:Lerp(CFrame.new(),(0.7 / State.wepStats.aimTime) * 0.3 * dt * 60)
 	--end
 	--animBase.CFrame *= aimingOffset
 
 	-- Aiming
-	local aimPart = gunModel:FindFirstChild("AimPart"..sightIndex) or gunModel.AimPart
+	local aimPart = State.gunModel:FindFirstChild("AimPart"..sightIndex) or State.gunModel.AimPart
 	-- DD_SPH Gunsmith: multiple aimparts on attachments
-	if attStats.aimParts then
-		if attStats.aimParts["AimPart"..sightIndex] then
-			aimPart = gunModel[attStats.aimParts["AimPart"..sightIndex]]:FindFirstChild("AimPart"..sightIndex)
+	if State.attStats.aimParts then
+		if State.attStats.aimParts["AimPart"..sightIndex] then
+			aimPart = State.gunModel[State.attStats.aimParts["AimPart"..sightIndex]]:FindFirstChild("AimPart"..sightIndex)
 		end
 	end
 	-- </DD_SPH>
 	aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
 
 	-- DD_SPH gunsmith: Adjusting aim time based on attstats.
-	local aimTime = wepStats.aimTime
-	if attStats.aimTime then aimTime *= attStats.aimTime end
+	local aimTime = State.wepStats.aimTime
+	if State.attStats.aimTime then aimTime *= State.attStats.aimTime end
 
-	if aiming then
+	if State.aiming then
 		aimingOffset = aimingOffset:Lerp(aimTarget,(0.7 / aimTime) * 0.3 * dt * 60)
 	else
 		aimingOffset = aimingOffset:Lerp(CFrame.new(),(0.7 / aimTime) * 0.3 * dt * 60)
@@ -1041,11 +1039,11 @@ local function UpdateViewmodelPosition(dt:number)
 	-- </DD_SPH>
 
 	-- Check if gun is too close to a wall
-	--local rayDistance = (animBase.CFrame.Position - gunModel.Grip.Muzzle.WorldCFrame.Position).Magnitude + 1
-	local rayDistance = wepStats.gunLength
+	--local rayDistance = (animBase.CFrame.Position - State.gunModel.Grip.Muzzle.WorldCFrame.Position).Magnitude + 1
+	local rayDistance = State.wepStats.gunLength
 
-	if attStats.gunLength then rayDistance += attStats.gunLength end -- DD_SPH Gunsmith: Adding gun length
-	local originCFrame = firstPerson and animBase.CFrame or weaponRig.AnimBase.CFrame
+	if State.attStats.gunLength then rayDistance += State.attStats.gunLength end -- DD_SPH Gunsmith: Adding gun length
+	local originCFrame = State.firstPerson and animBase.CFrame or weaponRig.AnimBase.CFrame
 	local newRay = workspace:Raycast(originCFrame.Position,originCFrame.LookVector * rayDistance,rayParams)
 	if newRay then
 		local distance = rayDistance - (animBase.CFrame.Position - newRay.Position).Magnitude
@@ -1059,27 +1057,27 @@ local function UpdateViewmodelPosition(dt:number)
 
 		if config.raiseGunAtWall then
 
-			if distance >= wepStats.maxPushback then
+			if distance >= State.wepStats.maxPushback then
 				if not blocked then
 					ChangeHoldStance(0)
-					PlayAnimation(wepStats.holdUpAnim,{looped = true, priority = Enum.AnimationPriority.Action,transSpeed = 0.3})
+					PlayAnimation(State.wepStats.holdUpAnim,{looped = true, priority = Enum.AnimationPriority.Action,transSpeed = 0.3})
 					blocked = true
-					if aiming then ToggleAiming(false) end
+					if State.aiming then ToggleAiming(false) end
 				end
 			elseif blocked then
-				StopAnimation(wepStats.holdUpAnim,0.3)
+				StopAnimation(State.wepStats.holdUpAnim,0.3)
 				blocked = false
-				if aimHeld and not aiming and firstPerson then
+				if aimHeld and not State.aiming and State.firstPerson then
 					ToggleAiming(true)
 				end
 			end
 		end
 	else
 		if blocked then
-			StopAnimation(wepStats.holdUpAnim,0.3)
+			StopAnimation(State.wepStats.holdUpAnim,0.3)
 		end
 		blocked = false
-		if aimHeld and not aiming and firstPerson and not sprinting then
+		if aimHeld and not State.aiming and State.firstPerson and not State.sprinting then
 			ToggleAiming(true)
 		end
 
@@ -1090,7 +1088,7 @@ local function UpdateViewmodelPosition(dt:number)
 	-- Update strafing roll
 	local relativeVelocity = humanoidRootPart.CFrame:VectorToObjectSpace(humanoidRootPart.Velocity)
 	local targetRollAngle = 0
-	if not aiming then targetRollAngle = math.clamp(-relativeVelocity.X, -config.maxStrafeRoll, config.maxStrafeRoll) end
+	if not State.aiming then targetRollAngle = math.clamp(-relativeVelocity.X, -config.maxStrafeRoll, config.maxStrafeRoll) end
 	if config.cameraTilting then targetRollAngle /= 2 end
 	rollAngle = LerpNumber(rollAngle, targetRollAngle, 0.07 * dt * 60)
 	animBase.CFrame *= CFrame.Angles(0, 0, math.rad(rollAngle))
@@ -1099,10 +1097,10 @@ local function UpdateViewmodelPosition(dt:number)
 
 	-- Update hipfire movement
 	local tempHipRotation = hipRotation
-	if config.hipfireMove and (not aiming or aiming and config.offCenterAiming) then
+	if config.hipfireMove and (not State.aiming or State.aiming and config.offCenterAiming) then
 		local maxX = config.hipfireMoveX
 		local maxY = config.hipfireMoveY
-		if aiming then
+		if State.aiming then
 			maxX /= 4
 			maxY /= 4
 		end
@@ -1123,12 +1121,12 @@ local function UpdateViewmodelPosition(dt:number)
 	-- Update breathing
 	local tickTime = tick() * 0.15
 	local tempDist = config.breathingDist
-	if aiming then tempDist *= config.breathingAimMultiplier end
+	if State.aiming then tempDist *= config.breathingAimMultiplier end
 	animBase.CFrame *= CFrame.new(tempDist * math.sin(tickTime * config.breathingSpeed / 2), tempDist * math.sin(tickTime * config.breathingSpeed), 0)
 
 	-- Update recoil
-	local recoilStats = wepStats.recoil
-	local gunRecoil = wepStats.gunRecoil
+	local recoilStats = State.wepStats.recoil
+	local gunRecoil = State.wepStats.gunRecoil
 
 	local updatedRecoil = recoilSpring.Position
 	local updatedGunRecoil = gunRecoilSpring:update(dt)
@@ -1161,20 +1159,20 @@ end
 
 -- Toggle spring speed
 local function ToggleSprint(toggle:boolean)
-	sprinting = toggle
+	State.sprinting = toggle
 	character:SetAttribute("Sprinting", toggle)
 	if toggle then
-		if aiming then ToggleAiming(false) end
+		if State.aiming then ToggleAiming(false) end
 		ChangeHoldStance(0)
 		userInputService.MouseDeltaSensitivity = 1
 		holdingM1 = false
-		PlayAnimation(wepStats.sprintAnim,{looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.2})
+		PlayAnimation(State.wepStats.sprintAnim,{looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.2})
 
 		if depthOfField then
 			ChangeDoF(0,6,0,0.3)
 		end
-	elseif wepStats then
-		StopAnimation(wepStats.sprintAnim,0.2)
+	elseif State.wepStats then
+		StopAnimation(State.wepStats.sprintAnim,0.2)
 
 		if depthOfField then
 			ChangeDoF(0,0,0,0)
@@ -1191,7 +1189,7 @@ end
 local baseCharacterHipHeight = player.Character:WaitForChild("Humanoid").HipHeight -- DD_SPH: Gets player's character's hipheight
 
 local function ChangeStance(change)
-	local number = stance + change
+	local number = State.stance + change
 	local targetCharacterHeight = 0 -- DD_SPH: TargetCharacterHeight adjusts for rigtype
 
 	-- Correct number if it's too low or too high
@@ -1237,9 +1235,9 @@ local function ChangeStance(change)
 		end
 
 		tweenService:Create(humanoid,TweenInfo.new(config.stanceChangeTime),{HipHeight = targetCharacterHeight}):Play() -- DD_SPH: Use targetCharacterHeight instead of 0
-		if stance == 0 then
+		if State.stance == 0 then
 			PlayCharSound("Crouch")
-		elseif stance == 2 then
+		elseif State.stance == 2 then
 			PlayCharSound("Unprone")
 		end
 	elseif number == 2 then -- Prone
@@ -1263,7 +1261,7 @@ local function ChangeStance(change)
 
 	if preMove and moveAnim then moveAnim:Play() end
 
-	stance = number
+	State.stance = number
 end
 
 local function HandleInput(actionName, inputState, inputObject)
@@ -1273,28 +1271,28 @@ local function HandleInput(actionName, inputState, inputObject)
 
 	if actionName == "SPH_Sprint" then -- Sprint hold
 		sprintHeld = inputState == inputBegan
-		if sprintHeld and stance < 2 and moving then -- Begin sprinting
-			if stance == 1 then ChangeStance(-1) end
-			if equipped and moving then ToggleSprint(true) end
+		if sprintHeld and State.stance < 2 and moving then -- Begin State.sprinting
+			if State.stance == 1 then ChangeStance(-1) end
+			if State.equipped and moving then ToggleSprint(true) end
 			ChangeWalkSpeed(config.sprintSpeed)
 			ChangeLean(0)
-		elseif stance == 0 then -- End sprinting
+		elseif State.stance == 0 then -- End State.sprinting
 			ToggleSprint(false)
 			ChangeWalkSpeed(config.walkSpeed)
 		end
 	elseif inputState == inputBegan then -- Other inputs
 
-		if actionName == "SPH_StanceLower" and inputState == inputBegan and stance < 2 and not humanoid.Sit then -- Lower stance
-			if not config.canProne and stance == 1 then return end -- If the player is crouched and unable to prone then return
+		if actionName == "SPH_StanceLower" and inputState == inputBegan and State.stance < 2 and not humanoid.Sit then -- Lower State.stance
+			if not config.canProne and State.stance == 1 then return end -- If the player is crouched and unable to prone then return
 			ChangeStance(1)
-			if sprinting then ToggleSprint(false) end
+			if State.sprinting then ToggleSprint(false) end
 
 
-		elseif actionName == "SPH_StanceRaise" and inputState == inputBegan and stance > 0 then -- Raise stance
+		elseif actionName == "SPH_StanceRaise" and inputState == inputBegan and State.stance > 0 then -- Raise State.stance
 			ChangeStance(-1)
 
 
-		elseif actionName == "SPH_LeanLeft" and inputState == inputBegan and stance < 2 and not sprinting and not humanoid.Sit then -- Lean left
+		elseif actionName == "SPH_LeanLeft" and inputState == inputBegan and State.stance < 2 and not State.sprinting and not humanoid.Sit then -- Lean left
 			if lean == -1 then
 				ChangeLean(0)
 			else
@@ -1302,7 +1300,7 @@ local function HandleInput(actionName, inputState, inputObject)
 			end
 
 
-		elseif actionName == "SPH_LeanRight" and inputState == inputBegan and stance < 2 and not sprinting and not humanoid.Sit then -- Lean right
+		elseif actionName == "SPH_LeanRight" and inputState == inputBegan and State.stance < 2 and not State.sprinting and not humanoid.Sit then -- Lean right
 			if lean == 1 then
 				ChangeLean(0)
 			else
@@ -1312,14 +1310,14 @@ local function HandleInput(actionName, inputState, inputObject)
 	end
 
 
-	if equipped then -- Gun inputs
+	if State.equipped then -- Gun inputs
 		if actionName == "SPH_Trigger" then
 			if inputState == inputBegan then -- Holding M1
 				cancelReload = true
-				if not (sprinting or reloading) then -- Detect mouse click
+				if not (State.sprinting or State.reloading) then -- Detect mouse click
 					holdingM1 = true
 
-					if not IsLoaded() and not (equipped:GetAttribute("FireMode") == fireModes.Manual and equipped:GetAttribute("MagAmmo") > 0) then
+					if not IsLoaded() and not (State.equipped:GetAttribute("FireMode") == fireModes.Manual and State.equipped:GetAttribute("MagAmmo") > 0) then
 						PlayRepSound("Click")
 					end
 				end
@@ -1331,43 +1329,43 @@ local function HandleInput(actionName, inputState, inputObject)
 
 
 		elseif actionName == "SPH_DropGun" and inputState == inputBegan then -- Gun drop
-			Unequip(equipped)
+			Unequip(State.equipped)
 			playerDropGun:Fire()
 
 
-			--elseif actionName == "SPH_Reload" and inputState == inputBegan and not reloading and cycled then -- Reload
-			--	if wepStats.infiniteAmmo or gunAmmo.ArcadeAmmoPool.Value > 0 then
-			--		if (wepStats.openBolt and gunAmmo.MagAmmo.Value < gunAmmo.MagAmmo.MaxValue) then
+			--elseif actionName == "SPH_Reload" and inputState == inputBegan and not State.reloading and cycled then -- Reload
+			--	if State.wepStats.infiniteAmmo or State.gunAmmo.ArcadeAmmoPool.Value > 0 then
+			--		if (State.wepStats.openBolt and State.gunAmmo.MagAmmo.Value < State.gunAmmo.MagAmmo.MaxValue) then
 			--			ReloadAnim()
 			--		else
-			--			if (wepStats.operationType == 4 and equipped.Chambered.Value)
-			--				or (wepStats.operationType == 3 and gunAmmo.MagAmmo.Value + 1 >= gunAmmo.MagAmmo.MaxValue)
-			--				or (wepStats.operationType == 2 and gunAmmo.MagAmmo.Value >= gunAmmo.MagAmmo.MaxValue) then
+			--			if (State.wepStats.operationType == 4 and State.equipped.Chambered.Value)
+			--				or (State.wepStats.operationType == 3 and State.gunAmmo.MagAmmo.Value + 1 >= State.gunAmmo.MagAmmo.MaxValue)
+			--				or (State.wepStats.operationType == 2 and State.gunAmmo.MagAmmo.Value >= State.gunAmmo.MagAmmo.MaxValue) then
 			--				return
 			--			end
 			--			ReloadAnim()
 			--		end
 			--	end
 
-		elseif actionName == "SPH_Reload" and inputState == inputBegan and not reloading and cycled then -- Reload
+		elseif actionName == "SPH_Reload" and inputState == inputBegan and not State.reloading and cycled then -- Reload
 			-- [UBGL START] - UBGL Reload Input Handling
 			-- Check if we're in UBGL mode
-			if curFireMode == fireModes.UBGL and wepStats.hasUBGL then
+			if curFireMode == fireModes.UBGL and State.wepStats.hasUBGL then
 				-- UBGL reload logic - reload when we have no grenades loaded
-				local ubglAmmoPool = equipped:FindFirstChild("UBGLAmmoPool")
+				local ubglAmmoPool = State.equipped:FindFirstChild("UBGLAmmoPool")
 				if ubglAmmo and ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
 					-- UBGL is empty and we have grenades in the pool, reload it
 					ReloadAnim()
 				end
 			else
 				-- Primary weapon reload logic
-				if wepStats.infiniteAmmo or gunAmmo.ArcadeAmmoPool.Value > 0 then
-					if (wepStats.openBolt and gunAmmo.MagAmmo.Value < gunAmmo.MagAmmo.MaxValue) then
+				if State.wepStats.infiniteAmmo or State.gunAmmo.ArcadeAmmoPool.Value > 0 then
+					if (State.wepStats.openBolt and State.gunAmmo.MagAmmo.Value < State.gunAmmo.MagAmmo.MaxValue) then
 						ReloadAnim()
 					else
-						if (wepStats.operationType == 4 and equipped.Chambered.Value)
-							or (wepStats.operationType == 3 and gunAmmo.MagAmmo.Value + 1 >= gunAmmo.MagAmmo.MaxValue)
-							or (wepStats.operationType == 2 and gunAmmo.MagAmmo.Value >= gunAmmo.MagAmmo.MaxValue) then
+						if (State.wepStats.operationType == 4 and State.equipped.Chambered.Value)
+							or (State.wepStats.operationType == 3 and State.gunAmmo.MagAmmo.Value + 1 >= State.gunAmmo.MagAmmo.MaxValue)
+							or (State.wepStats.operationType == 2 and State.gunAmmo.MagAmmo.Value >= State.gunAmmo.MagAmmo.MaxValue) then
 							return
 						end
 						ReloadAnim()
@@ -1378,21 +1376,21 @@ local function HandleInput(actionName, inputState, inputObject)
 
 
 		elseif actionName == "SPH_HoldAim" then
-			if not userInputService.TouchEnabled and not config.toggleAiming then -- Hold aiming
-				if inputState == inputBegan and firstPerson and not freeLook and not blocked then
+			if not userInputService.TouchEnabled and not config.toggleAiming then -- Hold State.aiming
+				if inputState == inputBegan and State.firstPerson and not freeLook and not blocked then
 					aimHeld = true
 					ToggleSprint(false)
-					if stance == 0 then ChangeWalkSpeed(config.walkSpeed) end
+					if State.stance == 0 then ChangeWalkSpeed(config.walkSpeed) end
 					ToggleAiming(true)
-				elseif not sprinting and aiming then -- Not aiming
+				elseif not State.sprinting and State.aiming then -- Not State.aiming
 					aimHeld = false
 					ToggleAiming(false)
 				end
-			elseif inputState == inputBegan then -- Mobile and toggle aiming
-				if firstPerson and not freeLook and not blocked and not aiming then
+			elseif inputState == inputBegan then -- Mobile and toggle State.aiming
+				if State.firstPerson and not freeLook and not blocked and not State.aiming then
 					aimHeld = true
 					ToggleSprint(false)
-					if stance == 0 then ChangeWalkSpeed(config.walkSpeed) end
+					if State.stance == 0 then ChangeWalkSpeed(config.walkSpeed) end
 					ToggleAiming(true)
 				else
 					aimHeld = false
@@ -1401,19 +1399,19 @@ local function HandleInput(actionName, inputState, inputObject)
 			end
 
 
-		elseif actionName == "SPH_Chamber" and inputState == inputBegan and not reloading and cycled then -- Chambering
+		elseif actionName == "SPH_Chamber" and inputState == inputBegan and not State.reloading and cycled then -- Chambering
 			ChamberAnim()
 
 
-		elseif actionName == "SPH_SwitchSights" and inputState == inputBegan and aiming and (gunModel:FindFirstChild("AimPart2") or (attStats.aimParts and attStats.aimParts["AimPart2"])) then -- Switch sights
+		elseif actionName == "SPH_SwitchSights" and inputState == inputBegan and State.aiming and (State.gunModel:FindFirstChild("AimPart2") or (State.attStats.aimParts and State.attStats.aimParts["AimPart2"])) then -- Switch sights
 			local tempIndex = sightIndex
 			tempIndex += 1
-			if gunModel:FindFirstChild("AimPart"..tempIndex) then
+			if State.gunModel:FindFirstChild("AimPart"..tempIndex) then
 				sightIndex = tempIndex
 				PlayRepSound("AimUp")	
 				-- DD_SPH Gunsmith: Multiple aimparts
-			elseif attStats.aimParts then
-				if attStats.aimParts["AimPart"..tempIndex] then
+			elseif State.attStats.aimParts then
+				if State.attStats.aimParts["AimPart"..tempIndex] then
 					sightIndex = tempIndex
 					PlayRepSound("AimUp")
 				else
@@ -1425,8 +1423,8 @@ local function HandleInput(actionName, inputState, inputObject)
 				sightIndex = 1
 				PlayRepSound("AimDown")
 			end
-			--if wepStats.ADSEnabled and wepStats.ADSEnabled[sightIndex] then
-			if (attStats.ADSEnabled and attStats.ADSEnabled[sightIndex]) or (wepStats.ADSEnabled and wepStats.ADSEnabled[sightIndex]) then -- DD_SPH Gunsmith: ADS enabling
+			--if State.wepStats.ADSEnabled and State.wepStats.ADSEnabled[sightIndex] then
+			if (State.attStats.ADSEnabled and State.attStats.ADSEnabled[sightIndex]) or (State.wepStats.ADSEnabled and State.wepStats.ADSEnabled[sightIndex]) then -- DD_SPH Gunsmith: ADS enabling
 				ToggleADS(true)
 			else
 				ToggleADS(false)
@@ -1444,30 +1442,30 @@ local function HandleInput(actionName, inputState, inputObject)
 				freeLookOffset = freeLookOffset - freeLookOffset.Position
 				humanoid.AutoRotate = true
 			end
-		elseif actionName == "SPH_HoldUp" and inputState == inputBegan and not reloading then -- Hold stance up
+		elseif actionName == "SPH_HoldUp" and inputState == inputBegan and not State.reloading then -- Hold State.stance up
 			ChangeHoldStance(1)
-		elseif actionName == "SPH_HoldPatrol" and inputState == inputBegan and not reloading then -- Hold stance patrol
+		elseif actionName == "SPH_HoldPatrol" and inputState == inputBegan and not State.reloading then -- Hold State.stance patrol
 			ChangeHoldStance(2)
-		elseif actionName == "SPH_HoldDown" and inputState == inputBegan and not reloading then -- Hold stance down
+		elseif actionName == "SPH_HoldDown" and inputState == inputBegan and not State.reloading then -- Hold State.stance down
 			ChangeHoldStance(3)
 		elseif actionName == "SPH_SwitchFireMode" and inputState == inputBegan then -- Switch fire mode
-			PlayAnimation(wepStats.switchAnim,{transSpeed = 0.2})
-		elseif actionName == "SPH_ToggleLaser" and inputState == inputBegan then--and gunModel.Grip:FindFirstChild("Laser") then
+			PlayAnimation(State.wepStats.switchAnim,{transSpeed = 0.2})
+		elseif actionName == "SPH_ToggleLaser" and inputState == inputBegan then--and State.gunModel.Grip:FindFirstChild("Laser") then
 			-- DD_SPH Gunsmith: Laser
-			local lazerbeem = gunModel.Grip:FindFirstChild("Laser")
-			if attStats.laserOrigin then
-				lazerbeem = gunModel[attStats.laserOrigin].Main:FindFirstChild("Laser")
+			local lazerbeem = State.gunModel.Grip:FindFirstChild("Laser")
+			if State.attStats.laserOrigin then
+				lazerbeem = State.gunModel[State.attStats.laserOrigin].Main:FindFirstChild("Laser")
 			end
 			if lazerbeem then
 				laserEnabled = not laserEnabled
-				if not firstPerson then laserBeamTP.Enabled = true end
+				if not State.firstPerson then laserBeamTP.Enabled = true end
 				PlayRepSound("Button")
 				playerToggleAttachment:Fire(1,laserEnabled)
 				laserDotUI.Dot.ImageColor3 = lazerbeem.Color.Value
 			end
 			-- </DD_SPH>
 		elseif actionName == "SPH_ToggleFlashlight" and inputState == inputBegan then
-			local flashlight = gunModel.Grip:FindFirstChild("Flashlight")
+			local flashlight = State.gunModel.Grip:FindFirstChild("Flashlight")
 			if flashlight then
 				local light = flashlight:FindFirstChildWhichIsA("Light")
 				flashlightEnabled = not flashlightEnabled
@@ -1477,16 +1475,16 @@ local function HandleInput(actionName, inputState, inputObject)
 
 				if not flashlightEnabled then
 					weaponRig.Weapon:FindFirstChildWhichIsA("Model").Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
-				elseif not firstPerson then
+				elseif not State.firstPerson then
 					weaponRig.Weapon:FindFirstChildWhichIsA("Model").Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
 				end
 			end
 			-- DD_SPH Gunsmith
-			if attStats.flashlights_client then
+			if State.attStats.flashlights_client then
 				if not flashlight then -- this makes sure that the flashlight toggle doesn't happen twice if you have both factory and gunsmith flashlights
 					flashlightEnabled = not flashlightEnabled
 				end
-				for _, lightAttachment in ipairs(attStats.flashlights_client) do
+				for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
 					local flashlite = lightAttachment.Main:FindFirstChild("Flashlight")
 					if flashlite then
 						local light = flashlite:FindFirstChildWhichIsA("Light")
@@ -1496,7 +1494,7 @@ local function HandleInput(actionName, inputState, inputObject)
 
 						if not flashlightEnabled then
 							weaponRig.Weapon:FindFirstChildWhichIsA("Model")[lightAttachment.Name].Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
-						elseif not firstPerson then
+						elseif not State.firstPerson then
 							weaponRig.Weapon:FindFirstChildWhichIsA("Model")[lightAttachment.Name].Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
 						end
 					end
@@ -1511,11 +1509,11 @@ InputController.ActionFired = HandleInput
 InputController.BindCharacterInputs()
 
 humanoid.Died:Connect(function()
-	dead = true
+	State.dead = true
 	switchWeapon:Fire()
-	equipped = nil
-	wepStats = nil
-	attStats = {} -- DD_SPH: Gunsmith
+	State.equipped = nil
+	State.wepStats = nil
+	State.attStats = {} -- DD_SPH: Gunsmith
 	userInputService.MouseIconEnabled = true
 	ToggleAiming(false)
 	viewmodelVisible = false
@@ -1550,17 +1548,17 @@ end)
 function Unequip(tool) -- Unequip a gun (Does not remove it from the player's character, must be global)
 	animBase.CFrame = storageCFrame
 	
-	lastGunModel = gunModel -- DD_SPH Reload Swap Fix: Stops shell-based reloads from continuing on the next gun you equip (e.g. start shell insert on M1891, equip RPG and reload continues on RPG)
+	lastGunModel = State.gunModel -- DD_SPH Reload Swap Fix: Stops shell-based reloads from continuing on the next gun you equip (e.g. start shell insert on M1891, equip RPG and reload continues on RPG)
 
 	switchWeapon:Fire()
-	if tool == equipped then
-		equipped = nil
-		wepStats = nil
-		attStats = {} -- DD_SPH Gunsmith
+	if tool == State.equipped then
+		State.equipped = nil
+		State.wepStats = nil
+		State.attStats = {} -- DD_SPH Gunsmith
 	end
 	userInputService.MouseIconEnabled = true
 	ToggleAiming(false)
-	aimHeld = false --- DD_SPH ADS Fix: Stops gun from automatically aiming down sights if you aim down sights, unequip and re-equip it
+	aimHeld = false --- DD_SPH ADS Fix: Stops gun from automatically State.aiming down sights if you aim down sights, unequip and re-equip it
 	viewmodelVisible = false
 
 	-- Stop animations
@@ -1613,10 +1611,10 @@ local function SetAttachment(weapon, attachmentSlot, weaponAttachment, parentPar
 	local newAttStats = require(assets.Attachments[weaponAttachment].AttStats)
 	-- enable ADS
 	if newAttStats.ADSEnabled then
-		if attStats.ADSEnabled then
+		if State.attStats.ADSEnabled then
 			warn("Multiple attachments enabling ADS Mesh")
 		else
-			attStats.ADSEnabled = newAttStats.ADSEnabled
+			State.attStats.ADSEnabled = newAttStats.ADSEnabled
 		end
 	end
 
@@ -1627,19 +1625,19 @@ local function SetAttachment(weapon, attachmentSlot, weaponAttachment, parentPar
 		end
 
 		if string.find(part.Name, "AimPart") then -- check aimparts
-			if not attStats.aimParts then
-				attStats.aimParts = {}
+			if not State.attStats.aimParts then
+				State.attStats.aimParts = {}
 			end
-			if not attStats.aimParts[part.Name] then
-				attStats.aimParts[part.Name] = newAttachment.Name
+			if not State.attStats.aimParts[part.Name] then
+				State.attStats.aimParts[part.Name] = newAttachment.Name
 			else
 				-- count up until you find a number that's not taken, rename this part accordingly
 				local newSightIndex = 1
-				for i, ap in attStats.aimParts do
+				for i, ap in State.attStats.aimParts do
 					newSightIndex += 1
 				end
 				part.Name = "AimPart"..newSightIndex
-				attStats.aimParts[part.Name] = newAttachment.Name
+				State.attStats.aimParts[part.Name] = newAttachment.Name
 			end
 			if weapon:FindFirstChild(part.Name) then -- there is a same-name aimpart on this weapon
 				weapon.Grip["Grip_"..part.Name]:Destroy()
@@ -1650,10 +1648,10 @@ local function SetAttachment(weapon, attachmentSlot, weaponAttachment, parentPar
 	end
 
 	if newAttachment.Main:FindFirstChild("Flashlight") then
-		if not attStats.flashlights_client then
-			attStats.flashlights_client = {}
+		if not State.attStats.flashlights_client then
+			State.attStats.flashlights_client = {}
 		end
-		table.insert(attStats.flashlights_client, newAttachment)
+		table.insert(State.attStats.flashlights_client, newAttachment)
 	end
 
 	weldMod.WeldModel(newAttachment, parentPart[attachmentSlot], false)
@@ -1684,9 +1682,9 @@ character.ChildAdded:Connect(function(newChild)
 		return
 	end
 
-	if newChild:FindFirstChild("SPH_Weapon") and not dead and (not humanoid.Sit or humanoid.Sit and not vehicleSeated) then
+	if newChild:FindFirstChild("SPH_Weapon") and not State.dead and (not humanoid.Sit or humanoid.Sit and not vehicleSeated) then
 		-- Reset variables
-		reloading = false
+		State.reloading = false
 		userInputService.MouseIconEnabled = false
 		hipRotation = Vector2.zero
 		equipping = true
@@ -1698,24 +1696,24 @@ character.ChildAdded:Connect(function(newChild)
 		switchWeapon:Fire(newChild)
 
 		-- Setup new gun
-		equipped = newChild
-		wepStats = require(equipped.SPH_Weapon.WeaponStats)
-		recoilSpring.Damping = wepStats.recoil.damping
-		recoilSpring.Speed = wepStats.recoil.speed
-		gunRecoilSpring.Damping = wepStats.gunRecoil.damping
-		gunRecoilSpring.Speed = wepStats.gunRecoil.speed
-		offset = wepStats.viewmodelOffset
-		aimFOVTarget = wepStats.aimFovDefault or defaultFOV
+		State.equipped = newChild
+		State.wepStats = require(State.equipped.SPH_Weapon.WeaponStats)
+		recoilSpring.Damping = State.wepStats.recoil.damping
+		recoilSpring.Speed = State.wepStats.recoil.speed
+		gunRecoilSpring.Damping = State.wepStats.gunRecoil.damping
+		gunRecoilSpring.Speed = State.wepStats.gunRecoil.speed
+		offset = State.wepStats.viewmodelOffset
+		aimFOVTarget = State.wepStats.aimFovDefault or defaultFOV
 		freeLookOffset = CFrame.new()
-		aimSensitivity = wepStats.aimSpeed
+		aimSensitivity = State.wepStats.aimSpeed
 
-		if not wepStats.operationType then wepStats.operationType = 1 end
+		if not State.wepStats.operationType then State.wepStats.operationType = 1 end
 
-		if type(wepStats.operationType) == "string" then
-			wepStats.operationType = 1
+		if type(State.wepStats.operationType) == "string" then
+			State.wepStats.operationType = 1
 		end
-		if not wepStats.magType then
-			wepStats.magType = 1
+		if not State.wepStats.magType then
+			State.wepStats.magType = 1
 		end
 
 		-- Destroy old gun model
@@ -1730,9 +1728,9 @@ character.ChildAdded:Connect(function(newChild)
 		weldMod.WeldModel(gun,gun.Grip,false)
 
 		-- DD_SPH: Place Attachments
-		if wepStats.Attachments then -- is there a table of attachments
-			attStats = gunsmith.getAttStats(wepStats.Attachments) -- calculate based on attachment set
-			for slot, item in wepStats.Attachments do
+		if State.wepStats.Attachments then -- is there a table of attachments
+			State.attStats = gunsmith.getAttStats(State.wepStats.Attachments) -- calculate based on attachment set
+			for slot, item in State.wepStats.Attachments do
 				if typeof(item) == "string" then
 					if not gun:FindFirstChild(slot) then warn("No slot found for "..slot) continue end
 					SetAttachment(gun, slot, item, gun)
@@ -1745,23 +1743,23 @@ character.ChildAdded:Connect(function(newChild)
 		end
 
 		-- DD_SPH Gunsmith: Adjust recoil springs based on attachments
-		if attStats.recoil then
-			recoilSpring.Damping *= attStats.recoil.damping
-			recoilSpring.Speed *= attStats.recoil.speed
+		if State.attStats.recoil then
+			recoilSpring.Damping *= State.attStats.recoil.damping
+			recoilSpring.Speed *= State.attStats.recoil.speed
 		end
 
-		if attStats.gunRecoil then
-			gunRecoilSpring.Damping *= attStats.gunRecoil.damping
-			gunRecoilSpring.Speed *= attStats.gunRecoil.speed
+		if State.attStats.gunRecoil then
+			gunRecoilSpring.Damping *= State.attStats.gunRecoil.damping
+			gunRecoilSpring.Speed *= State.attStats.gunRecoil.speed
 		end
 
 		--
-		if attStats.aimFovDefault then
-			aimFOVTarget = attStats.aimFovDefault
+		if State.attStats.aimFovDefault then
+			aimFOVTarget = State.attStats.aimFovDefault
 		end
 		-- </DD_SPH>
 
-		for _, partName in ipairs(wepStats.rigParts) do
+		for _, partName in ipairs(State.wepStats.rigParts) do
 			if gun:FindFirstChild(partName) then
 				gun.Grip["Grip_"..partName]:Destroy()
 				local newMotor = weldMod.M6D(gun.Grip,gun[partName])
@@ -1778,24 +1776,24 @@ character.ChildAdded:Connect(function(newChild)
 		end
 
 		gun.Parent = rig.Weapon
-		gunModel = gun
+		State.gunModel = gun
 		weldMod.BlankM6D(rig.AnimBase,gun.Grip)
 
-		if firstPerson then
+		if State.firstPerson then
 			RefreshViewmodel()
 		end
 
-		InputController.BindGunInputs(firstPerson)
+		InputController.BindGunInputs(State.firstPerson)
 
 		ToggleSprint(sprintHeld)
 		EquipAnim()
 		IdleAnim()
 
-		gunAmmo = newChild:WaitForChild("Ammo")
+		State.gunAmmo = newChild:WaitForChild("Ammo")
 
 		-- [UBGL START] - UBGL Ammo Initialization
 		-- Initialize UBGL ammo if this weapon has UBGL
-		if wepStats.hasUBGL then
+		if State.wepStats.hasUBGL then
 			-- Get or create UBGL ammo values
 			ubglAmmo = newChild:FindFirstChild("UBGLAmmo")
 			local ubglAmmoPool = newChild:FindFirstChild("UBGLAmmoPool")
@@ -1807,7 +1805,7 @@ character.ChildAdded:Connect(function(newChild)
 				ubglAmmo.Parent = newChild
 
 				-- Initialize values only if creating new
-				local totalStartAmmo = wepStats.ubgl.startAmmoPool or 6
+				local totalStartAmmo = State.wepStats.ubgl.startAmmoPool or 6
 				if totalStartAmmo > 0 and (not ubglAmmoPool or ubglAmmoPool.Value > 0) then
 					ubglAmmo.Value = 1
 				else
@@ -1818,11 +1816,11 @@ character.ChildAdded:Connect(function(newChild)
 			if not ubglAmmoPool then
 				ubglAmmoPool = Instance.new("DoubleConstrainedValue")
 				ubglAmmoPool.Name = "UBGLAmmoPool"
-				ubglAmmoPool.MaxValue = wepStats.ubgl.maxAmmoPool or 12
+				ubglAmmoPool.MaxValue = State.wepStats.ubgl.maxAmmoPool or 12
 				ubglAmmoPool.Parent = newChild
 
 				-- Initialize pool value only if creating new
-				local totalStartAmmo = wepStats.ubgl.startAmmoPool or 6
+				local totalStartAmmo = State.wepStats.ubgl.startAmmoPool or 6
 				if totalStartAmmo > 0 then
 					ubglAmmoPool.Value = totalStartAmmo - (ubglAmmo.Value or 0)
 				else
@@ -1831,10 +1829,10 @@ character.ChildAdded:Connect(function(newChild)
 			end
 
 			-- Preload UBGL animations if they exist
-			if wepStats.ubgl.reloadAnim then
-				local animSpeed = wepStats.reloadSpeedModifier		-- DD_SPH gunsmith: adjusting reload speed
-				if attStats.reloadSpeedModifier then animSpeed *= attStats.reloadSpeedModifier end
-				PlayAnimation(wepStats.ubgl.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload",true) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
+			if State.wepStats.ubgl.reloadAnim then
+				local animSpeed = State.wepStats.reloadSpeedModifier		-- DD_SPH gunsmith: adjusting reload speed
+				if State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
+				PlayAnimation(State.wepStats.ubgl.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload",true) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
 			end
 		else
 			-- Clear UBGL reference if weapon doesn't have UBGL
@@ -1842,50 +1840,50 @@ character.ChildAdded:Connect(function(newChild)
 		end
 		-- [UBGL END] - UBGL Ammo Initialization
 
-		if not equipped.BoltReady.Value then
-			MoveBolt(wepStats.boltDist,true)
+		if not State.equipped.BoltReady.Value then
+			MoveBolt(State.wepStats.boltDist,true)
 		end
 
 		if config.lockFirstPerson then
 			player.CameraMode = Enum.CameraMode.LockFirstPerson
 		end
 
-		curFireMode = equipped.FireMode.Value
+		curFireMode = State.equipped.FireMode.Value
 
-		if gunModel.Grip:FindFirstChild("Laser") then
-			laserBeamFP.Attachment0 = gunModel.Grip.Laser
+		if State.gunModel.Grip:FindFirstChild("Laser") then
+			laserBeamFP.Attachment0 = State.gunModel.Grip.Laser
 		end
 
 		-- DD_SPH Gunsmith: Laser
-		if attStats.laserOrigin and gunModel[attStats.laserOrigin].Main:FindFirstChild("Laser") then
-			laserBeamFP.Attachment0 = gunModel[attStats.laserOrigin].Main.Laser		
+		if State.attStats.laserOrigin and State.gunModel[State.attStats.laserOrigin].Main:FindFirstChild("Laser") then
+			laserBeamFP.Attachment0 = State.gunModel[State.attStats.laserOrigin].Main.Laser		
 		end
 
 		-- DD_SPH gunsmith: adjusting reload speed
-		local animSpeed = wepStats.reloadSpeedModifier
-		if attStats.reloadSpeedModifier then animSpeed *= attStats.reloadSpeedModifier end
+		local animSpeed = State.wepStats.reloadSpeedModifier
+		if State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
 
 
 		-- Preload animations
-		if wepStats.magType == 1 then
-			PlayAnimation(wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload",true) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
+		if State.wepStats.magType == 1 then
+			PlayAnimation(State.wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17},"Reload",true) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
 		else
-			PlayAnimation(wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0, looped = gunAmmo.MagAmmo.MaxValue > 1},"Reload",true) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
-			if wepStats.magType == 3 then
-				PlayAnimation(wepStats.clipReloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17, looped = false},"Reload",true) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
+			PlayAnimation(State.wepStats.reloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0, looped = State.gunAmmo.MagAmmo.MaxValue > 1},"Reload",true) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
+			if State.wepStats.magType == 3 then
+				PlayAnimation(State.wepStats.clipReloadAnim,{speed = animSpeed,priority = Enum.AnimationPriority.Action2,transSpeed = 0.17, looped = false},"Reload",true) -- DD_SPH gunsmith: Originally used wepstats reloadspeedmodifier
 			end
 		end
 
-		local newEquipAnim: AnimationTrack = PlayAnimation(wepStats.equipAnim,{priority = Enum.AnimationPriority.Action2},"Equip", true)
+		local newEquipAnim: AnimationTrack = PlayAnimation(State.wepStats.equipAnim,{priority = Enum.AnimationPriority.Action2},"Equip", true)
 		newEquipAnim.Stopped:Connect(function()
 			equipping = false
 		end)
 
-		PlayAnimation(wepStats.boltChamber,{priority = Enum.AnimationPriority.Action2, transSpeed = 0.05, looped = false},"Chamber", true)
+		PlayAnimation(State.wepStats.boltChamber,{priority = Enum.AnimationPriority.Action2, transSpeed = 0.05, looped = false},"Chamber", true)
 
-		if wepStats.operationType == 2 or wepStats.operationType == 3 then
-			PlayAnimation(wepStats.boltOpen,{priority = Enum.AnimationPriority.Action2, transSpeed = 0, looped = false},"BoltOpen", true)
-			PlayAnimation(wepStats.boltClose,{priority = Enum.AnimationPriority.Action2, looped = false},"BoltClose", true)
+		if State.wepStats.operationType == 2 or State.wepStats.operationType == 3 then
+			PlayAnimation(State.wepStats.boltOpen,{priority = Enum.AnimationPriority.Action2, transSpeed = 0, looped = false},"BoltOpen", true)
+			PlayAnimation(State.wepStats.boltClose,{priority = Enum.AnimationPriority.Action2, looped = false},"BoltClose", true)
 		end
 		
 		wait(1)
@@ -1895,49 +1893,49 @@ end)
 
 -- Unequip function
 character.ChildRemoved:Connect(function(oldChild)
-	if equipped and oldChild:FindFirstChild("SPH_Weapon") and assets.WeaponModels:FindFirstChild(oldChild.Name) then
+	if State.equipped and oldChild:FindFirstChild("SPH_Weapon") and assets.WeaponModels:FindFirstChild(oldChild.Name) then
 		Unequip(oldChild)
 	end
 end)
 
 runService.Heartbeat:Connect(function(dt:number)
 	-- Mouse click code
-	if equipped and not dead and holdingM1 and cycled and not sprinting and not reloading then
+	if State.equipped and not State.dead and holdingM1 and cycled and not State.sprinting and not State.reloading then
 
 		-- Can the player fire this gun?
 		--if canFire and not blocked and holdStance == 0 and IsLoaded() and curFireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not equipping then
-		--	if not firstPerson and not config.thirdPersonFiring then return end
+		--	if not State.firstPerson and not config.thirdPersonFiring then return end
 		--	-- Fire gun
 
-		--	if wepStats.fireAnim then PlayAnimation(wepStats.fireAnim,{priority = Enum.AnimationPriority.Action2, looped = false}) end
+		--	if State.wepStats.fireAnim then PlayAnimation(State.wepStats.fireAnim,{priority = Enum.AnimationPriority.Action2, looped = false}) end
 
 		--	bulletsCurrentlyFired += 1
 		--	ejected = false
 
-		--	if curFireMode == fireModes.Semi or curFireMode == fireModes.Manual or (curFireMode == fireModes.Burst and bulletsCurrentlyFired >= wepStats.burstNumber) then
+		--	if curFireMode == fireModes.Semi or curFireMode == fireModes.Manual or (curFireMode == fireModes.Burst and bulletsCurrentlyFired >= State.wepStats.burstNumber) then
 		--		canFire = false
 		--		holdingM1 = false
 		--	end
 		--	cycled = false
 		--	local curModel = weaponRig.Weapon:FindFirstChildWhichIsA("Model")
-		--	curModel = gunModel
-		--	local recoilStats = wepStats.recoil
+		--	curModel = State.gunModel
+		--	local recoilStats = State.wepStats.recoil
 		--	local vertRecoil = recoilStats.vertical
 		--	local horzRecoil = recoilStats.horizontal
-		--	if aiming then
+		--	if State.aiming then
 		--		vertRecoil /= recoilStats.aimReduction
 		--		horzRecoil /= recoilStats.aimReduction
 		--	end
-		--	if stance == 2 then
+		--	if State.stance == 2 then
 		--		vertRecoil /= 2
 		--		horzRecoil /= 2
 		--	end
 		--	recoilSpring:shove(Vector3.new(vertRecoil, math.random(-horzRecoil,horzRecoil),recoilStats.camShake))
 
-		--	recoilStats = wepStats.gunRecoil
+		--	recoilStats = State.wepStats.gunRecoil
 		--	vertRecoil = recoilStats.vertical
 		--	horzRecoil = recoilStats.horizontal
-		--	if stance == 2 then
+		--	if State.stance == 2 then
 		--		vertRecoil /= 1.5
 		--		horzRecoil /= 1.5
 		--	end
@@ -1949,32 +1947,32 @@ runService.Heartbeat:Connect(function(dt:number)
 		--	end
 
 		--	-- Bullet visibility
-		--	local bulletHandlerPart = wepStats.bulletHolder and gunModel:FindFirstChild(wepStats.bulletHolder)
+		--	local bulletHandlerPart = State.wepStats.bulletHolder and State.gunModel:FindFirstChild(State.wepStats.bulletHolder)
 		--	if bulletHandlerPart then
-		--		local bulletNumber = gunAmmo.MagAmmo.MaxValue - (gunAmmo.MagAmmo.Value - 1)
+		--		local bulletNumber = State.gunAmmo.MagAmmo.MaxValue - (State.gunAmmo.MagAmmo.Value - 1)
 		--		local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
 		--		if tempBulletPart then
 		--			tempBulletPart.Transparency = 1
 		--		end
 		--	end
 
-		--	local tempGunModel = gunModel
-		--	if not firstPerson then tempGunModel = weaponRig.Weapon:FindFirstChildWhichIsA("Model") end
-		--	bulletHandler.FireFX(player,tempGunModel,"Muzzle",wepStats.muzzleChance)
+		--	local tempGunModel = State.gunModel
+		--	if not State.firstPerson then tempGunModel = weaponRig.Weapon:FindFirstChildWhichIsA("Model") end
+		--	bulletHandler.FireFX(player,tempGunModel,"Muzzle",State.wepStats.muzzleChance)
 
 		--	-- Move bolt
-		--	--if gunModel:FindFirstChild("Bolt") then
-		--	MoveBolt(wepStats.boltDist)
+		--	--if State.gunModel:FindFirstChild("Bolt") then
+		--	MoveBolt(State.wepStats.boltDist)
 		--	--end
 
 		--	-- Fire bullet
-		--	local shotCount = (wepStats.shotgun and wepStats.shotgunPellets) or 1
+		--	local shotCount = (State.wepStats.shotgun and State.wepStats.shotgunPellets) or 1
 		--	repeat
 		--		shotCount -= 1
 		--		local bulletOrigin, bulletDirection
-		--		local tempSpread = wepStats.spread * 100
+		--		local tempSpread = State.wepStats.spread * 100
 		--		local spreadCFrame = CFrame.Angles(math.rad(math.random(-tempSpread, tempSpread) / 100), math.rad(math.random(-tempSpread, tempSpread) / 100), 0)
-		--		if firstPerson then
+		--		if State.firstPerson then
 		--			bulletOrigin = curModel.Grip.Muzzle.WorldCFrame.Position
 		--			bulletDirection = (curModel.Grip.Muzzle.WorldCFrame * spreadCFrame).LookVector
 		--		else
@@ -1983,26 +1981,26 @@ runService.Heartbeat:Connect(function(dt:number)
 		--			bulletDirection = (muzzle.WorldCFrame * spreadCFrame).LookVector
 		--		end
 
-		--		local bulletVelocity = (bulletDirection * wepStats.muzzleVelocity * 3.5) -- 1 Meter = ~3.5 Studs (According to the dev forum)
+		--		local bulletVelocity = (bulletDirection * State.wepStats.muzzleVelocity * 3.5) -- 1 Meter = ~3.5 Studs (According to the dev forum)
 
 		--		local tracerColor = nil
-		--		--print(gunAmmo.MagAmmo.Value % wepStats.tracerTiming)
-		--		if wepStats.tracers and gunAmmo.MagAmmo.Value % wepStats.tracerTiming == 0 then
-		--			tracerColor = wepStats.tracerColor
+		--		--print(State.gunAmmo.MagAmmo.Value % State.wepStats.tracerTiming)
+		--		if State.wepStats.tracers and State.gunAmmo.MagAmmo.Value % State.wepStats.tracerTiming == 0 then
+		--			tracerColor = State.wepStats.tracerColor
 		--		end
 
-		--		bulletHandler.FireBullet(weaponRig,bulletOrigin,bulletDirection,bulletVelocity,equipped,player,tracerColor)
+		--		bulletHandler.FireBullet(weaponRig,bulletOrigin,bulletDirection,bulletVelocity,State.equipped,player,tracerColor)
 		--	until shotCount <= 0
 
 		--	playerFire:Fire(curModel.Grip.Muzzle.WorldCFrame)
 
-		--	local cycleTime = wepStats.fireRate
-		--	if curFireMode == fireModes.Burst and wepStats.burstFireRate then
-		--		cycleTime = wepStats.burstFireRate
+		--	local cycleTime = State.wepStats.fireRate
+		--	if curFireMode == fireModes.Burst and State.wepStats.burstFireRate then
+		--		cycleTime = State.wepStats.burstFireRate
 		--	end
 
-		--	if gunModel and wepStats.projectile ~= "Bullet" and gunModel:FindFirstChild(wepStats.projectile) then
-		--		local projectile = gunModel:FindFirstChild(wepStats.projectile)
+		--	if State.gunModel and State.wepStats.projectile ~= "Bullet" and State.gunModel:FindFirstChild(State.wepStats.projectile) then
+		--		local projectile = State.gunModel:FindFirstChild(State.wepStats.projectile)
 		--		projectile.LocalTransparencyModifier = 1
 		--		for _, child in ipairs(projectile:GetDescendants()) do
 		--			if child:IsA("BasePart") then
@@ -2013,15 +2011,15 @@ runService.Heartbeat:Connect(function(dt:number)
 
 		--	task.wait(60 / cycleTime)
 
-		--	if not equipped then return end
+		--	if not State.equipped then return end
 
-		--	if wepStats.autoChamber and curFireMode == fireModes.Manual and not reloading then
+		--	if State.wepStats.autoChamber and curFireMode == fireModes.Manual and not State.reloading then
 		--		ChamberAnim()
 		--	end
 
 		--	cycled = true
 		if canFire and not blocked and holdStance == 0 and IsLoaded() and curFireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not equipping then -- UBGL
-			if not firstPerson and not config.thirdPersonFiring then return end
+			if not State.firstPerson and not config.thirdPersonFiring then return end
 			-- [UBGL START] - UBGL/Primary Weapon Firing System
 			-- Fire gun
 
@@ -2040,17 +2038,17 @@ runService.Heartbeat:Connect(function(dt:number)
 			end
 			cycled = false
 			local curModel = weaponRig.Weapon:FindFirstChildWhichIsA("Model")
-			curModel = gunModel
+			curModel = State.gunModel
 			local recoilStats = currentStats.recoil
 			local vertRecoil = recoilStats.vertical
 			local horzRecoil = recoilStats.horizontal
 
 			-- DD_SPH Gunsmith: Adjusting recoil
-			if attStats.recoil then
-				vertRecoil *= attStats.recoil.vertical
-				horzRecoil *= attStats.recoil.horizontal
-				recoilStats.camShake *= attStats.recoil.camShake
-				recoilStats.aimReduction *= attStats.recoil.aimReduction
+			if State.attStats.recoil then
+				vertRecoil *= State.attStats.recoil.vertical
+				horzRecoil *= State.attStats.recoil.horizontal
+				recoilStats.camShake *= State.attStats.recoil.camShake
+				recoilStats.aimReduction *= State.attStats.recoil.aimReduction
 			end
 			-- </DD_SPH>
 
@@ -2060,11 +2058,11 @@ runService.Heartbeat:Connect(function(dt:number)
 				horzRecoil /= 4
 			end
 
-			if aiming then
+			if State.aiming then
 				vertRecoil /= recoilStats.aimReduction
 				horzRecoil /= recoilStats.aimReduction
 			end
-			if stance == 2 then
+			if State.stance == 2 then
 				vertRecoil /= 2
 				horzRecoil /= 2
 			end
@@ -2075,13 +2073,13 @@ runService.Heartbeat:Connect(function(dt:number)
 			vertRecoil = recoilStats.vertical
 			horzRecoil = recoilStats.horizontal
 
-			if attStats.gunRecoil then -- DD_SPH Gunsmith: Adjusting gun recoil
-				vertRecoil *= attStats.gunRecoil.vertical
-				horzRecoil *= attStats.gunRecoil.horizontal
-				recoilStats.punchMultiplier *= attStats.gunRecoil.punchMultiplier
+			if State.attStats.gunRecoil then -- DD_SPH Gunsmith: Adjusting gun recoil
+				vertRecoil *= State.attStats.gunRecoil.vertical
+				horzRecoil *= State.attStats.gunRecoil.horizontal
+				recoilStats.punchMultiplier *= State.attStats.gunRecoil.punchMultiplier
 			end -- </DD_SPH>
 
-			if stance == 2 then
+			if State.stance == 2 then
 				vertRecoil /= 1.5
 				horzRecoil /= 1.5
 			end
@@ -2101,9 +2099,9 @@ runService.Heartbeat:Connect(function(dt:number)
 
 			-- Bullet visibility (only for primary weapon)
 			if curFireMode ~= fireModes.UBGL then
-				local bulletHandlerPart = wepStats.bulletHolder and gunModel:FindFirstChild(wepStats.bulletHolder)
+				local bulletHandlerPart = State.wepStats.bulletHolder and State.gunModel:FindFirstChild(State.wepStats.bulletHolder)
 				if bulletHandlerPart then
-					local bulletNumber = gunAmmo.MagAmmo.MaxValue - (gunAmmo.MagAmmo.Value - 1)
+					local bulletNumber = State.gunAmmo.MagAmmo.MaxValue - (State.gunAmmo.MagAmmo.Value - 1)
 					local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
 					if tempBulletPart then
 						tempBulletPart.Transparency = 1
@@ -2111,17 +2109,17 @@ runService.Heartbeat:Connect(function(dt:number)
 				end
 			end
 
-			local tempGunModel = gunModel
-			if not firstPerson then tempGunModel = weaponRig.Weapon:FindFirstChildWhichIsA("Model") end
+			local tempGunModel = State.gunModel
+			if not State.firstPerson then tempGunModel = weaponRig.Weapon:FindFirstChildWhichIsA("Model") end
 
 			-- Use appropriate muzzle point for effects
 			local muzzleName = "Muzzle"
 			if curFireMode == fireModes.UBGL then
 				muzzleName = "UBGLMuzzle"
 			end
-			local muCh = attStats.muzzleChance or wepStats.muzzleChance -- DD_SPH Gunsmith: Adjusting muzzle chance
-			if attStats.newMuzzleDevice then
-				tempGunModel = tempGunModel[attStats.newMuzzleDevice]
+			local muCh = State.attStats.muzzleChance or State.wepStats.muzzleChance -- DD_SPH Gunsmith: Adjusting muzzle chance
+			if State.attStats.newMuzzleDevice then
+				tempGunModel = tempGunModel[State.attStats.newMuzzleDevice]
 			end
 			bulletHandler.FireFX(player,tempGunModel,muzzleName,muCh,curFireMode == fireModes.UBGL)
 
@@ -2145,7 +2143,7 @@ runService.Heartbeat:Connect(function(dt:number)
 
 				-- Get appropriate muzzle point
 				local muzzlePoint
-				if firstPerson then
+				if State.firstPerson then
 					muzzlePoint = GetMuzzlePoint(curModel)
 					bulletOrigin = muzzlePoint.WorldCFrame.Position
 					bulletDirection = (muzzlePoint.WorldCFrame * spreadCFrame).LookVector
@@ -2158,13 +2156,13 @@ runService.Heartbeat:Connect(function(dt:number)
 
 				--local bulletVelocity = (bulletDirection * currentStats.muzzleVelocity * 3.5) -- 1 Meter = ~3.5 Studs (According to the dev forum)
 
-				-- DD_SPH Gunsmith: Muzzle Velocity alteration based on attStats
+				-- DD_SPH Gunsmith: Muzzle Velocity alteration based on State.attStats
 				local muVe = currentStats.muzzleVelocity
-				if attStats.muzzleVelocityReplace then -- Replace the muzzle velocity with a new one (swapping calibers)
-					muVe = attStats.muzzleVelocityReplace
+				if State.attStats.muzzleVelocityReplace then -- Replace the muzzle velocity with a new one (swapping calibers)
+					muVe = State.attStats.muzzleVelocityReplace
 				end
-				if attStats.muzzleVelocity then -- Increase or decrease muzzle velocity by a certain percentage (barrel length, improved rifling etc.)
-					muVe *= attStats.muzzleVelocity
+				if State.attStats.muzzleVelocity then -- Increase or decrease muzzle velocity by a certain percentage (barrel length, improved rifling etc.)
+					muVe *= State.attStats.muzzleVelocity
 				end
 				local bulletVelocity = (bulletDirection * muVe * 3.5) -- 1 Meter = ~3.5 Studs (According to the dev forum)
 				-- </DD_SPH Gunsmith
@@ -2174,22 +2172,22 @@ runService.Heartbeat:Connect(function(dt:number)
 				-- DD_SPH Gunsmith: Adjusting tracer timing with gunsmith
 				local TrTi = currentStats.tracerTiming
 				if TrTi then
-					if attStats.tracerTiming then
+					if State.attStats.tracerTiming then
 						TrTi = currentStats.tracerTiming
 					end
 				end
-				if curFireMode ~= fireModes.UBGL and currentStats.tracers and gunAmmo.MagAmmo.Value % TrTi == 0 then
-					tracerColor = attStats.tracerColor or currentStats.tracerColor-- DD_SPH Gunsmith: Tracer alteration based on rounds
+				if curFireMode ~= fireModes.UBGL and currentStats.tracers and State.gunAmmo.MagAmmo.Value % TrTi == 0 then
+					tracerColor = State.attStats.tracerColor or currentStats.tracerColor-- DD_SPH Gunsmith: Tracer alteration based on rounds
 				end
 
 				-- Create a modified tool for UBGL mode that includes fire mode info
-				local bulletData = equipped
+				local bulletData = State.equipped
 				if curFireMode == fireModes.UBGL then
 					-- Add fire mode information for bullet physics
 					bulletData = {
-						Tool = equipped,
+						Tool = State.equipped,
 						fireMode = curFireMode,
-						SPH_Weapon = equipped.SPH_Weapon
+						SPH_Weapon = State.equipped.SPH_Weapon
 					}
 				end
 
@@ -2198,7 +2196,7 @@ runService.Heartbeat:Connect(function(dt:number)
 
 			-- Fire the appropriate muzzle point for networking
 			local firePoint
-			if firstPerson then
+			if State.firstPerson then
 				firePoint = GetMuzzlePoint(curModel)
 			else
 				firePoint = GetMuzzlePoint(weaponRig.Weapon:FindFirstChildWhichIsA("Model"))
@@ -2210,11 +2208,11 @@ runService.Heartbeat:Connect(function(dt:number)
 				cycleTime = currentStats.burstFireRate
 			end
 
-			if attStats.fireRate then cycleTime *= attStats.fireRate end -- DD_SPH Gunsmith: Adjusting fire rate
+			if State.attStats.fireRate then cycleTime *= State.attStats.fireRate end -- DD_SPH Gunsmith: Adjusting fire rate
 
 			-- Handle projectile visibility
-			if gunModel and currentStats.projectile ~= "Bullet" and gunModel:FindFirstChild(currentStats.projectile) then
-				local projectile = gunModel:FindFirstChild(currentStats.projectile)
+			if State.gunModel and currentStats.projectile ~= "Bullet" and State.gunModel:FindFirstChild(currentStats.projectile) then
+				local projectile = State.gunModel:FindFirstChild(currentStats.projectile)
 				projectile.LocalTransparencyModifier = 1
 				for _, child in ipairs(projectile:GetDescendants()) do
 					if child:IsA("BasePart") then
@@ -2226,9 +2224,9 @@ runService.Heartbeat:Connect(function(dt:number)
 			task.wait(60 / cycleTime)
 			-- [UBGL END] - UBGL/Primary Weapon Firing System
 
-			if not equipped then return end
+			if not State.equipped then return end
 
-			if currentStats.autoChamber and curFireMode == fireModes.Manual and not reloading then
+			if currentStats.autoChamber and curFireMode == fireModes.Manual and not State.reloading then
 				ChamberAnim()
 			end
 
@@ -2237,11 +2235,11 @@ runService.Heartbeat:Connect(function(dt:number)
 		else
 			-- Chamber gun
 			if not IsLoaded() then
-				if curFireMode == fireModes.Manual and gunAmmo.MagAmmo.Value > 0 and not reloading and not chambering then -- Click chamber
+				if curFireMode == fireModes.Manual and State.gunAmmo.MagAmmo.Value > 0 and not State.reloading and not chambering then -- Click chamber
 					ChamberAnim()
 					holdingM1 = false
 				end
-			elseif wepStats.emptyCloseBolt then
+			elseif State.wepStats.emptyCloseBolt then
 				repChamber:Fire()
 				MoveBolt(CFrame.new())
 			end
@@ -2258,7 +2256,7 @@ runService.RenderStepped:Connect(function(dt:number)
 	headRotationEventCooldown -= dt
 
 	-- Limit camera rotation
-	if (humanoid.Sit and not vehicleSeated and firstPerson or freeLook) and config.cameraLimitInSeats then
+	if (humanoid.Sit and not vehicleSeated and State.firstPerson or freeLook) and config.cameraLimitInSeats then
 		local cameraCFrame = humanoidRootPart.CFrame:ToObjectSpace(camera.CFrame)
 		local x, y, z = cameraCFrame:ToOrientation()
 		local a = camera.CFrame.Position.X
@@ -2272,8 +2270,8 @@ runService.RenderStepped:Connect(function(dt:number)
 		camera.CFrame = CFrame.new(camera.CFrame.Position) * (limitedCFrame - limitedCFrame.Position)
 	end
 
-	if not dead and character:FindFirstChild("Head") then		
-		if not dead then
+	if not State.dead and character:FindFirstChild("Head") then		
+		if not State.dead then
 			local torsoDirection
 			if humanoid.RigType == Enum.HumanoidRigType.R6 then
 				torsoDirection = character.Torso.CFrame.LookVector
@@ -2282,7 +2280,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			end
 
 			local lookDirection = camera.CFrame
-			if (not config.headRotation or sprinting) and not firstPerson then
+			if (not config.headRotation or State.sprinting) and not State.firstPerson then
 				lookDirection = humanoidRootPart.CFrame
 			end
 
@@ -2299,25 +2297,25 @@ runService.RenderStepped:Connect(function(dt:number)
 			neckJoint.C1 = neckJoint.C1:Lerp(neckCFrame,1 - math.exp(-config.headRotationSpeed * dt))
 			--neckJoint.C1 = neckCFrame
 
-			if headRotationEventCooldown <= 0 and not dead and not config.disableHeadRotation then
+			if headRotationEventCooldown <= 0 and not State.dead and not config.disableHeadRotation then
 				headRotationEventCooldown = config.headRotationEventRate
 				bodyAnimRequest:Fire(neckJoint.C1)
 			end
 		end
 
 		-- Check if player is in first person
-		if not firstPerson and character.Head.LocalTransparencyModifier >= fpThreshold then
-			firstPerson = true
-			if equipped then
+		if not State.firstPerson and character.Head.LocalTransparencyModifier >= fpThreshold then
+			State.firstPerson = true
+			if State.equipped then
 				InputController.BindAiming()
 				if flashlightEnabled then
-					if gunModel.Grip:FindFirstChild("Flashlight") then
-						gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
+					if State.gunModel.Grip:FindFirstChild("Flashlight") then
+						State.gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
 						weaponRig.Weapon:FindFirstChildWhichIsA("Model").Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
 					end
 					-- DD_SPH Gunsmith
-					if attStats.flashlights_client then
-						for _, lightAttachment in ipairs(attStats.flashlights_client) do
+					if State.attStats.flashlights_client then
+						for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
 							lightAttachment.Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
 							weaponRig.Weapon:FindFirstChildWhichIsA("Model")[lightAttachment.Name].Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
 						end
@@ -2329,10 +2327,10 @@ runService.RenderStepped:Connect(function(dt:number)
 					laserBeamFP.Enabled = true
 				end
 			end
-		elseif firstPerson and character.Head.LocalTransparencyModifier <= fpThreshold then
-			firstPerson = false
+		elseif State.firstPerson and character.Head.LocalTransparencyModifier <= fpThreshold then
+			State.firstPerson = false
 			InputController.UnbindAiming()
-			if equipped then
+			if State.equipped then
 				if laserEnabled then
 					laserBeamTP.Enabled = true
 					laserBeamFP.Enabled = false
@@ -2340,19 +2338,19 @@ runService.RenderStepped:Connect(function(dt:number)
 						laserBeamTP.Attachment0 = GetThirdPersonGunModel().Grip.Laser
 					end
 					-- DD_SPH Gunsmith: Laser
-					if attStats.laserOrigin and gunModel[attStats.laserOrigin].Main:FindFirstChild("Laser") then
-						laserBeamTP.Attachment0 = GetThirdPersonGunModel()[attStats.laserOrigin].Main.Laser		
+					if State.attStats.laserOrigin and State.gunModel[State.attStats.laserOrigin].Main:FindFirstChild("Laser") then
+						laserBeamTP.Attachment0 = GetThirdPersonGunModel()[State.attStats.laserOrigin].Main.Laser		
 					end
 				end
-				if gunModel.Grip:FindFirstChild("Flashlight") then
-					gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
+				if State.gunModel.Grip:FindFirstChild("Flashlight") then
+					State.gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
 					if weaponRig.Weapon:FindFirstChildWhichIsA("Model") and flashlightEnabled then
 						weaponRig.Weapon:FindFirstChildWhichIsA("Model").Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
 					end
 				end
 				-- DD_SPH Gunsmith
-				if attStats.flashlights_client then
-					for _, lightAttachment in ipairs(attStats.flashlights_client) do
+				if State.attStats.flashlights_client then
+					for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
 						lightAttachment.Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
 						if weaponRig.Weapon:FindFirstChildWhichIsA("Model") and flashlightEnabled then
 							weaponRig.Weapon:FindFirstChildWhichIsA("Model")[lightAttachment].Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
@@ -2372,7 +2370,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			if moveAnim then moveAnim:Play(config.stanceChangeTime) end
 		elseif humanoid.MoveDirection.Magnitude <= 0 then
 			moving = false
-			if sprinting then
+			if State.sprinting then
 				ToggleSprint(false)
 				ChangeWalkSpeed(config.walkSpeed)
 			end
@@ -2388,7 +2386,7 @@ runService.RenderStepped:Connect(function(dt:number)
 
 		if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Added rig-check to correct positioning
 
-			if config.firstPersonBody and firstPerson then
+			if config.firstPersonBody and State.firstPerson then
 				local xHead = character.HumanoidRootPart.CFrame:ToObjectSpace(camera.CFrame):ToEulerAngles()
 				local rotationOffset = -1.2 + (xHead + 1.4) / 2.8
 				cameraOffsetTarget = Vector3.new(0,0,rotationOffset)
@@ -2400,12 +2398,12 @@ runService.RenderStepped:Connect(function(dt:number)
 			yOffset = 0
 			zOffset = cameraOffsetTarget.Z
 
-			if stance == 1 then
+			if State.stance == 1 then
 				yOffset = -1
-				if firstPerson then zOffset -= 0.3 end
-			elseif stance == 2 then
+				if State.firstPerson then zOffset -= 0.3 end
+			elseif State.stance == 2 then
 				yOffset = -1.5
-				if firstPerson then zOffset = -1.7 end
+				if State.firstPerson then zOffset = -1.7 end
 			end
 
 			-- Lean offset
@@ -2419,7 +2417,7 @@ runService.RenderStepped:Connect(function(dt:number)
 
 		else
 
-			if config.firstPersonBody and firstPerson then
+			if config.firstPersonBody and State.firstPerson then
 				local xHead = character.HumanoidRootPart.CFrame:ToObjectSpace(camera.CFrame):ToEulerAngles()
 				local rotationOffset = -1.6 + (xHead + 1.4) / 2.8
 				cameraOffsetTarget = Vector3.new(0,0,rotationOffset)
@@ -2431,12 +2429,12 @@ runService.RenderStepped:Connect(function(dt:number)
 			yOffset = 0
 			zOffset = cameraOffsetTarget.Z
 
-			if stance == 1 then -- DD_SPH: Adjusted camera positioning to reflect R15.
+			if State.stance == 1 then -- DD_SPH: Adjusted camera positioning to reflect R15.
 				yOffset = .5
-				if firstPerson then zOffset -= 1.5 end --rev
-			elseif stance == 2 then
+				if State.firstPerson then zOffset -= 1.5 end --rev
+			elseif State.stance == 2 then
 				yOffset = 1.5
-				if firstPerson then zOffset = -3 end --rev
+				if State.firstPerson then zOffset = -3 end --rev
 			end
 
 			-- Lean offset
@@ -2471,7 +2469,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			camera.CFrame *= CFrame.Angles(0,0,math.rad(cameraLeanRotation))
 
 			-- Camera tilt
-			if config.cameraTilting and firstPerson then
+			if config.cameraTilting and State.firstPerson then
 				local maxTiltAngle = 2
 				local relativeVelocity = humanoidRootPart.CFrame:VectorToObjectSpace(humanoidRootPart.Velocity)
 				local mouseDelta = userInputService:GetMouseDelta()
@@ -2482,8 +2480,8 @@ runService.RenderStepped:Connect(function(dt:number)
 		end
 
 		-- Update viewmodel
-		if equipped and camera.CameraType == Enum.CameraType.Custom then
-			if firstPerson and not viewmodelVisible then
+		if State.equipped and camera.CameraType == Enum.CameraType.Custom then
+			if State.firstPerson and not viewmodelVisible then
 				-- Player switched to first person
 				RefreshViewmodel()
 				ToggleSprint(sprintHeld)
@@ -2493,8 +2491,8 @@ runService.RenderStepped:Connect(function(dt:number)
 			UpdateViewmodelPosition(dt)
 
 			-- DD_SPH Bipod
-			if gunModel.Grip:FindFirstChild("Bipod") then -- factory
-				local BipodRay = Ray.new(gunModel.Grip.Bipod.WorldCFrame.Position, Vector3.new(0,-1.5,0))
+			if State.gunModel.Grip:FindFirstChild("Bipod") then -- factory
+				local BipodRay = Ray.new(State.gunModel.Grip.Bipod.WorldCFrame.Position, Vector3.new(0,-1.5,0))
 				local BipodHit, BipodPos, BipodNorm = workspace:FindPartOnRayWithIgnoreList(BipodRay, bipodRayIgnore, false, true)
 
 				if BipodHit then
@@ -2505,20 +2503,20 @@ runService.RenderStepped:Connect(function(dt:number)
 
 				if canBipod and not bipodEnabled then -- deploy bipod if possible
 					bipodEnabled = true
-					ToggleBipod(gunModel, bipodEnabled)
+					ToggleBipod(State.gunModel, bipodEnabled)
 					PlayRepSound("Switch")
 					playerToggleAttachment:Fire(2,bipodEnabled)
 				end
 
 				if bipodEnabled and not canBipod then -- undeploy bipod if not possible but still active
 					bipodEnabled = false
-					ToggleBipod(gunModel, bipodEnabled)
+					ToggleBipod(State.gunModel, bipodEnabled)
 					PlayRepSound("Switch")
 					playerToggleAttachment:Fire(2,bipodEnabled)
 				end				
 			end
-			if attStats.Bipod and gunModel[attStats.Bipod].Main:FindFirstChild("Bipod") then
-				local BipodRay = Ray.new(gunModel[attStats.Bipod].Main.Bipod.WorldCFrame.Position, Vector3.new(0,-1.5,0))
+			if State.attStats.Bipod and State.gunModel[State.attStats.Bipod].Main:FindFirstChild("Bipod") then
+				local BipodRay = Ray.new(State.gunModel[State.attStats.Bipod].Main.Bipod.WorldCFrame.Position, Vector3.new(0,-1.5,0))
 				local BipodHit, BipodPos, BipodNorm = workspace:FindPartOnRayWithIgnoreList(BipodRay, bipodRayIgnore, false, true)
 
 				if BipodHit then
@@ -2529,14 +2527,14 @@ runService.RenderStepped:Connect(function(dt:number)
 
 				if canBipod and not bipodEnabled then -- deploy bipod if possible
 					bipodEnabled = true
-					ToggleBipod(gunModel[attStats.Bipod], bipodEnabled)
+					ToggleBipod(State.gunModel[State.attStats.Bipod], bipodEnabled)
 					PlayRepSound("Switch")
 					playerToggleAttachment:Fire(2,bipodEnabled)
 				end
 
 				if bipodEnabled and not canBipod then -- undeploy bipod if not possible but still active
 					bipodEnabled = false
-					ToggleBipod(gunModel[attStats.Bipod], bipodEnabled)
+					ToggleBipod(State.gunModel[State.attStats.Bipod], bipodEnabled)
 					PlayRepSound("Switch")
 					playerToggleAttachment:Fire(2,bipodEnabled)
 				end
@@ -2549,11 +2547,11 @@ runService.RenderStepped:Connect(function(dt:number)
 					laserDotUI.Enabled = true
 					-- DD_SPH Gunsmith: Laser
 					local lazer
-					if attStats.laserOrigin then
-						lazer = gunModel[attStats.laserOrigin].Main.Laser
+					if State.attStats.laserOrigin then
+						lazer = State.gunModel[State.attStats.laserOrigin].Main.Laser
 					end
-					if gunModel.Grip:FindFirstChild("Laser") then
-						lazer = gunModel.Grip.Laser
+					if State.gunModel.Grip:FindFirstChild("Laser") then
+						lazer = State.gunModel.Grip.Laser
 					end
 					laserDotUI.Dot.ImageColor3 = lazer.Color.Value
 
@@ -2561,15 +2559,15 @@ runService.RenderStepped:Connect(function(dt:number)
 						laserBeamFP.Color = ColorSequence.new(lazer.Color.Value)
 						laserBeamTP.Color = ColorSequence.new(lazer.Color.Value)
 
-						if firstPerson then
+						if State.firstPerson then
 							laserBeamFP.Enabled = true
 						else
 							laserBeamTP.Enabled = true
 							if not laserBeamTP.Attachment0 then
-								if attStats.laserOrigin then
-									laserBeamTP.Attachment0 = GetThirdPersonGunModel()[attStats.laserOrigin].Main.Laser
+								if State.attStats.laserOrigin then
+									laserBeamTP.Attachment0 = GetThirdPersonGunModel()[State.attStats.laserOrigin].Main.Laser
 								end
-								if gunModel.Grip:FindFirstChild("Laser") then
+								if State.gunModel.Grip:FindFirstChild("Laser") then
 									laserBeamTP.Attachment0 = GetThirdPersonGunModel().Grip.Laser
 								end
 							end
@@ -2577,19 +2575,19 @@ runService.RenderStepped:Connect(function(dt:number)
 					end
 					-- </DD_SPH>
 				end
-				local laserPoint:Attachment-- = firstPerson and gunModel.Grip.Laser or GetThirdPersonGunModel().Grip.Laser
+				local laserPoint:Attachment-- = State.firstPerson and State.gunModel.Grip.Laser or GetThirdPersonGunModel().Grip.Laser
 				-- DD_SPH Gunsmith: Layzer
-				if gunModel.Grip:FindFirstChild("Laser") then
-					laserPoint = firstPerson and gunModel.Grip.Laser or GetThirdPersonGunModel().Grip.Laser
+				if State.gunModel.Grip:FindFirstChild("Laser") then
+					laserPoint = State.firstPerson and State.gunModel.Grip.Laser or GetThirdPersonGunModel().Grip.Laser
 				end
-				if attStats.laserOrigin then
-					laserPoint = firstPerson and gunModel[attStats.laserOrigin].Main.Laser or GetThirdPersonGunModel()[attStats.laserOrigin].Main.Laser
+				if State.attStats.laserOrigin then
+					laserPoint = State.firstPerson and State.gunModel[State.attStats.laserOrigin].Main.Laser or GetThirdPersonGunModel()[State.attStats.laserOrigin].Main.Laser
 				end
 				if not laserDotPoint then return end
 				-- </DD_SPH>
 				local laserRayParams = RaycastParams.new()
 				laserRayParams.FilterType = Enum.RaycastFilterType.Exclude
-				laserRayParams.FilterDescendantsInstances = {gunModel, character}
+				laserRayParams.FilterDescendantsInstances = {State.gunModel, character}
 				laserRayParams.RespectCanCollide = true
 				local rayResult = workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * 600, laserRayParams)
 				if rayResult then
@@ -2612,7 +2610,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		local difference = tempDampening - (tempDampening / (tempWalkSpeed / config.walkSpeed))
 		difference /= 2
 		tempDampening -= difference
-		if aiming then tempDampening *= config.aimBobDampening end
+		if State.aiming then tempDampening *= config.aimBobDampening end
 
 		local tempBobSpeed = config.bobSpeed
 		tempBobSpeed *= tempWalkSpeed / config.walkSpeed
@@ -2626,7 +2624,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		animBase.CFrame = animBase.CFrame:ToWorldSpace(CFrame.new(updatedMoveSway.Y, updatedMoveSway.X, 0) * CFrame.Angles(updatedMoveSway.Y * 0.3,0,updatedMoveSway.Y * 0.8))
 
 		-- Camera movement sway
-		if config.cameraMovement and (firstPerson and not humanoid.Sit) and not vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
+		if config.cameraMovement and (State.firstPerson and not humanoid.Sit) and not vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
 			camera.CFrame *= CFrame.Angles(math.rad(updatedMoveSway.X / config.cameraBobDampening), math.rad(updatedMoveSway.Y / config.cameraBobDampening), 0)
 		end
 
@@ -2644,7 +2642,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			end
 		end
 
-		if aiming then
+		if State.aiming then
 			camera.FieldOfView = LerpNumber(camera.FieldOfView, aimFOVTarget, 0.3)
 		end
 	end
@@ -2662,7 +2660,7 @@ runService.RenderStepped:Connect(function(dt:number)
 	humanoid.WalkSpeed = LerpNumber(humanoid.WalkSpeed, tempWalkSpeed, 0.2 * dt * 60)
 
 	-- Prone angle
-	if stance == 2 and config.proneAngle then
+	if State.stance == 2 and config.proneAngle then
 		local params = RaycastParams.new()
 		params.FilterType = Enum.RaycastFilterType.Exclude
 		params.FilterDescendantsInstances = {character}
@@ -2686,21 +2684,21 @@ runService.RenderStepped:Connect(function(dt:number)
 end)
 
 InputController.ScrollFired = function(scrollAmount, holdForZoom)
-	if aiming then
+	if State.aiming then
 		if holdForZoom then
 			-- Zoom
 			local newFOV = aimFOVTarget - scrollAmount * 3
 			-- DD_SPH Gunsmith: FOV adjusts with scope
-			local aimFovMinTarget = wepStats.aimFovMin
-			local aimFovMaxTarget = wepStats.aimFovMax or defaultFOV
-			if attStats.aimFovMin then aimFovMinTarget = attStats.aimFovMin end
-			if attStats.aimFovMax then aimFovMaxTarget = attStats.aimFovMax end
+			local aimFovMinTarget = State.wepStats.aimFovMin
+			local aimFovMaxTarget = State.wepStats.aimFovMax or defaultFOV
+			if State.attStats.aimFovMin then aimFovMinTarget = State.attStats.aimFovMin end
+			if State.attStats.aimFovMax then aimFovMaxTarget = State.attStats.aimFovMax end
 			aimFOVTarget = math.clamp(newFOV, aimFovMinTarget, aimFovMaxTarget)
 			-- </DD_SPH>
 		else
 			-- Sensitivity
 			aimSensitivity = math.clamp(aimSensitivity - 0.01 * -scrollAmount,0.005,1)
-			wepStats.aimSpeed = aimSensitivity
+			State.wepStats.aimSpeed = aimSensitivity
 			userInputService.MouseDeltaSensitivity = aimSensitivity
 		end
 	end
@@ -2711,16 +2709,16 @@ humanoid.Seated:Connect(function(seated, seatPart)
 		InputController.UnbindCharacterInputs()
 		ToggleSprint(false)
 		ChangeLean(0)
-		if stance == 1 then
+		if State.stance == 1 then
 			ChangeStance(-1)
-		elseif stance == 2 then
+		elseif State.stance == 2 then
 			ChangeStance(-1)
 			ChangeStance(-1)
 		end
 
 		if seatPart:IsA("VehicleSeat") then
 			vehicleSeated = true
-			if equipped then
+			if State.equipped then
 				humanoid:UnequipTools()
 			end
 		else
@@ -2737,7 +2735,7 @@ local canJump = true
 InputController.JumpRequested = function()
 	if humanoid.Sit then
 		character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-	elseif stance == 0 then
+	elseif State.stance == 0 then
 		if character.Humanoid.FloorMaterial == Enum.Material.Air then return end
 		if canJump then
 			canJump = false
