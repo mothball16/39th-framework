@@ -6,7 +6,6 @@ local players = game:GetService("Players")
 local tweenService = game:GetService("TweenService")
 local testService = game:GetService("TestService")
 local httpService = game:GetService("HttpService")
-local contextActionService = game:GetService("ContextActionService")
 
 local assets = replicatedStorage.SPH_Assets
 local modules = assets.Modules
@@ -43,6 +42,8 @@ local hitFX = require(modules.HitFX)
 local shellEjection = require(modules.ShellEjection)
 local bulletHandler = require(modules.BulletHandler)
 local callbacks = require(assets.Mods)
+local InputController = require(script.Parent:WaitForChild("Controllers"):WaitForChild("InputController"))
+
 bulletHandler.Initialize(player)
 
 local config = require(assets.GameConfig)
@@ -1506,79 +1507,8 @@ local function HandleInput(actionName, inputState, inputObject)
 	end
 end
 
-local function BindAiming()
-	contextActionService:BindActionAtPriority("SPH_HoldAim", HandleInput, config.mobileButtons, config.gunInputPriority, unpack(config.aimGun))
-	contextActionService:SetTitle("SPH_HoldAim", "Aim")
-	contextActionService:SetPosition("SPH_HoldAim", UDim2.fromScale(0.24, 0.3))
-end
-
-local function UnbindAiming()
-	contextActionService:UnbindAction("SPH_HoldAim")
-end
-
-local function BindGunInputs() -- Bind inputs for a gun
-	contextActionService:BindActionAtPriority("SPH_Trigger", HandleInput, config.mobileButtons, config.gunInputPriority, unpack(config.fireGun))
-	contextActionService:BindActionAtPriority("SPH_DropGun", HandleInput, false, config.gunInputPriority, unpack(config.dropKey))
-	contextActionService:BindActionAtPriority("SPH_Reload", HandleInput, config.mobileButtons, config.gunInputPriority, unpack(config.keyReload))
-	contextActionService:BindActionAtPriority("SPH_Chamber", HandleInput, false, config.gunInputPriority, unpack(config.keyChamber))
-	contextActionService:BindActionAtPriority("SPH_SwitchSights", HandleInput, false, config.gunInputPriority, unpack(config.sightSwitch))
-	contextActionService:BindActionAtPriority("SPH_Freelook", HandleInput, false, config.gunInputPriority, unpack(config.freeLook))
-	contextActionService:BindActionAtPriority("SPH_HoldUp", HandleInput, false, config.gunInputPriority, unpack(config.holdUp))
-	contextActionService:BindActionAtPriority("SPH_HoldPatrol", HandleInput, false, config.gunInputPriority, unpack(config.holdPatrol))
-	contextActionService:BindActionAtPriority("SPH_HoldDown", HandleInput, false, config.gunInputPriority, unpack(config.holdDown))
-	contextActionService:BindActionAtPriority("SPH_SwitchFireMode", HandleInput, false, config.gunInputPriority, unpack(config.switchFireMode))
-	contextActionService:BindActionAtPriority("SPH_ToggleLaser", HandleInput, false, config.gunInputPriority, unpack(config.toggleLaser))
-	contextActionService:BindActionAtPriority("SPH_ToggleFlashlight", HandleInput, false, config.gunInputPriority, unpack(config.toggleFlashlight))
-
-	if firstPerson then
-		BindAiming()
-	end
-
-	contextActionService:SetTitle("SPH_Trigger", "Fire")
-	contextActionService:SetPosition("SPH_Trigger", UDim2.fromScale(0.3, 0.6))
-
-	contextActionService:SetTitle("SPH_Reload", "Reload")
-	contextActionService:SetPosition("SPH_Reload", UDim2.fromScale(0, 0.6))
-end
-
-local function UnbindGunInputs() -- Remove gun inputs
-	contextActionService:UnbindAction("SPH_Trigger")
-	contextActionService:UnbindAction("SPH_DropGun")
-	contextActionService:UnbindAction("SPH_Reload")
-	contextActionService:UnbindAction("SPH_HoldAim")
-	contextActionService:UnbindAction("SPH_Chamber")
-	contextActionService:UnbindAction("SPH_SwitchSights")
-	contextActionService:UnbindAction("SPH_Freelook")
-	contextActionService:UnbindAction("SPH_HoldUp")
-	contextActionService:UnbindAction("SPH_HoldPatrol")
-	contextActionService:UnbindAction("SPH_HoldDown")
-	contextActionService:UnbindAction("SPH_SwitchFireMode")
-	contextActionService:UnbindAction("SPH_ToggleLaser")
-	contextActionService:UnbindAction("SPH_ToggleFlashlight")
-end
-
-local function BindCharacterInputs() -- Bind movement inputs
-	contextActionService:BindActionAtPriority("SPH_Sprint", HandleInput, false, config.movementInputPriority, unpack(config.keySprint))
-	contextActionService:BindActionAtPriority("SPH_StanceLower", HandleInput, config.mobileButtons, config.movementInputPriority, unpack(config.lowerStance))
-	contextActionService:BindActionAtPriority("SPH_StanceRaise", HandleInput, config.mobileButtons, config.movementInputPriority, unpack(config.raiseStance))
-	contextActionService:BindActionAtPriority("SPH_LeanLeft", HandleInput, false, config.movementInputPriority, unpack(config.leanLeft))
-	contextActionService:BindActionAtPriority("SPH_LeanRight", HandleInput, false, config.movementInputPriority, unpack(config.leanRight))
-
-	contextActionService:SetTitle("SPH_StanceLower", "Crouch")
-	contextActionService:SetPosition("SPH_StanceLower", UDim2.fromScale(0.4, 0))
-
-	contextActionService:SetTitle("SPH_StanceRaise", "Stand")
-	contextActionService:SetPosition("SPH_StanceRaise", UDim2.fromScale(0.55, -0.25))
-end
-BindCharacterInputs()
-
-local function UnbindCharacterInputs() -- Remove movement inputs
-	contextActionService:UnbindAction("SPH_Sprint")
-	contextActionService:UnbindAction("SPH_StanceLower")
-	contextActionService:UnbindAction("SPH_StanceRaise")
-	contextActionService:UnbindAction("SPH_LeanLeft")
-	contextActionService:UnbindAction("SPH_LeanRight")
-end
+InputController.ActionFired = HandleInput
+InputController.BindCharacterInputs()
 
 humanoid.Died:Connect(function()
 	dead = true
@@ -1591,7 +1521,7 @@ humanoid.Died:Connect(function()
 	viewmodelVisible = false
 	animBase.CFrame = storageCFrame
 
-	UnbindGunInputs()
+	InputController.UnbindGunInputs()
 
 	--bodyAnimRequest:Destroy()
 	--repReload:Destroy()
@@ -1666,7 +1596,7 @@ function Unequip(tool) -- Unequip a gun (Does not remove it from the player's ch
 	laserBeamFP.Enabled = false
 	laserBeamTP.Enabled = false
 
-	UnbindGunInputs()
+	InputController.UnbindGunInputs()
 end
 
 local function GetRotationBetween(u, v, axis)
@@ -1855,7 +1785,7 @@ character.ChildAdded:Connect(function(newChild)
 			RefreshViewmodel()
 		end
 
-		BindGunInputs()
+		InputController.BindGunInputs(firstPerson)
 
 		ToggleSprint(sprintHeld)
 		EquipAnim()
@@ -2379,7 +2309,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		if not firstPerson and character.Head.LocalTransparencyModifier >= fpThreshold then
 			firstPerson = true
 			if equipped then
-				BindAiming()
+				InputController.BindAiming()
 				if flashlightEnabled then
 					if gunModel.Grip:FindFirstChild("Flashlight") then
 						gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
@@ -2401,7 +2331,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			end
 		elseif firstPerson and character.Head.LocalTransparencyModifier <= fpThreshold then
 			firstPerson = false
-			UnbindAiming()
+			InputController.UnbindAiming()
 			if equipped then
 				if laserEnabled then
 					laserBeamTP.Enabled = true
@@ -2755,12 +2685,11 @@ runService.RenderStepped:Connect(function(dt:number)
 	end
 end)
 
-userInputService.InputChanged:Connect(function(input)
-	if aiming and input.UserInputType == Enum.UserInputType.MouseWheel then
-		if userInputService:IsKeyDown(config.holdForScrollZoom) then
+InputController.ScrollFired = function(scrollAmount, holdForZoom)
+	if aiming then
+		if holdForZoom then
 			-- Zoom
-			local newFOV = aimFOVTarget - input.Position.Z * 3
-			--aimFOVTarget = math.clamp(newFOV, wepStats.aimFovMin, wepStats.aimFovMax or defaultFOV)
+			local newFOV = aimFOVTarget - scrollAmount * 3
 			-- DD_SPH Gunsmith: FOV adjusts with scope
 			local aimFovMinTarget = wepStats.aimFovMin
 			local aimFovMaxTarget = wepStats.aimFovMax or defaultFOV
@@ -2770,17 +2699,16 @@ userInputService.InputChanged:Connect(function(input)
 			-- </DD_SPH>
 		else
 			-- Sensitivity
-			aimSensitivity = math.clamp(aimSensitivity - 0.01 * -input.Position.Z,0.005,1)
+			aimSensitivity = math.clamp(aimSensitivity - 0.01 * -scrollAmount,0.005,1)
 			wepStats.aimSpeed = aimSensitivity
 			userInputService.MouseDeltaSensitivity = aimSensitivity
-			--player:SetAttribute("SavedAimSensitivity", aimSensitivity) -- DD_SPH: Aim sens no longer carries over between weapons
 		end
 	end
-end)
+end
 
 humanoid.Seated:Connect(function(seated, seatPart)
 	if seated then -- In a seat
-		UnbindCharacterInputs()
+		InputController.UnbindCharacterInputs()
 		ToggleSprint(false)
 		ChangeLean(0)
 		if stance == 1 then
@@ -2799,14 +2727,14 @@ humanoid.Seated:Connect(function(seated, seatPart)
 			vehicleSeated = false
 		end
 	else -- Exiting a seat
-		BindCharacterInputs()
+		InputController.BindCharacterInputs()
 		vehicleSeated = false
 	end
 end)
 
 local canJump = true
 
-userInputService.JumpRequest:Connect(function()
+InputController.JumpRequested = function()
 	if humanoid.Sit then
 		character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 	elseif stance == 0 then
@@ -2822,4 +2750,4 @@ userInputService.JumpRequest:Connect(function()
 	else
 		character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
 	end
-end)
+end
