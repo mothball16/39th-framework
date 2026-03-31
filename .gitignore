@@ -10,3 +10,10 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Wally dependencies
+Packages/
+ServerPackages/
+
+# Build stuff
+sourcemap.json

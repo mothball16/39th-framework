@@ -1,0 +1,8 @@
+[package]
+name = "jzou0/39th-framework"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
+Charm = "littensy/charm@0.11.0-rc.5"
