@@ -47,6 +47,7 @@ local ViewmodelController = require(Controllers:WaitForChild("ViewmodelControlle
 local MovementController = require(Controllers:WaitForChild("MovementController"))
 local AnimationController = require(Controllers:WaitForChild("AnimationController"))
 local WeaponController = require(Controllers:WaitForChild("WeaponController"))
+local CameraController = require(Controllers:WaitForChild("CameraController"))
 
 bulletHandler.Initialize(player)
 
@@ -67,8 +68,6 @@ local playCharSound = bridgeNet.CreateBridge("PlayCharacterSound")
 local playerLean = bridgeNet.CreateBridge("PlayerLean")
 
 local fpThreshold = 0.6
-
-local cameraRollAngle = 0
 
 local depthOfField = game.Lighting:FindFirstChild("SPH_DoF")
 if not depthOfField and config.blurEffects then
@@ -112,12 +111,6 @@ proneIdleAnim.Priority = Enum.AnimationPriority.Idle
 local proneMoveAnim:AnimationTrack = humanoid.Animator:LoadAnimation(animations.Prone_Move)
 proneMoveAnim.Looped = true
 proneMoveAnim.Priority = Enum.AnimationPriority.Movement
-
-local xHead, yHead, zHead
-local cameraOffsetTarget = Vector3.zero
-
-
-local cameraLeanRotation = 0
 
 local laserDotUI = assets.HUD.LaserDotUI:Clone()
 local laserDotPoint = Instance.new("Attachment")
@@ -432,6 +425,16 @@ ViewmodelController.Initialize({
 	ToggleAiming = ToggleAiming
 })
 
+CameraController.Initialize({
+	camera = camera,
+	character = character,
+	humanoid = humanoid,
+	humanoidRootPart = humanoidRootPart,
+	rootJoint = rootJoint,
+	rigType = rigType,
+	MovementController = MovementController,
+})
+
 WeaponController.Initialize({
 	player = player,
 	character = character,
@@ -609,118 +612,12 @@ runService.RenderStepped:Connect(function(dt:number)
 				-- </DD_SPH>
 			end
 			ResetHead()
-			cameraOffsetTarget = Vector3.zero
+			CameraController.cameraOffsetTarget = Vector3.zero
 		end
 
 		MovementController.UpdateRender(dt)
 
-
-
-
-		-- TODO: Delegate this to CameraController
-		local xOffset
-		local yOffset
-		local zOffset
-
-
-		if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Added rig-check to correct positioning
-
-			if config.firstPersonBody and State.firstPerson then
-				local xHead = character.HumanoidRootPart.CFrame:ToObjectSpace(camera.CFrame):ToEulerAngles()
-				local rotationOffset = -1.2 + (xHead + 1.4) / 2.8
-				cameraOffsetTarget = Vector3.new(0,0,rotationOffset)
-			else
-				cameraOffsetTarget = Vector3.zero
-			end
-
-			xOffset = 0
-			yOffset = 0
-			zOffset = cameraOffsetTarget.Z
-
-			if State.stance == 1 then
-				yOffset = -1
-				if State.firstPerson then zOffset -= 0.3 end
-			elseif State.stance == 2 then
-				yOffset = -1.5
-				if State.firstPerson then zOffset = -1.7 end
-			end
-
-			-- Lean offset
-			if MovementController.lean < 0 then
-				xOffset = -1
-				yOffset += -0.2
-			elseif MovementController.lean > 0 then
-				xOffset = 1
-				yOffset += -0.2
-			end
-
-		else
-
-			if config.firstPersonBody and State.firstPerson then
-				local xHead = character.HumanoidRootPart.CFrame:ToObjectSpace(camera.CFrame):ToEulerAngles()
-				local rotationOffset = -1.6 + (xHead + 1.4) / 2.8
-				cameraOffsetTarget = Vector3.new(0,0,rotationOffset)
-			else
-				cameraOffsetTarget = Vector3.zero
-			end
-
-			xOffset = 0
-			yOffset = 0
-			zOffset = cameraOffsetTarget.Z
-
-			if State.stance == 1 then -- DD_SPH: Adjusted camera positioning to reflect R15.
-				yOffset = .5
-				if State.firstPerson then zOffset -= 1.5 end --rev
-			elseif State.stance == 2 then
-				yOffset = 1.5
-				if State.firstPerson then zOffset = -3 end --rev
-			end
-
-			-- Lean offset
-			if MovementController.lean < 0 then
-				xOffset = -1
-				yOffset += -0.2 --rev
-			elseif MovementController.lean > 0 then
-				xOffset = 1
-				yOffset += -0.2 --rev
-			end
-
-		end --</DD_SPH>
-
-
-
-
-
-		if not MovementController.vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
-			-- Update camera offset
-			if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Different offsets for different rigs
-				cameraOffsetTarget = Vector3.new(xOffset,yOffset,zOffset)
-			else
-				cameraOffsetTarget = Vector3.new(xOffset,-yOffset,zOffset)
-			end
-			humanoid.CameraOffset = humanoid.CameraOffset:Lerp(cameraOffsetTarget,0.1 * dt * 60)
-
-			-- Update leaning offset
-			-- DD_SPH: Rig Check!
-			if rigType ~= Enum.HumanoidRigType.R15 then
-				rootJoint.C1 = rootJoint.C1:Lerp(CFrame.new(-xOffset / 2,0,0) * CFrame.Angles(math.rad(90),math.rad(180) + math.rad(17 * MovementController.lean),0),0.1 * dt * 60)
-			else
-				rootJoint.C1 = rootJoint.C1:Lerp(CFrame.new(-xOffset / 2,0,0) * CFrame.Angles(math.rad(0),math.rad(0), math.rad(0) + math.rad(17 * MovementController.lean)),0.1 * dt * 60)
-			end
-			-- </DD_SPH>
-			cameraLeanRotation = LerpNumber(cameraLeanRotation,15 * -MovementController.lean, 0.1)
-			camera.CFrame *= CFrame.Angles(0,0,math.rad(cameraLeanRotation))
-
-			-- Camera tilt
-			if config.cameraTilting and State.firstPerson then
-				local maxTiltAngle = 2
-				local relativeVelocity = humanoidRootPart.CFrame:VectorToObjectSpace(humanoidRootPart.Velocity)
-				local mouseDelta = userInputService:GetMouseDelta()
-				local targetRollAngle = math.clamp(-relativeVelocity.X, -maxTiltAngle, maxTiltAngle) + mouseDelta.X / 2
-				cameraRollAngle = LerpNumber(cameraRollAngle,targetRollAngle,0.07 * dt * 60)
-				camera.CFrame *= CFrame.Angles(0,0,math.rad(cameraRollAngle))
-			end
-		end
+		CameraController.UpdateRender(dt)
 
 		-- Update viewmodel
 		if State.equipped and camera.CameraType == Enum.CameraType.Custom then
@@ -756,14 +653,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			end
 		end
 
-		-- TODO: Delegate this to cameracontroller
-		local camSensFactor = camera.FieldOfView / config.defaultFOV
-		if State.aiming() then
-			camera.FieldOfView = LerpNumber(camera.FieldOfView, State.aimFOVTarget(), 0.3 * (dt * 60))
-			userInputService.MouseDeltaSensitivity = State.aimSens() * camSensFactor
-		else
-			userInputService.MouseDeltaSensitivity = 1 * camSensFactor
-		end
+		CameraController.UpdateFOV(dt)
 	end
 
 end)
