@@ -1,25 +1,6 @@
 {
     "workbench.colorTheme": "One Dark Pro Monokai Darker",
-    "files.exclude": {
-        "src/TestService": true,
-        "src/StarterGui": true,
-        "src/ServerScriptService/RespawnServer.server.lua": true,
-        "src/ServerScriptService/ClassHandler.server.lua": true,
-        "src/ServerScriptService/ClassScript.server.lua": true,
-        "src/ServerScriptService/GM_Server.server.lua": true,
-        "src/ServerScriptService/INTERACT_Server.server.lua": true,
-        "src/ServerScriptService/PingHandler.server.lua": true,
-        "src/ServerScriptService/TeamSelectionHandler.server.lua": true,
-        "src/ReplicatedStorage/INTERACT_Assets": true,
-        "src/ReplicatedStorage/GM_Assets": true,
-        "src/ReplicatedStorage/DTS_Assets": true,
-        "src/ReplicatedStorage/TemporaryIndicatorSystem": true,
-        "src/ReplicatedStorage/DD_Settings.lua": true,
-        "src/ServerScriptService/DTS_Server": true,
-        "src/StarterPlayer/StarterPlayerScripts/CustomPrompt": true,
-        "src/StarterPlayer/StarterPlayerScripts/DTS_Player": true,
-        "{s,[!s]*,sr,s[!r]*,sr[!c]*,src?*}": true
-    },
+    "files.exclude": {},
     "folder-scopes.scopes": {
         "SPH": {
             "39th-framework": {

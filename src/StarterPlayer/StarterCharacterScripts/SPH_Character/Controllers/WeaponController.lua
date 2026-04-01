@@ -67,8 +67,6 @@ local WC = {
 	
 	RefreshViewmodel = nil,
 	ToggleAiming = nil,
-	ChangeDoF = nil,
-	GetSprintHeld = nil,
 }
 
 WC.switchWeapon = bridgeNet.CreateBridge("SwitchWeapon")
@@ -107,8 +105,6 @@ function WC.Initialize(params)
 	
 	WC.RefreshViewmodel = params.RefreshViewmodel
 	WC.ToggleAiming = params.ToggleAiming
-	WC.ChangeDoF = params.ChangeDoF
-	WC.GetSprintHeld = params.GetSprintHeld
 	
 	WC.character.ChildAdded:Connect(function(child)
 		WC.Equip(child)
@@ -415,7 +411,6 @@ function WC.Unequip(tool)
 	end
 
 	WC.sights = {}
-	if WC.ChangeDoF then WC.ChangeDoF(0, 0, 0, 0) end
 
 	WC.holdStance = 0
 	WC.holdAnim = nil
@@ -558,7 +553,6 @@ function WC.Equip(newChild)
 
 		if State.firstPerson() then WC.RefreshViewmodel() end
 		WC.InputController.BindGunInputs(State.firstPerson())
-		WC.MovementController.ToggleSprint(WC.GetSprintHeld())
 		WC.EquipAnim()
 		WC.IdleAnim()
 

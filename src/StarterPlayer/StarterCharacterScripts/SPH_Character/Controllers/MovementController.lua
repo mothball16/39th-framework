@@ -24,7 +24,6 @@ local MovementController = {
     humanoidRootPart = nil,
     rootJoint = nil,
     rigType = nil,
-    depthOfField = nil,
     crouchIdleAnim = nil,
     crouchMoveAnim = nil,
     proneIdleAnim = nil,
@@ -38,7 +37,6 @@ local MovementController = {
     StopAnimation = nil,
     PlayCharSound = nil,
     playerLean = nil,
-    ChangeDoF = nil,
     CancelFiring = nil,
 }
 
@@ -53,7 +51,6 @@ function MovementController.Initialize(params)
 	MovementController.humanoidRootPart = params.humanoidRootPart
 	MovementController.rootJoint = params.rootJoint
 	MovementController.rigType = params.rigType
-	MovementController.depthOfField = params.depthOfField
 	MovementController.script = params.script
 	MovementController.baseCharacterHipHeight = params.humanoid.HipHeight
 	
@@ -68,10 +65,9 @@ function MovementController.Initialize(params)
 	MovementController.StopAnimation = params.StopAnimation
 	MovementController.PlayCharSound = params.PlayCharSound
 	MovementController.playerLean = params.playerLean
-	MovementController.ChangeDoF = params.ChangeDoF
 	MovementController.CancelFiring = params.CancelFiring
 
-	Charm.subscribe(State.sprinting, MovementController.OnSprintToggled)
+	Charm.subscribe(State.sprinting, MovementController.OnSprintChanged)
 end
 
 function MovementController.ChangeWalkSpeed(newSpeed)
@@ -85,33 +81,33 @@ function MovementController.ChangeLean(newLean)
 	MovementController.playerLean:Fire(newLean)
 end
 
-function MovementController.OnSprintToggled(newSprint)
-	MovementController.humanoid.Parent:SetAttribute("Sprinting", newSprint)
-	if newSprint then
+function MovementController.OnSprintChanged(sprinting)
+	MovementController.humanoid.Parent:SetAttribute("Sprinting", sprinting)
+	if sprinting then
 		if State.aiming() then MovementController.ToggleAiming(false) end
+		if State.stance() == 1 then MovementController.ChangeStance(-1) end
+		MovementController.ChangeWalkSpeed(config.sprintSpeed)
+		MovementController.ChangeLean(0)
 		MovementController.ChangeHoldStance(0)
-		UserInputService.MouseDeltaSensitivity = 1
+
+
+		-- TODO: refactor this. movementcontroller shouldnt be handling firing
 		MovementController.CancelFiring()
-		if State.wepStats and State.wepStats.sprintAnim then
-			MovementController.PlayAnimation(State.wepStats.sprintAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.2})
-		end
-
-		if MovementController.depthOfField then
-			MovementController.ChangeDoF(0, 6, 0, 0.3)
-		end
 	else
-		if State.wepStats and State.wepStats.sprintAnim then
-			MovementController.StopAnimation(State.wepStats.sprintAnim, 0.2)
-		end
-
-		if MovementController.depthOfField then
-			MovementController.ChangeDoF(0, 0, 0, 0)
-		end
+		State.sprinting(false)
+		MovementController.ChangeWalkSpeed(config.walkSpeed)
 	end
 end
 
-function MovementController.ToggleSprint(toggle)
-	State.sprinting(toggle)
+
+function MovementController.OnSprintIntent(inputState, _)
+	local sprintHeld = inputState == Enum.UserInputState.Begin
+	local notCrawling = State.stance() < 2
+	if sprintHeld and notCrawling and MovementController.moving then -- Begin State.sprinting
+		State.sprinting(true)
+	else
+		State.sprinting(false)
+	end
 end
 
 function MovementController.ChangeStance(change)
@@ -164,15 +160,12 @@ function MovementController.UpdateRender(dt)
 	local humanoid = MovementController.humanoid
 	if MovementController.moveAnim then MovementController.moveAnim:AdjustSpeed(humanoid.WalkSpeed / 6) end
 	
-	if humanoid.MoveDirection.Magnitude > 0 and not MovementController.moving then
+	if humanoid.MoveDirection.Magnitude > 0.01 and not MovementController.moving then
 		MovementController.moving = true
 		if MovementController.moveAnim then MovementController.moveAnim:Play(config.stanceChangeTime) end
-	elseif humanoid.MoveDirection.Magnitude <= 0 then
+	elseif humanoid.MoveDirection.Magnitude <= 0.01 then
 		MovementController.moving = false
-		if State.sprinting() then
-			MovementController.ToggleSprint(false)
-			MovementController.ChangeWalkSpeed(config.walkSpeed)
-		end
+		State.sprinting(false)
 		if MovementController.moveAnim then MovementController.moveAnim:Stop(config.stanceChangeTime) end
 	end
 end
