@@ -8,17 +8,14 @@ local CharacterState = {
 	wepStats = nil,
 	attStats = {},
 
-
-
 	gunModel = nil,
 	gunAmmo = nil,
 
-	aiming = Charm.atom(false) 							:: Charm.Atom<boolean>,
 	aimSens = Charm.atom(config.defaultAimSensitivity) 	:: Charm.Atom<number>,
 	sightIndex = Charm.atom(1) 							:: Charm.Atom<number>,
 	aimFOVTarget = 	Charm.atom(config.defaultFOV) 		:: Charm.Atom<number>,
 
-
+	aiming = Charm.atom(false) 							:: Charm.Atom<boolean>,
 	equipped = Charm.atom(nil) 							:: Charm.Atom<Instance>,
 	sprinting = Charm.atom(false)						:: Charm.Atom<boolean>,
 	reloading = Charm.atom(false)						:: Charm.Atom<boolean>,
