@@ -4,11 +4,10 @@ local userInputService = game:GetService("UserInputService")
 local debris = game:GetService("Debris")
 local players = game:GetService("Players")
 local tweenService = game:GetService("TweenService")
-local testService = game:GetService("TestService")
-local httpService = game:GetService("HttpService")
 
 local assets = replicatedStorage.SPH_Assets
 local modules = assets.Modules
+local config = require(assets.GameConfig)
 local animations = assets.Animations
 local player = players.LocalPlayer
 
@@ -32,8 +31,6 @@ if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
 camera.CameraType = Enum.CameraType.Custom
 if camera:FindFirstChild("WeaponRig") then camera.WeaponRig:Destroy() end
 
-local defaultFOV = camera.FieldOfView
-
 local weldMod = require(modules.WeldMod)
 local bridgeNet = require(modules.BridgeNet)
 local viewMod = require(modules.ViewMod)
@@ -53,7 +50,6 @@ local WeaponController = require(Controllers:WaitForChild("WeaponController"))
 
 bulletHandler.Initialize(player)
 
-local config = require(assets.GameConfig)
 local warnPrefix = "【 SPEARHEAD 】 "
 humanoid.WalkSpeed = config.walkSpeed
 
@@ -120,7 +116,6 @@ proneMoveAnim.Priority = Enum.AnimationPriority.Movement
 local xHead, yHead, zHead
 local cameraOffsetTarget = Vector3.zero
 
-local defaultCameraMode = player.CameraMode
 
 local cameraLeanRotation = 0
 
@@ -303,40 +298,8 @@ local function LerpNumber(number:number, target:number, speed:number)
 end
 
 local function ToggleAiming(toggle)
+	State.aiming(toggle)
 	character:SetAttribute("Aiming", toggle)
-	if toggle then
-		WeaponController.ChangeHoldStance(0)
-		State.aiming = true
-		--if State.wepStats.ADSEnabled and State.wepStats.ADSEnabled[sightIndex] then
-		if (State.attStats.ADSEnabled and State.attStats.ADSEnabled[WeaponController.sightIndex]) or (State.wepStats.ADSEnabled and State.wepStats.ADSEnabled[WeaponController.sightIndex]) then -- DD_SPH Gunsmith: ADS enabling
-			WeaponController.ToggleADS(true)
-		else
-			WeaponController.ToggleADS(false)
-		end
-		userInputService.MouseDeltaSensitivity = WeaponController.aimSensitivity
-		WeaponController.PlayRepSound("AimUp")
-
-		--tweenService:Create(camera,TweenInfo.new(State.wepStats.aimTime),{FieldOfView = State.wepStats.aimFovDefault or defaultFOV}):Play()
-
-		if not config.lockFirstPerson then
-			player.CameraMode = Enum.CameraMode.LockFirstPerson
-		end
-	else
-		State.aiming = false
-		WeaponController.ToggleADS(false)
-		userInputService.MouseDeltaSensitivity = 1
-		WeaponController.PlayRepSound("AimDown")
-		local aimOutTime
-		if State.wepStats then
-			aimOutTime = State.wepStats.aimTime / 2
-		else
-			aimOutTime = 0.3
-		end
-		tweenService:Create(camera,TweenInfo.new(aimOutTime),{FieldOfView = defaultFOV}):Play()
-		if not config.lockFirstPerson then
-			player.CameraMode = defaultCameraMode
-		end
-	end
 end
 
 
@@ -397,18 +360,18 @@ local function HandleInput(actionName, inputState, inputObject)
 
 
 	if actionName == "SPH_HoldAim" then
-		if not userInputService.TouchEnabled and not config.toggleAiming then -- Hold State.aiming
+		if not userInputService.TouchEnabled and not config.toggleAiming then -- Hold aiming
 			if inputState == inputBegan and State.firstPerson and not freeLook and not blocked then
 				aimHeld = true
 				MovementController.ToggleSprint(false)
 				if State.stance == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
 				ToggleAiming(true)
-			elseif not State.sprinting and State.aiming then -- Not State.aiming
+			elseif not State.sprinting and State.aiming() then -- Not aiming
 				aimHeld = false
 				ToggleAiming(false)
 			end
-		elseif inputState == inputBegan then -- Mobile and toggle State.aiming
-			if State.firstPerson and not freeLook and not blocked and not State.aiming then
+		elseif inputState == inputBegan then -- Mobile and toggle aiming
+			if State.firstPerson and not freeLook and not blocked and not State.aiming() then
 				aimHeld = true
 				MovementController.ToggleSprint(false)
 				if State.stance == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
@@ -482,7 +445,6 @@ WeaponController.Initialize({
 	laserDotPoint = laserDotPoint,
 	laserBeamFP = laserBeamFP,
 	laserBeamTP = laserBeamTP,
-	defaultFOV = defaultFOV,
 	AnimationController = AnimationController,
 	ViewmodelController = ViewmodelController,
 	MovementController = MovementController,
@@ -557,7 +519,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		camera.CFrame = CFrame.new(camera.CFrame.Position) * (limitedCFrame - limitedCFrame.Position)
 	end
 
-	if not State.dead and character:FindFirstChild("Head") then		
+	if not State.dead and character:FindFirstChild("Head") then
 		if not State.dead then
 			local torsoDirection
 			if humanoid.RigType == Enum.HumanoidRigType.R6 then
@@ -652,8 +614,10 @@ runService.RenderStepped:Connect(function(dt:number)
 
 		MovementController.UpdateRender(dt)
 
-		-- First person body offset
 
+
+
+		-- TODO: Delegate this to CameraController
 		local xOffset
 		local yOffset
 		local zOffset
@@ -723,6 +687,10 @@ runService.RenderStepped:Connect(function(dt:number)
 
 		end --</DD_SPH>
 
+
+
+
+
 		if not MovementController.vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
 			-- Update camera offset
 			if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Different offsets for different rigs
@@ -774,7 +742,7 @@ runService.RenderStepped:Connect(function(dt:number)
 
 		ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, MovementController.vehicleSeated)
 
-		-- Update sights
+		-- TODO: move this to WeaponController
 		for _, sight:BasePart in ipairs(WeaponController.sights) do
 			local frame = sight.SurfaceGui.Frame
 			local sightUI = frame:FindFirstChild("Reticle") or frame:FindFirstChild("Holo")
@@ -788,8 +756,13 @@ runService.RenderStepped:Connect(function(dt:number)
 			end
 		end
 
-		if State.aiming then
-			camera.FieldOfView = LerpNumber(camera.FieldOfView, WeaponController.aimFOVTarget, 0.3)
+		-- TODO: Delegate this to cameracontroller
+		local camSensFactor = camera.FieldOfView / config.defaultFOV
+		if State.aiming() then
+			camera.FieldOfView = LerpNumber(camera.FieldOfView, State.aimFOVTarget(), 0.3 * (dt * 60))
+			userInputService.MouseDeltaSensitivity = State.aimSens() * camSensFactor
+		else
+			userInputService.MouseDeltaSensitivity = 1 * camSensFactor
 		end
 	end
 
@@ -799,6 +772,7 @@ runService.Heartbeat:Connect(function(dt:number)
 	MovementController.UpdateHeartbeat(dt)
 	WeaponController.UpdateHeartbeat(dt, freeLook, blocked)
 
+	-- TODO: figure out wtf this does
 	if State.stance == 2 and config.proneAngle then
 		local params = RaycastParams.new()
 		params.FilterType = Enum.RaycastFilterType.Exclude
@@ -813,26 +787,32 @@ runService.Heartbeat:Connect(function(dt:number)
 			rootJoint.C0 *= CFrame.Angles(rotateToFloorCFrame.X, rotateToFloorCFrame.Y, rotateToFloorCFrame.Z)
 		end
 	end
+
+
 end)
 
 InputController.ScrollFired = function(scrollAmount, holdForZoom)
-	if State.aiming then
+	if State.aiming() then
+		--[[
+		NOTE: This can be added at a future time
+
 		if holdForZoom then
 			-- Zoom
 			local newFOV = WeaponController.aimFOVTarget - scrollAmount * 3
 			-- DD_SPH Gunsmith: FOV adjusts with scope
 			local aimFovMinTarget = State.wepStats.aimFovMin
-			local aimFovMaxTarget = State.wepStats.aimFovMax or defaultFOV
+			local aimFovMaxTarget = State.wepStats.aimFovMax or config.defaultFOV
 			if State.attStats.aimFovMin then aimFovMinTarget = State.attStats.aimFovMin end
 			if State.attStats.aimFovMax then aimFovMaxTarget = State.attStats.aimFovMax end
 			WeaponController.aimFOVTarget = math.clamp(newFOV, aimFovMinTarget, aimFovMaxTarget)
 			-- </DD_SPH>
 		else
-			-- Sensitivity
-			WeaponController.aimSensitivity = math.clamp(WeaponController.aimSensitivity - 0.01 * -scrollAmount,0.005,1)
-			State.wepStats.aimSpeed = WeaponController.aimSensitivity
-			userInputService.MouseDeltaSensitivity = WeaponController.aimSensitivity
-		end
+
+		end]]
+
+		-- Sensitivity
+		State.aimSens(math.clamp(State.aimSens() + (0.01 * scrollAmount), 0.01, 1))
+		State.wepStats.aimSpeed = State.aimSens()
 	end
 end
 

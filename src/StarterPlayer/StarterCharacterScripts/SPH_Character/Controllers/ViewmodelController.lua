@@ -98,7 +98,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 	local aimTime = State.wepStats.aimTime
 	if State.attStats.aimTime then aimTime *= State.attStats.aimTime end
 
-	if State.aiming then
+	if State.aiming() then
 		aimingOffset = aimingOffset:Lerp(aimTarget, (0.7 / aimTime) * 0.3 * dt * 60)
 	else
 		aimingOffset = aimingOffset:Lerp(CFrame.new(), (0.7 / aimTime) * 0.3 * dt * 60)
@@ -126,12 +126,12 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 					ViewmodelController.ChangeHoldStance(0)
 					ViewmodelController.PlayAnimation(State.wepStats.holdUpAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
 					blocked = true
-					if State.aiming then ViewmodelController.ToggleAiming(false) end
+					if State.aiming() then ViewmodelController.ToggleAiming(false) end
 				end
 			elseif blocked then
 				ViewmodelController.StopAnimation(State.wepStats.holdUpAnim, 0.3)
 				blocked = false
-				if aimHeld and not State.aiming and State.firstPerson then
+				if aimHeld and not State.aiming() and State.firstPerson then
 					ViewmodelController.ToggleAiming(true)
 				end
 			end
@@ -141,7 +141,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 			ViewmodelController.StopAnimation(State.wepStats.holdUpAnim, 0.3)
 		end
 		blocked = false
-		if aimHeld and not State.aiming and State.firstPerson and not State.sprinting then
+		if aimHeld and not State.aiming() and State.firstPerson and not State.sprinting then
 			ViewmodelController.ToggleAiming(true)
 		end
 		pushbackOffset = LerpNumber(pushbackOffset, 0, 0.2 * 60 * dt)
@@ -150,7 +150,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 
 	local relativeVelocity = humanoidRootPart.CFrame:VectorToObjectSpace(humanoidRootPart.Velocity)
 	local targetRollAngle = 0
-	if not State.aiming then targetRollAngle = math.clamp(-relativeVelocity.X, -config.maxStrafeRoll, config.maxStrafeRoll) end
+	if not State.aiming() then targetRollAngle = math.clamp(-relativeVelocity.X, -config.maxStrafeRoll, config.maxStrafeRoll) end
 	if config.cameraTilting then targetRollAngle /= 2 end
 	rollAngle = LerpNumber(rollAngle, targetRollAngle, 0.07 * dt * 60)
 	animBase.CFrame *= CFrame.Angles(0, 0, math.rad(rollAngle))
@@ -158,10 +158,10 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 	local mouseDelta = UserInputService:GetMouseDelta()
 
 	local tempHipRotation = hipRotation
-	if config.hipfireMove and (not State.aiming or State.aiming and config.offCenterAiming) then
+	if config.hipfireMove and (not State.aiming() or State.aiming() and config.offCenterAiming) then
 		local maxX = config.hipfireMoveX
 		local maxY = config.hipfireMoveY
-		if State.aiming then
+		if State.aiming() then
 			maxX /= 4
 			maxY /= 4
 		end
@@ -180,7 +180,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 
 	local tickTime = tick() * 0.15
 	local tempDist = config.breathingDist
-	if State.aiming then tempDist *= config.breathingAimMultiplier end
+	if State.aiming() then tempDist *= config.breathingAimMultiplier end
 	animBase.CFrame *= CFrame.new(tempDist * math.sin(tickTime * config.breathingSpeed / 2), tempDist * math.sin(tickTime * config.breathingSpeed), 0)
 
 	local updatedRecoil = ViewmodelController.recoilSpring.Position
@@ -213,7 +213,7 @@ function ViewmodelController.UpdateMovementSway(dt, tempWalkSpeed, vehicleSeated
 	local difference = tempDampening - (tempDampening / (tempWalkSpeed / config.walkSpeed))
 	difference /= 2
 	tempDampening -= difference
-	if State.aiming then tempDampening *= config.aimBobDampening end
+	if State.aiming() then tempDampening *= config.aimBobDampening end
 
 	local tempBobSpeed = config.bobSpeed
 	tempBobSpeed *= tempWalkSpeed / config.walkSpeed

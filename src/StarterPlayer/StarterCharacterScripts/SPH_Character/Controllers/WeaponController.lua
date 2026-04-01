@@ -1,7 +1,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Packages = ReplicatedStorage:WaitForChild("Packages")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
+local Charm = require(Packages.Charm)
 
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
@@ -13,8 +15,12 @@ local weldMod = require(modules.WeldMod)
 local bridgeNet = require(modules.BridgeNet)
 
 local State = require(script.Parent.CharacterState)
+local Player = game.Players.LocalPlayer
+local Camera = game.Workspace.CurrentCamera
 
 local storageCFrame = CFrame.new(1000000, 0, 0)
+local defaultCameraMode = Player.CameraMode
+
 
 local WC = {
 	holdingM1 = false,
@@ -38,9 +44,8 @@ local WC = {
 	curFireMode = 0,
 	holdStance = 0,
 	holdAnim = nil,
-	aimSensitivity = 1,
-	aimFOVTarget = 70, -- Will be set correctly on init
-	
+	aimFOVTarget = 70,
+
 	-- Dependencies
 	player = nil,
 	character = nil,
@@ -54,8 +59,7 @@ local WC = {
 	laserDotPoint = nil,
 	laserBeamFP = nil,
 	laserBeamTP = nil,
-	defaultFOV = 70,
-	
+
 	AnimationController = nil,
 	ViewmodelController = nil,
 	MovementController = nil,
@@ -93,8 +97,6 @@ function WC.Initialize(params)
 	WC.laserDotPoint = params.laserDotPoint
 	WC.laserBeamFP = params.laserBeamFP
 	WC.laserBeamTP = params.laserBeamTP
-	WC.defaultFOV = params.defaultFOV
-	WC.aimFOVTarget = params.defaultFOV
 	
 	WC.bipodRayIgnore = {params.character}
 	
@@ -117,7 +119,51 @@ function WC.Initialize(params)
 			WC.Unequip(child)
 		end
 	end)
+
+	Charm.subscribe(State.aiming, WC.OnAimToggled)
+	Charm.subscribe(State.sightIndex, WC.OnSightIndexSwitched)
 end
+
+
+function WC._adsMeshEnabled(sightIndex)
+	return (State.attStats and State.attStats.ADSEnabled and State.attStats.ADSEnabled[sightIndex])
+	or (State.wepStats and State.wepStats.ADSEnabled and State.wepStats.ADSEnabled[sightIndex])
+end
+
+
+function WC.OnAimToggled(_, newAim)
+	if newAim then
+		WC.ChangeHoldStance(0)
+		local ADSMeshEnabled = WC._adsMeshEnabled(WC.sightIndex)
+
+		WC.PlayRepSound("AimUp")
+		WC.ToggleADS(ADSMeshEnabled)
+
+		if not config.lockFirstPerson then
+			Player.CameraMode = Enum.CameraMode.LockFirstPerson
+		end
+	else
+		WC.PlayRepSound("AimDown")
+		UserInputService.MouseDeltaSensitivity = 1
+
+		local aimOutTime = State.wepStats and State.wepStats.aimTime / 2 or 0.3
+
+		TweenService:Create(Camera,TweenInfo.new(aimOutTime),{FieldOfView = config.defaultFOV}):Play()
+		if not config.lockFirstPerson then
+			Player.CameraMode = defaultCameraMode
+		end
+	end
+end
+
+function WC.OnSightIndexSwitched(_, newIndex)
+	if WC._adsMeshEnabled(newIndex) then
+		WC.ToggleADS(true)
+	else
+		WC.ToggleADS(false)
+	end
+end
+
+
 
 function WC.PlayRepSound(soundName)
 	if not State.dead and State.wepStats then
@@ -186,18 +232,18 @@ function WC.MoveBolt(direction:CFrame, silent:boolean)
 end
 
 function WC.ToggleADS(toggle)
-	if (State.wepStats and State.wepStats.ADSEnabled) or (State.attStats and State.attStats.ADSEnabled) then
-		local aimingTime = (State.wepStats.aimTime and State.wepStats.aimTime / 20) or 0.2
-		if State.attStats.aimTime then aimingTime *= State.attStats.aimTime end
-		
-		local tweenInfo = TweenInfo.new(aimingTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, 0, false, aimingTime)
+	if not ((State.wepStats and State.wepStats.ADSEnabled) or (State.attStats and State.attStats.ADSEnabled)) then
+		return
+	end
 
-		for _, child in ipairs(State.gunModel:GetDescendants()) do
-			if child.Name == "REG" then
-				TweenService:Create(child, tweenInfo, {Transparency = toggle and 1 or 0}):Play()
-			elseif child.Name == "ADS" then
-				TweenService:Create(child, tweenInfo, {Transparency = toggle and 0 or 1}):Play()
-			end
+	local aimingTime = (State.wepStats.aimTime and State.wepStats.aimTime / 20) or 0.2
+	if State.attStats.aimTime then aimingTime *= State.attStats.aimTime end
+
+	for _, child in ipairs(State.gunModel:GetDescendants()) do
+		if child.Name == "REG" then
+			child.Transparency = toggle and 1 or 0
+		elseif child.Name == "ADS" then
+			child.Transparency = toggle and 0 or 1
 		end
 	end
 end
@@ -247,7 +293,7 @@ function WC.SwitchFireMode()
 end
 
 function WC.ChangeHoldStance(newStance)
-	if State.aiming then return end
+	if State.aiming() then return end
 	if WC.holdStance == newStance and WC.holdAnim then
 		WC.AnimationController.StopAnimation(WC.holdAnim.Name, 0.3)
 		WC.holdAnim = nil
@@ -453,13 +499,13 @@ function WC.Equip(newChild)
 
 		State.equipped = newChild
 		State.wepStats = require(State.equipped.SPH_Weapon.WeaponStats)
+		
 		WC.ViewmodelController.recoilSpring.Damping = State.wepStats.recoil.damping
 		WC.ViewmodelController.recoilSpring.Speed = State.wepStats.recoil.speed
 		WC.ViewmodelController.gunRecoilSpring.Damping = State.wepStats.gunRecoil.damping
 		WC.ViewmodelController.gunRecoilSpring.Speed = State.wepStats.gunRecoil.speed
 		
-		WC.aimFOVTarget = State.wepStats.aimFovDefault or WC.defaultFOV
-		WC.aimSensitivity = State.wepStats.aimSpeed
+		WC.aimFOVTarget = State.wepStats.aimFovDefault or config.defaultFOV
 
 		if not State.wepStats.operationType or type(State.wepStats.operationType) == "string" then State.wepStats.operationType = 1 end
 		if not State.wepStats.magType then State.wepStats.magType = 1 end
@@ -625,15 +671,16 @@ function WC.HandleInput(actionName, inputState)
 	elseif actionName == "SPH_Chamber" and inputState == inputBegan and not State.reloading and WC.cycled then
 		WC.ChamberAnim()
 	elseif actionName == "SPH_SwitchSights" and inputState == inputBegan and State.aiming and (State.gunModel:FindFirstChild("AimPart2") or (State.attStats.aimParts and State.attStats.aimParts["AimPart2"])) then
-		local tempIndex = WC.sightIndex + 1
+		-- TODO: move this out to the CharacterClient - it should modify state and WC should do the rest.
+		local tempIndex = State.sightIndex() + 1
 		if State.gunModel:FindFirstChild("AimPart"..tempIndex) or (State.attStats.aimParts and State.attStats.aimParts["AimPart"..tempIndex]) then
-			WC.sightIndex = tempIndex
+			State.sightIndex(tempIndex)
 			WC.PlayRepSound("AimUp")
 		else
-			WC.sightIndex = 1
+			State.sightIndex(1)
 			WC.PlayRepSound("AimDown")
 		end
-		if (State.attStats.ADSEnabled and State.attStats.ADSEnabled[WC.sightIndex]) or (State.wepStats.ADSEnabled and State.wepStats.ADSEnabled[WC.sightIndex]) then
+		if WC._adsMeshEnabled(State.sightIndex) then
 			WC.ToggleADS(true)
 		else
 			WC.ToggleADS(false)
@@ -729,7 +776,7 @@ function WC.UpdateHeartbeat(dt, freeLook, blocked)
 				vertRecoil /= 4
 				horzRecoil /= 4
 			end
-			if State.aiming then
+			if State.aiming() then
 				vertRecoil /= aimReduction
 				horzRecoil /= aimReduction
 			end

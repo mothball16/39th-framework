@@ -104,6 +104,7 @@ config.holdForScrollZoom = Enum.KeyCode.LeftControl
 config.fireGun = {Enum.UserInputType.MouseButton1, Enum.KeyCode.ButtonR2}
 config.aimGun = {Enum.UserInputType.MouseButton2, Enum.KeyCode.ButtonL2}
 
+config.defaultFOV = 70
 config.defaultAimSensitivity = 0.4 -- Scrolling up and down while aiming will increase/decrease your aim sensitivity
 config.gunInputPriority = 100 -- Priority level for gun inputs
 config.movementInputPriority = 100 -- Priority level for movement inputs

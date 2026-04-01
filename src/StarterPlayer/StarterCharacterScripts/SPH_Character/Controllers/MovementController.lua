@@ -85,7 +85,7 @@ function MovementController.ToggleSprint(toggle)
 	State.sprinting = toggle
 	MovementController.humanoid.Parent:SetAttribute("Sprinting", toggle)
 	if toggle then
-		if State.aiming then MovementController.ToggleAiming(false) end
+		if State.aiming() then MovementController.ToggleAiming(false) end
 		MovementController.ChangeHoldStance(0)
 		UserInputService.MouseDeltaSensitivity = 1
 		MovementController.CancelFiring()
