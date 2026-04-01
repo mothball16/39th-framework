@@ -131,8 +131,8 @@ function WC._adsMeshEnabled(sightIndex)
 end
 
 
-function WC.OnAimToggled(_, newAim)
-	if newAim then
+function WC.OnAimToggled(aiming)
+	if aiming then
 		WC.ChangeHoldStance(0)
 		local ADSMeshEnabled = WC._adsMeshEnabled(WC.sightIndex)
 
@@ -155,8 +155,8 @@ function WC.OnAimToggled(_, newAim)
 	end
 end
 
-function WC.OnSightIndexSwitched(_, newIndex)
-	if WC._adsMeshEnabled(newIndex) then
+function WC.OnSightIndexSwitched(index)
+	if WC._adsMeshEnabled(index) then
 		WC.ToggleADS(true)
 	else
 		WC.ToggleADS(false)
