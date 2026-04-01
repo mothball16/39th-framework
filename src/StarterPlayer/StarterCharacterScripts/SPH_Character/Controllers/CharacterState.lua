@@ -1,3 +1,7 @@
+local Packages = game.ReplicatedStorage:WaitForChild("Packages")
+local Charm = require(Packages.Charm)
+
+
 local CharacterState = {
 	-- Weapon Data
 	equipped = nil,
