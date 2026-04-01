@@ -44,7 +44,7 @@ function CameraController.UpdateRender(dt, freeLook)
 	local MovementController = CameraController.MovementController
 	
 	-- Limit camera rotation
-	if (humanoid.Sit and not MovementController.vehicleSeated and State.firstPerson or freeLook) and config.cameraLimitInSeats then
+	if (humanoid.Sit and not MovementController.vehicleSeated and State.firstPerson() or freeLook) and config.cameraLimitInSeats then
 		local cameraCFrame = humanoidRootPart.CFrame:ToObjectSpace(camera.CFrame)
 		local x, y, z = cameraCFrame:ToOrientation()
 		local a = camera.CFrame.Position.X
@@ -63,7 +63,7 @@ function CameraController.UpdateRender(dt, freeLook)
 	local zOffset
 
 	if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Added rig-check to correct positioning
-		if config.firstPersonBody and State.firstPerson then
+		if config.firstPersonBody and State.firstPerson() then
 			local xHead = humanoidRootPart.CFrame:ToObjectSpace(camera.CFrame):ToEulerAngles()
 			local rotationOffset = -1.2 + (xHead + 1.4) / 2.8
 			CameraController.cameraOffsetTarget = Vector3.new(0, 0, rotationOffset)
@@ -77,10 +77,10 @@ function CameraController.UpdateRender(dt, freeLook)
 
 		if State.stance == 1 then
 			yOffset = -1
-			if State.firstPerson then zOffset -= 0.3 end
+			if State.firstPerson() then zOffset -= 0.3 end
 		elseif State.stance == 2 then
 			yOffset = -1.5
-			if State.firstPerson then zOffset = -1.7 end
+			if State.firstPerson() then zOffset = -1.7 end
 		end
 
 		-- Lean offset
@@ -92,7 +92,7 @@ function CameraController.UpdateRender(dt, freeLook)
 			yOffset += -0.2
 		end
 	else
-		if config.firstPersonBody and State.firstPerson then
+		if config.firstPersonBody and State.firstPerson() then
 			local xHead = humanoidRootPart.CFrame:ToObjectSpace(camera.CFrame):ToEulerAngles()
 			local rotationOffset = -1.6 + (xHead + 1.4) / 2.8
 			CameraController.cameraOffsetTarget = Vector3.new(0, 0, rotationOffset)
@@ -106,10 +106,10 @@ function CameraController.UpdateRender(dt, freeLook)
 
 		if State.stance == 1 then -- DD_SPH: Adjusted camera positioning to reflect R15.
 			yOffset = .5
-			if State.firstPerson then zOffset -= 1.5 end --rev
+			if State.firstPerson() then zOffset -= 1.5 end --rev
 		elseif State.stance == 2 then
 			yOffset = 1.5
-			if State.firstPerson then zOffset = -3 end --rev
+			if State.firstPerson() then zOffset = -3 end --rev
 		end
 
 		-- Lean offset
@@ -143,7 +143,7 @@ function CameraController.UpdateRender(dt, freeLook)
 		camera.CFrame *= CFrame.Angles(0, 0, math.rad(CameraController.cameraLeanRotation))
 
 		-- Camera tilt
-		if config.cameraTilting and State.firstPerson then
+		if config.cameraTilting and State.firstPerson() then
 			local maxTiltAngle = 2
 			local relativeVelocity = humanoidRootPart.CFrame:VectorToObjectSpace(humanoidRootPart.Velocity)
 			local mouseDelta = UserInputService:GetMouseDelta()

@@ -107,7 +107,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 
 	local rayDistance = State.wepStats.gunLength
 	if State.attStats.gunLength then rayDistance += State.attStats.gunLength end
-	local originCFrame = State.firstPerson and animBase.CFrame or weaponRig.AnimBase.CFrame
+	local originCFrame = State.firstPerson() and animBase.CFrame or weaponRig.AnimBase.CFrame
 	local newRay = workspace:Raycast(originCFrame.Position, originCFrame.LookVector * rayDistance, rayParams)
 	
 	if newRay then
@@ -131,7 +131,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 			elseif blocked then
 				ViewmodelController.StopAnimation(State.wepStats.holdUpAnim, 0.3)
 				blocked = false
-				if aimHeld and not State.aiming() and State.firstPerson then
+				if aimHeld and not State.aiming() and State.firstPerson() then
 					ViewmodelController.ToggleAiming(true)
 				end
 			end
@@ -141,7 +141,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 			ViewmodelController.StopAnimation(State.wepStats.holdUpAnim, 0.3)
 		end
 		blocked = false
-		if aimHeld and not State.aiming() and State.firstPerson and not State.sprinting() then
+		if aimHeld and not State.aiming() and State.firstPerson() and not State.sprinting() then
 			ViewmodelController.ToggleAiming(true)
 		end
 		pushbackOffset = LerpNumber(pushbackOffset, 0, 0.2 * 60 * dt)
@@ -226,7 +226,7 @@ function ViewmodelController.UpdateMovementSway(dt, tempWalkSpeed, vehicleSeated
 	local updatedMoveSway = ViewmodelController.moveSpring:update(dt)
 	animBase.CFrame = animBase.CFrame:ToWorldSpace(CFrame.new(updatedMoveSway.Y, updatedMoveSway.X, 0) * CFrame.Angles(updatedMoveSway.Y * 0.3, 0, updatedMoveSway.Y * 0.8))
 
-	if config.cameraMovement and (State.firstPerson and not humanoid.Sit) and not vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
+	if config.cameraMovement and (State.firstPerson() and not humanoid.Sit) and not vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
 		camera.CFrame *= CFrame.Angles(math.rad(updatedMoveSway.X / config.cameraBobDampening), math.rad(updatedMoveSway.Y / config.cameraBobDampening), 0)
 	end
 end

@@ -20,8 +20,8 @@ local CharacterState = {
 	aimFOVTarget = 	Charm.atom(70) 						:: Charm.Atom<number>, -- TODO: use config defaultFOV
 
 	sprinting = Charm.atom(false)						:: Charm.Atom<boolean>,
-	reloading = false,
-	firstPerson = false,
+	reloading = Charm.atom(false)						:: Charm.Atom<boolean>,
+	firstPerson = Charm.atom(false)						:: Charm.Atom<boolean>,
 	dead = false,
 	stance = 0,
 }

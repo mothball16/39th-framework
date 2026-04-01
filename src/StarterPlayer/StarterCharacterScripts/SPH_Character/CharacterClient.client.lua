@@ -234,7 +234,7 @@ AnimationController.Initialize({
 
 -- Makes the viewmodel visible and refreshes its appearance
 local function RefreshViewmodel()
-	if State.firstPerson and not WeaponController.equipping then
+	if State.firstPerson() and not WeaponController.equipping then
 		viewmodelVisible = true
 	end
 
@@ -284,10 +284,6 @@ end
 -- Remove rig and reset head orientation
 local function ResetHead()
 	viewmodelVisible = false
-end
-
-local function LerpNumber(number:number, target:number, speed:number)
-	return number + (target-number) * speed
 end
 
 local function ToggleAiming(toggle)
@@ -354,7 +350,7 @@ local function HandleInput(actionName, inputState, inputObject)
 
 	if actionName == "SPH_HoldAim" then
 		if not userInputService.TouchEnabled and not config.toggleAiming then -- Hold aiming
-			if inputState == inputBegan and State.firstPerson and not freeLook and not blocked then
+			if inputState == inputBegan and State.firstPerson() and not freeLook and not blocked then
 				aimHeld = true
 				MovementController.ToggleSprint(false)
 				if State.stance == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
@@ -364,7 +360,7 @@ local function HandleInput(actionName, inputState, inputObject)
 				ToggleAiming(false)
 			end
 		elseif inputState == inputBegan then -- Mobile and toggle aiming
-			if State.firstPerson and not freeLook and not blocked and not State.aiming() then
+			if State.firstPerson() and not freeLook and not blocked and not State.aiming() then
 				aimHeld = true
 				MovementController.ToggleSprint(false)
 				if State.stance == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
@@ -517,7 +513,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			end
 
 			local lookDirection = camera.CFrame
-			if (not config.headRotation or State.sprinting()) and not State.firstPerson then
+			if (not config.headRotation or State.sprinting()) and not State.firstPerson() then
 				lookDirection = humanoidRootPart.CFrame
 			end
 
@@ -541,8 +537,8 @@ runService.RenderStepped:Connect(function(dt:number)
 		end
 
 		-- Check if player is in first person
-		if not State.firstPerson and character.Head.LocalTransparencyModifier >= fpThreshold then
-			State.firstPerson = true
+		if not State.firstPerson() and character.Head.LocalTransparencyModifier >= fpThreshold then
+			State.firstPerson(true)
 			if State.equipped then
 				InputController.BindAiming()
 				if WeaponController.flashlightEnabled then
@@ -564,8 +560,8 @@ runService.RenderStepped:Connect(function(dt:number)
 					laserBeamFP.Enabled = true
 				end
 			end
-		elseif State.firstPerson and character.Head.LocalTransparencyModifier <= fpThreshold then
-			State.firstPerson = false
+		elseif State.firstPerson() and character.Head.LocalTransparencyModifier <= fpThreshold then
+			State.firstPerson(false)
 			InputController.UnbindAiming()
 			if State.equipped then
 				if WeaponController.laserEnabled then
@@ -605,7 +601,7 @@ runService.RenderStepped:Connect(function(dt:number)
 
 		-- Update viewmodel
 		if State.equipped and camera.CameraType == Enum.CameraType.Custom then
-			if State.firstPerson and not viewmodelVisible then
+			if State.firstPerson() and not viewmodelVisible then
 				-- Player switched to first person
 				RefreshViewmodel()
 				MovementController.ToggleSprint(sprintHeld)
