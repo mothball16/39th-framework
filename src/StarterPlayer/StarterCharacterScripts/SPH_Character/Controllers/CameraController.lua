@@ -1,5 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
+local Packages = ReplicatedStorage:WaitForChild("Packages")
+local Charm = require(Packages.Charm)
+local TweenService = game:GetService("TweenService")
 
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
@@ -33,7 +36,21 @@ function CameraController.Initialize(params)
 	CameraController.rigType = params.rigType
 	
 	CameraController.MovementController = params.MovementController
+	
+	Charm.subscribe(State.sprinting, CameraController.OnSprintChanged)
 end
+
+
+function CameraController.OnSprintChanged(sprinting)
+	--[[
+	if sprinting then
+		if depthOfField then
+			CameraController.ChangeDoF(0, 6, 0, 0.3)
+		end
+	end]]
+end
+
+
 
 function CameraController.UpdateRender(dt, freeLook)
 	local camera = CameraController.camera
@@ -163,6 +180,24 @@ function CameraController.UpdateFOV(dt)
 	else
 		UserInputService.MouseDeltaSensitivity = 1 * camSensFactor
 	end
+end
+
+
+-- TODO: REFACTOR
+local depthOfField = game.Lighting:FindFirstChild("SPH_DoF")
+if not depthOfField and config.blurEffects then
+	depthOfField = Instance.new("DepthOfFieldEffect",game.Lighting)
+end
+if depthOfField then depthOfField.Name = "SPH_DoF" end
+
+function CameraController.ChangeDoF(fInt,fDist,fRad,nInt)
+	if not depthOfField then return end
+	TweenService:Create(depthOfField,TweenInfo.new(0.2),{
+		FarIntensity = fInt,
+		FocusDistance = fDist,
+		InFocusRadius = fRad,
+		NearIntensity = nInt
+	}):Play()
 end
 
 return CameraController

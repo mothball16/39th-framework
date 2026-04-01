@@ -1,3 +1,7 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Packages = ReplicatedStorage:WaitForChild("Packages")
+local Charm = require(Packages.Charm)
+local State = require(script.Parent.CharacterState)
 local AnimationController = {}
 
 AnimationController.loadedAnims = {}
@@ -14,7 +18,22 @@ function AnimationController.Initialize(params)
 	AnimationController.animationsFolder = params.animationsFolder
 	AnimationController.OnKeyframeReached = params.OnKeyframeReached
 	AnimationController.OnAnimationStopped = params.OnAnimationStopped
+
+	Charm.subscribe(State.sprinting, AnimationController.OnSprintChanged)
 end
+
+function AnimationController.OnSprintChanged(sprinting)
+	if sprinting then
+		if State.wepStats and State.wepStats.sprintAnim then
+			AnimationController.PlayAnimation(State.wepStats.sprintAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.2})
+		end
+	else
+		if State.wepStats and State.wepStats.sprintAnim then
+			AnimationController.StopAnimation(State.wepStats.sprintAnim, 0.2)
+		end
+	end
+end
+
 
 function AnimationController.StopAnimation(animName: string, transTime: number)
 	if AnimationController.loadedAnims[animName] then
