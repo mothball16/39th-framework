@@ -634,7 +634,7 @@ function WC.HandleInput(actionName, inputState)
 	if actionName == "SPH_Trigger" then
 		if inputState == inputBegan then
 			WC.cancelReload = true
-			if not (State.sprinting or State.reloading) then
+			if not (State.sprinting() or State.reloading) then
 				WC.holdingM1 = true
 				if not WC.IsLoaded() and not (State.equipped:GetAttribute("FireMode") == WC.fireModes.Manual and State.equipped:GetAttribute("MagAmmo") > 0) then
 					WC.PlayRepSound("Click")
@@ -744,7 +744,7 @@ function WC.HandleInput(actionName, inputState)
 end
 
 function WC.UpdateHeartbeat(dt, freeLook, blocked)
-	if State.equipped and not State.dead and WC.holdingM1 and WC.cycled and not State.sprinting and not State.reloading then
+	if State.equipped and not State.dead and WC.holdingM1 and WC.cycled and not State.sprinting() and not State.reloading then
 		if WC.canFire and not blocked and WC.holdStance == 0 and WC.IsLoaded() and WC.curFireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not WC.equipping then
 			if not State.firstPerson and not config.thirdPersonFiring then return end
 

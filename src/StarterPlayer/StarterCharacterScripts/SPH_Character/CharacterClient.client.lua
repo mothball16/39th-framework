@@ -327,14 +327,14 @@ local function HandleInput(actionName, inputState, inputObject)
 		if actionName == "SPH_StanceLower" and inputState == inputBegan and State.stance < 2 and not humanoid.Sit then -- Lower State.stance
 			if not config.canProne and State.stance == 1 then return end -- If the player is crouched and unable to prone then return
 			MovementController.ChangeStance(1)
-			if State.sprinting then MovementController.ToggleSprint(false) end
+			if State.sprinting() then MovementController.ToggleSprint(false) end
 
 
 		elseif actionName == "SPH_StanceRaise" and inputState == inputBegan and State.stance > 0 then -- Raise State.stance
 			MovementController.ChangeStance(-1)
 
 
-		elseif actionName == "SPH_LeanLeft" and inputState == inputBegan and State.stance < 2 and not State.sprinting and not humanoid.Sit then -- Lean left
+		elseif actionName == "SPH_LeanLeft" and inputState == inputBegan and State.stance < 2 and not State.sprinting() and not humanoid.Sit then -- Lean left
 			if MovementController.lean == -1 then
 				MovementController.ChangeLean(0)
 			else
@@ -342,7 +342,7 @@ local function HandleInput(actionName, inputState, inputObject)
 			end
 
 
-		elseif actionName == "SPH_LeanRight" and inputState == inputBegan and State.stance < 2 and not State.sprinting and not humanoid.Sit then -- Lean right
+		elseif actionName == "SPH_LeanRight" and inputState == inputBegan and State.stance < 2 and not State.sprinting() and not humanoid.Sit then -- Lean right
 			if MovementController.lean == 1 then
 				MovementController.ChangeLean(0)
 			else
@@ -359,7 +359,7 @@ local function HandleInput(actionName, inputState, inputObject)
 				MovementController.ToggleSprint(false)
 				if State.stance == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
 				ToggleAiming(true)
-			elseif not State.sprinting and State.aiming() then -- Not aiming
+			elseif not State.sprinting() and State.aiming() then -- Not aiming
 				aimHeld = false
 				ToggleAiming(false)
 			end
@@ -532,7 +532,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			end
 
 			local lookDirection = camera.CFrame
-			if (not config.headRotation or State.sprinting) and not State.firstPerson then
+			if (not config.headRotation or State.sprinting()) and not State.firstPerson then
 				lookDirection = humanoidRootPart.CFrame
 			end
 

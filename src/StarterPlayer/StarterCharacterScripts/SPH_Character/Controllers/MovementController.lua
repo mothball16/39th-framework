@@ -1,6 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local Packages = ReplicatedStorage:WaitForChild("Packages")
+local Charm = require(Packages.Charm)
 
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
@@ -68,6 +70,8 @@ function MovementController.Initialize(params)
 	MovementController.playerLean = params.playerLean
 	MovementController.ChangeDoF = params.ChangeDoF
 	MovementController.CancelFiring = params.CancelFiring
+
+	Charm.subscribe(State.sprinting, MovementController.OnSprintToggled)
 end
 
 function MovementController.ChangeWalkSpeed(newSpeed)
@@ -81,26 +85,33 @@ function MovementController.ChangeLean(newLean)
 	MovementController.playerLean:Fire(newLean)
 end
 
-function MovementController.ToggleSprint(toggle)
-	State.sprinting = toggle
-	MovementController.humanoid.Parent:SetAttribute("Sprinting", toggle)
-	if toggle then
+function MovementController.OnSprintToggled(newSprint)
+	MovementController.humanoid.Parent:SetAttribute("Sprinting", newSprint)
+	if newSprint then
 		if State.aiming() then MovementController.ToggleAiming(false) end
 		MovementController.ChangeHoldStance(0)
 		UserInputService.MouseDeltaSensitivity = 1
 		MovementController.CancelFiring()
-		MovementController.PlayAnimation(State.wepStats.sprintAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.2})
+		if State.wepStats and State.wepStats.sprintAnim then
+			MovementController.PlayAnimation(State.wepStats.sprintAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.2})
+		end
 
 		if MovementController.depthOfField then
 			MovementController.ChangeDoF(0, 6, 0, 0.3)
 		end
-	elseif State.wepStats then
-		MovementController.StopAnimation(State.wepStats.sprintAnim, 0.2)
+	else
+		if State.wepStats and State.wepStats.sprintAnim then
+			MovementController.StopAnimation(State.wepStats.sprintAnim, 0.2)
+		end
 
 		if MovementController.depthOfField then
 			MovementController.ChangeDoF(0, 0, 0, 0)
 		end
 	end
+end
+
+function MovementController.ToggleSprint(toggle)
+	State.sprinting(toggle)
 end
 
 function MovementController.ChangeStance(change)
@@ -158,7 +169,7 @@ function MovementController.UpdateRender(dt)
 		if MovementController.moveAnim then MovementController.moveAnim:Play(config.stanceChangeTime) end
 	elseif humanoid.MoveDirection.Magnitude <= 0 then
 		MovementController.moving = false
-		if State.sprinting then
+		if State.sprinting() then
 			MovementController.ToggleSprint(false)
 			MovementController.ChangeWalkSpeed(config.walkSpeed)
 		end

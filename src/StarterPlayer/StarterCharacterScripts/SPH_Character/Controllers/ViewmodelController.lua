@@ -141,7 +141,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 			ViewmodelController.StopAnimation(State.wepStats.holdUpAnim, 0.3)
 		end
 		blocked = false
-		if aimHeld and not State.aiming() and State.firstPerson and not State.sprinting then
+		if aimHeld and not State.aiming() and State.firstPerson and not State.sprinting() then
 			ViewmodelController.ToggleAiming(true)
 		end
 		pushbackOffset = LerpNumber(pushbackOffset, 0, 0.2 * 60 * dt)
