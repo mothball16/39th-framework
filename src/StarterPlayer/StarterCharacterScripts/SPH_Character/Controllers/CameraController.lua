@@ -35,7 +35,7 @@ function CameraController.Initialize(params)
 	CameraController.MovementController = params.MovementController
 end
 
-function CameraController.UpdateRender(dt)
+function CameraController.UpdateRender(dt, freeLook)
 	local camera = CameraController.camera
 	local humanoid = CameraController.humanoid
 	local humanoidRootPart = CameraController.humanoidRootPart
@@ -43,6 +43,21 @@ function CameraController.UpdateRender(dt)
 	local rigType = CameraController.rigType
 	local MovementController = CameraController.MovementController
 	
+	-- Limit camera rotation
+	if (humanoid.Sit and not MovementController.vehicleSeated and State.firstPerson or freeLook) and config.cameraLimitInSeats then
+		local cameraCFrame = humanoidRootPart.CFrame:ToObjectSpace(camera.CFrame)
+		local x, y, z = cameraCFrame:ToOrientation()
+		local a = camera.CFrame.Position.X
+		local b = camera.CFrame.Position.Y
+		local c = camera.CFrame.Position.Z
+
+		local xlimit = math.rad(math.clamp(math.deg(x), -60, 60))
+		local ylimit = math.rad(math.clamp(math.deg(y), -60, 60))
+		local zlimit = math.rad(math.clamp(math.deg(z), -60, 60))
+		local limitedCFrame = humanoidRootPart.CFrame:ToWorldSpace(CFrame.new(a, b, c) * CFrame.fromOrientation(xlimit, ylimit, zlimit))
+		camera.CFrame = CFrame.new(camera.CFrame.Position) * (limitedCFrame - limitedCFrame.Position)
+	end
+
 	local xOffset
 	local yOffset
 	local zOffset

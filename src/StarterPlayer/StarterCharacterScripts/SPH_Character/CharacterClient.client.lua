@@ -507,21 +507,6 @@ runService.RenderStepped:Connect(function(dt:number)
 
 	headRotationEventCooldown -= dt
 
-	-- Limit camera rotation
-	if (humanoid.Sit and not MovementController.vehicleSeated and State.firstPerson or freeLook) and config.cameraLimitInSeats then
-		local cameraCFrame = humanoidRootPart.CFrame:ToObjectSpace(camera.CFrame)
-		local x, y, z = cameraCFrame:ToOrientation()
-		local a = camera.CFrame.Position.X
-		local b = camera.CFrame.Position.Y
-		local c = camera.CFrame.Position.Z
-
-		local xlimit = math.rad(math.clamp(math.deg(x),-60,60))
-		local ylimit = math.rad(math.clamp(math.deg(y),-60,60))
-		local zlimit = math.rad(math.clamp(math.deg(z),-60,60))
-		local limitedCFrame = humanoidRootPart.CFrame:ToWorldSpace(CFrame.new(a,b,c) * CFrame.fromOrientation(xlimit,ylimit,zlimit))
-		camera.CFrame = CFrame.new(camera.CFrame.Position) * (limitedCFrame - limitedCFrame.Position)
-	end
-
 	if not State.dead and character:FindFirstChild("Head") then
 		if not State.dead then
 			local torsoDirection
@@ -616,8 +601,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		end
 
 		MovementController.UpdateRender(dt)
-
-		CameraController.UpdateRender(dt)
+		CameraController.UpdateRender(dt, freeLook)
 
 		-- Update viewmodel
 		if State.equipped and camera.CameraType == Enum.CameraType.Custom then
