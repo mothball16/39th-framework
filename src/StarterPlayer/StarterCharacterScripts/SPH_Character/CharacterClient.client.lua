@@ -309,28 +309,28 @@ local function HandleInput(actionName, inputState, inputObject)
 
 	if actionName == "SPH_Sprint" then -- Sprint hold
 		sprintHeld = inputState == inputBegan
-		if sprintHeld and State.stance < 2 and MovementController.moving then -- Begin State.sprinting
-			if State.stance == 1 then MovementController.ChangeStance(-1) end
+		if sprintHeld and State.stance() < 2 and MovementController.moving then -- Begin State.sprinting
+			if State.stance() == 1 then MovementController.ChangeStance(-1) end
 			if State.equipped() and MovementController.moving then MovementController.ToggleSprint(true) end
 			MovementController.ChangeWalkSpeed(config.sprintSpeed)
 			MovementController.ChangeLean(0)
-		elseif State.stance == 0 then -- End State.sprinting
+		elseif State.stance() == 0 then -- End State.sprinting
 			MovementController.ToggleSprint(false)
 			MovementController.ChangeWalkSpeed(config.walkSpeed)
 		end
 	elseif inputState == inputBegan then -- Other inputs
 
-		if actionName == "SPH_StanceLower" and inputState == inputBegan and State.stance < 2 and not humanoid.Sit then -- Lower State.stance
-			if not config.canProne and State.stance == 1 then return end -- If the player is crouched and unable to prone then return
+		if actionName == "SPH_StanceLower" and inputState == inputBegan and State.stance() < 2 and not humanoid.Sit then -- Lower State.stance
+			if not config.canProne and State.stance() == 1 then return end -- If the player is crouched and unable to prone then return
 			MovementController.ChangeStance(1)
 			if State.sprinting() then MovementController.ToggleSprint(false) end
 
 
-		elseif actionName == "SPH_StanceRaise" and inputState == inputBegan and State.stance > 0 then -- Raise State.stance
+		elseif actionName == "SPH_StanceRaise" and inputState == inputBegan and State.stance() > 0 then -- Raise State.stance
 			MovementController.ChangeStance(-1)
 
 
-		elseif actionName == "SPH_LeanLeft" and inputState == inputBegan and State.stance < 2 and not State.sprinting() and not humanoid.Sit then -- Lean left
+		elseif actionName == "SPH_LeanLeft" and inputState == inputBegan and State.stance() < 2 and not State.sprinting() and not humanoid.Sit then -- Lean left
 			if MovementController.lean == -1 then
 				MovementController.ChangeLean(0)
 			else
@@ -338,7 +338,7 @@ local function HandleInput(actionName, inputState, inputObject)
 			end
 
 
-		elseif actionName == "SPH_LeanRight" and inputState == inputBegan and State.stance < 2 and not State.sprinting() and not humanoid.Sit then -- Lean right
+		elseif actionName == "SPH_LeanRight" and inputState == inputBegan and State.stance() < 2 and not State.sprinting() and not humanoid.Sit then -- Lean right
 			if MovementController.lean == 1 then
 				MovementController.ChangeLean(0)
 			else
@@ -353,7 +353,7 @@ local function HandleInput(actionName, inputState, inputObject)
 			if inputState == inputBegan and State.firstPerson() and not freeLook and not blocked then
 				aimHeld = true
 				MovementController.ToggleSprint(false)
-				if State.stance == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
+				if State.stance() == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
 				ToggleAiming(true)
 			elseif not State.sprinting() and State.aiming() then -- Not aiming
 				aimHeld = false
@@ -363,7 +363,7 @@ local function HandleInput(actionName, inputState, inputObject)
 			if State.firstPerson() and not freeLook and not blocked and not State.aiming() then
 				aimHeld = true
 				MovementController.ToggleSprint(false)
-				if State.stance == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
+				if State.stance() == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
 				ToggleAiming(true)
 			else
 				aimHeld = false
@@ -642,7 +642,7 @@ runService.Heartbeat:Connect(function(dt:number)
 	WeaponController.UpdateHeartbeat(dt, freeLook, blocked)
 
 	-- TODO: figure out wtf this does
-	if State.stance == 2 and config.proneAngle then
+	if State.stance() == 2 and config.proneAngle then
 		local params = RaycastParams.new()
 		params.FilterType = Enum.RaycastFilterType.Exclude
 		params.FilterDescendantsInstances = {character}
@@ -690,9 +690,9 @@ humanoid.Seated:Connect(function(seated, seatPart)
 		InputController.UnbindCharacterInputs()
 		MovementController.ToggleSprint(false)
 		MovementController.ChangeLean(0)
-		if State.stance == 1 then
+		if State.stance() == 1 then
 			MovementController.ChangeStance(-1)
-		elseif State.stance == 2 then
+		elseif State.stance() == 2 then
 			MovementController.ChangeStance(-1)
 			MovementController.ChangeStance(-1)
 		end

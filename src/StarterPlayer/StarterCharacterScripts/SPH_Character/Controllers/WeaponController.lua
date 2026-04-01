@@ -786,7 +786,7 @@ function WC.UpdateHeartbeat(dt, freeLook, blocked)
 				vertRecoil /= aimReduction
 				horzRecoil /= aimReduction
 			end
-			if State.stance == 2 then
+			if State.stance() == 2 then
 				vertRecoil /= 2
 				horzRecoil /= 2
 			end
@@ -803,7 +803,7 @@ function WC.UpdateHeartbeat(dt, freeLook, blocked)
 				gunHorzRecoil *= State.attStats.gunRecoil.horizontal
 				punchMultiplier *= State.attStats.gunRecoil.punchMultiplier
 			end
-			if State.stance == 2 then
+			if State.stance() == 2 then
 				gunVertRecoil /= 1.5
 				gunHorzRecoil /= 1.5
 			end

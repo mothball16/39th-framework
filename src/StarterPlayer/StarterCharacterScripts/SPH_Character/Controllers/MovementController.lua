@@ -115,7 +115,7 @@ function MovementController.ToggleSprint(toggle)
 end
 
 function MovementController.ChangeStance(change)
-	local number = State.stance + change
+	local number = State.stance() + change
 	local targetCharacterHeight = 0
 
 	if number < 0 then number = 0 elseif number > 2 then number = 2 end
@@ -142,7 +142,7 @@ function MovementController.ChangeStance(change)
 		MovementController.ChangeWalkSpeed(config.crouchSpeed)
 		targetCharacterHeight = (MovementController.rigType == Enum.HumanoidRigType.R6) and 0 or MovementController.baseCharacterHipHeight
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), {HipHeight = targetCharacterHeight}):Play()
-		MovementController.PlayCharSound(State.stance == 0 and "Crouch" or "Unprone")
+		MovementController.PlayCharSound(State.stance() == 0 and "Crouch" or "Unprone")
 	elseif number == 2 then -- Prone
 		MovementController.ChangeLean(0)
 		MovementController.script.Parent.MovementLeaning:SetAttribute("DisableLean", true)
@@ -157,7 +157,7 @@ function MovementController.ChangeStance(change)
 	end
 
 	if preMove and MovementController.moveAnim then MovementController.moveAnim:Play() end
-	State.stance = number
+	State.stance(number)
 end
 
 function MovementController.UpdateRender(dt)
@@ -195,7 +195,7 @@ end
 function MovementController.Jump()
 	if MovementController.humanoid.Sit then
 		MovementController.humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-	elseif State.stance == 0 then
+	elseif State.stance() == 0 then
 		if MovementController.humanoid.FloorMaterial == Enum.Material.Air then return end
 		if MovementController.canJump then
 			MovementController.canJump = false

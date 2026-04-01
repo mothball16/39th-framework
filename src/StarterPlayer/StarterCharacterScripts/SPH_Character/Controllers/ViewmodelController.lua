@@ -76,7 +76,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 		animBase.CFrame *= freeLookRotation
 	end
 
-	if State.stance == 2 then
+	if State.stance() == 2 then
 		proneViewmodelOffset = LerpNumber(proneViewmodelOffset, 0.2, 0.1)
 	else
 		proneViewmodelOffset = LerpNumber(proneViewmodelOffset, 0, 0.1)

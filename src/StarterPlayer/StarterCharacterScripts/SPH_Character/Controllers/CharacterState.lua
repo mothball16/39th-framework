@@ -21,7 +21,7 @@ local CharacterState = {
 	reloading = Charm.atom(false)						:: Charm.Atom<boolean>,
 	firstPerson = Charm.atom(false)						:: Charm.Atom<boolean>,
 	dead = Charm.atom(false)							:: Charm.Atom<boolean>,
-	stance = 0,
+	stance = Charm.atom(0) 								:: Charm.Atom<number>,
 }
 
 return CharacterState

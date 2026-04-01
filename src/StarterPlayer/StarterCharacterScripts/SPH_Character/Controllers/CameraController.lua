@@ -75,10 +75,10 @@ function CameraController.UpdateRender(dt, freeLook)
 		yOffset = 0
 		zOffset = CameraController.cameraOffsetTarget.Z
 
-		if State.stance == 1 then
+		if State.stance() == 1 then
 			yOffset = -1
 			if State.firstPerson() then zOffset -= 0.3 end
-		elseif State.stance == 2 then
+		elseif State.stance() == 2 then
 			yOffset = -1.5
 			if State.firstPerson() then zOffset = -1.7 end
 		end
@@ -104,10 +104,10 @@ function CameraController.UpdateRender(dt, freeLook)
 		yOffset = 0
 		zOffset = CameraController.cameraOffsetTarget.Z
 
-		if State.stance == 1 then -- DD_SPH: Adjusted camera positioning to reflect R15.
+		if State.stance() == 1 then -- DD_SPH: Adjusted camera positioning to reflect R15.
 			yOffset = .5
 			if State.firstPerson() then zOffset -= 1.5 end --rev
-		elseif State.stance == 2 then
+		elseif State.stance() == 2 then
 			yOffset = 1.5
 			if State.firstPerson() then zOffset = -3 end --rev
 		end
