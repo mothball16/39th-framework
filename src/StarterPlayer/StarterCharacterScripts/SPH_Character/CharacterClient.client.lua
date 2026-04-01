@@ -3,8 +3,8 @@ local runService = game:GetService("RunService")
 local userInputService = game:GetService("UserInputService")
 local debris = game:GetService("Debris")
 local players = game:GetService("Players")
-local tweenService = game:GetService("TweenService")
-
+local Enums = require(script.Parent.Enums)
+local Intents = Enums.Intents
 local assets = replicatedStorage.SPH_Assets
 local modules = assets.Modules
 local config = require(assets.GameConfig)
@@ -69,15 +69,10 @@ local playerLean = bridgeNet.CreateBridge("PlayerLean")
 
 local fpThreshold = 0.6
 
-local depthOfField = game.Lighting:FindFirstChild("SPH_DoF")
-if not depthOfField and config.blurEffects then
-	depthOfField = Instance.new("DepthOfFieldEffect",game.Lighting)
-end
-if depthOfField then depthOfField.Name = "SPH_DoF" end
+
 
 local viewmodelVisible = false
 local blocked = false
-local sprintHeld = false
 local aimHeld = false
 
 local freeLook = false
@@ -292,38 +287,18 @@ local function ToggleAiming(toggle)
 end
 
 
-local function ChangeDoF(fInt,fDist,fRad,nInt)
-	if not depthOfField then return end
-	tweenService:Create(depthOfField,TweenInfo.new(0.2),{
-		FarIntensity = fInt,
-		FocusDistance = fDist,
-		InFocusRadius = fRad,
-		NearIntensity = nInt
-	}):Play()
-end
 
 local function HandleInput(actionName, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	local inputEnded = Enum.UserInputState.End
 
 
-	if actionName == "SPH_Sprint" then -- Sprint hold
-		sprintHeld = inputState == inputBegan
-		if sprintHeld and State.stance() < 2 and MovementController.moving then -- Begin State.sprinting
-			if State.stance() == 1 then MovementController.ChangeStance(-1) end
-			if State.equipped() and MovementController.moving then MovementController.ToggleSprint(true) end
-			MovementController.ChangeWalkSpeed(config.sprintSpeed)
-			MovementController.ChangeLean(0)
-		elseif State.stance() == 0 then -- End State.sprinting
-			MovementController.ToggleSprint(false)
-			MovementController.ChangeWalkSpeed(config.walkSpeed)
-		end
-	elseif inputState == inputBegan then -- Other inputs
+	if inputState == inputBegan then -- Other inputs
 
 		if actionName == "SPH_StanceLower" and inputState == inputBegan and State.stance() < 2 and not humanoid.Sit then -- Lower State.stance
 			if not config.canProne and State.stance() == 1 then return end -- If the player is crouched and unable to prone then return
 			MovementController.ChangeStance(1)
-			if State.sprinting() then MovementController.ToggleSprint(false) end
+			State.sprinting(false)
 
 
 		elseif actionName == "SPH_StanceRaise" and inputState == inputBegan and State.stance() > 0 then -- Raise State.stance
@@ -352,7 +327,7 @@ local function HandleInput(actionName, inputState, inputObject)
 		if not userInputService.TouchEnabled and not config.toggleAiming then -- Hold aiming
 			if inputState == inputBegan and State.firstPerson() and not freeLook and not blocked then
 				aimHeld = true
-				MovementController.ToggleSprint(false)
+				State.sprinting(false)
 				if State.stance() == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
 				ToggleAiming(true)
 			elseif not State.sprinting() and State.aiming() then -- Not aiming
@@ -362,7 +337,7 @@ local function HandleInput(actionName, inputState, inputObject)
 		elseif inputState == inputBegan then -- Mobile and toggle aiming
 			if State.firstPerson() and not freeLook and not blocked and not State.aiming() then
 				aimHeld = true
-				MovementController.ToggleSprint(false)
+				State.sprinting(false)
 				if State.stance() == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
 				ToggleAiming(true)
 			else
@@ -388,12 +363,18 @@ local function HandleInput(actionName, inputState, inputObject)
 	end
 end
 
+
+InputController.Initialize({
+	callbacks = {
+		[Intents.SPRINT] = MovementController.OnSprintIntent
+	}
+})
+
 MovementController.Initialize({
 	humanoid = humanoid,
 	humanoidRootPart = humanoidRootPart,
 	rootJoint = rootJoint,
 	rigType = rigType,
-	depthOfField = depthOfField,
 	script = script,
 	crouchIdleAnim = crouchIdleAnim,
 	crouchMoveAnim = crouchMoveAnim,
@@ -405,7 +386,6 @@ MovementController.Initialize({
 	StopAnimation = AnimationController.StopAnimation,
 	PlayCharSound = PlayCharSound,
 	playerLean = playerLean,
-	ChangeDoF = ChangeDoF,
 	CancelFiring = function() WeaponController.holdingM1 = false end
 })
 
@@ -450,8 +430,6 @@ WeaponController.Initialize({
 	InputController = InputController,
 	RefreshViewmodel = RefreshViewmodel,
 	ToggleAiming = ToggleAiming,
-	ChangeDoF = ChangeDoF,
-	GetSprintHeld = function() return sprintHeld end
 })
 
 InputController.ActionFired = HandleInput
@@ -603,7 +581,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			if State.firstPerson() and not viewmodelVisible then
 				-- Player switched to first person
 				RefreshViewmodel()
-				MovementController.ToggleSprint(sprintHeld)
+				State.sprinting(false)
 			end
 
 			-- Update recoil and movement springs
@@ -688,7 +666,7 @@ end
 humanoid.Seated:Connect(function(seated, seatPart)
 	if seated then -- In a seat
 		InputController.UnbindCharacterInputs()
-		MovementController.ToggleSprint(false)
+		State.sprinting(false)
 		MovementController.ChangeLean(0)
 		if State.stance() == 1 then
 			MovementController.ChangeStance(-1)

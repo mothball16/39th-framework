@@ -1,20 +1,53 @@
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
+local Enums = require(script.Parent.Parent.Enums)
+local Intents = Enums.Intents
 local config = require(ReplicatedStorage:WaitForChild("SPH_Assets").GameConfig)
 
 local InputController = {}
+
+InputController._callbacks = {}
+
 
 -- Callbacks to be assigned by the main CharacterClient
 InputController.ActionFired = nil
 InputController.ScrollFired = nil
 InputController.JumpRequested = nil
 
+function InputController.Initialize(args)
+	for intentKey, _ in pairs(Intents) do
+		local callback = args.callbacks[intentKey]
+		if not callback then
+			warn(`[pearhead] no callback defined for intent key {intentKey}`)
+		end
+
+		InputController._callbacks[intentKey] = callback or function(inputState, inputObject)
+			warn(`[pearhead] no callback defined for intent key {intentKey}`)
+		end
+	end
+end
+
 local function InternalHandleInput(actionName, inputState, inputObject)
 	if InputController.ActionFired then
 		InputController.ActionFired(actionName, inputState, inputObject)
 	end
+end
+
+
+function InputController.HandleInput(actionName, inputState, inputObject)
+	if not InputController._callbacks[actionName] then
+		warn(`[pearhead] no callback defined for intent key {actionName}`)
+		return
+	end
+	InputController._callbacks[actionName](inputState, inputObject)
+end
+
+function InputController.BindInput(actionName, touchButton, ...)
+	if not Intents[actionName] then
+		warn(`[pearhead] {actionName} isn't a valid intent in Enums.Intents`)
+	end
+	ContextActionService:BindActionAtPriority(actionName, InputController.HandleInput,touchButton, config.gunInputPriority, ...)
 end
 
 function InputController.BindAiming()
@@ -69,7 +102,10 @@ function InputController.UnbindGunInputs()
 end
 
 function InputController.BindCharacterInputs()
-	ContextActionService:BindActionAtPriority("SPH_Sprint", InternalHandleInput, false, config.movementInputPriority, unpack(config.keySprint))
+	InputController.BindInput(Intents.SPRINT, false, unpack(config.keySprint))
+
+
+	
 	ContextActionService:BindActionAtPriority("SPH_StanceLower", InternalHandleInput, config.mobileButtons, config.movementInputPriority, unpack(config.lowerStance))
 	ContextActionService:BindActionAtPriority("SPH_StanceRaise", InternalHandleInput, config.mobileButtons, config.movementInputPriority, unpack(config.raiseStance))
 	ContextActionService:BindActionAtPriority("SPH_LeanLeft", InternalHandleInput, false, config.movementInputPriority, unpack(config.leanLeft))

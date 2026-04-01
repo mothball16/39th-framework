@@ -1,19 +1,20 @@
 return {
     Stance = {
-        STANDING = "stand",
-        CROUCHING = "crouch",
-        CRAWLING = "crawl",
+        STANDING = "STANDING",
+        CROUCHING = "CROUCHING",
+        CRAWLING = "CRAWLING",
     },
     Lean = {
-        LEFT = "left",
-        RIGHT = "right",
-        NONE = "none",
+        LEFT = "LEFT",
+        RIGHT = "RIGHT",
+        NONE = "NONE",
     },
     Intents = {
-        STANCE_UP = "ph_stanceup",
-        STANCE_DOWN = "ph_stancedown",
-        LEAN_LEFT = "ph_leanleft",
-        LEAN_RIGHT = "ph_leanright",
-        LEAN_NONE = "ph_leannone",
+        STANCE_UP = "STANCE_UP",
+        STANCE_DOWN = "STANCE_DOWN",
+        LEAN_LEFT = "LEAN_LEFT",
+        LEAN_RIGHT = "LEAN_RIGHT",
+        LEAN_NONE = "LEAN_NONE",
+        SPRINT = "SPRINT",
     }
 }
