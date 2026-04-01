@@ -5,9 +5,14 @@ registry = "test"
 [[package]]
 name = "jzou0/39th-framework"
 version = "0.1.0"
-dependencies = [["Charm", "littensy/charm@0.11.0-rc.5"]]
+dependencies = [["Charm", "littensy/charm@0.11.0-rc.5"], ["signal", "sleitnick/signal@2.0.3"]]
 
 [[package]]
 name = "littensy/charm"
 version = "0.11.0-rc.5"
+dependencies = []
+
+[[package]]
+name = "sleitnick/signal"
+version = "2.0.3"
 dependencies = []
