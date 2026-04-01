@@ -5,7 +5,6 @@ local config = require(assets.GameConfig)
 
 local CharacterState = {
 	-- Weapon Data
-	equipped = nil,
 	wepStats = nil,
 	attStats = {},
 
@@ -19,6 +18,8 @@ local CharacterState = {
 	sightIndex = Charm.atom(1) 							:: Charm.Atom<number>,
 	aimFOVTarget = 	Charm.atom(config.defaultFOV) 		:: Charm.Atom<number>,
 
+
+	equipped = Charm.atom(nil) 							:: Charm.Atom<Instance>,
 	sprinting = Charm.atom(false)						:: Charm.Atom<boolean>,
 	reloading = Charm.atom(false)						:: Charm.Atom<boolean>,
 	firstPerson = Charm.atom(false)						:: Charm.Atom<boolean>,

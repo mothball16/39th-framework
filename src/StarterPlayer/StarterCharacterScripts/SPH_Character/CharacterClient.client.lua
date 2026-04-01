@@ -311,7 +311,7 @@ local function HandleInput(actionName, inputState, inputObject)
 		sprintHeld = inputState == inputBegan
 		if sprintHeld and State.stance < 2 and MovementController.moving then -- Begin State.sprinting
 			if State.stance == 1 then MovementController.ChangeStance(-1) end
-			if State.equipped and MovementController.moving then MovementController.ToggleSprint(true) end
+			if State.equipped() and MovementController.moving then MovementController.ToggleSprint(true) end
 			MovementController.ChangeWalkSpeed(config.sprintSpeed)
 			MovementController.ChangeLean(0)
 		elseif State.stance == 0 then -- End State.sprinting
@@ -370,7 +370,7 @@ local function HandleInput(actionName, inputState, inputObject)
 				ToggleAiming(false)
 			end
 		end
-	elseif State.equipped then
+	elseif State.equipped() then
 		WeaponController.HandleInput(actionName, inputState)
 	end
 	
@@ -459,10 +459,9 @@ InputController.BindCharacterInputs()
 
 humanoid.Died:Connect(function()
 	State.dead(true)
-	WeaponController.switchWeapon:Fire()
-	State.equipped = nil
-	State.wepStats = nil
-	State.attStats = {} -- DD_SPH: Gunsmith
+	if State.equipped() then
+		WeaponController.Unequip(State.equipped())
+	end
 	userInputService.MouseIconEnabled = true
 	ToggleAiming(false)
 	viewmodelVisible = false
@@ -539,7 +538,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		-- Check if player is in first person
 		if not State.firstPerson() and character.Head.LocalTransparencyModifier >= fpThreshold then
 			State.firstPerson(true)
-			if State.equipped then
+			if State.equipped() then
 				InputController.BindAiming()
 				if WeaponController.flashlightEnabled then
 					if State.gunModel.Grip:FindFirstChild("Flashlight") then
@@ -563,7 +562,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		elseif State.firstPerson() and character.Head.LocalTransparencyModifier <= fpThreshold then
 			State.firstPerson(false)
 			InputController.UnbindAiming()
-			if State.equipped then
+			if State.equipped() then
 				if WeaponController.laserEnabled then
 					laserBeamTP.Enabled = true
 					laserBeamFP.Enabled = false
@@ -600,7 +599,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		CameraController.UpdateRender(dt, freeLook)
 
 		-- Update viewmodel
-		if State.equipped and camera.CameraType == Enum.CameraType.Custom then
+		if State.equipped() and camera.CameraType == Enum.CameraType.Custom then
 			if State.firstPerson() and not viewmodelVisible then
 				-- Player switched to first person
 				RefreshViewmodel()
@@ -700,7 +699,7 @@ humanoid.Seated:Connect(function(seated, seatPart)
 
 		if seatPart:IsA("VehicleSeat") then
 			MovementController.vehicleSeated = true
-			if State.equipped then
+			if State.equipped() then
 				humanoid:UnequipTools()
 			end
 		else
