@@ -458,7 +458,7 @@ InputController.ActionFired = HandleInput
 InputController.BindCharacterInputs()
 
 humanoid.Died:Connect(function()
-	State.dead = true
+	State.dead(true)
 	WeaponController.switchWeapon:Fire()
 	State.equipped = nil
 	State.wepStats = nil
@@ -503,8 +503,8 @@ runService.RenderStepped:Connect(function(dt:number)
 
 	headRotationEventCooldown -= dt
 
-	if not State.dead and character:FindFirstChild("Head") then
-		if not State.dead then
+	if not State.dead() and character:FindFirstChild("Head") then
+		if not State.dead() then
 			local torsoDirection
 			if humanoid.RigType == Enum.HumanoidRigType.R6 then
 				torsoDirection = character.Torso.CFrame.LookVector
@@ -530,7 +530,7 @@ runService.RenderStepped:Connect(function(dt:number)
 			neckJoint.C1 = neckJoint.C1:Lerp(neckCFrame,1 - math.exp(-config.headRotationSpeed * dt))
 			--neckJoint.C1 = neckCFrame
 
-			if headRotationEventCooldown <= 0 and not State.dead and not config.disableHeadRotation then
+			if headRotationEventCooldown <= 0 and not State.dead() and not config.disableHeadRotation then
 				headRotationEventCooldown = config.headRotationEventRate
 				bodyAnimRequest:Fire(neckJoint.C1)
 			end

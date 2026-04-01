@@ -166,7 +166,7 @@ end
 
 
 function WC.PlayRepSound(soundName)
-	if not State.dead and State.wepStats then
+	if not State.dead() and State.wepStats then
 		local soundToPlay
 		if WC.curFireMode == WC.fireModes.UBGL and State.wepStats.hasUBGL then
 			soundToPlay = State.gunModel.Grip:FindFirstChild("UBGL_" .. soundName)
@@ -486,7 +486,7 @@ end
 function WC.Equip(newChild)
 	if newChild:FindFirstChild("SPH_Weapon") and not assets.WeaponModels:FindFirstChild(newChild.Name) then return end
 
-	if newChild:FindFirstChild("SPH_Weapon") and not State.dead and (not WC.humanoid.Sit or WC.humanoid.Sit and not WC.MovementController.vehicleSeated) then
+	if newChild:FindFirstChild("SPH_Weapon") and not State.dead() and (not WC.humanoid.Sit or WC.humanoid.Sit and not WC.MovementController.vehicleSeated) then
 		State.reloading(false)
 		UserInputService.MouseIconEnabled = false
 		WC.ViewmodelController.ResetHipRotation()
@@ -744,7 +744,7 @@ function WC.HandleInput(actionName, inputState)
 end
 
 function WC.UpdateHeartbeat(dt, freeLook, blocked)
-	if State.equipped and not State.dead and WC.holdingM1 and WC.cycled and not State.sprinting() and not State.reloading() then
+	if State.equipped and not State.dead() and WC.holdingM1 and WC.cycled and not State.sprinting() and not State.reloading() then
 		if WC.canFire and not blocked and WC.holdStance == 0 and WC.IsLoaded() and WC.curFireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not WC.equipping then
 			if not State.firstPerson() and not config.thirdPersonFiring then return end
 

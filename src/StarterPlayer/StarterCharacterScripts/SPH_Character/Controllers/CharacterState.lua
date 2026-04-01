@@ -17,12 +17,12 @@ local CharacterState = {
 	aiming = Charm.atom(false) 							:: Charm.Atom<boolean>,
 	aimSens = Charm.atom(config.defaultAimSensitivity) 	:: Charm.Atom<number>,
 	sightIndex = Charm.atom(1) 							:: Charm.Atom<number>,
-	aimFOVTarget = 	Charm.atom(70) 						:: Charm.Atom<number>, -- TODO: use config defaultFOV
+	aimFOVTarget = 	Charm.atom(config.defaultFOV) 		:: Charm.Atom<number>,
 
 	sprinting = Charm.atom(false)						:: Charm.Atom<boolean>,
 	reloading = Charm.atom(false)						:: Charm.Atom<boolean>,
 	firstPerson = Charm.atom(false)						:: Charm.Atom<boolean>,
-	dead = false,
+	dead = Charm.atom(false)							:: Charm.Atom<boolean>,
 	stance = 0,
 }
 
