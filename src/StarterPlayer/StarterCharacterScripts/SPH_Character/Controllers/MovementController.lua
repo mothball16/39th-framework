@@ -241,9 +241,11 @@ function MovementController.UpdateRender(dt)
 		* CFrame.Angles(math.rad(0), math.rad(0), math.rad(0) + math.rad(17 * State.lean())), 0.1 * dt * 60)
 	end
 
+
 	if config.movementLeaning then
 		UpdateCharacterTilt(Players.LocalPlayer.Character, dt)
-		
+
+		-- TODO: this is probably an optimization issue. consider caching and determining how this would work under StreamingEnabled
 		if config.replicateMovementLeaning then
 			for _, player in ipairs(Players:GetPlayers()) do
 				if player ~= Players.LocalPlayer and player.Character then

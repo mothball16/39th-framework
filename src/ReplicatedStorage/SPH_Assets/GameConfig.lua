@@ -63,7 +63,7 @@ config.proneSpeed = 3
 -- To override these speeds, see the "WalkspeedOverrideToggle" and "WalkspeedOverride" attributes of the CharacterClient script
 
 config.movementLeaning = true -- Will players lean into the direction they're moving? (This setting can cause issues if other scripts are trying to animate the torso)
-config.replicateMovementLeaning = true -- Replicate other players leaning?
+config.replicateMovementLeaning = false -- Replicate other players leaning?
 config.maxLeanAngle = 5 -- How far can players lean while moving
 
 config.stanceChangeTime = 0.3 -- How long it takes to transition between stances
