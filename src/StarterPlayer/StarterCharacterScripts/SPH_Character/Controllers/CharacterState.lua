@@ -48,6 +48,7 @@ local CharacterState = {
 	dead = Charm.atom(false)							:: Charm.Atom<boolean>,
 	stance = Charm.atom(0) 								:: Charm.Atom<number>,
 	lean = Charm.atom(0) 								:: Charm.Atom<number>,
+	moving = Charm.atom(false)							:: Charm.Atom<boolean>,
 
 }
 

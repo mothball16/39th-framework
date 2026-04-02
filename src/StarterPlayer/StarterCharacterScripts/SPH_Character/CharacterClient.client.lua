@@ -90,23 +90,6 @@ else
 end
 -- </DD_SPH>
 
--- Preload movement animations
-local crouchIdleAnim:AnimationTrack = humanoid.Animator:LoadAnimation(animations.Crouch_Idle)
-crouchIdleAnim.Looped = true
-crouchIdleAnim.Priority = Enum.AnimationPriority.Idle
-
-local crouchMoveAnim:AnimationTrack = humanoid.Animator:LoadAnimation(animations.Crouch_Move)
-crouchMoveAnim.Looped = true
-crouchMoveAnim.Priority = Enum.AnimationPriority.Movement
-
-local proneIdleAnim:AnimationTrack = humanoid.Animator:LoadAnimation(animations.Prone_Idle)
-proneIdleAnim.Looped = true
-proneIdleAnim.Priority = Enum.AnimationPriority.Idle
-
-local proneMoveAnim:AnimationTrack = humanoid.Animator:LoadAnimation(animations.Prone_Move)
-proneMoveAnim.Looped = true
-proneMoveAnim.Priority = Enum.AnimationPriority.Movement
-
 local laserDotUI = assets.HUD.LaserDotUI:Clone()
 local laserDotPoint = Instance.new("Attachment")
 laserDotPoint.Parent = workspace.Terrain
@@ -351,14 +334,11 @@ MovementController.Initialize({
 	rootJoint = rootJoint,
 	rigType = rigType,
 	script = script,
-	crouchIdleAnim = crouchIdleAnim,
-	crouchMoveAnim = crouchMoveAnim,
-	proneIdleAnim = proneIdleAnim,
-	proneMoveAnim = proneMoveAnim,
 	ToggleAiming = ToggleAiming,
 	ChangeHoldStance = WeaponController.ChangeHoldStance,
 	PlayAnimation = AnimationController.PlayAnimation,
 	StopAnimation = AnimationController.StopAnimation,
+	AdjustMoveAnimSpeed = AnimationController.AdjustMoveAnimSpeed,
 	PlayCharSound = PlayCharSound,
 	CancelFiring = function() WeaponController.holdingM1 = false end
 })

@@ -2,12 +2,19 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local State = require(script.Parent.CharacterState)
+local config = require(ReplicatedStorage:WaitForChild("SPH_Assets").GameConfig)
 local AnimationController = {}
 
 AnimationController.loadedAnims = {}
 AnimationController.vmAnimator = nil
 AnimationController.characterAnimator = nil
 AnimationController.animationsFolder = nil
+
+AnimationController.crouchIdleAnim = nil
+AnimationController.crouchMoveAnim = nil
+AnimationController.proneIdleAnim = nil
+AnimationController.proneMoveAnim = nil
+AnimationController.moveAnim = nil
 
 AnimationController.OnKeyframeReached = nil
 AnimationController.OnAnimationStopped = nil
@@ -19,7 +26,53 @@ function AnimationController.Initialize(params)
 	AnimationController.OnKeyframeReached = params.OnKeyframeReached
 	AnimationController.OnAnimationStopped = params.OnAnimationStopped
 
+	AnimationController.crouchIdleAnim = State.Parts.Humanoid.Animator:LoadAnimation(params.animationsFolder.Crouch_Idle)
+	AnimationController.crouchIdleAnim.Looped = true
+	AnimationController.crouchIdleAnim.Priority = Enum.AnimationPriority.Idle
+
+	AnimationController.crouchMoveAnim = State.Parts.Humanoid.Animator:LoadAnimation(params.animationsFolder.Crouch_Move)
+	AnimationController.crouchMoveAnim.Looped = true
+	AnimationController.crouchMoveAnim.Priority = Enum.AnimationPriority.Movement
+
+	AnimationController.proneIdleAnim = State.Parts.Humanoid.Animator:LoadAnimation(params.animationsFolder.Prone_Idle)
+	AnimationController.proneIdleAnim.Looped = true
+	AnimationController.proneIdleAnim.Priority = Enum.AnimationPriority.Idle
+
+	AnimationController.proneMoveAnim = State.Parts.Humanoid.Animator:LoadAnimation(params.animationsFolder.Prone_Move)
+	AnimationController.proneMoveAnim.Looped = true
+	AnimationController.proneMoveAnim.Priority = Enum.AnimationPriority.Movement
+
 	Charm.subscribe(State.sprinting, AnimationController.OnSprintChanged)
+	Charm.subscribe(State.stance, AnimationController.OnStanceChanged)
+	Charm.subscribe(State.moving, AnimationController.OnMovingChanged)
+end
+
+function AnimationController.OnStanceChanged(stance, oldStance)
+	if AnimationController.moveAnim then AnimationController.moveAnim:Stop(config.stanceChangeTime) end
+
+	if stance == 0 then -- Walking
+		AnimationController.moveAnim = nil
+		AnimationController.crouchIdleAnim:Stop(config.stanceChangeTime)
+		AnimationController.proneIdleAnim:Stop(config.stanceChangeTime)
+	elseif stance == 1 then -- Crouching
+		AnimationController.moveAnim = AnimationController.crouchMoveAnim
+		if State.moving() then AnimationController.moveAnim:Play(config.stanceChangeTime) end
+		AnimationController.proneIdleAnim:Stop(config.stanceChangeTime)
+		AnimationController.crouchIdleAnim:Play(config.stanceChangeTime)
+	elseif stance == 2 then -- Prone
+		AnimationController.moveAnim = AnimationController.proneMoveAnim
+		AnimationController.crouchIdleAnim:Stop(config.stanceChangeTime)
+		AnimationController.proneIdleAnim:Play(config.stanceChangeTime)
+		if State.moving() then AnimationController.moveAnim:Play(config.stanceChangeTime) end
+	end
+end
+
+function AnimationController.OnMovingChanged(moving)
+	if moving then
+		if AnimationController.moveAnim then AnimationController.moveAnim:Play(config.stanceChangeTime) end
+	else
+		if AnimationController.moveAnim then AnimationController.moveAnim:Stop(config.stanceChangeTime) end
+	end
 end
 
 function AnimationController.OnSprintChanged(sprinting)
@@ -104,6 +157,12 @@ function AnimationController.StopAll()
 		for _, track in ipairs(AnimationController.characterAnimator:GetPlayingAnimationTracks()) do
 			track:Stop()
 		end
+	end
+end
+
+function AnimationController.AdjustMoveAnimSpeed(speed: number)
+	if AnimationController.moveAnim then
+		AnimationController.moveAnim:AdjustSpeed(speed)
 	end
 end
 

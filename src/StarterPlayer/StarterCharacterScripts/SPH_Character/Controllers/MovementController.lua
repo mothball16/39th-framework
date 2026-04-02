@@ -19,19 +19,13 @@ local MovementController = {
     tempWalkSpeed = config.walkSpeed,
     vehicleSeated = false,
     canJump = true,
-    moving = false,
     baseCharacterHipHeight = 0,
-    moveAnim = nil,
 
     -- init vars
     humanoid = nil,
     humanoidRootPart = nil,
     rootJoint = nil,
     rigType = nil,
-    crouchIdleAnim = nil,
-    crouchMoveAnim = nil,
-    proneIdleAnim = nil,
-    proneMoveAnim = nil,
     script = nil,
 
     -- Callbacks
@@ -39,6 +33,7 @@ local MovementController = {
     ChangeHoldStance = nil,
     PlayAnimation = nil,
     StopAnimation = nil,
+    AdjustMoveAnimSpeed = nil,
     PlayCharSound = nil,
     CancelFiring = nil,
 }
@@ -57,15 +52,11 @@ function MovementController.Initialize(params)
 	MovementController.script = params.script
 	MovementController.baseCharacterHipHeight = params.humanoid.HipHeight
 	
-	MovementController.crouchIdleAnim = params.crouchIdleAnim
-	MovementController.crouchMoveAnim = params.crouchMoveAnim
-	MovementController.proneIdleAnim = params.proneIdleAnim
-	MovementController.proneMoveAnim = params.proneMoveAnim
-	
 	MovementController.ToggleAiming = params.ToggleAiming
 	MovementController.ChangeHoldStance = params.ChangeHoldStance
 	MovementController.PlayAnimation = params.PlayAnimation
 	MovementController.StopAnimation = params.StopAnimation
+	MovementController.AdjustMoveAnimSpeed = params.AdjustMoveAnimSpeed
 	MovementController.PlayCharSound = params.PlayCharSound
 	MovementController.CancelFiring = params.CancelFiring
 
@@ -80,7 +71,7 @@ local function isInputDown(state)
 end
 function MovementController.OnSprintIntent(inputState, _)
 	local notCrawling = State.stance() < 2
-	if isInputDown(inputState) and notCrawling and MovementController.moving then -- Begin State.sprinting
+	if isInputDown(inputState) and notCrawling and State.moving() then -- Begin State.sprinting
 		State.sprinting(true)
 	else
 		State.sprinting(false)
@@ -179,7 +170,6 @@ end
 function MovementController.UpdateStance(stance, oldStance)
 	local targetCharacterHeight = MovementController.GetTargetCharacterHeight(stance)
 
-	local preMove = MovementController.moveAnim and MovementController.moveAnim.IsPlaying or false
 	local humanoid = MovementController.humanoid
 	local newSpeed = MovementController.GetStanceSpeed(stance)
 	MovementController.UpdateWalkSpeed(newSpeed)
@@ -189,51 +179,27 @@ function MovementController.UpdateStance(stance, oldStance)
 		MovementController.UpdateWalkSpeed(config.walkSpeed)
 		MovementController.PlayCharSound("Uncrouch")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), {HipHeight = targetCharacterHeight}):Play()
-
-		-- TODO: move this to AnimationController
-		if MovementController.moveAnim then MovementController.moveAnim:Stop(config.stanceChangeTime) end
-		MovementController.moveAnim = nil
-		MovementController.crouchIdleAnim:Stop(config.stanceChangeTime)
 	elseif stance == 1 then -- Crouching
 		MovementController.script.Parent.MovementLeaning:SetAttribute("DisableLean", false)
 		MovementController.PlayCharSound(oldStance == 0 and "Crouch" or "Unprone")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), {HipHeight = targetCharacterHeight}):Play()
-
-
-		-- TODO: move this to AnimationController
-		if MovementController.moveAnim then MovementController.moveAnim:Stop(config.stanceChangeTime) end
-		MovementController.moveAnim = MovementController.crouchMoveAnim
-		if MovementController.moving then MovementController.moveAnim:Play(config.stanceChangeTime) end
-		MovementController.proneIdleAnim:Stop(config.stanceChangeTime)
-		MovementController.crouchIdleAnim:Play(config.stanceChangeTime)
 	elseif stance == 2 then -- Prone
 		MovementController.UpdateLean(0)
 		MovementController.script.Parent.MovementLeaning:SetAttribute("DisableLean", true)
 		MovementController.PlayCharSound("Prone")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime * 1.5), {HipHeight = targetCharacterHeight}):Play()
-
-
-		-- TODO: move this to AnimationController
-		if MovementController.moveAnim then MovementController.moveAnim:Stop(config.stanceChangeTime) end
-		MovementController.moveAnim = MovementController.proneMoveAnim
-		MovementController.crouchIdleAnim:Stop(config.stanceChangeTime)
-		MovementController.proneIdleAnim:Play(config.stanceChangeTime)
 	end
-
-	if preMove and MovementController.moveAnim then MovementController.moveAnim:Play() end
 end
 
 function MovementController.UpdateRender(dt)
 	local humanoid = MovementController.humanoid
-	if MovementController.moveAnim then MovementController.moveAnim:AdjustSpeed(humanoid.WalkSpeed / 6) end
+	if MovementController.AdjustMoveAnimSpeed then MovementController.AdjustMoveAnimSpeed(humanoid.WalkSpeed / 6) end
 	
-	if humanoid.MoveDirection.Magnitude > 0 and not MovementController.moving then
-		MovementController.moving = true
-		if MovementController.moveAnim then MovementController.moveAnim:Play(config.stanceChangeTime) end
-	elseif humanoid.MoveDirection.Magnitude <= 0 then
-		MovementController.moving = false
+	if humanoid.MoveDirection.Magnitude > 0 and not State.moving() then
+		State.moving(true)
+	elseif humanoid.MoveDirection.Magnitude <= 0 and State.moving() then
+		State.moving(false)
 		State.sprinting(false)
-		if MovementController.moveAnim then MovementController.moveAnim:Stop(config.stanceChangeTime) end
 	end
 
 	-- lean logic
