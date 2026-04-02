@@ -51,6 +51,12 @@ function InputController.BindInput(actionName, touchButton, priority, ...)
 	return InputController
 end
 
+function InputController.UnbindInput(...)
+	for _, actionName in ipairs(...) do
+		ContextActionService:UnbindAction(actionName)
+	end
+end
+
 function InputController.BindAiming()
 	ContextActionService:BindActionAtPriority("SPH_HoldAim", InternalHandleInput, config.mobileButtons, config.gunInputPriority, unpack(config.aimGun))
 	ContextActionService:SetTitle("SPH_HoldAim", "Aim")
@@ -104,26 +110,20 @@ end
 
 function InputController.BindCharacterInputs()
 	InputController
+		.BindInput(Intents.LEAN_LEFT, false, config.movementInputPriority, unpack(config.leanLeft))
+		.BindInput(Intents.LEAN_RIGHT, false, config.movementInputPriority, unpack(config.leanRight))
 		.BindInput(Intents.SPRINT, false, config.movementInputPriority, unpack(config.keySprint))
-		.BindInput(Intents.STANCE_DOWN, config.mobileButtons, config.movementInputPriority, unpack(config.lowerStance))
-		.BindInput(Intents.STANCE_UP, config.mobileButtons, config.movementInputPriority, unpack(config.raiseStance))
-
-	ContextActionService:BindActionAtPriority("SPH_LeanLeft", InternalHandleInput, false, config.movementInputPriority, unpack(config.leanLeft))
-	ContextActionService:BindActionAtPriority("SPH_LeanRight", InternalHandleInput, false, config.movementInputPriority, unpack(config.leanRight))
-
-	ContextActionService:SetTitle("SPH_StanceLower", "Crouch")
-	ContextActionService:SetPosition("SPH_StanceLower", UDim2.fromScale(0.4, 0))
-
-	ContextActionService:SetTitle("SPH_StanceRaise", "Stand")
-	ContextActionService:SetPosition("SPH_StanceRaise", UDim2.fromScale(0.55, -0.25))
+		.BindInput(Intents.STANCE_DOWN, false, config.movementInputPriority, unpack(config.lowerStance))
+		.BindInput(Intents.STANCE_UP, false, config.movementInputPriority, unpack(config.raiseStance))
 end
 
 function InputController.UnbindCharacterInputs()
-	ContextActionService:UnbindAction("SPH_Sprint")
-	ContextActionService:UnbindAction("SPH_StanceLower")
-	ContextActionService:UnbindAction("SPH_StanceRaise")
-	ContextActionService:UnbindAction("SPH_LeanLeft")
-	ContextActionService:UnbindAction("SPH_LeanRight")
+	InputController.UnbindInput(
+		Intents.LEAN_LEFT,
+		Intents.LEAN_RIGHT,
+		Intents.SPRINT,
+		Intents.STANCE_DOWN,
+		Intents.STANCE_UP)
 end
 
 UserInputService.InputChanged:Connect(function(input)

@@ -8,11 +8,15 @@ local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local State = require(script.Parent.CharacterState)
 
+local assets = game.ReplicatedStorage.SPH_Assets
+local modules = assets.Modules
+local bridgeNet = require(modules.BridgeNet)
+local playerLean = bridgeNet.CreateBridge("PlayerLean")
+
 local MovementController = {
     -- state vars
     targetWalkSpeed = config.walkSpeed,
     tempWalkSpeed = config.walkSpeed,
-    lean = 0,
     vehicleSeated = false,
     canJump = true,
     moving = false,
@@ -36,7 +40,6 @@ local MovementController = {
     PlayAnimation = nil,
     StopAnimation = nil,
     PlayCharSound = nil,
-    playerLean = nil,
     CancelFiring = nil,
 }
 
@@ -64,11 +67,11 @@ function MovementController.Initialize(params)
 	MovementController.PlayAnimation = params.PlayAnimation
 	MovementController.StopAnimation = params.StopAnimation
 	MovementController.PlayCharSound = params.PlayCharSound
-	MovementController.playerLean = params.playerLean
 	MovementController.CancelFiring = params.CancelFiring
 
 	Charm.subscribe(State.sprinting, MovementController.UpdateSprint)
 	Charm.subscribe(State.stance, MovementController.UpdateStance)
+	Charm.subscribe(State.lean, MovementController.UpdateLean)
 end
 
 --#region ----------------------------[intent]----------------------------
@@ -81,6 +84,25 @@ function MovementController.OnSprintIntent(inputState, _)
 		State.sprinting(true)
 	else
 		State.sprinting(false)
+	end
+end
+
+local function _canLean()
+	local notCrawling = State.stance() < 2
+	local notSprinting = not State.sprinting()
+	local notSitting = not State.Parts.Humanoid.Sit
+	return notCrawling and notSprinting and notSitting
+end
+
+function MovementController.OnLeanLeftIntent(inputState, _)
+	if isInputDown(inputState) and _canLean() then
+		State.lean(State.lean() == -1 and 0 or -1)
+	end
+end
+
+function MovementController.OnLeanRightIntent(inputState, _)
+	if isInputDown(inputState) and _canLean() then
+		State.lean(State.lean() == 1 and 0 or 1)
 	end
 end
 
@@ -132,9 +154,8 @@ function MovementController.UpdateSprint(sprinting)
 	if sprinting then
 		if State.aiming() then MovementController.ToggleAiming(false) end
 		State.stance(0)
-
+		State.lean(0)
 		MovementController.UpdateWalkSpeed(config.sprintSpeed)
-		MovementController.ChangeLean(0)
 		MovementController.ChangeHoldStance(0)
 
 
@@ -147,13 +168,12 @@ function MovementController.UpdateSprint(sprinting)
 end
 
 
-
-
-function MovementController.ChangeLean(newLean)
-	if not config.canLean then return end
-	if newLean ~= MovementController.lean then MovementController.PlayCharSound("Lean") end
-	MovementController.lean = newLean
-	MovementController.playerLean:Fire(newLean)
+function MovementController.UpdateLean(lean, oldLean)
+	if not config.canLean or lean == oldLean then
+		return
+	end
+	MovementController.PlayCharSound("Lean")
+	playerLean:Fire(lean)
 end
 
 function MovementController.UpdateStance(stance, oldStance)
@@ -187,7 +207,7 @@ function MovementController.UpdateStance(stance, oldStance)
 		MovementController.proneIdleAnim:Stop(config.stanceChangeTime)
 		MovementController.crouchIdleAnim:Play(config.stanceChangeTime)
 	elseif stance == 2 then -- Prone
-		MovementController.ChangeLean(0)
+		MovementController.UpdateLean(0)
 		MovementController.script.Parent.MovementLeaning:SetAttribute("DisableLean", true)
 		MovementController.PlayCharSound("Prone")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime * 1.5), {HipHeight = targetCharacterHeight}):Play()
@@ -214,6 +234,17 @@ function MovementController.UpdateRender(dt)
 		MovementController.moving = false
 		State.sprinting(false)
 		if MovementController.moveAnim then MovementController.moveAnim:Stop(config.stanceChangeTime) end
+	end
+
+	-- lean logic
+	local xOffset = State.lean() * 1
+
+	if State.Parts.IsR6 then
+		State.Parts.RootJoint.C1 = State.Parts.RootJoint.C1:Lerp(CFrame.new(-xOffset / 2, 0, 0)
+		* CFrame.Angles(math.rad(90), math.rad(180) + math.rad(17 * State.lean()), 0), 0.1 * dt * 60)
+	else
+		State.Parts.RootJoint.C1 = State.Parts.RootJoint.C1:Lerp(CFrame.new(-xOffset / 2, 0, 0)
+		* CFrame.Angles(math.rad(0), math.rad(0), math.rad(0) + math.rad(17 * State.lean())), 0.1 * dt * 60)
 	end
 end
 

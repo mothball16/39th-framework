@@ -3,7 +3,7 @@ local runService = game:GetService("RunService")
 local userInputService = game:GetService("UserInputService")
 local debris = game:GetService("Debris")
 local players = game:GetService("Players")
-local Enums = require(script.Parent.Enums)
+local Enums = require(script.Parent:WaitForChild("Enums"))
 local Intents = Enums.Intents
 local assets = replicatedStorage.SPH_Assets
 local modules = assets.Modules
@@ -66,7 +66,6 @@ rayParams.FilterDescendantsInstances = {character,camera,shellFolder}
 
 local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")
 local playCharSound = bridgeNet.CreateBridge("PlayCharacterSound")
-local playerLean = bridgeNet.CreateBridge("PlayerLean")
 
 local fpThreshold = 0.6
 
@@ -292,23 +291,7 @@ end
 local function HandleInput(actionName, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	local inputEnded = Enum.UserInputState.End
-	if inputState == inputBegan then -- Other inputs
-		if actionName == "SPH_LeanLeft" and inputState == inputBegan and State.stance() < 2 and not State.sprinting() and not humanoid.Sit then -- Lean left
-			if MovementController.lean == -1 then
-				MovementController.ChangeLean(0)
-			else
-				MovementController.ChangeLean(-1)
-			end
 
-
-		elseif actionName == "SPH_LeanRight" and inputState == inputBegan and State.stance() < 2 and not State.sprinting() and not humanoid.Sit then -- Lean right
-			if MovementController.lean == 1 then
-				MovementController.ChangeLean(0)
-			else
-				MovementController.ChangeLean(1)
-			end
-		end
-	end
 
 
 	if actionName == "SPH_HoldAim" then
@@ -357,6 +340,8 @@ InputController.Initialize({
 		[Intents.SPRINT] = MovementController.OnSprintIntent,
 		[Intents.STANCE_DOWN] = MovementController.OnStanceDownIntent,
 		[Intents.STANCE_UP] = MovementController.OnStanceUpIntent,
+		[Intents.LEAN_LEFT] = MovementController.OnLeanLeftIntent,
+		[Intents.LEAN_RIGHT] = MovementController.OnLeanRightIntent
 	}
 })
 
@@ -375,7 +360,6 @@ MovementController.Initialize({
 	PlayAnimation = AnimationController.PlayAnimation,
 	StopAnimation = AnimationController.StopAnimation,
 	PlayCharSound = PlayCharSound,
-	playerLean = playerLean,
 	CancelFiring = function() WeaponController.holdingM1 = false end
 })
 
@@ -451,7 +435,6 @@ humanoid.Died:Connect(function()
 	--playerToggleAttachment:Destroy()
 	--repBoltOpen:Destroy()
 	--magGrab:Destroy()
-	--playerLean:Destroy()
 
 	if config.useDeathCameraSubject then
 		repeat task.wait() until humanoid.Parent ~= character
@@ -657,13 +640,8 @@ humanoid.Seated:Connect(function(seated, seatPart)
 	if seated then -- In a seat
 		InputController.UnbindCharacterInputs()
 		State.sprinting(false)
-		MovementController.ChangeLean(0)
-		if State.stance() == 1 then
-			MovementController.UpdateStance(-1)
-		elseif State.stance() == 2 then
-			MovementController.UpdateStance(-1)
-			MovementController.UpdateStance(-1)
-		end
+		State.stance(0)
+		MovementController.UpdateLean(0)
 
 		if seatPart:IsA("VehicleSeat") then
 			MovementController.vehicleSeated = true

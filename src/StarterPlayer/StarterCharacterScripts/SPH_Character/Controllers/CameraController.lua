@@ -101,10 +101,10 @@ function CameraController.UpdateRender(dt, freeLook)
 		end
 
 		-- Lean offset
-		if MovementController.lean < 0 then
+		if State.lean() < 0 then
 			xOffset = -1
 			yOffset += -0.2
-		elseif MovementController.lean > 0 then
+		elseif State.lean() > 0 then
 			xOffset = 1
 			yOffset += -0.2
 		end
@@ -130,12 +130,12 @@ function CameraController.UpdateRender(dt, freeLook)
 		end
 
 		-- Lean offset
-		if MovementController.lean < 0 then
+		if State.lean() < 0 then
 			xOffset = -1
-			yOffset += -0.2 --rev
-		elseif MovementController.lean > 0 then
+			yOffset -= 0.2 --rev
+		elseif State.lean() > 0 then
 			xOffset = 1
-			yOffset += -0.2 --rev
+			yOffset -= 0.2 --rev
 		end
 	end --</DD_SPH>
 
@@ -148,15 +148,8 @@ function CameraController.UpdateRender(dt, freeLook)
 		end
 		humanoid.CameraOffset = humanoid.CameraOffset:Lerp(CameraController.cameraOffsetTarget, 0.1 * dt * 60)
 
-		-- Update leaning offset
-		-- DD_SPH: Rig Check!
-		if rigType ~= Enum.HumanoidRigType.R15 then
-			rootJoint.C1 = rootJoint.C1:Lerp(CFrame.new(-xOffset / 2, 0, 0) * CFrame.Angles(math.rad(90), math.rad(180) + math.rad(17 * MovementController.lean), 0), 0.1 * dt * 60)
-		else
-			rootJoint.C1 = rootJoint.C1:Lerp(CFrame.new(-xOffset / 2, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0) + math.rad(17 * MovementController.lean)), 0.1 * dt * 60)
-		end
 		-- </DD_SPH>
-		CameraController.cameraLeanRotation = LerpNumber(CameraController.cameraLeanRotation, 15 * -MovementController.lean, 0.1)
+		CameraController.cameraLeanRotation = LerpNumber(CameraController.cameraLeanRotation, 15 * -State.lean(), 0.1)
 		camera.CFrame *= CFrame.Angles(0, 0, math.rad(CameraController.cameraLeanRotation))
 
 		-- Camera tilt
