@@ -160,10 +160,10 @@ function MovementController.UpdateRender(dt)
 	local humanoid = MovementController.humanoid
 	if MovementController.moveAnim then MovementController.moveAnim:AdjustSpeed(humanoid.WalkSpeed / 6) end
 	
-	if humanoid.MoveDirection.Magnitude > 0.01 and not MovementController.moving then
+	if humanoid.MoveDirection.Magnitude > 0 and not MovementController.moving then
 		MovementController.moving = true
 		if MovementController.moveAnim then MovementController.moveAnim:Play(config.stanceChangeTime) end
-	elseif humanoid.MoveDirection.Magnitude <= 0.01 then
+	elseif humanoid.MoveDirection.Magnitude <= 0 then
 		MovementController.moving = false
 		State.sprinting(false)
 		if MovementController.moveAnim then MovementController.moveAnim:Stop(config.stanceChangeTime) end
