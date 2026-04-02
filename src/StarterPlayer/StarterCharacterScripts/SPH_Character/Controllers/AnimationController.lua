@@ -19,6 +19,43 @@ AnimationController.moveAnim = nil
 AnimationController.OnKeyframeReached = nil
 AnimationController.OnAnimationStopped = nil
 
+local function _getAnimationTracks(animName, parameters, animType)
+	if AnimationController.loadedAnims[animName] then
+		return AnimationController.loadedAnims[animName]
+	end
+
+	if not animName or not AnimationController.animationsFolder:FindFirstChild(animName) then
+		return nil
+	end
+
+	local animAsset = AnimationController.animationsFolder[animName]
+	parameters = parameters or {}
+
+	local vmTrack = AnimationController.vmAnimator:LoadAnimation(animAsset)
+	vmTrack.Looped = parameters.looped or false
+	vmTrack.Priority = parameters.priority or Enum.AnimationPriority.Action
+
+	local tpTrack = AnimationController.characterAnimator:LoadAnimation(animAsset)
+	tpTrack.Looped = parameters.looped or false
+	tpTrack.Priority = parameters.priority or Enum.AnimationPriority.Action
+
+	vmTrack.KeyframeReached:Connect(function(keyframeName)
+		if AnimationController.OnKeyframeReached then
+			AnimationController.OnKeyframeReached(animName, keyframeName, vmTrack, animType)
+		end
+	end)
+
+	vmTrack.Stopped:Connect(function()
+		if AnimationController.OnAnimationStopped then
+			AnimationController.OnAnimationStopped(animName, vmTrack, animType)
+		end
+	end)
+
+	local tracks = { vm = vmTrack, tp = tpTrack }
+	AnimationController.loadedAnims[animName] = tracks
+	return tracks
+end
+
 function AnimationController.Initialize(params)
 	AnimationController.vmAnimator = params.vmAnimator
 	AnimationController.characterAnimator = params.characterAnimator
@@ -87,64 +124,29 @@ function AnimationController.OnSprintChanged(sprinting)
 	end
 end
 
-
 function AnimationController.StopAnimation(animName: string, transTime: number)
-	if AnimationController.loadedAnims[animName] then
-		if transTime then
-			AnimationController.loadedAnims[animName]:Stop(transTime)
-			if AnimationController.loadedAnims[animName.."ThirdPerson"] then
-				AnimationController.loadedAnims[animName.."ThirdPerson"]:Stop(transTime)
-			end
-		else
-			AnimationController.loadedAnims[animName]:Stop()
-			if AnimationController.loadedAnims[animName.."ThirdPerson"] then
-				AnimationController.loadedAnims[animName.."ThirdPerson"]:Stop()
-			end
-		end
+	local tracks = AnimationController.loadedAnims[animName]
+	if tracks then
+		tracks.vm:Stop(transTime)
+		tracks.tp:Stop(transTime)
 	end
 end
 
 function AnimationController.PlayAnimation(animName: string, parameters: table, animType: string, preload: boolean)
 	parameters = parameters or {}
-	local animToPlay, tpAnim
-	if AnimationController.loadedAnims[animName] then
-		animToPlay = AnimationController.loadedAnims[animName]
-		tpAnim = AnimationController.loadedAnims[animName.."ThirdPerson"]
-	elseif animName and AnimationController.animationsFolder:FindFirstChild(animName) then
-		local newAnim = AnimationController.vmAnimator:LoadAnimation(AnimationController.animationsFolder[animName])
-		newAnim.Looped = parameters.looped or false
-		newAnim.Priority = parameters.priority or Enum.AnimationPriority.Action
-		AnimationController.loadedAnims[animName] = newAnim
+	local tracks = _getAnimationTracks(animName, parameters, animType)
 
-		local thirdPersonAnim = AnimationController.characterAnimator:LoadAnimation(AnimationController.animationsFolder[animName])
-		thirdPersonAnim.Looped = parameters.looped or false
-		thirdPersonAnim.Priority = parameters.priority or Enum.AnimationPriority.Action
-		AnimationController.loadedAnims[animName.."ThirdPerson"] = thirdPersonAnim
+	if tracks and not preload then
+		local transSpeed = parameters.transSpeed
+		local speed = parameters.speed or 1
 
-		newAnim.KeyframeReached:Connect(function(keyframeName)
-			if AnimationController.OnKeyframeReached then
-				AnimationController.OnKeyframeReached(animName, keyframeName, newAnim, animType)
-			end
-		end)
-
-		newAnim.Stopped:Connect(function()
-			if AnimationController.OnAnimationStopped then
-				AnimationController.OnAnimationStopped(animName, newAnim, animType)
-			end
-		end)
-
-		animToPlay = newAnim
-		tpAnim = thirdPersonAnim
+		tracks.vm:Play(transSpeed)
+		tracks.vm:AdjustSpeed(speed)
+		tracks.tp:Play(transSpeed)
+		tracks.tp:AdjustSpeed(speed)
 	end
 
-	if animToPlay and not preload then
-		animToPlay:Play(parameters.transSpeed or 0)
-		animToPlay:AdjustSpeed(parameters.speed or 1)
-		tpAnim:Play(parameters.transSpeed or 0)
-		tpAnim:AdjustSpeed(parameters.speed or 1)
-	end
-
-	return animToPlay
+	return tracks and tracks.vm
 end
 
 function AnimationController.StopAll()
