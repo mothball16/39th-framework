@@ -52,7 +52,7 @@ function InputController.BindInput(actionName, touchButton, priority, ...)
 end
 
 function InputController.UnbindInput(...)
-	for _, actionName in ipairs(...) do
+	for _, actionName in ipairs({...}) do
 		ContextActionService:UnbindAction(actionName)
 	end
 end
