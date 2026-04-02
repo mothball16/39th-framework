@@ -50,9 +50,22 @@ function CameraController.OnSprintChanged(sprinting)
 	end]]
 end
 
+function CameraController.OnFreelookIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan then -- Holding
+		State.freeLook(true)
+		CameraController.humanoid.AutoRotate = false
+		State.freeLookRotation(CameraController.camera.CFrame - CameraController.camera.CFrame.Position)
+	else -- Stopped holding
+		State.freeLook(false)
+		local freeLookOffset = State.freeLookRotation():ToObjectSpace(CameraController.camera.CFrame)
+		State.freeLookOffset(freeLookOffset - freeLookOffset.Position)
+		CameraController.humanoid.AutoRotate = true
+	end
+end
 
 
-function CameraController.UpdateRender(dt, freeLook)
+function CameraController.UpdateRender(dt)
 	local camera = CameraController.camera
 	local humanoid = CameraController.humanoid
 	local humanoidRootPart = CameraController.humanoidRootPart
@@ -61,7 +74,7 @@ function CameraController.UpdateRender(dt, freeLook)
 	local MovementController = CameraController.MovementController
 	
 	-- Limit camera rotation
-	if (humanoid.Sit and not MovementController.vehicleSeated and State.firstPerson() or freeLook) and config.cameraLimitInSeats then
+	if (humanoid.Sit and not MovementController.vehicleSeated and State.firstPerson() or State.freeLook()) and config.cameraLimitInSeats then
 		local cameraCFrame = humanoidRootPart.CFrame:ToObjectSpace(camera.CFrame)
 		local x, y, z = cameraCFrame:ToOrientation()
 		local a = camera.CFrame.Position.X

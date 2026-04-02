@@ -38,13 +38,11 @@ local WC = {
 	bulletsCurrentlyFired = 0,
 	ubglAmmo = nil,
 	sights = {},
-	sightIndex = 1,
 	lastGunModel = nil,
 	fireModes = { Safe = 0, Semi = 1, Auto = 2, Burst = 3, UBGL = 4, Manual = 5 },
 	curFireMode = 0,
 	holdStance = 0,
 	holdAnim = nil,
-	aimFOVTarget = 70,
 
 	-- Dependencies
 	player = nil,
@@ -118,6 +116,8 @@ function WC.Initialize(params)
 
 	Charm.subscribe(State.aiming, WC.OnAimToggled)
 	Charm.subscribe(State.sightIndex, WC.OnSightIndexSwitched)
+	Charm.subscribe(State.firstPerson, WC.OnFirstPersonToggled)
+	Charm.subscribe(State.sprinting, WC.OnSprintToggled)
 end
 
 
@@ -130,7 +130,7 @@ end
 function WC.OnAimToggled(aiming)
 	if aiming then
 		WC.ChangeHoldStance(0)
-		local ADSMeshEnabled = WC._adsMeshEnabled(WC.sightIndex)
+		local ADSMeshEnabled = WC._adsMeshEnabled(State.sightIndex())
 
 		WC.PlayRepSound("AimUp")
 		WC.ToggleADS(ADSMeshEnabled)
@@ -148,6 +148,68 @@ function WC.OnAimToggled(aiming)
 		if not config.lockFirstPerson then
 			Player.CameraMode = defaultCameraMode
 		end
+	end
+end
+
+function WC.OnFirstPersonToggled(isFirstPerson)
+	if isFirstPerson then
+		if State.equipped() then
+			WC.InputController.BindAiming()
+			local tpModel = WC.GetThirdPersonGunModel()
+			if WC.flashlightEnabled then
+				if State.gunModel.Grip:FindFirstChild("Flashlight") then
+					State.gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
+					if tpModel then tpModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false end
+				end
+				if State.attStats.flashlights_client then
+					for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
+						lightAttachment.Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
+						if tpModel then tpModel[lightAttachment.Name].Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false end
+					end
+				end
+			end
+			if WC.laserEnabled then
+				WC.laserBeamTP.Enabled = false
+				WC.laserBeamFP.Enabled = true
+			end
+		end
+	else
+		WC.InputController.UnbindAiming()
+		if State.equipped() then
+			local tpModel = WC.GetThirdPersonGunModel()
+			if WC.laserEnabled then
+				WC.laserBeamTP.Enabled = true
+				WC.laserBeamFP.Enabled = false
+				if not WC.laserBeamTP.Attachment0 and tpModel then
+					WC.laserBeamTP.Attachment0 = tpModel.Grip.Laser
+				end
+				if State.attStats.laserOrigin and State.gunModel[State.attStats.laserOrigin].Main:FindFirstChild("Laser") and tpModel then
+					WC.laserBeamTP.Attachment0 = tpModel[State.attStats.laserOrigin].Main.Laser		
+				end
+			end
+			if State.gunModel.Grip:FindFirstChild("Flashlight") then
+				State.gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
+				if tpModel and WC.flashlightEnabled then
+					tpModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
+				end
+			end
+			if State.attStats.flashlights_client then
+				for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
+					lightAttachment.Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
+					if tpModel and WC.flashlightEnabled then
+						tpModel[lightAttachment.Name].Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
+					end
+				end
+			end
+		end
+	end
+end
+
+function WC.OnSprintToggled(sprinting)
+	if sprinting then
+		State.aiming(false)
+		WC.holdingM1 = false
+		WC.ChangeHoldStance(0)
 	end
 end
 
@@ -500,7 +562,7 @@ function WC.Equip(newChild)
 		WC.ViewmodelController.gunRecoilSpring.Damping = State.wepStats.gunRecoil.damping
 		WC.ViewmodelController.gunRecoilSpring.Speed = State.wepStats.gunRecoil.speed
 		
-		WC.aimFOVTarget = State.wepStats.aimFovDefault or config.defaultFOV
+		State.aimFOVTarget(State.wepStats.aimFovDefault or config.defaultFOV)
 
 		if not State.wepStats.operationType or type(State.wepStats.operationType) == "string" then State.wepStats.operationType = 1 end
 		if not State.wepStats.magType then State.wepStats.magType = 1 end
@@ -531,7 +593,7 @@ function WC.Equip(newChild)
 			WC.ViewmodelController.gunRecoilSpring.Speed *= State.attStats.gunRecoil.speed
 		end
 		if State.attStats.aimFovDefault then
-			WC.aimFOVTarget = State.attStats.aimFovDefault
+			State.aimFOVTarget(State.attStats.aimFovDefault)
 		end
 
 		for _, partName in ipairs(State.wepStats.rigParts) do
@@ -664,7 +726,7 @@ function WC.HandleInput(actionName, inputState)
 		end
 	elseif actionName == "SPH_Chamber" and inputState == inputBegan and not State.reloading() and WC.cycled then
 		WC.ChamberAnim()
-	elseif actionName == "SPH_SwitchSights" and inputState == inputBegan and State.aiming and (State.gunModel:FindFirstChild("AimPart2") or (State.attStats.aimParts and State.attStats.aimParts["AimPart2"])) then
+	elseif actionName == "SPH_SwitchSights" and inputState == inputBegan and State.aiming() and (State.gunModel:FindFirstChild("AimPart2") or (State.attStats.aimParts and State.attStats.aimParts["AimPart2"])) then
 		-- TODO: move this out to the CharacterClient - it should modify state and WC should do the rest.
 		local tempIndex = State.sightIndex() + 1
 		if State.gunModel:FindFirstChild("AimPart"..tempIndex) or (State.attStats.aimParts and State.attStats.aimParts["AimPart"..tempIndex]) then
@@ -673,11 +735,6 @@ function WC.HandleInput(actionName, inputState)
 		else
 			State.sightIndex(1)
 			WC.PlayRepSound("AimDown")
-		end
-		if WC._adsMeshEnabled(State.sightIndex) then
-			WC.ToggleADS(true)
-		else
-			WC.ToggleADS(false)
 		end
 	elseif actionName == "SPH_HoldUp" and inputState == inputBegan and not State.reloading() then
 		WC.ChangeHoldStance(1)
@@ -737,7 +794,34 @@ function WC.HandleInput(actionName, inputState)
 	end
 end
 
-function WC.UpdateHeartbeat(dt, freeLook, blocked)
+function WC.OnAimIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if not UserInputService.TouchEnabled and not config.toggleAiming then -- Hold aiming
+		if inputState == inputBegan and State.firstPerson() and not State.freeLook() and not State.blocked() then
+			State.aimHeld(true)
+			State.sprinting(false)
+			if State.stance() == 0 then WC.MovementController.UpdateWalkSpeed(config.walkSpeed) end
+			WC.ToggleAiming(true)
+		elseif not State.sprinting() and State.aiming() then -- Not aiming
+			State.aimHeld(false)
+			WC.ToggleAiming(false)
+		end
+	elseif inputState == inputBegan then -- Mobile and toggle aiming
+		if State.firstPerson() and not State.freeLook() and not State.blocked() and not State.aiming() then
+			State.aimHeld(true)
+			State.sprinting(false)
+			if State.stance() == 0 then WC.MovementController.UpdateWalkSpeed(config.walkSpeed) end
+			WC.ToggleAiming(true)
+		else
+			State.aimHeld(false)
+			WC.ToggleAiming(false)
+		end
+	end
+end
+
+function WC.UpdateHeartbeat(dt)
+	local freeLook = State.freeLook()
+	local blocked = State.blocked()
 	if
 		State.equipped()
 		and not State.dead()

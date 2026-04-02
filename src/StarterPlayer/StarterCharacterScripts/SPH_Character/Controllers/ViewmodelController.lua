@@ -58,7 +58,7 @@ function ViewmodelController.ResetHipRotation()
 	hipRotation = Vector2.zero
 end
 
-function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeLookRotation, freeLookOffset, sightIndex, blocked, aimHeld, viewmodelVisible)
+function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex, viewmodelVisible)
 	local fps = 1 / dt
 	recoilUpdateCD -= dt
 
@@ -70,10 +70,10 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 
 	animBase.CFrame = CFrame.new((camera.CFrame * offset).Position)
 
-	if not freeLook then
+	if not State.freeLook() then
 		animBase.CFrame *= camera.CFrame - camera.CFrame.Position
 	else
-		animBase.CFrame *= freeLookRotation
+		animBase.CFrame *= State.freeLookRotation()
 	end
 
 	if State.stance() == 2 then
@@ -84,8 +84,9 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 	animBase.CFrame *= CFrame.new(0, proneViewmodelOffset, 0)
 
 	local freelookRecovery = 0.2
-	freeLookOffset = freeLookOffset:Lerp(CFrame.new(), freelookRecovery * dt * 60)
-	animBase.CFrame *= freeLookOffset:Inverse()
+	local newFlOffset = State.freeLookOffset():Lerp(CFrame.new(), freelookRecovery * dt * 60)
+	State.freeLookOffset(newFlOffset)
+	animBase.CFrame *= newFlOffset:Inverse()
 
 	local aimPart = State.gunModel:FindFirstChild("AimPart" .. sightIndex) or State.gunModel.AimPart
 	if State.attStats.aimParts then
@@ -110,11 +111,12 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 	local originCFrame = State.firstPerson() and animBase.CFrame or weaponRig.AnimBase.CFrame
 	local newRay = workspace:Raycast(originCFrame.Position, originCFrame.LookVector * rayDistance, rayParams)
 	
+	local isBlocked = State.blocked()
 	if newRay then
 		local distance = rayDistance - (animBase.CFrame.Position - newRay.Position).Magnitude
 		if config.pushBackViewmodel and distance > 0 then
 			local tempDist = distance
-			if blocked then tempDist /= 2 end
+			if isBlocked then tempDist /= 2 end
 			pushbackOffset = LerpNumber(pushbackOffset, tempDist, 0.2 * 60 * dt)
 		else
 			pushbackOffset = LerpNumber(pushbackOffset, 0, 0.2 * 60 * dt)
@@ -122,26 +124,26 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 
 		if config.raiseGunAtWall then
 			if distance >= State.wepStats.maxPushback then
-				if not blocked then
+				if not isBlocked then
 					ViewmodelController.ChangeHoldStance(0)
 					ViewmodelController.PlayAnimation(State.wepStats.holdUpAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
-					blocked = true
+					State.blocked(true)
 					if State.aiming() then ViewmodelController.ToggleAiming(false) end
 				end
-			elseif blocked then
+			elseif isBlocked then
 				ViewmodelController.StopAnimation(State.wepStats.holdUpAnim, 0.3)
-				blocked = false
-				if aimHeld and not State.aiming() and State.firstPerson() then
+				State.blocked(false)
+				if State.aimHeld() and not State.aiming() and State.firstPerson() then
 					ViewmodelController.ToggleAiming(true)
 				end
 			end
 		end
 	else
-		if blocked then
+		if isBlocked then
 			ViewmodelController.StopAnimation(State.wepStats.holdUpAnim, 0.3)
 		end
-		blocked = false
-		if aimHeld and not State.aiming() and State.firstPerson() and not State.sprinting() then
+		State.blocked(false)
+		if State.aimHeld() and not State.aiming() and State.firstPerson() and not State.sprinting() then
 			ViewmodelController.ToggleAiming(true)
 		end
 		pushbackOffset = LerpNumber(pushbackOffset, 0, 0.2 * 60 * dt)
@@ -200,8 +202,6 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, freeLook, freeL
 	if not viewmodelVisible then
 		animBase.CFrame *= storageCFrame
 	end
-
-	return freeLookOffset, blocked
 end
 
 function ViewmodelController.UpdateMovementSway(dt, tempWalkSpeed, vehicleSeated)

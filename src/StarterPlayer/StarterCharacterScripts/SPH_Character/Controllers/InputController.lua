@@ -44,7 +44,14 @@ function InputController.HandleInput(actionName, inputState, inputObject)
 end
 
 function InputController.BindInput(actionName, touchButton, priority, ...)
-	if not Intents[actionName] then
+	local isValidIntent = false
+	for _, intentName in pairs(Intents) do
+		if intentName == actionName then
+			isValidIntent = true
+			break
+		end
+	end
+	if not isValidIntent then
 		warn(`[pearhead] {actionName} isn't a valid intent in Enums.Intents`)
 	end
 	ContextActionService:BindActionAtPriority(actionName, InputController.HandleInput,touchButton, priority, ...)
@@ -58,13 +65,13 @@ function InputController.UnbindInput(...)
 end
 
 function InputController.BindAiming()
-	ContextActionService:BindActionAtPriority("SPH_HoldAim", InternalHandleInput, config.mobileButtons, config.gunInputPriority, unpack(config.aimGun))
-	ContextActionService:SetTitle("SPH_HoldAim", "Aim")
-	ContextActionService:SetPosition("SPH_HoldAim", UDim2.fromScale(0.24, 0.3))
+	InputController.BindInput(Intents.HOLD_AIM, config.mobileButtons, config.gunInputPriority, unpack(config.aimGun))
+	ContextActionService:SetTitle(Intents.HOLD_AIM, "Aim")
+	ContextActionService:SetPosition(Intents.HOLD_AIM, UDim2.fromScale(0.24, 0.3))
 end
 
 function InputController.UnbindAiming()
-	ContextActionService:UnbindAction("SPH_HoldAim")
+	InputController.UnbindInput(Intents.HOLD_AIM)
 end
 
 function InputController.BindGunInputs(isFirstPerson)
@@ -73,7 +80,7 @@ function InputController.BindGunInputs(isFirstPerson)
 	ContextActionService:BindActionAtPriority("SPH_Reload", InternalHandleInput, config.mobileButtons, config.gunInputPriority, unpack(config.keyReload))
 	ContextActionService:BindActionAtPriority("SPH_Chamber", InternalHandleInput, false, config.gunInputPriority, unpack(config.keyChamber))
 	ContextActionService:BindActionAtPriority("SPH_SwitchSights", InternalHandleInput, false, config.gunInputPriority, unpack(config.sightSwitch))
-	ContextActionService:BindActionAtPriority("SPH_Freelook", InternalHandleInput, false, config.gunInputPriority, unpack(config.freeLook))
+	InputController.BindInput(Intents.FREELOOK, false, config.gunInputPriority, unpack(config.freeLook))
 	ContextActionService:BindActionAtPriority("SPH_HoldUp", InternalHandleInput, false, config.gunInputPriority, unpack(config.holdUp))
 	ContextActionService:BindActionAtPriority("SPH_HoldPatrol", InternalHandleInput, false, config.gunInputPriority, unpack(config.holdPatrol))
 	ContextActionService:BindActionAtPriority("SPH_HoldDown", InternalHandleInput, false, config.gunInputPriority, unpack(config.holdDown))
@@ -96,10 +103,10 @@ function InputController.UnbindGunInputs()
 	ContextActionService:UnbindAction("SPH_Trigger")
 	ContextActionService:UnbindAction("SPH_DropGun")
 	ContextActionService:UnbindAction("SPH_Reload")
-	ContextActionService:UnbindAction("SPH_HoldAim")
+	InputController.UnbindInput(Intents.HOLD_AIM)
 	ContextActionService:UnbindAction("SPH_Chamber")
 	ContextActionService:UnbindAction("SPH_SwitchSights")
-	ContextActionService:UnbindAction("SPH_Freelook")
+	InputController.UnbindInput(Intents.FREELOOK)
 	ContextActionService:UnbindAction("SPH_HoldUp")
 	ContextActionService:UnbindAction("SPH_HoldPatrol")
 	ContextActionService:UnbindAction("SPH_HoldDown")

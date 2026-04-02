@@ -16,5 +16,7 @@ return {
         LEAN_RIGHT = "LEAN_RIGHT",
         LEAN_NONE = "LEAN_NONE",
         SPRINT = "SPRINT",
+        HOLD_AIM = "HOLD_AIM",
+        FREELOOK = "FREELOOK",
     }
 }

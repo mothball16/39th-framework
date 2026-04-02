@@ -56,6 +56,14 @@ local function _getAnimationTracks(animName, parameters, animType)
 	return tracks
 end
 
+
+local function _preloadAnimation(track, looped, priority)
+	local anim = State.Parts.Humanoid.Animator:LoadAnimation(track)
+	anim.Looped = looped
+	anim.Priority = priority
+	return anim
+end
+
 function AnimationController.Initialize(params)
 	AnimationController.vmAnimator = params.vmAnimator
 	AnimationController.characterAnimator = params.characterAnimator
@@ -63,21 +71,11 @@ function AnimationController.Initialize(params)
 	AnimationController.OnKeyframeReached = params.OnKeyframeReached
 	AnimationController.OnAnimationStopped = params.OnAnimationStopped
 
-	AnimationController.crouchIdleAnim = State.Parts.Humanoid.Animator:LoadAnimation(params.animationsFolder.Crouch_Idle)
-	AnimationController.crouchIdleAnim.Looped = true
-	AnimationController.crouchIdleAnim.Priority = Enum.AnimationPriority.Idle
+	AnimationController.crouchIdleAnim = _preloadAnimation(params.animationsFolder.Crouch_Idle, true, Enum.AnimationPriority.Idle)
+	AnimationController.crouchMoveAnim = _preloadAnimation(params.animationsFolder.Crouch_Move, true, Enum.AnimationPriority.Movement)
+	AnimationController.proneIdleAnim = _preloadAnimation(params.animationsFolder.Prone_Idle, true, Enum.AnimationPriority.Idle)
+	AnimationController.proneMoveAnim = _preloadAnimation(params.animationsFolder.Prone_Move, true, Enum.AnimationPriority.Movement)
 
-	AnimationController.crouchMoveAnim = State.Parts.Humanoid.Animator:LoadAnimation(params.animationsFolder.Crouch_Move)
-	AnimationController.crouchMoveAnim.Looped = true
-	AnimationController.crouchMoveAnim.Priority = Enum.AnimationPriority.Movement
-
-	AnimationController.proneIdleAnim = State.Parts.Humanoid.Animator:LoadAnimation(params.animationsFolder.Prone_Idle)
-	AnimationController.proneIdleAnim.Looped = true
-	AnimationController.proneIdleAnim.Priority = Enum.AnimationPriority.Idle
-
-	AnimationController.proneMoveAnim = State.Parts.Humanoid.Animator:LoadAnimation(params.animationsFolder.Prone_Move)
-	AnimationController.proneMoveAnim.Looped = true
-	AnimationController.proneMoveAnim.Priority = Enum.AnimationPriority.Movement
 
 	Charm.subscribe(State.sprinting, AnimationController.OnSprintChanged)
 	Charm.subscribe(State.stance, AnimationController.OnStanceChanged)

@@ -72,13 +72,6 @@ local fpThreshold = 0.6
 
 
 local viewmodelVisible = false
-local blocked = false
-local aimHeld = false
-
-local freeLook = false
-local freeLookOffset = CFrame.new()
-local freeLookRotation = CFrame.new()
-
 local storageCFrame = CFrame.new(1000000,0,0) -- This is used for moving the viewmodel super far away.
 -- Doing this to the viewmodel allows animations to be loaded, played, etc, while still having it out of view.
 
@@ -269,62 +262,15 @@ local function ToggleAiming(toggle)
 	character:SetAttribute("Aiming", toggle)
 end
 
-
-
-local function HandleInput(actionName, inputState, inputObject)
-	local inputBegan = Enum.UserInputState.Begin
-	local inputEnded = Enum.UserInputState.End
-
-
-
-	if actionName == "SPH_HoldAim" then
-		if not userInputService.TouchEnabled and not config.toggleAiming then -- Hold aiming
-			if inputState == inputBegan and State.firstPerson() and not freeLook and not blocked then
-				aimHeld = true
-				State.sprinting(false)
-				if State.stance() == 0 then MovementController.UpdateWalkSpeed(config.walkSpeed) end
-				ToggleAiming(true)
-			elseif not State.sprinting() and State.aiming() then -- Not aiming
-				aimHeld = false
-				ToggleAiming(false)
-			end
-		elseif inputState == inputBegan then -- Mobile and toggle aiming
-			if State.firstPerson() and not freeLook and not blocked and not State.aiming() then
-				aimHeld = true
-				State.sprinting(false)
-				if State.stance() == 0 then MovementController.UpdateWalkSpeed(config.walkSpeed) end
-				ToggleAiming(true)
-			else
-				aimHeld = false
-				ToggleAiming(false)
-			end
-		end
-	elseif State.equipped() then
-		WeaponController.HandleInput(actionName, inputState)
-	end
-	
-	if actionName == "SPH_Freelook" then -- Freelook
-		if inputState == inputBegan then -- Holding
-			freeLook = true
-			humanoid.AutoRotate = false
-			freeLookRotation = camera.CFrame - camera.CFrame.Position
-		else -- Stopped holding
-			freeLook = false
-			freeLookOffset = freeLookRotation:ToObjectSpace(camera.CFrame)
-			freeLookOffset = freeLookOffset - freeLookOffset.Position
-			humanoid.AutoRotate = true
-		end
-	end
-end
-
-
 InputController.Initialize({
 	callbacks = {
 		[Intents.SPRINT] = MovementController.OnSprintIntent,
 		[Intents.STANCE_DOWN] = MovementController.OnStanceDownIntent,
 		[Intents.STANCE_UP] = MovementController.OnStanceUpIntent,
 		[Intents.LEAN_LEFT] = MovementController.OnLeanLeftIntent,
-		[Intents.LEAN_RIGHT] = MovementController.OnLeanRightIntent
+		[Intents.LEAN_RIGHT] = MovementController.OnLeanRightIntent,
+		[Intents.HOLD_AIM] = WeaponController.OnAimIntent,
+		[Intents.FREELOOK] = CameraController.OnFreelookIntent,
 	}
 })
 
@@ -340,7 +286,6 @@ MovementController.Initialize({
 	StopAnimation = AnimationController.StopAnimation,
 	AdjustMoveAnimSpeed = AnimationController.AdjustMoveAnimSpeed,
 	PlayCharSound = PlayCharSound,
-	CancelFiring = function() WeaponController.holdingM1 = false end
 })
 
 ViewmodelController.Initialize({
@@ -386,7 +331,11 @@ WeaponController.Initialize({
 	ToggleAiming = ToggleAiming,
 })
 
-InputController.ActionFired = HandleInput
+InputController.ActionFired = function(actionName, inputState, inputObject)
+	if State.equipped() then
+		WeaponController.HandleInput(actionName, inputState)
+	end
+end
 InputController.BindCharacterInputs()
 
 humanoid.Died:Connect(function()
@@ -469,65 +418,14 @@ runService.RenderStepped:Connect(function(dt:number)
 		-- Check if player is in first person
 		if not State.firstPerson() and character.Head.LocalTransparencyModifier >= fpThreshold then
 			State.firstPerson(true)
-			if State.equipped() then
-				InputController.BindAiming()
-				if WeaponController.flashlightEnabled then
-					if State.gunModel.Grip:FindFirstChild("Flashlight") then
-						State.gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
-						weaponRig.Weapon:FindFirstChildWhichIsA("Model").Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
-					end
-					-- DD_SPH Gunsmith
-					if State.attStats.flashlights_client then
-						for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
-							lightAttachment.Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
-							weaponRig.Weapon:FindFirstChildWhichIsA("Model")[lightAttachment.Name].Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
-						end
-					end
-					-- </DD_SPH>
-				end
-				if WeaponController.laserEnabled then
-					laserBeamTP.Enabled = false
-					laserBeamFP.Enabled = true
-				end
-			end
 		elseif State.firstPerson() and character.Head.LocalTransparencyModifier <= fpThreshold then
 			State.firstPerson(false)
-			InputController.UnbindAiming()
-			if State.equipped() then
-				if WeaponController.laserEnabled then
-					laserBeamTP.Enabled = true
-					laserBeamFP.Enabled = false
-					if not laserBeamTP.Attachment0 then
-						laserBeamTP.Attachment0 = weaponRig.Weapon:FindFirstChildWhichIsA("Model").Grip.Laser
-					end
-					-- DD_SPH Gunsmith: Laser
-					if State.attStats.laserOrigin and State.gunModel[State.attStats.laserOrigin].Main:FindFirstChild("Laser") then
-						laserBeamTP.Attachment0 = weaponRig.Weapon:FindFirstChildWhichIsA("Model")[State.attStats.laserOrigin].Main.Laser		
-					end
-				end
-				if State.gunModel.Grip:FindFirstChild("Flashlight") then
-					State.gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
-					if weaponRig.Weapon:FindFirstChildWhichIsA("Model") and WeaponController.flashlightEnabled then
-						weaponRig.Weapon:FindFirstChildWhichIsA("Model").Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
-					end
-				end
-				-- DD_SPH Gunsmith
-				if State.attStats.flashlights_client then
-					for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
-						lightAttachment.Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
-						if weaponRig.Weapon:FindFirstChildWhichIsA("Model") and WeaponController.flashlightEnabled then
-							weaponRig.Weapon:FindFirstChildWhichIsA("Model")[lightAttachment].Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
-						end
-					end
-				end
-				-- </DD_SPH>
-			end
 			ResetHead()
 			CameraController.cameraOffsetTarget = Vector3.zero
 		end
 
 		MovementController.UpdateRender(dt)
-		CameraController.UpdateRender(dt, freeLook)
+		CameraController.UpdateRender(dt)
 
 		-- Update viewmodel
 		if State.equipped() and camera.CameraType == Enum.CameraType.Custom then
@@ -539,7 +437,7 @@ runService.RenderStepped:Connect(function(dt:number)
 
 			-- Update recoil and movement springs
 			local currentOffset = State.wepStats and State.wepStats.viewmodelOffset or CFrame.new()
-			freeLookOffset, blocked = ViewmodelController.UpdateViewmodelPosition(dt, currentOffset, freeLook, freeLookRotation, freeLookOffset, WeaponController.sightIndex, blocked, aimHeld, viewmodelVisible)
+			ViewmodelController.UpdateViewmodelPosition(dt, currentOffset, State.sightIndex(), viewmodelVisible)
 
 			WeaponController.UpdateRender(dt)
 
@@ -570,7 +468,7 @@ end)
 
 runService.Heartbeat:Connect(function(dt:number)
 	MovementController.UpdateHeartbeat(dt)
-	WeaponController.UpdateHeartbeat(dt, freeLook, blocked)
+	WeaponController.UpdateHeartbeat(dt)
 
 	-- TODO: figure out wtf this does
 	if State.stance() == 2 and config.proneAngle then

@@ -38,7 +38,6 @@ local MovementController = {
     StopAnimation = nil,
     AdjustMoveAnimSpeed = nil,
     PlayCharSound = nil,
-    CancelFiring = nil,
 }
 
 
@@ -61,7 +60,6 @@ function MovementController.Initialize(params)
 	MovementController.StopAnimation = params.StopAnimation
 	MovementController.AdjustMoveAnimSpeed = params.AdjustMoveAnimSpeed
 	MovementController.PlayCharSound = params.PlayCharSound
-	MovementController.CancelFiring = params.CancelFiring
 
 	Charm.subscribe(State.sprinting, MovementController.UpdateSprint)
 	Charm.subscribe(State.stance, MovementController.UpdateStance)
@@ -150,11 +148,6 @@ function MovementController.UpdateSprint(sprinting)
 		State.stance(0)
 		State.lean(0)
 		MovementController.UpdateWalkSpeed(config.sprintSpeed)
-		MovementController.ChangeHoldStance(0)
-
-
-		-- TODO: refactor this. movementcontroller shouldnt be handling firing
-		MovementController.CancelFiring()
 	else
 		local newSpeed = MovementController.GetStanceSpeed(State.stance())
 		MovementController.UpdateWalkSpeed(newSpeed)

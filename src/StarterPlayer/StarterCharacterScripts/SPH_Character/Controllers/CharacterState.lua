@@ -50,6 +50,11 @@ local CharacterState = {
 	lean = Charm.atom(0) 								:: Charm.Atom<number>,
 	moving = Charm.atom(false)							:: Charm.Atom<boolean>,
 
+	freeLook = Charm.atom(false)						:: Charm.Atom<boolean>,
+	freeLookRotation = Charm.atom(CFrame.new())			:: Charm.Atom<CFrame>,
+	freeLookOffset = Charm.atom(CFrame.new())			:: Charm.Atom<CFrame>,
+	aimHeld = Charm.atom(false)							:: Charm.Atom<boolean>,
+	blocked = Charm.atom(false)							:: Charm.Atom<boolean>,
 }
 
 return CharacterState
