@@ -26,6 +26,7 @@ else
 	neckJoint = character.Head.Neck -- DD_SPH: SPH v1.2.3 lists this as UpperTorso which is wrong
 	rigType = humanoid.RigType
 end
+
 local camera = workspace.CurrentCamera
 if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
 camera.CameraType = Enum.CameraType.Custom
@@ -291,21 +292,8 @@ end
 local function HandleInput(actionName, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	local inputEnded = Enum.UserInputState.End
-
-
 	if inputState == inputBegan then -- Other inputs
-
-		if actionName == "SPH_StanceLower" and inputState == inputBegan and State.stance() < 2 and not humanoid.Sit then -- Lower State.stance
-			if not config.canProne and State.stance() == 1 then return end -- If the player is crouched and unable to prone then return
-			MovementController.ChangeStance(1)
-			State.sprinting(false)
-
-
-		elseif actionName == "SPH_StanceRaise" and inputState == inputBegan and State.stance() > 0 then -- Raise State.stance
-			MovementController.ChangeStance(-1)
-
-
-		elseif actionName == "SPH_LeanLeft" and inputState == inputBegan and State.stance() < 2 and not State.sprinting() and not humanoid.Sit then -- Lean left
+		if actionName == "SPH_LeanLeft" and inputState == inputBegan and State.stance() < 2 and not State.sprinting() and not humanoid.Sit then -- Lean left
 			if MovementController.lean == -1 then
 				MovementController.ChangeLean(0)
 			else
@@ -328,7 +316,7 @@ local function HandleInput(actionName, inputState, inputObject)
 			if inputState == inputBegan and State.firstPerson() and not freeLook and not blocked then
 				aimHeld = true
 				State.sprinting(false)
-				if State.stance() == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
+				if State.stance() == 0 then MovementController.UpdateWalkSpeed(config.walkSpeed) end
 				ToggleAiming(true)
 			elseif not State.sprinting() and State.aiming() then -- Not aiming
 				aimHeld = false
@@ -338,7 +326,7 @@ local function HandleInput(actionName, inputState, inputObject)
 			if State.firstPerson() and not freeLook and not blocked and not State.aiming() then
 				aimHeld = true
 				State.sprinting(false)
-				if State.stance() == 0 then MovementController.ChangeWalkSpeed(config.walkSpeed) end
+				if State.stance() == 0 then MovementController.UpdateWalkSpeed(config.walkSpeed) end
 				ToggleAiming(true)
 			else
 				aimHeld = false
@@ -366,7 +354,9 @@ end
 
 InputController.Initialize({
 	callbacks = {
-		[Intents.SPRINT] = MovementController.OnSprintIntent
+		[Intents.SPRINT] = MovementController.OnSprintIntent,
+		[Intents.STANCE_DOWN] = MovementController.OnStanceDownIntent,
+		[Intents.STANCE_UP] = MovementController.OnStanceUpIntent,
 	}
 })
 
@@ -669,10 +659,10 @@ humanoid.Seated:Connect(function(seated, seatPart)
 		State.sprinting(false)
 		MovementController.ChangeLean(0)
 		if State.stance() == 1 then
-			MovementController.ChangeStance(-1)
+			MovementController.UpdateStance(-1)
 		elseif State.stance() == 2 then
-			MovementController.ChangeStance(-1)
-			MovementController.ChangeStance(-1)
+			MovementController.UpdateStance(-1)
+			MovementController.UpdateStance(-1)
 		end
 
 		if seatPart:IsA("VehicleSeat") then

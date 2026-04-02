@@ -3,7 +3,19 @@ local Packages = game.ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local config = require(assets.GameConfig)
 
+
+local Player = game.Players.LocalPlayer
+local character = Player.Character or Player.CharacterAdded:Wait()
+local HRP = character:WaitForChild("HumanoidRootPart")
+local Humanoid: Humanoid = character:WaitForChild("Humanoid")
+local IsR6 = Humanoid.RigType == Enum.HumanoidRigType.R6
 local CharacterState = {
+	Parts = {
+		Humanoid = Humanoid,
+		HRP = HRP,
+		IsR6 = IsR6,
+	},
+
 	-- Weapon Data
 	wepStats = nil,
 	attStats = {},

@@ -43,11 +43,12 @@ function InputController.HandleInput(actionName, inputState, inputObject)
 	InputController._callbacks[actionName](inputState, inputObject)
 end
 
-function InputController.BindInput(actionName, touchButton, ...)
+function InputController.BindInput(actionName, touchButton, priority, ...)
 	if not Intents[actionName] then
 		warn(`[pearhead] {actionName} isn't a valid intent in Enums.Intents`)
 	end
-	ContextActionService:BindActionAtPriority(actionName, InputController.HandleInput,touchButton, config.gunInputPriority, ...)
+	ContextActionService:BindActionAtPriority(actionName, InputController.HandleInput,touchButton, priority, ...)
+	return InputController
 end
 
 function InputController.BindAiming()
@@ -102,12 +103,11 @@ function InputController.UnbindGunInputs()
 end
 
 function InputController.BindCharacterInputs()
-	InputController.BindInput(Intents.SPRINT, false, unpack(config.keySprint))
+	InputController
+		.BindInput(Intents.SPRINT, false, config.movementInputPriority, unpack(config.keySprint))
+		.BindInput(Intents.STANCE_DOWN, config.mobileButtons, config.movementInputPriority, unpack(config.lowerStance))
+		.BindInput(Intents.STANCE_UP, config.mobileButtons, config.movementInputPriority, unpack(config.raiseStance))
 
-
-	
-	ContextActionService:BindActionAtPriority("SPH_StanceLower", InternalHandleInput, config.mobileButtons, config.movementInputPriority, unpack(config.lowerStance))
-	ContextActionService:BindActionAtPriority("SPH_StanceRaise", InternalHandleInput, config.mobileButtons, config.movementInputPriority, unpack(config.raiseStance))
 	ContextActionService:BindActionAtPriority("SPH_LeanLeft", InternalHandleInput, false, config.movementInputPriority, unpack(config.leanLeft))
 	ContextActionService:BindActionAtPriority("SPH_LeanRight", InternalHandleInput, false, config.movementInputPriority, unpack(config.leanRight))
 
