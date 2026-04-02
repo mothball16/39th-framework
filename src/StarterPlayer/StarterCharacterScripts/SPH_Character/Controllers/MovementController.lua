@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 
@@ -12,6 +13,8 @@ local assets = game.ReplicatedStorage.SPH_Assets
 local modules = assets.Modules
 local bridgeNet = require(modules.BridgeNet)
 local playerLean = bridgeNet.CreateBridge("PlayerLean")
+
+local c0Ref = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
 
 local MovementController = {
     -- state vars
@@ -175,20 +178,45 @@ function MovementController.UpdateStance(stance, oldStance)
 	MovementController.UpdateWalkSpeed(newSpeed)
 
 	if stance == 0 then -- Walking
-		MovementController.script.Parent.MovementLeaning:SetAttribute("DisableLean", false)
 		MovementController.UpdateWalkSpeed(config.walkSpeed)
 		MovementController.PlayCharSound("Uncrouch")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), {HipHeight = targetCharacterHeight}):Play()
 	elseif stance == 1 then -- Crouching
-		MovementController.script.Parent.MovementLeaning:SetAttribute("DisableLean", false)
 		MovementController.PlayCharSound(oldStance == 0 and "Crouch" or "Unprone")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), {HipHeight = targetCharacterHeight}):Play()
 	elseif stance == 2 then -- Prone
 		MovementController.UpdateLean(0)
-		MovementController.script.Parent.MovementLeaning:SetAttribute("DisableLean", true)
 		MovementController.PlayCharSound("Prone")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime * 1.5), {HipHeight = targetCharacterHeight}):Play()
 	end
+end
+
+local function UpdateCharacterTilt(character, dt)
+	local humanoid = character:FindFirstChild("Humanoid")
+	local rootPart
+	local rootJoint
+	
+	if humanoid and humanoid.RigType ~= Enum.HumanoidRigType.R6 then -- finds the rig type and sets the root accordingly I KNOW THIS IS WRONG LEAVE IT UNTIL I FIGURE OUT THE MATH BELOW OR ITLL MAKE YOU HORIZONTAL
+		rootPart = character:FindFirstChild("LowerTorso")
+		rootJoint = rootPart and rootPart:FindFirstChild("Root")
+	else
+		rootPart = character:FindFirstChild("HumanoidRootPart")
+		rootJoint = rootPart and rootPart:FindFirstChild("RootJoint")
+	end
+	
+	if not humanoid or humanoid.Health <= 0 or not rootPart or not rootJoint then return end
+	local MoveDirection = rootPart.CFrame:VectorToObjectSpace(humanoid.MoveDirection)
+
+	local tilt = c0Ref:Inverse() * rootJoint.C0
+
+	local target = CFrame.Angles(math.rad(-MoveDirection.Z) * config.maxLeanAngle, math.rad(-MoveDirection.X) * config.maxLeanAngle, 0)
+	
+	local isLocal = character == Players.LocalPlayer.Character
+	local disableLean = isLocal and (State.stance() == 2) or false
+	
+	if humanoid.Sit or disableLean or character:GetAttribute("SeatAnim") then target = CFrame.new() end
+	tilt = tilt:Lerp(target, 0.2 ^ (1 / (dt * 60)))
+	rootJoint.C0 = c0Ref * tilt
 end
 
 function MovementController.UpdateRender(dt)
@@ -211,6 +239,18 @@ function MovementController.UpdateRender(dt)
 	else
 		State.Parts.RootJoint.C1 = State.Parts.RootJoint.C1:Lerp(CFrame.new(-xOffset / 2, 0, 0)
 		* CFrame.Angles(math.rad(0), math.rad(0), math.rad(0) + math.rad(17 * State.lean())), 0.1 * dt * 60)
+	end
+
+	if config.movementLeaning then
+		UpdateCharacterTilt(Players.LocalPlayer.Character, dt)
+		
+		if config.replicateMovementLeaning then
+			for _, player in ipairs(Players:GetPlayers()) do
+				if player ~= Players.LocalPlayer and player.Character then
+					UpdateCharacterTilt(player.Character, dt)
+				end
+			end
+		end
 	end
 end
 
