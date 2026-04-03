@@ -4,7 +4,7 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Charm = require(Packages.Charm)
-
+local Enums = require(script.Parent.Parent.Enums)
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local modules = assets.Modules
@@ -21,7 +21,6 @@ local Camera = game.Workspace.CurrentCamera
 local storageCFrame = CFrame.new(1000000, 0, 0)
 local defaultCameraMode = Player.CameraMode
 
-
 local WC = {
 	holdingM1 = false,
 	cycled = true,
@@ -34,7 +33,6 @@ local WC = {
 	ubglAmmo = nil,
 	sights = {},
 	lastGunModel = nil,
-	fireModes = { Safe = 0, Semi = 1, Auto = 2, Burst = 3, UBGL = 4, Manual = 5 },
 
 	-- Dependencies
 	player = nil,
@@ -268,7 +266,7 @@ end
 function WC.PlayRepSound(soundName)
 	if not State.dead() and State.wepStats then
 		local soundToPlay
-		if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+		if State.fireMode() == Enums.FireModes.UBGL and State.wepStats.hasUBGL then
 			soundToPlay = State.gunModel.Grip:FindFirstChild("UBGL_" .. soundName)
 			if not soundToPlay then
 				soundToPlay = State.gunModel.Grip:FindFirstChild(soundName)
@@ -298,7 +296,7 @@ function WC.PlayRepSound(soundName)
 end
 
 function WC.GetCurrentWepStats()
-	if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+	if State.fireMode() == Enums.FireModes.UBGL and State.wepStats.hasUBGL then
 		return State.wepStats.getStatsForMode(4)
 	else
 		return State.wepStats
@@ -307,7 +305,7 @@ end
 
 function WC.IsLoaded()
 	local currentStats = WC.GetCurrentWepStats()
-	if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+	if State.fireMode() == Enums.FireModes.UBGL and State.wepStats.hasUBGL then
 		return WC.ubglAmmo and WC.ubglAmmo.Value > 0
 	else
 		return not currentStats.openBolt and State.equipped().Chambered.Value or currentStats.openBolt and State.gunAmmo.MagAmmo.Value > 0
@@ -315,7 +313,7 @@ function WC.IsLoaded()
 end
 
 function WC.GetMuzzlePoint(gunModel)
-	if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+	if State.fireMode() == Enums.FireModes.UBGL and State.wepStats.hasUBGL then
 		local ubglMuzzle = gunModel.Grip:FindFirstChild("UBGLMuzzle")
 		if ubglMuzzle then return ubglMuzzle end
 	end
@@ -631,7 +629,7 @@ function WC.OnTriggerIntent(inputState, inputObject)
 		WC.cancelReload = true
 		if not (State.sprinting() or State.reloading()) then
 			WC.holdingM1 = true
-			if not WC.IsLoaded() and not (State.equipped():GetAttribute("FireMode") == WC.fireModes.Manual and State.equipped():GetAttribute("MagAmmo") > 0) then
+			if not WC.IsLoaded() and not (State.equipped():GetAttribute("FireMode") == Enums.FireModes.Manual and State.equipped():GetAttribute("MagAmmo") > 0) then
 				WC.PlayRepSound("Click")
 			end
 		end
@@ -653,7 +651,7 @@ end
 function WC.OnReloadIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan and not State.reloading() and WC.cycled then
-		if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+		if State.fireMode() == Enums.FireModes.UBGL and State.wepStats.hasUBGL then
 			local ubglAmmoPool = State.equipped():FindFirstChild("UBGLAmmoPool")
 			if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
 				WC.cancelReload = false
@@ -795,7 +793,7 @@ function WC.UpdateHeartbeat(dt)
 			WC.bulletsCurrentlyFired += 1
 			WC.ejected = false
 
-			if fireMode == WC.fireModes.Semi or fireMode == WC.fireModes.Manual or fireMode == WC.fireModes.UBGL or (fireMode == WC.fireModes.Burst and WC.bulletsCurrentlyFired >= currentStats.burstNumber) then
+			if fireMode == Enums.FireModes.Semi or fireMode == Enums.FireModes.Manual or fireMode == Enums.FireModes.UBGL or (fireMode == Enums.FireModes.Burst and WC.bulletsCurrentlyFired >= currentStats.burstNumber) then
 				WC.canFire = false
 				WC.holdingM1 = false
 			end
@@ -849,11 +847,11 @@ function WC.UpdateHeartbeat(dt)
 
 			WC.ViewmodelController.gunRecoilSpring:shove(Vector3.new(gunVertRecoil, math.random(-gunHorzRecoil,gunHorzRecoil), punchMultiplier))
 
-			if fireMode ~= WC.fireModes.Manual and fireMode ~= WC.fireModes.UBGL then
+			if fireMode ~= Enums.FireModes.Manual and fireMode ~= Enums.FireModes.UBGL then
 				WC.EjectShell()
 			end
 
-			if fireMode ~= WC.fireModes.UBGL then
+			if fireMode ~= Enums.FireModes.UBGL then
 				local bulletHandlerPart = State.wepStats.bulletHandler and State.gunModel:FindFirstChild(State.wepStats.bulletHolder)
 				if bulletHandlerPart then
 					local bulletNumber = State.gunAmmo.MagAmmo.MaxValue - (State.gunAmmo.MagAmmo.Value - 1)
@@ -866,14 +864,14 @@ function WC.UpdateHeartbeat(dt)
 			if not State.firstPerson() then tempGunModel = WC.GetThirdPersonGunModel() end
 
 			local muzzleName = "Muzzle"
-			if fireMode == WC.fireModes.UBGL then muzzleName = "UBGLMuzzle" end
+			if fireMode == Enums.FireModes.UBGL then muzzleName = "UBGLMuzzle" end
 			local muCh = State.attStats.muzzleChance or State.wepStats.muzzleChance
 			if State.attStats.newMuzzleDevice then tempGunModel = tempGunModel[State.attStats.newMuzzleDevice] end
-			bulletHandler.FireFX(WC.player, tempGunModel, muzzleName, muCh, fireMode == WC.fireModes.UBGL)
+			bulletHandler.FireFX(WC.player, tempGunModel, muzzleName, muCh, fireMode == Enums.FireModes.UBGL)
 
 			WC.PlayRepSound("Fire")
 
-			if fireMode ~= WC.fireModes.UBGL then
+			if fireMode ~= Enums.FireModes.UBGL then
 				WC.MoveBolt(currentStats.boltDist)
 			end
 
@@ -895,12 +893,12 @@ function WC.UpdateHeartbeat(dt)
 				local tracerColor = nil
 				local TrTi = currentStats.tracerTiming
 				if TrTi and State.attStats.tracerTiming then TrTi = currentStats.tracerTiming end
-				if fireMode ~= WC.fireModes.UBGL and currentStats.tracers and State.gunAmmo.MagAmmo.Value % TrTi == 0 then
+				if fireMode ~= Enums.FireModes.UBGL and currentStats.tracers and State.gunAmmo.MagAmmo.Value % TrTi == 0 then
 					tracerColor = State.attStats.tracerColor or currentStats.tracerColor
 				end
 
 				local bulletData = State.equipped()
-				if fireMode == WC.fireModes.UBGL then
+				if fireMode == Enums.FireModes.UBGL then
 					bulletData = {
 						Tool = State.equipped(),
 						fireMode = fireMode,
@@ -915,7 +913,7 @@ function WC.UpdateHeartbeat(dt)
 			WC.playerFire:Fire(firePoint.WorldCFrame)
 
 			local cycleTime = currentStats.fireRate
-			if fireMode == WC.fireModes.Burst and currentStats.burstFireRate then cycleTime = currentStats.burstFireRate end
+			if fireMode == Enums.FireModes.Burst and currentStats.burstFireRate then cycleTime = currentStats.burstFireRate end
 			if State.attStats.fireRate then cycleTime *= State.attStats.fireRate end
 
 			if currentStats.projectile ~= "Bullet" then
@@ -925,14 +923,14 @@ function WC.UpdateHeartbeat(dt)
 			task.wait(60 / cycleTime)
 			if not State.equipped() then return end
 
-			if currentStats.autoChamber and fireMode == WC.fireModes.Manual and not State.reloading() then
+			if currentStats.autoChamber and fireMode == Enums.FireModes.Manual and not State.reloading() then
 				WC.ChangeHoldStance(0)
 				WC.AnimationController.WeaponChamber()
 			end
 			WC.cycled = true
 		else
 			if not WC.IsLoaded() then
-				if fireMode == WC.fireModes.Manual and State.gunAmmo.MagAmmo.Value > 0 and not State.reloading() and not State.chambering() then
+				if fireMode == Enums.FireModes.Manual and State.gunAmmo.MagAmmo.Value > 0 and not State.reloading() and not State.chambering() then
 					WC.ChangeHoldStance(0)
 					WC.AnimationController.WeaponChamber()
 					WC.holdingM1 = false

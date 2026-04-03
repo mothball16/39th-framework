@@ -31,5 +31,14 @@ return {
         TOGGLE_LASER = "TOGGLE_LASER",
         TOGGLE_FLASHLIGHT = "TOGGLE_FLASHLIGHT",
         DROP_GUN = "DROP_GUN",
+    },
+
+    FireModes = {
+        Safe = 0,
+        Semi = 1,
+        Auto = 2,
+        Burst = 3,
+        UBGL = 4,
+        Manual = 5
     }
 }
