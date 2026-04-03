@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local State = require(script.Parent.CharacterState)
+local WeaponState = require(script.Parent.WeaponState)
 
 local CameraController = {
 	camera = nil,
@@ -113,7 +114,7 @@ function CameraController.UpdateRender(dt)
 			State.firstPerson(true)
 		elseif State.firstPerson() and character.Head.LocalTransparencyModifier <= fpThreshold then
 			State.firstPerson(false)
-			State.wepState.viewmodelVisible(false)
+			WeaponState.viewmodelVisible(false)
 			CameraController.cameraOffsetTarget = Vector3.zero
 		end
 	end
@@ -227,7 +228,7 @@ function CameraController.UpdateFOV(dt)
 	local camSensFactor = camera.FieldOfView / config.defaultFOV
 	if State.aiming() then
 		camera.FieldOfView = LerpNumber(camera.FieldOfView, State.aimFOVTarget(), 0.3 * (dt * 60))
-		UserInputService.MouseDeltaSensitivity = State.wepState.aimSens() * camSensFactor
+		UserInputService.MouseDeltaSensitivity = WeaponState.aimSens() * camSensFactor
 	else
 		UserInputService.MouseDeltaSensitivity = 1 * camSensFactor
 	end

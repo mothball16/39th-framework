@@ -28,31 +28,6 @@ local CharacterState = {
 		HRP = HRP,
 	},
 
-
-	-- Weapon Data
-	wepStats = nil,
-	attStats = {},
-
-	gunModel = nil,
-	gunAmmo = nil,
-
-	wepState = {
-		aimSens = Charm.atom(config.defaultAimSensitivity) 	:: Charm.Atom<number>,
-		sightIndex = Charm.atom(1) 							:: Charm.Atom<number>,
-		viewmodelVisible = Charm.atom(false)				:: Charm.Atom<boolean>,
-		reloading = Charm.atom(false)						:: Charm.Atom<boolean>,
-		chambering = Charm.atom(false)						:: Charm.Atom<boolean>,
-		aimHeld = Charm.atom(false)							:: Charm.Atom<boolean>,
-		blocked = Charm.atom(false)							:: Charm.Atom<boolean>,
-
-		laserEnabled = Charm.atom(false)					:: Charm.Atom<boolean>,
-		flashlightEnabled = Charm.atom(false)				:: Charm.Atom<boolean>,
-		bipodEnabled = Charm.atom(false)					:: Charm.Atom<boolean>,
-		fireMode = Charm.atom(0)							:: Charm.Atom<number>,
-		holdStance = Charm.atom(0)							:: Charm.Atom<number>,
-	},
-
-
 	aimFOVTarget = 	Charm.atom(config.defaultFOV) 		:: Charm.Atom<number>,
 
 	aiming = Charm.atom(false) 							:: Charm.Atom<boolean>,

@@ -43,6 +43,7 @@ local callbacks = require(assets.Mods)
 
 local Controllers = script.Parent:WaitForChild("Controllers")
 local State = require(Controllers:WaitForChild("CharacterState"))
+local WeaponState = require(Controllers:WaitForChild("WeaponState"))
 local InputController = require(Controllers:WaitForChild("InputController"))
 local ViewmodelController = require(Controllers:WaitForChild("ViewmodelController"))
 local MovementController = require(Controllers:WaitForChild("MovementController"))
@@ -160,7 +161,7 @@ local characterAnimator:Animator = weaponRig:WaitForChild("AnimationController")
 
 -- DD_SPH Gunsmith
 local gunsmith = require(modules.Gunsmith)
-State.attStats = gunsmith.attStats
+WeaponState.attStats = gunsmith.attStats
 
 local function PlayCharSound(soundType)
 	local soundFolder = assets.Sounds:FindFirstChild(soundType)
@@ -185,7 +186,7 @@ AnimationController.Initialize({
 -- Makes the viewmodel visible and refreshes its appearance
 local function RefreshViewmodel()
 	if State.firstPerson() and not State.equipping() then
-		State.wepState.viewmodelVisible(true)
+		WeaponState.viewmodelVisible(true)
 	end
 
 	local plrShirt = character:FindFirstChildWhichIsA("Shirt")
@@ -253,8 +254,8 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 		end]]
 
 		-- Sensitivity
-		State.aimSens(math.clamp(State.aimSens() + (0.01 * scrollAmount), 0.01, 1))
-		State.wepStats.aimSpeed = State.aimSens()
+		WeaponState.aimSens(math.clamp(WeaponState.aimSens() + (0.01 * scrollAmount), 0.01, 1))
+		WeaponState.wepStats.aimSpeed = WeaponState.aimSens()
 	end
 end
 
@@ -359,7 +360,7 @@ humanoid.Died:Connect(function()
 	end
 	userInputService.MouseIconEnabled = true
 	ToggleAiming(false)
-	State.wepState.viewmodelVisible(false)
+	WeaponState.viewmodelVisible(false)
 	animBase.CFrame = storageCFrame
 
 	InputController.UnbindGunInputs()
