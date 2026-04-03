@@ -387,7 +387,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		WeaponController.UpdateRender(dt)
 		CameraController.UpdateFOV(dt)
 	end
-	
+
 	ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, MovementController.vehicleSeated)
 end)
 

@@ -57,6 +57,12 @@ local CharacterState = {
 	freeLookOffset = Charm.atom(CFrame.new())			:: Charm.Atom<CFrame>,
 	aimHeld = Charm.atom(false)							:: Charm.Atom<boolean>,
 	blocked = Charm.atom(false)							:: Charm.Atom<boolean>,
+
+	laserEnabled = Charm.atom(false)					:: Charm.Atom<boolean>,
+	flashlightEnabled = Charm.atom(false)				:: Charm.Atom<boolean>,
+	bipodEnabled = Charm.atom(false)					:: Charm.Atom<boolean>,
+	fireMode = Charm.atom(0)							:: Charm.Atom<number>,
+	holdStance = Charm.atom(0)							:: Charm.Atom<number>,
 }
 
 return CharacterState

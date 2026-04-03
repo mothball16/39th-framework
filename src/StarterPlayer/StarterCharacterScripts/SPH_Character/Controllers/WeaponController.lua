@@ -26,10 +26,7 @@ local WC = {
 	holdingM1 = false,
 	cycled = true,
 	canFire = true,
-	laserEnabled = false,
-	flashlightEnabled = false,
 	canBipod = false,
-	bipodEnabled = false,
 	bipodRayIgnore = {},
 	ejected = true,
 	cancelReload = false,
@@ -39,8 +36,6 @@ local WC = {
 	sights = {},
 	lastGunModel = nil,
 	fireModes = { Safe = 0, Semi = 1, Auto = 2, Burst = 3, UBGL = 4, Manual = 5 },
-	curFireMode = 0,
-	holdStance = 0,
 	holdAnim = nil,
 
 	-- Dependencies
@@ -117,6 +112,100 @@ function WC.Initialize(params)
 	Charm.subscribe(State.sightIndex, WC.OnSightIndexSwitched)
 	Charm.subscribe(State.firstPerson, WC.OnFirstPersonToggled)
 	Charm.subscribe(State.sprinting, WC.OnSprintToggled)
+	Charm.subscribe(State.laserEnabled, WC.OnLaserToggled)
+	Charm.subscribe(State.flashlightEnabled, WC.OnFlashlightToggled)
+	Charm.subscribe(State.bipodEnabled, WC.OnBipodToggled)
+	Charm.subscribe(State.fireMode, WC.OnFireModeChanged)
+	Charm.subscribe(State.holdStance, WC.OnHoldStanceChanged)
+end
+
+function WC.UpdateAttachmentsVisibility()
+	if not State.equipped() then return end
+	
+	local isFirstPerson = State.firstPerson()
+	local laserOn = State.laserEnabled()
+	local flashlightOn = State.flashlightEnabled()
+	local tpModel = WC.GetThirdPersonGunModel()
+	
+	if laserOn and config.laserTrail then
+		WC.laserBeamFP.Enabled = isFirstPerson
+		WC.laserBeamTP.Enabled = not isFirstPerson
+		
+		if not isFirstPerson and tpModel then
+			if State.attStats.laserOrigin and State.gunModel[State.attStats.laserOrigin].Main:FindFirstChild("Laser") then
+				WC.laserBeamTP.Attachment0 = tpModel[State.attStats.laserOrigin].Main.Laser
+			elseif tpModel.Grip:FindFirstChild("Laser") then
+				WC.laserBeamTP.Attachment0 = tpModel.Grip.Laser
+			end
+		end
+	else
+		WC.laserBeamFP.Enabled = false
+		WC.laserBeamTP.Enabled = false
+	end
+	
+	local function updateLight(model, enabled)
+		if not model then return end
+		if model.Grip:FindFirstChild("Flashlight") then
+			local light = model.Grip.Flashlight:FindFirstChildWhichIsA("Light")
+			if light then light.Enabled = enabled end
+		end
+		if State.attStats.flashlights_client then
+			for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
+				if model:FindFirstChild(lightAttachment.Name) then
+					local light = model[lightAttachment.Name].Main.Flashlight:FindFirstChildWhichIsA("Light")
+					if light then light.Enabled = enabled end
+				end
+			end
+		end
+	end
+	
+	updateLight(State.gunModel, flashlightOn and isFirstPerson)
+	updateLight(tpModel, flashlightOn and not isFirstPerson)
+end
+
+function WC.OnLaserToggled(enabled)
+	if not State.equipped() then return end
+	WC.PlayRepSound("Button")
+	WC.playerToggleAttachment:Fire(1, enabled)
+	
+	WC.laserDotUI.Enabled = enabled
+	if enabled then
+		local lazerbeem = State.gunModel.Grip:FindFirstChild("Laser")
+		if State.attStats.laserOrigin then lazerbeem = State.gunModel[State.attStats.laserOrigin].Main:FindFirstChild("Laser") end
+		if lazerbeem then
+			WC.laserDotUI.Dot.ImageColor3 = lazerbeem.Color.Value
+			if config.laserTrail then
+				WC.laserBeamFP.Color = ColorSequence.new(lazerbeem.Color.Value)
+				WC.laserBeamTP.Color = ColorSequence.new(lazerbeem.Color.Value)
+			end
+		end
+	end
+	WC.UpdateAttachmentsVisibility()
+end
+
+function WC.OnFlashlightToggled(enabled)
+	if not State.equipped() then return end
+	WC.PlayRepSound("Button")
+	WC.playerToggleAttachment:Fire(0, enabled)
+	WC.UpdateAttachmentsVisibility()
+end
+
+function WC.OnBipodToggled(enabled)
+	if not State.equipped() then return end
+	local bipodModel = State.gunModel
+	if State.attStats.Bipod and State.gunModel[State.attStats.Bipod].Main:FindFirstChild("Bipod") then
+		bipodModel = State.gunModel[State.attStats.Bipod]
+	end
+	if bipodModel then
+		WC.ToggleBipod(bipodModel, enabled)
+		WC.PlayRepSound("Switch")
+		WC.playerToggleAttachment:Fire(2, enabled)
+	end
+end
+
+function WC.OnFireModeChanged(mode)
+	if not State.equipped() then return end
+	WC.switchFireMode:Fire(mode)
 end
 
 
@@ -154,54 +243,11 @@ function WC.OnFirstPersonToggled(isFirstPerson)
 	if isFirstPerson then
 		if State.equipped() then
 			WC.InputController.BindAiming()
-			local tpModel = WC.GetThirdPersonGunModel()
-			if WC.flashlightEnabled then
-				if State.gunModel.Grip:FindFirstChild("Flashlight") then
-					State.gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
-					if tpModel then tpModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false end
-				end
-				if State.attStats.flashlights_client then
-					for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
-						lightAttachment.Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
-						if tpModel then tpModel[lightAttachment.Name].Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false end
-					end
-				end
-			end
-			if WC.laserEnabled then
-				WC.laserBeamTP.Enabled = false
-				WC.laserBeamFP.Enabled = true
-			end
 		end
 	else
 		WC.InputController.UnbindAiming()
-		if State.equipped() then
-			local tpModel = WC.GetThirdPersonGunModel()
-			if WC.laserEnabled then
-				WC.laserBeamTP.Enabled = true
-				WC.laserBeamFP.Enabled = false
-				if not WC.laserBeamTP.Attachment0 and tpModel then
-					WC.laserBeamTP.Attachment0 = tpModel.Grip.Laser
-				end
-				if State.attStats.laserOrigin and State.gunModel[State.attStats.laserOrigin].Main:FindFirstChild("Laser") and tpModel then
-					WC.laserBeamTP.Attachment0 = tpModel[State.attStats.laserOrigin].Main.Laser		
-				end
-			end
-			if State.gunModel.Grip:FindFirstChild("Flashlight") then
-				State.gunModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
-				if tpModel and WC.flashlightEnabled then
-					tpModel.Grip.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
-				end
-			end
-			if State.attStats.flashlights_client then
-				for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
-					lightAttachment.Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = false
-					if tpModel and WC.flashlightEnabled then
-						tpModel[lightAttachment.Name].Main.Flashlight:FindFirstChildWhichIsA("Light").Enabled = true
-					end
-				end
-			end
-		end
 	end
+	WC.UpdateAttachmentsVisibility()
 end
 
 function WC.OnSprintToggled(sprinting)
@@ -225,7 +271,7 @@ end
 function WC.PlayRepSound(soundName)
 	if not State.dead() and State.wepStats then
 		local soundToPlay
-		if WC.curFireMode == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+		if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
 			soundToPlay = State.gunModel.Grip:FindFirstChild("UBGL_" .. soundName)
 			if not soundToPlay then
 				soundToPlay = State.gunModel.Grip:FindFirstChild(soundName)
@@ -255,7 +301,7 @@ function WC.PlayRepSound(soundName)
 end
 
 function WC.GetCurrentWepStats()
-	if WC.curFireMode == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+	if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
 		return State.wepStats.getStatsForMode(4)
 	else
 		return State.wepStats
@@ -264,7 +310,7 @@ end
 
 function WC.IsLoaded()
 	local currentStats = WC.GetCurrentWepStats()
-	if WC.curFireMode == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+	if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
 		return WC.ubglAmmo and WC.ubglAmmo.Value > 0
 	else
 		return not currentStats.openBolt and State.equipped().Chambered.Value or currentStats.openBolt and State.gunAmmo.MagAmmo.Value > 0
@@ -272,7 +318,7 @@ function WC.IsLoaded()
 end
 
 function WC.GetMuzzlePoint(gunModel)
-	if WC.curFireMode == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+	if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
 		local ubglMuzzle = gunModel.Grip:FindFirstChild("UBGLMuzzle")
 		if ubglMuzzle then return ubglMuzzle end
 	end
@@ -342,44 +388,49 @@ function WC.GetThirdPersonGunModel()
 end
 
 function WC.SwitchFireMode()
+	local mode = State.fireMode()
 	repeat
-		WC.curFireMode += 1
-		if WC.curFireMode > 5 then WC.curFireMode = 0 break end
-	until State.wepStats.fireSwitch[WC.curFireMode]
-	WC.switchFireMode:Fire(WC.curFireMode)
+		mode += 1
+		if mode > 5 then mode = 0 break end
+	until State.wepStats.fireSwitch[mode]
+	State.fireMode(mode)
 end
 
 function WC.ChangeHoldStance(newStance)
 	if State.aiming() then return end
-	if WC.holdStance == newStance and WC.holdAnim then
+	if State.holdStance() == newStance and WC.holdAnim then
+		State.holdStance(0)
+	else
+		State.holdStance(newStance)
+	end
+end
+
+function WC.OnHoldStanceChanged(newStance, oldStance)
+	if WC.holdAnim then
 		WC.AnimationController.StopAnimation(WC.holdAnim.Name, 0.3)
 		WC.holdAnim = nil
-		WC.holdStance = 0
-	else
-		WC.holdStance = newStance
-		if WC.holdAnim then WC.AnimationController.StopAnimation(WC.holdAnim.Name, 0.3) end
+	end
 
-		local animToPlay
-		if WC.holdStance == 1 and State.wepStats.holdUpAnim then
-			animToPlay = State.wepStats.holdUpAnim
-		elseif WC.holdStance == 2 and State.wepStats.patrolAnim then
-			animToPlay = State.wepStats.patrolAnim
-		elseif WC.holdStance == 3 and State.wepStats.holdDownAnim then
-			animToPlay = State.wepStats.holdDownAnim
-		end
+	if not State.equipped() then return end
 
-		if animToPlay then
-			WC.holdAnim = WC.AnimationController.PlayAnimation(animToPlay, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
-			WC.holdAnim:Play()
-		elseif WC.holdAnim then
-			WC.holdAnim = nil
-		end
+	local animToPlay
+	if newStance == 1 and State.wepStats.holdUpAnim then
+		animToPlay = State.wepStats.holdUpAnim
+	elseif newStance == 2 and State.wepStats.patrolAnim then
+		animToPlay = State.wepStats.patrolAnim
+	elseif newStance == 3 and State.wepStats.holdDownAnim then
+		animToPlay = State.wepStats.holdDownAnim
+	end
+
+	if animToPlay then
+		WC.holdAnim = WC.AnimationController.PlayAnimation(animToPlay, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
+		if WC.holdAnim then WC.holdAnim:Play() end
 	end
 end
 
 function WC.ChamberAnim()
 	local animNameToPlay
-	if State.equipped().BoltReady.Value or WC.curFireMode == WC.fireModes.Manual then
+	if State.equipped().BoltReady.Value or State.fireMode() == WC.fireModes.Manual then
 		animNameToPlay = State.wepStats.boltChamber
 	else
 		animNameToPlay = State.wepStats.boltClose
@@ -419,7 +470,7 @@ function WC.ReloadAnim()
 	local animSpeed = State.wepStats.reloadSpeedModifier
 	if State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
 
-	if WC.curFireMode == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+	if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
 		local ubglStats = State.wepStats.getStatsForMode(4)
 		if ubglStats.reloadAnim then
 			WC.AnimationController.PlayAnimation(ubglStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
@@ -474,11 +525,11 @@ function WC.Unequip(tool)
 
 	WC.sights = {}
 
-	WC.holdStance = 0
 	WC.holdAnim = nil
-	WC.laserEnabled = false
-	WC.flashlightEnabled = false
-	WC.bipodEnabled = false
+	State.laserEnabled(false)
+	State.flashlightEnabled(false)
+	State.bipodEnabled(false)
+	State.holdStance(0)
 	WC.laserDotUI.Enabled = false
 	WC.laserBeamFP.Enabled = false
 	WC.laserBeamTP.Enabled = false
@@ -548,7 +599,9 @@ function WC.Equip(newChild)
 		UserInputService.MouseIconEnabled = false
 		WC.ViewmodelController.ResetHipRotation()
 		State.equipping(true)
-		WC.laserEnabled = false
+		State.laserEnabled(false)
+		State.flashlightEnabled(false)
+		State.bipodEnabled(false)
 		WC.cycled = true
 		WC.chambering = false
 
@@ -651,7 +704,8 @@ function WC.Equip(newChild)
 		end
 
 		if config.lockFirstPerson then WC.player.CameraMode = Enum.CameraMode.LockFirstPerson end
-		WC.curFireMode = State.equipped().FireMode.Value
+		State.fireMode(State.equipped().FireMode.Value)
+		State.holdStance(0)
 
 		if State.gunModel.Grip:FindFirstChild("Laser") then
 			WC.laserBeamFP.Attachment0 = State.gunModel.Grip.Laser
@@ -713,7 +767,7 @@ end
 function WC.OnReloadIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan and not State.reloading() and WC.cycled then
-		if WC.curFireMode == WC.fireModes.UBGL and State.wepStats.hasUBGL then
+		if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
 			local ubglAmmoPool = State.equipped():FindFirstChild("UBGLAmmoPool")
 			if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
 				WC.ReloadAnim()
@@ -791,11 +845,7 @@ function WC.OnToggleLaserIntent(inputState, inputObject)
 		local lazerbeem = State.gunModel.Grip:FindFirstChild("Laser")
 		if State.attStats.laserOrigin then lazerbeem = State.gunModel[State.attStats.laserOrigin].Main:FindFirstChild("Laser") end
 		if lazerbeem then
-			WC.laserEnabled = not WC.laserEnabled
-			if not State.firstPerson() then WC.laserBeamTP.Enabled = true end
-			WC.PlayRepSound("Button")
-			WC.playerToggleAttachment:Fire(1, WC.laserEnabled)
-			WC.laserDotUI.Dot.ImageColor3 = lazerbeem.Color.Value
+			State.laserEnabled(not State.laserEnabled())
 		end
 	end
 end
@@ -803,42 +853,7 @@ end
 function WC.OnToggleFlashlightIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then
-		WC.flashlightEnabled = not WC.flashlightEnabled
-		WC.PlayRepSound("Button")
-		WC.playerToggleAttachment:Fire(0, WC.flashlightEnabled)
-
-		local tpModel = WC.GetThirdPersonGunModel()
-		local tpEnabled = (not State.firstPerson()) and WC.flashlightEnabled
-
-		local function updateFlashlightState(attachmentParent)
-			if not attachmentParent then return end
-			local flashlight = attachmentParent:FindFirstChild("Flashlight")
-			if flashlight then
-				local light = flashlight:FindFirstChildWhichIsA("Light")
-				if light then light.Enabled = WC.flashlightEnabled end
-			end
-		end
-		
-		local function updateTPLightState(attachmentParent)
-			if not attachmentParent then return end
-			local flashlight = attachmentParent:FindFirstChild("Flashlight")
-			if flashlight then
-				local light = flashlight:FindFirstChildWhichIsA("Light")
-				if light then light.Enabled = tpEnabled end
-			end
-		end
-
-		updateFlashlightState(State.gunModel.Grip)
-		if tpModel then updateTPLightState(tpModel.Grip) end
-
-		if State.attStats.flashlights_client then
-			for _, lightAttachment in ipairs(State.attStats.flashlights_client) do
-				updateFlashlightState(lightAttachment.Main)
-				if tpModel and tpModel:FindFirstChild(lightAttachment.Name) then
-					updateTPLightState(tpModel[lightAttachment.Name].Main)
-				end
-			end
-		end
+		State.flashlightEnabled(not State.flashlightEnabled())
 	end
 end
 
@@ -870,6 +885,7 @@ end
 function WC.UpdateHeartbeat(dt)
 	local freeLook = State.freeLook()
 	local blocked = State.blocked()
+	local fireMode = State.fireMode()
 	if
 		State.equipped()
 		and not State.dead()
@@ -877,7 +893,7 @@ function WC.UpdateHeartbeat(dt)
 		and not State.reloading()
 		and WC.holdingM1 
 		and WC.cycled then
-		if WC.canFire and not blocked and WC.holdStance == 0 and WC.IsLoaded() and WC.curFireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not State.equipping() then
+		if WC.canFire and not blocked and State.holdStance() == 0 and WC.IsLoaded() and fireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not State.equipping() then
 			if not State.firstPerson() and not config.thirdPersonFiring then return end
 
 			local currentStats = WC.GetCurrentWepStats()
@@ -886,7 +902,7 @@ function WC.UpdateHeartbeat(dt)
 			WC.bulletsCurrentlyFired += 1
 			WC.ejected = false
 
-			if WC.curFireMode == WC.fireModes.Semi or WC.curFireMode == WC.fireModes.Manual or WC.curFireMode == WC.fireModes.UBGL or (WC.curFireMode == WC.fireModes.Burst and WC.bulletsCurrentlyFired >= currentStats.burstNumber) then
+			if fireMode == WC.fireModes.Semi or fireMode == WC.fireModes.Manual or fireMode == WC.fireModes.UBGL or (fireMode == WC.fireModes.Burst and WC.bulletsCurrentlyFired >= currentStats.burstNumber) then
 				WC.canFire = false
 				WC.holdingM1 = false
 			end
@@ -904,7 +920,7 @@ function WC.UpdateHeartbeat(dt)
 				camShake *= State.attStats.recoil.camShake
 				aimReduction *= State.attStats.recoil.aimReduction
 			end
-			if WC.bipodEnabled then
+			if State.bipodEnabled() then
 				vertRecoil /= 4
 				horzRecoil /= 4
 			end
@@ -933,18 +949,18 @@ function WC.UpdateHeartbeat(dt)
 				gunVertRecoil /= 1.5
 				gunHorzRecoil /= 1.5
 			end
-			if WC.bipodEnabled then
+			if State.bipodEnabled() then
 				gunVertRecoil /= 3
 				gunHorzRecoil /= 3
 			end
 
 			WC.ViewmodelController.gunRecoilSpring:shove(Vector3.new(gunVertRecoil, math.random(-gunHorzRecoil,gunHorzRecoil), punchMultiplier))
 
-			if WC.curFireMode ~= WC.fireModes.Manual and WC.curFireMode ~= WC.fireModes.UBGL then
+			if fireMode ~= WC.fireModes.Manual and fireMode ~= WC.fireModes.UBGL then
 				WC.EjectShell()
 			end
 
-			if WC.curFireMode ~= WC.fireModes.UBGL then
+			if fireMode ~= WC.fireModes.UBGL then
 				local bulletHandlerPart = State.wepStats.bulletHandler and State.gunModel:FindFirstChild(State.wepStats.bulletHolder)
 				if bulletHandlerPart then
 					local bulletNumber = State.gunAmmo.MagAmmo.MaxValue - (State.gunAmmo.MagAmmo.Value - 1)
@@ -957,14 +973,14 @@ function WC.UpdateHeartbeat(dt)
 			if not State.firstPerson() then tempGunModel = WC.GetThirdPersonGunModel() end
 
 			local muzzleName = "Muzzle"
-			if WC.curFireMode == WC.fireModes.UBGL then muzzleName = "UBGLMuzzle" end
+			if fireMode == WC.fireModes.UBGL then muzzleName = "UBGLMuzzle" end
 			local muCh = State.attStats.muzzleChance or State.wepStats.muzzleChance
 			if State.attStats.newMuzzleDevice then tempGunModel = tempGunModel[State.attStats.newMuzzleDevice] end
-			bulletHandler.FireFX(WC.player, tempGunModel, muzzleName, muCh, WC.curFireMode == WC.fireModes.UBGL)
+			bulletHandler.FireFX(WC.player, tempGunModel, muzzleName, muCh, fireMode == WC.fireModes.UBGL)
 
 			WC.PlayRepSound("Fire")
 
-			if WC.curFireMode ~= WC.fireModes.UBGL then
+			if fireMode ~= WC.fireModes.UBGL then
 				WC.MoveBolt(currentStats.boltDist)
 			end
 
@@ -986,15 +1002,15 @@ function WC.UpdateHeartbeat(dt)
 				local tracerColor = nil
 				local TrTi = currentStats.tracerTiming
 				if TrTi and State.attStats.tracerTiming then TrTi = currentStats.tracerTiming end
-				if WC.curFireMode ~= WC.fireModes.UBGL and currentStats.tracers and State.gunAmmo.MagAmmo.Value % TrTi == 0 then
+				if fireMode ~= WC.fireModes.UBGL and currentStats.tracers and State.gunAmmo.MagAmmo.Value % TrTi == 0 then
 					tracerColor = State.attStats.tracerColor or currentStats.tracerColor
 				end
 
 				local bulletData = State.equipped()
-				if WC.curFireMode == WC.fireModes.UBGL then
+				if fireMode == WC.fireModes.UBGL then
 					bulletData = {
 						Tool = State.equipped(),
-						fireMode = WC.curFireMode,
+						fireMode = fireMode,
 						SPH_Weapon = State.equipped().SPH_Weapon
 					}
 				end
@@ -1006,7 +1022,7 @@ function WC.UpdateHeartbeat(dt)
 			WC.playerFire:Fire(firePoint.WorldCFrame)
 
 			local cycleTime = currentStats.fireRate
-			if WC.curFireMode == WC.fireModes.Burst and currentStats.burstFireRate then cycleTime = currentStats.burstFireRate end
+			if fireMode == WC.fireModes.Burst and currentStats.burstFireRate then cycleTime = currentStats.burstFireRate end
 			if State.attStats.fireRate then cycleTime *= State.attStats.fireRate end
 
 			if currentStats.projectile ~= "Bullet" then
@@ -1016,13 +1032,13 @@ function WC.UpdateHeartbeat(dt)
 			task.wait(60 / cycleTime)
 			if not State.equipped() then return end
 
-			if currentStats.autoChamber and WC.curFireMode == WC.fireModes.Manual and not State.reloading() then
+			if currentStats.autoChamber and fireMode == WC.fireModes.Manual and not State.reloading() then
 				WC.ChamberAnim()
 			end
 			WC.cycled = true
 		else
 			if not WC.IsLoaded() then
-				if WC.curFireMode == WC.fireModes.Manual and State.gunAmmo.MagAmmo.Value > 0 and not State.reloading() and not WC.chambering then
+				if fireMode == WC.fireModes.Manual and State.gunAmmo.MagAmmo.Value > 0 and not State.reloading() and not WC.chambering then
 					WC.ChamberAnim()
 					WC.holdingM1 = false
 				end
@@ -1052,36 +1068,12 @@ function WC.UpdateRender(dt)
 		local rayResult = workspace:Raycast(bipodPart.WorldCFrame.Position, Vector3.new(0,-1.5,0), bipodRayParams)
 		WC.canBipod = rayResult ~= nil
 
-		if WC.canBipod ~= WC.bipodEnabled then
-			WC.bipodEnabled = WC.canBipod
-			WC.ToggleBipod(bipodModel, WC.bipodEnabled)
-			WC.PlayRepSound("Switch")
-			WC.playerToggleAttachment:Fire(2, WC.bipodEnabled)
+		if WC.canBipod ~= State.bipodEnabled() then
+			State.bipodEnabled(WC.canBipod)
 		end
 	end
 
-	if WC.laserEnabled then
-		if not WC.laserDotUI.Enabled then
-			WC.laserDotUI.Enabled = true
-			local lazer
-			if State.attStats.laserOrigin then lazer = State.gunModel[State.attStats.laserOrigin].Main.Laser end
-			if State.gunModel.Grip:FindFirstChild("Laser") then lazer = State.gunModel.Grip.Laser end
-			WC.laserDotUI.Dot.ImageColor3 = lazer.Color.Value
-
-			if config.laserTrail then
-				WC.laserBeamFP.Color = ColorSequence.new(lazer.Color.Value)
-				WC.laserBeamTP.Color = ColorSequence.new(lazer.Color.Value)
-				if State.firstPerson() then
-					WC.laserBeamFP.Enabled = true
-				else
-					WC.laserBeamTP.Enabled = true
-					if not WC.laserBeamTP.Attachment0 then
-						if State.attStats.laserOrigin then WC.laserBeamTP.Attachment0 = WC.GetThirdPersonGunModel()[State.attStats.laserOrigin].Main.Laser end
-						if State.gunModel.Grip:FindFirstChild("Laser") then WC.laserBeamTP.Attachment0 = WC.GetThirdPersonGunModel().Grip.Laser end
-					end
-				end
-			end
-		end
+	if State.laserEnabled() then
 		local laserPoint
 		if State.gunModel.Grip:FindFirstChild("Laser") then laserPoint = State.firstPerson() and State.gunModel.Grip.Laser or WC.GetThirdPersonGunModel().Grip.Laser end
 		if State.attStats.laserOrigin then laserPoint = State.firstPerson() and State.gunModel[State.attStats.laserOrigin].Main.Laser or WC.GetThirdPersonGunModel()[State.attStats.laserOrigin].Main.Laser end
@@ -1091,16 +1083,14 @@ function WC.UpdateRender(dt)
 		laserRayParams.FilterType = Enum.RaycastFilterType.Exclude
 		laserRayParams.FilterDescendantsInstances = {State.gunModel, WC.character}
 		laserRayParams.RespectCanCollide = true
-		local rayResult = workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * 600, laserRayParams)
-		if rayResult then
-			WC.laserDotPoint.WorldPosition = rayResult.Position
-		else
-			WC.laserDotPoint.WorldPosition = laserPoint.WorldCFrame.LookVector * 600
+		if laserPoint then
+			local rayResult = workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * 600, laserRayParams)
+			if rayResult then
+				WC.laserDotPoint.WorldPosition = rayResult.Position
+			else
+				WC.laserDotPoint.WorldPosition = laserPoint.WorldCFrame.LookVector * 600
+			end
 		end
-	elseif WC.laserDotUI.Enabled then
-		WC.laserDotUI.Enabled = false
-		WC.laserBeamFP.Enabled = false
-		WC.laserBeamTP.Enabled = false
 	end
 
 	for _, sight:BasePart in ipairs(WC.sights) do
