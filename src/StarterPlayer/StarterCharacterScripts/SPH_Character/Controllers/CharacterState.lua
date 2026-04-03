@@ -42,6 +42,8 @@ local CharacterState = {
 
 	aiming = Charm.atom(false) 							:: Charm.Atom<boolean>,
 	equipped = Charm.atom(nil) 							:: Charm.Atom<Instance>,
+	equipping = Charm.atom(false)						:: Charm.Atom<boolean>,
+	viewmodelVisible = Charm.atom(false)				:: Charm.Atom<boolean>,
 	sprinting = Charm.atom(false)						:: Charm.Atom<boolean>,
 	reloading = Charm.atom(false)						:: Charm.Atom<boolean>,
 	firstPerson = Charm.atom(false)						:: Charm.Atom<boolean>,

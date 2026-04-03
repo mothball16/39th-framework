@@ -32,6 +32,7 @@ ViewmodelController.ChangeHoldStance = nil
 ViewmodelController.PlayAnimation = nil
 ViewmodelController.StopAnimation = nil
 ViewmodelController.ToggleAiming = nil
+ViewmodelController.RefreshViewmodel = nil
 
 local function LerpNumber(number: number, target: number, speed: number)
 	return number + (target - number) * speed
@@ -52,13 +53,14 @@ function ViewmodelController.Initialize(params)
 	ViewmodelController.PlayAnimation = params.PlayAnimation
 	ViewmodelController.StopAnimation = params.StopAnimation
 	ViewmodelController.ToggleAiming = params.ToggleAiming
+	ViewmodelController.RefreshViewmodel = params.RefreshViewmodel
 end
 
 function ViewmodelController.ResetHipRotation()
 	hipRotation = Vector2.zero
 end
 
-function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex, viewmodelVisible)
+function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	local fps = 1 / dt
 	recoilUpdateCD -= dt
 
@@ -199,8 +201,23 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex, vie
 	animBase.CFrame *= CFrame.new(0, 0, updatedGunRecoil.Z)
 	camera.CFrame *= CFrame.Angles(math.rad(updatedRecoil.X), math.rad(updatedRecoil.Y), math.rad(updatedRecoil.Z))
 
-	if not viewmodelVisible then
+	if not State.viewmodelVisible() then
 		animBase.CFrame *= storageCFrame
+	end
+end
+
+function ViewmodelController.UpdateRender(dt)
+	local camera = ViewmodelController.camera
+	if State.equipped() and camera.CameraType == Enum.CameraType.Custom then
+		if State.firstPerson() and not State.viewmodelVisible() then
+			if ViewmodelController.RefreshViewmodel then ViewmodelController.RefreshViewmodel() end
+			State.sprinting(false)
+		end
+
+		local currentOffset = State.wepStats and State.wepStats.viewmodelOffset or CFrame.new()
+		ViewmodelController.UpdateViewmodelPosition(dt, currentOffset, State.sightIndex())
+	elseif State.viewmodelVisible() and not State.equipping() then
+		State.viewmodelVisible(false)
 	end
 end
 

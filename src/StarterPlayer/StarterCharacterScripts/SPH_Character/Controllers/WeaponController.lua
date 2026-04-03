@@ -25,7 +25,6 @@ local defaultCameraMode = Player.CameraMode
 local WC = {
 	holdingM1 = false,
 	cycled = true,
-	equipping = false,
 	canFire = true,
 	laserEnabled = false,
 	flashlightEnabled = false,
@@ -455,6 +454,7 @@ function WC.ReloadAnim()
 end
 
 function WC.Unequip(tool)
+	State.equipping(false)
 	WC.viewmodelRig.AnimBase.CFrame = storageCFrame
 	WC.lastGunModel = State.gunModel
 	
@@ -547,7 +547,7 @@ function WC.Equip(newChild)
 		State.reloading(false)
 		UserInputService.MouseIconEnabled = false
 		WC.ViewmodelController.ResetHipRotation()
-		WC.equipping = true
+		State.equipping(true)
 		WC.laserEnabled = false
 		WC.cycled = true
 		WC.chambering = false
@@ -673,7 +673,7 @@ function WC.Equip(newChild)
 		end
 
 		local newEquipAnim = WC.AnimationController.PlayAnimation(State.wepStats.equipAnim, {priority = Enum.AnimationPriority.Action2}, "Equip", true)
-		newEquipAnim.Stopped:Connect(function() WC.equipping = false end)
+		newEquipAnim.Stopped:Connect(function() State.equipping(false) end)
 
 		WC.AnimationController.PlayAnimation(State.wepStats.boltChamber, {priority = Enum.AnimationPriority.Action2, transSpeed = 0.05, looped = false}, "Chamber", true)
 		if State.wepStats.operationType == 2 or State.wepStats.operationType == 3 then
@@ -877,7 +877,7 @@ function WC.UpdateHeartbeat(dt)
 		and not State.reloading()
 		and WC.holdingM1 
 		and WC.cycled then
-		if WC.canFire and not blocked and WC.holdStance == 0 and WC.IsLoaded() and WC.curFireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not WC.equipping then
+		if WC.canFire and not blocked and WC.holdStance == 0 and WC.IsLoaded() and WC.curFireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not State.equipping() then
 			if not State.firstPerson() and not config.thirdPersonFiring then return end
 
 			local currentStats = WC.GetCurrentWepStats()
@@ -1101,6 +1101,21 @@ function WC.UpdateRender(dt)
 		WC.laserDotUI.Enabled = false
 		WC.laserBeamFP.Enabled = false
 		WC.laserBeamTP.Enabled = false
+	end
+
+	for _, sight:BasePart in ipairs(WC.sights) do
+		local frame = sight:FindFirstChild("SurfaceGui") and sight.SurfaceGui:FindFirstChild("Frame")
+		if not frame then continue end
+		local sightUI = frame:FindFirstChild("Reticle") or frame:FindFirstChild("Holo")
+		if not sightUI then continue end
+
+		local dist = sight.CFrame:PointToObjectSpace(WC.camera.CFrame.Position)/sight.Size
+		sightUI.Position = UDim2.fromScale(0.5 + dist.X, 0.5 - dist.Y)	
+
+		if sightUI.Name == "Holo" then
+			local newSize = WC.camera.FieldOfView / 70
+			sightUI.Size = UDim2.fromScale(newSize,newSize)
+		end
 	end
 end
 

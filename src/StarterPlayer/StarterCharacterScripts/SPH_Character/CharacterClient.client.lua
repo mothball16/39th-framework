@@ -67,11 +67,6 @@ rayParams.FilterDescendantsInstances = {character,camera,shellFolder}
 
 local playCharSound = bridgeNet.CreateBridge("PlayCharacterSound")
 
-local fpThreshold = 0.6
-
-
-
-local viewmodelVisible = false
 local storageCFrame = CFrame.new(1000000,0,0) -- This is used for moving the viewmodel super far away.
 -- Doing this to the viewmodel allows animations to be loaded, played, etc, while still having it out of view.
 
@@ -121,23 +116,7 @@ end
 -- Create new viewmodel
 local rig = viewMod.RigModel(player)
 
--- Create fake arms
---local lArm = rig["Left Arm"]
---local rArm = rig["Right Arm"]
---lArm.Color = character["Left Arm"].Color
---rArm.Color = character["Right Arm"].Color
-
---for _, part in ipairs(rig:GetDescendants()) do
---	if part.Name == "Skin" then
---		if part.Parent.Name == "Left Arm" then
---			part.Color = character["Left Arm"].Color
---		elseif part.Parent.Name == "Right Arm" then
---			part.Color = character["Right Arm"].Color
---		end
---	end
---end
-
-if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Easy coloring
+if State.Parts.IsR6 then -- DD_SPH: Easy coloring
 	local lArm = rig["Left Arm"]
 	local rArm = rig["Right Arm"]
 	lArm.Color = character["Left Arm"].Color
@@ -205,8 +184,8 @@ AnimationController.Initialize({
 
 -- Makes the viewmodel visible and refreshes its appearance
 local function RefreshViewmodel()
-	if State.firstPerson() and not WeaponController.equipping then
-		viewmodelVisible = true
+	if State.firstPerson() and not State.equipping() then
+		State.viewmodelVisible(true)
 	end
 
 	local plrShirt = character:FindFirstChildWhichIsA("Shirt")
@@ -252,11 +231,6 @@ local function RefreshViewmodel()
 	if callbacks.onViewmodelRefresh then callbacks.onViewmodelRefresh(player,rig) end
 end
 
--- Remove rig and reset head orientation
-local function ResetHead()
-	viewmodelVisible = false
-end
-
 local function ToggleAiming(toggle)
 	State.aiming(toggle)
 end
@@ -293,10 +267,13 @@ InputController.Initialize({
 		[Intents.STANCE_UP] = MovementController.OnStanceUpIntent,
 		[Intents.LEAN_LEFT] = MovementController.OnLeanLeftIntent,
 		[Intents.LEAN_RIGHT] = MovementController.OnLeanRightIntent,
-		[Intents.HOLD_AIM] = WeaponController.OnAimIntent,
+		[Intents.JUMP] = MovementController.Jump,
+
 		[Intents.FREELOOK] = CameraController.OnFreelookIntent,
 		[Intents.SCROLL] = OnScrollIntent,
-		[Intents.JUMP] = MovementController.Jump,
+
+
+		[Intents.HOLD_AIM] = WeaponController.OnAimIntent,
 		[Intents.TRIGGER] = WeaponController.OnTriggerIntent,
 		[Intents.DROP_GUN] = WeaponController.OnDropGunIntent,
 		[Intents.RELOAD] = WeaponController.OnReloadIntent,
@@ -334,7 +311,8 @@ ViewmodelController.Initialize({
 	ChangeHoldStance = WeaponController.ChangeHoldStance,
 	PlayAnimation = AnimationController.PlayAnimation,
 	StopAnimation = AnimationController.StopAnimation,
-	ToggleAiming = ToggleAiming
+	ToggleAiming = ToggleAiming,
+	RefreshViewmodel = RefreshViewmodel,
 })
 
 CameraController.Initialize({
@@ -343,8 +321,10 @@ CameraController.Initialize({
 	humanoid = humanoid,
 	humanoidRootPart = humanoidRootPart,
 	rootJoint = rootJoint,
+	neckJoint = neckJoint,
 	rigType = rigType,
 	MovementController = MovementController,
+	ReplicationController = ReplicationController,
 })
 
 WeaponController.Initialize({
@@ -381,25 +361,10 @@ humanoid.Died:Connect(function()
 	end
 	userInputService.MouseIconEnabled = true
 	ToggleAiming(false)
-	viewmodelVisible = false
+	State.viewmodelVisible(false)
 	animBase.CFrame = storageCFrame
 
 	InputController.UnbindGunInputs()
-
-	--bodyAnimRequest:Destroy()
-	--repReload:Destroy()
-	--switchWeapon:Destroy()
-	--playerFire:Destroy()
-	--playSound:Destroy()
-	----bulletHit:Destroy()
-	--repChamber:Destroy()
-	--moveBolt:Destroy()
-	--switchFireMode:Destroy()
-	--playCharSound:Destroy()
-	--playerDropGun:Destroy()
-	--playerToggleAttachment:Destroy()
-	--repBoltOpen:Destroy()
-	--magGrab:Destroy()
 
 	if config.useDeathCameraSubject then
 		repeat task.wait() until humanoid.Parent ~= character
@@ -409,97 +374,21 @@ humanoid.Died:Connect(function()
 	if rig then rig:Destroy() end
 end)
 
-local headRotationEventCooldown = 0
 runService.RenderStepped:Connect(function(dt:number)
 	if math.ceil(1 / dt) < 5 then -- Skip the render stepped function if FPS is lower than 5 to avoid stuttering issues
 		print(warnPrefix.."RenderStepped skipped due to low framerate.")
 		return
 	end
 
-	headRotationEventCooldown -= dt
-
 	if not State.dead() and character:FindFirstChild("Head") then
-		if not State.dead() then
-			local torsoDirection
-			if humanoid.RigType == Enum.HumanoidRigType.R6 then
-				torsoDirection = character.Torso.CFrame.LookVector
-			else
-				torsoDirection = character.UpperTorso.CFrame.LookVector
-			end
-
-			local lookDirection = camera.CFrame
-			if (not config.headRotation or State.sprinting()) and not State.firstPerson() then
-				lookDirection = humanoidRootPart.CFrame
-			end
-
-			local cameraDirection = humanoidRootPart.CFrame:ToObjectSpace(lookDirection).LookVector
-			--local rotationCFrame = CFrame.Angles(0, math.asin(cameraDirection.X)/1.15, 0) * CFrame.Angles(-math.asin(lookDirection.LookVector.Y) + math.asin(torsoDirection.Y), 0, 0)
-			--local neckCFrame = CFrame.new(0, -.5, 0) * rotationCFrame * CFrame.Angles(-math.rad(90), 0, math.rad(180))
-			local rotationCFrame = CFrame.Angles(0, math.asin(cameraDirection.X)/1.15, 0) * CFrame.Angles(-math.asin(math.clamp(lookDirection.LookVector.Y,-.8,.15)) + math.asin(math.clamp(torsoDirection.Y, -.6,.6)), 0, 0) -- DD_SPH: clamped the Y direction so you can't roll your head into your body like a turtle.. as much.
-			local neckCFrame -- DD_SPH: Reworked neck rotation to check by rig
-			if humanoid.RigType == Enum.HumanoidRigType.R6 then
-				neckCFrame = CFrame.new(0, -.5, 0) * rotationCFrame * CFrame.Angles(-math.rad(90), 0, math.rad(180))
-			else
-				neckCFrame = CFrame.new(0, -.5, 0) * rotationCFrame * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0))
-			end -- </DD_SPH>
-			neckJoint.C1 = neckJoint.C1:Lerp(neckCFrame,1 - math.exp(-config.headRotationSpeed * dt))
-			--neckJoint.C1 = neckCFrame
-
-			if headRotationEventCooldown <= 0 and not State.dead() and not config.disableHeadRotation then
-				headRotationEventCooldown = config.headRotationEventRate
-				ReplicationController.ReplicateHeadRotation(neckJoint.C1)
-			end
-		end
-
-		-- Check if player is in first person
-		if not State.firstPerson() and character.Head.LocalTransparencyModifier >= fpThreshold then
-			State.firstPerson(true)
-		elseif State.firstPerson() and character.Head.LocalTransparencyModifier <= fpThreshold then
-			State.firstPerson(false)
-			ResetHead()
-			CameraController.cameraOffsetTarget = Vector3.zero
-		end
-
 		MovementController.UpdateRender(dt)
 		CameraController.UpdateRender(dt)
-
-		-- Update viewmodel
-		if State.equipped() and camera.CameraType == Enum.CameraType.Custom then
-			if State.firstPerson() and not viewmodelVisible then
-				-- Player switched to first person
-				RefreshViewmodel()
-				State.sprinting(false)
-			end
-
-			-- Update recoil and movement springs
-			local currentOffset = State.wepStats and State.wepStats.viewmodelOffset or CFrame.new()
-			ViewmodelController.UpdateViewmodelPosition(dt, currentOffset, State.sightIndex(), viewmodelVisible)
-
-			WeaponController.UpdateRender(dt)
-
-		elseif viewmodelVisible and not WeaponController.equipping then
-			viewmodelVisible = false
-		end
-
-		ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, MovementController.vehicleSeated)
-
-		-- TODO: move this to WeaponController
-		for _, sight:BasePart in ipairs(WeaponController.sights) do
-			local frame = sight.SurfaceGui.Frame
-			local sightUI = frame:FindFirstChild("Reticle") or frame:FindFirstChild("Holo")
-
-			local dist = sight.CFrame:PointToObjectSpace(camera.CFrame.Position)/sight.Size
-			sightUI.Position = UDim2.fromScale(0.5 + dist.X, 0.5 - dist.Y)	
-
-			if sightUI.Name == "Holo" then
-				local newSize = camera.FieldOfView / 70
-				sightUI.Size = UDim2.fromScale(newSize,newSize)
-			end
-		end
-
+		ViewmodelController.UpdateRender(dt)
+		WeaponController.UpdateRender(dt)
 		CameraController.UpdateFOV(dt)
 	end
-
+	
+	ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, MovementController.vehicleSeated)
 end)
 
 runService.Heartbeat:Connect(function(dt:number)

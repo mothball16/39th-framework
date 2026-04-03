@@ -14,13 +14,16 @@ local CameraController = {
 	humanoid = nil,
 	humanoidRootPart = nil,
 	rootJoint = nil,
+	neckJoint = nil,
 	rigType = nil,
 	
 	cameraRollAngle = 0,
 	cameraLeanRotation = 0,
 	cameraOffsetTarget = Vector3.zero,
+	headRotationEventCooldown = 0,
 	
 	MovementController = nil,
+	ReplicationController = nil,
 }
 
 local function LerpNumber(number, target, speed)
@@ -33,9 +36,11 @@ function CameraController.Initialize(params)
 	CameraController.humanoid = params.humanoid
 	CameraController.humanoidRootPart = params.humanoidRootPart
 	CameraController.rootJoint = params.rootJoint
+	CameraController.neckJoint = params.neckJoint
 	CameraController.rigType = params.rigType
 	
 	CameraController.MovementController = params.MovementController
+	CameraController.ReplicationController = params.ReplicationController
 	
 	Charm.subscribe(State.sprinting, CameraController.OnSprintChanged)
 end
@@ -72,6 +77,46 @@ function CameraController.UpdateRender(dt)
 	local rootJoint = CameraController.rootJoint
 	local rigType = CameraController.rigType
 	local MovementController = CameraController.MovementController
+	local character = CameraController.character
+
+	if not State.dead() and character:FindFirstChild("Head") then
+		local torsoDirection
+		if rigType == Enum.HumanoidRigType.R6 then
+			torsoDirection = character.Torso.CFrame.LookVector
+		else
+			torsoDirection = character.UpperTorso.CFrame.LookVector
+		end
+
+		local lookDirection = camera.CFrame
+		if (not config.headRotation or State.sprinting()) and not State.firstPerson() then
+			lookDirection = humanoidRootPart.CFrame
+		end
+
+		local cameraDirection = humanoidRootPart.CFrame:ToObjectSpace(lookDirection).LookVector
+		local rotationCFrame = CFrame.Angles(0, math.asin(cameraDirection.X)/1.15, 0) * CFrame.Angles(-math.asin(math.clamp(lookDirection.LookVector.Y,-.8,.15)) + math.asin(math.clamp(torsoDirection.Y, -.6,.6)), 0, 0)
+		local neckCFrame
+		if rigType == Enum.HumanoidRigType.R6 then
+			neckCFrame = CFrame.new(0, -.5, 0) * rotationCFrame * CFrame.Angles(-math.rad(90), 0, math.rad(180))
+		else
+			neckCFrame = CFrame.new(0, -.5, 0) * rotationCFrame * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0))
+		end
+		CameraController.neckJoint.C1 = CameraController.neckJoint.C1:Lerp(neckCFrame, 1 - math.exp(-config.headRotationSpeed * dt))
+
+		CameraController.headRotationEventCooldown -= dt
+		if CameraController.headRotationEventCooldown <= 0 and not config.disableHeadRotation then
+			CameraController.headRotationEventCooldown = config.headRotationEventRate
+			CameraController.ReplicationController.ReplicateHeadRotation(CameraController.neckJoint.C1)
+		end
+
+		local fpThreshold = 0.6
+		if not State.firstPerson() and character.Head.LocalTransparencyModifier >= fpThreshold then
+			State.firstPerson(true)
+		elseif State.firstPerson() and character.Head.LocalTransparencyModifier <= fpThreshold then
+			State.firstPerson(false)
+			State.viewmodelVisible(false)
+			CameraController.cameraOffsetTarget = Vector3.zero
+		end
+	end
 	
 	-- Limit camera rotation
 	if (humanoid.Sit and not MovementController.vehicleSeated and State.firstPerson() or State.freeLook()) and config.cameraLimitInSeats then
