@@ -261,6 +261,31 @@ local function ToggleAiming(toggle)
 	State.aiming(toggle)
 end
 
+local function OnScrollIntent(scrollAmount, holdForZoom)
+	if State.aiming() then
+		--[[
+		NOTE: This can be added at a future time
+
+		if holdForZoom then
+			-- Zoom
+			local newFOV = WeaponController.aimFOVTarget - scrollAmount * 3
+			-- DD_SPH Gunsmith: FOV adjusts with scope
+			local aimFovMinTarget = State.wepStats.aimFovMin
+			local aimFovMaxTarget = State.wepStats.aimFovMax or config.defaultFOV
+			if State.attStats.aimFovMin then aimFovMinTarget = State.attStats.aimFovMin end
+			if State.attStats.aimFovMax then aimFovMaxTarget = State.attStats.aimFovMax end
+			WeaponController.aimFOVTarget = math.clamp(newFOV, aimFovMinTarget, aimFovMaxTarget)
+			-- </DD_SPH>
+		else
+
+		end]]
+
+		-- Sensitivity
+		State.aimSens(math.clamp(State.aimSens() + (0.01 * scrollAmount), 0.01, 1))
+		State.wepStats.aimSpeed = State.aimSens()
+	end
+end
+
 InputController.Initialize({
 	callbacks = {
 		[Intents.SPRINT] = MovementController.OnSprintIntent,
@@ -270,6 +295,8 @@ InputController.Initialize({
 		[Intents.LEAN_RIGHT] = MovementController.OnLeanRightIntent,
 		[Intents.HOLD_AIM] = WeaponController.OnAimIntent,
 		[Intents.FREELOOK] = CameraController.OnFreelookIntent,
+		[Intents.SCROLL] = OnScrollIntent,
+		[Intents.JUMP] = MovementController.Jump,
 	}
 })
 
@@ -474,52 +501,3 @@ runService.Heartbeat:Connect(function(dt:number)
 	WeaponController.UpdateHeartbeat(dt)
 end)
 
-InputController.ScrollFired = function(scrollAmount, holdForZoom)
-	if State.aiming() then
-		--[[
-		NOTE: This can be added at a future time
-
-		if holdForZoom then
-			-- Zoom
-			local newFOV = WeaponController.aimFOVTarget - scrollAmount * 3
-			-- DD_SPH Gunsmith: FOV adjusts with scope
-			local aimFovMinTarget = State.wepStats.aimFovMin
-			local aimFovMaxTarget = State.wepStats.aimFovMax or config.defaultFOV
-			if State.attStats.aimFovMin then aimFovMinTarget = State.attStats.aimFovMin end
-			if State.attStats.aimFovMax then aimFovMaxTarget = State.attStats.aimFovMax end
-			WeaponController.aimFOVTarget = math.clamp(newFOV, aimFovMinTarget, aimFovMaxTarget)
-			-- </DD_SPH>
-		else
-
-		end]]
-
-		-- Sensitivity
-		State.aimSens(math.clamp(State.aimSens() + (0.01 * scrollAmount), 0.01, 1))
-		State.wepStats.aimSpeed = State.aimSens()
-	end
-end
-
-humanoid.Seated:Connect(function(seated, seatPart)
-	if seated then -- In a seat
-		InputController.UnbindCharacterInputs()
-		State.sprinting(false)
-		State.stance(0)
-		MovementController.UpdateLean(0)
-
-		if seatPart:IsA("VehicleSeat") then
-			MovementController.vehicleSeated = true
-			if State.equipped() then
-				humanoid:UnequipTools()
-			end
-		else
-			MovementController.vehicleSeated = false
-		end
-	else -- Exiting a seat
-		InputController.BindCharacterInputs()
-		MovementController.vehicleSeated = false
-	end
-end)
-
-InputController.JumpRequested = function()
-	MovementController.Jump()
-end

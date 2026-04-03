@@ -12,8 +12,6 @@ InputController._callbacks = {}
 
 -- Callbacks to be assigned by the main CharacterClient
 InputController.ActionFired = nil
-InputController.ScrollFired = nil
-InputController.JumpRequested = nil
 
 function InputController.Initialize(args)
 	for intentKey, _ in pairs(Intents) do
@@ -135,16 +133,12 @@ end
 
 UserInputService.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseWheel then
-		if InputController.ScrollFired then
-			InputController.ScrollFired(input.Position.Z, UserInputService:IsKeyDown(config.holdForScrollZoom))
-		end
+		InputController._callbacks[Intents.SCROLL](input.Position.Z, UserInputService:IsKeyDown(config.holdForScrollZoom))
 	end
 end)
 
 UserInputService.JumpRequest:Connect(function()
-	if InputController.JumpRequested then
-		InputController.JumpRequested()
-	end
+	InputController._callbacks[Intents.JUMP]()
 end)
 
 return InputController

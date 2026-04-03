@@ -18,5 +18,7 @@ return {
         SPRINT = "SPRINT",
         HOLD_AIM = "HOLD_AIM",
         FREELOOK = "FREELOOK",
+        SCROLL = "SCROLL",
+        JUMP = "JUMP",
     }
 }
