@@ -185,7 +185,7 @@ AnimationController.Initialize({
 -- Makes the viewmodel visible and refreshes its appearance
 local function RefreshViewmodel()
 	if State.firstPerson() and not State.equipping() then
-		State.viewmodelVisible(true)
+		State.wepState.viewmodelVisible(true)
 	end
 
 	local plrShirt = character:FindFirstChildWhichIsA("Shirt")
@@ -359,7 +359,7 @@ humanoid.Died:Connect(function()
 	end
 	userInputService.MouseIconEnabled = true
 	ToggleAiming(false)
-	State.viewmodelVisible(false)
+	State.wepState.viewmodelVisible(false)
 	animBase.CFrame = storageCFrame
 
 	InputController.UnbindGunInputs()

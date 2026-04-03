@@ -80,7 +80,7 @@ function AnimationController.Initialize(params)
 	Charm.subscribe(State.sprinting, AnimationController.OnSprintChanged)
 	Charm.subscribe(State.stance, AnimationController.OnStanceChanged)
 	Charm.subscribe(State.moving, AnimationController.OnMovingChanged)
-	Charm.subscribe(State.holdStance, AnimationController.OnHoldStanceChanged)
+	Charm.subscribe(State.wepState.holdStance, AnimationController.OnHoldStanceChanged)
 end
 
 function AnimationController.OnStanceChanged(stance, oldStance)
@@ -234,26 +234,26 @@ end
 
 function AnimationController.WeaponChamber()
 	if not State.wepStats or not State.equipped() then return end
-	local animNameToPlay = (State.equipped().BoltReady.Value or State.fireMode() == 5) and State.wepStats.boltChamber or State.wepStats.boltClose
+	local animNameToPlay = (State.equipped().BoltReady.Value or State.wepState.fireMode() == 5) and State.wepStats.boltChamber or State.wepStats.boltClose
 
 	if animNameToPlay then
-		State.reloading(true)
-		State.chambering(true)
-		State.holdStance(0)
+		State.wepState.reloading(true)
+		State.wepState.chambering(true)
+		State.wepState.holdStance(0)
 		local playingAnim = AnimationController.PlayAnimation(animNameToPlay, {priority = Enum.AnimationPriority.Action2, transSpeed = 0.05}, "Chamber")
-		if playingAnim then playingAnim.Stopped:Once(function() State.chambering(false) end) end
+		if playingAnim then playingAnim.Stopped:Once(function() State.wepState.chambering(false) end) end
 	end
 end
 
 function AnimationController.WeaponReload(lastGunModelName)
 	if not State.equipped() or not State.wepStats then return end
-	State.reloading(true)
-	State.holdStance(0)
+	State.wepState.reloading(true)
+	State.wepState.holdStance(0)
 	
 	local animSpeed = State.wepStats.reloadSpeedModifier
 	if State.attStats and State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
 
-	if State.fireMode() == 4 and State.wepStats.hasUBGL then
+	if State.wepState.fireMode() == 4 and State.wepStats.hasUBGL then
 		local ubglStats = State.wepStats.getStatsForMode(4)
 		AnimationController.PlayAnimation(ubglStats.reloadAnim or State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
 		return
@@ -262,7 +262,7 @@ function AnimationController.WeaponReload(lastGunModelName)
 	local gunAmmo = State.equipped():FindFirstChild("Ammo")
 	if State.wepStats.operationType == 3 or (State.wepStats.operationType == 2 and gunAmmo and gunAmmo.MagAmmo.Value <= 0 and not State.equipped().Chambered.Value) then
 		local boltOpenTrack = AnimationController.PlayAnimation(State.wepStats.boltOpen, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "BoltOpen")
-		if not boltOpenTrack then State.reloading(false) return end
+		if not boltOpenTrack then State.wepState.reloading(false) return end
 		boltOpenTrack.Stopped:Once(function()
 			if not State.equipped() or not gunAmmo then return end
 			local cap = State.wepStats.clipSize or (State.attStats and State.attStats.magazineCapacity) or State.wepStats.magazineCapacity

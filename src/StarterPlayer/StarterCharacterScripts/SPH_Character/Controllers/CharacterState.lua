@@ -36,17 +36,30 @@ local CharacterState = {
 	gunModel = nil,
 	gunAmmo = nil,
 
-	aimSens = Charm.atom(config.defaultAimSensitivity) 	:: Charm.Atom<number>,
-	sightIndex = Charm.atom(1) 							:: Charm.Atom<number>,
+	wepState = {
+		aimSens = Charm.atom(config.defaultAimSensitivity) 	:: Charm.Atom<number>,
+		sightIndex = Charm.atom(1) 							:: Charm.Atom<number>,
+		viewmodelVisible = Charm.atom(false)				:: Charm.Atom<boolean>,
+		reloading = Charm.atom(false)						:: Charm.Atom<boolean>,
+		chambering = Charm.atom(false)						:: Charm.Atom<boolean>,
+		aimHeld = Charm.atom(false)							:: Charm.Atom<boolean>,
+		blocked = Charm.atom(false)							:: Charm.Atom<boolean>,
+
+		laserEnabled = Charm.atom(false)					:: Charm.Atom<boolean>,
+		flashlightEnabled = Charm.atom(false)				:: Charm.Atom<boolean>,
+		bipodEnabled = Charm.atom(false)					:: Charm.Atom<boolean>,
+		fireMode = Charm.atom(0)							:: Charm.Atom<number>,
+		holdStance = Charm.atom(0)							:: Charm.Atom<number>,
+	},
+
+
 	aimFOVTarget = 	Charm.atom(config.defaultFOV) 		:: Charm.Atom<number>,
 
 	aiming = Charm.atom(false) 							:: Charm.Atom<boolean>,
 	equipped = Charm.atom(nil) 							:: Charm.Atom<Instance>,
 	equipping = Charm.atom(false)						:: Charm.Atom<boolean>,
-	viewmodelVisible = Charm.atom(false)				:: Charm.Atom<boolean>,
 	sprinting = Charm.atom(false)						:: Charm.Atom<boolean>,
-	reloading = Charm.atom(false)						:: Charm.Atom<boolean>,
-	chambering = Charm.atom(false)						:: Charm.Atom<boolean>,
+
 	firstPerson = Charm.atom(false)						:: Charm.Atom<boolean>,
 	dead = Charm.atom(false)							:: Charm.Atom<boolean>,
 	stance = Charm.atom(0) 								:: Charm.Atom<number>,
@@ -56,14 +69,6 @@ local CharacterState = {
 	freeLook = Charm.atom(false)						:: Charm.Atom<boolean>,
 	freeLookRotation = Charm.atom(CFrame.new())			:: Charm.Atom<CFrame>,
 	freeLookOffset = Charm.atom(CFrame.new())			:: Charm.Atom<CFrame>,
-	aimHeld = Charm.atom(false)							:: Charm.Atom<boolean>,
-	blocked = Charm.atom(false)							:: Charm.Atom<boolean>,
-
-	laserEnabled = Charm.atom(false)					:: Charm.Atom<boolean>,
-	flashlightEnabled = Charm.atom(false)				:: Charm.Atom<boolean>,
-	bipodEnabled = Charm.atom(false)					:: Charm.Atom<boolean>,
-	fireMode = Charm.atom(0)							:: Charm.Atom<number>,
-	holdStance = Charm.atom(0)							:: Charm.Atom<number>,
 }
 
 return CharacterState

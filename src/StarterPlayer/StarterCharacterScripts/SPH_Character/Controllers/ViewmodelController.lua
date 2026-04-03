@@ -113,7 +113,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	local originCFrame = State.firstPerson() and animBase.CFrame or weaponRig.AnimBase.CFrame
 	local newRay = workspace:Raycast(originCFrame.Position, originCFrame.LookVector * rayDistance, rayParams)
 	
-	local isBlocked = State.blocked()
+	local isBlocked = State.wepState.blocked()
 	if newRay then
 		local distance = rayDistance - (animBase.CFrame.Position - newRay.Position).Magnitude
 		if config.pushBackViewmodel and distance > 0 then
@@ -129,13 +129,13 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 				if not isBlocked then
 					ViewmodelController.ChangeHoldStance(0)
 					ViewmodelController.PlayAnimation(State.wepStats.holdUpAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
-					State.blocked(true)
+					State.wepState.blocked(true)
 					if State.aiming() then ViewmodelController.ToggleAiming(false) end
 				end
 			elseif isBlocked then
 				ViewmodelController.StopAnimation(State.wepStats.holdUpAnim, 0.3)
-				State.blocked(false)
-				if State.aimHeld() and not State.aiming() and State.firstPerson() then
+				State.wepState.blocked(false)
+				if State.wepState.aimHeld() and not State.aiming() and State.firstPerson() then
 					ViewmodelController.ToggleAiming(true)
 				end
 			end
@@ -144,8 +144,8 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 		if isBlocked then
 			ViewmodelController.StopAnimation(State.wepStats.holdUpAnim, 0.3)
 		end
-		State.blocked(false)
-		if State.aimHeld() and not State.aiming() and State.firstPerson() and not State.sprinting() then
+		State.wepState.blocked(false)
+		if State.wepState.aimHeld() and not State.aiming() and State.firstPerson() and not State.sprinting() then
 			ViewmodelController.ToggleAiming(true)
 		end
 		pushbackOffset = LerpNumber(pushbackOffset, 0, 0.2 * 60 * dt)
@@ -201,7 +201,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	animBase.CFrame *= CFrame.new(0, 0, updatedGunRecoil.Z)
 	camera.CFrame *= CFrame.Angles(math.rad(updatedRecoil.X), math.rad(updatedRecoil.Y), math.rad(updatedRecoil.Z))
 
-	if not State.viewmodelVisible() then
+	if not State.wepState.viewmodelVisible() then
 		animBase.CFrame *= storageCFrame
 	end
 end
@@ -209,15 +209,15 @@ end
 function ViewmodelController.UpdateRender(dt)
 	local camera = ViewmodelController.camera
 	if State.equipped() and camera.CameraType == Enum.CameraType.Custom then
-		if State.firstPerson() and not State.viewmodelVisible() then
+		if State.firstPerson() and not State.wepState.viewmodelVisible() then
 			if ViewmodelController.RefreshViewmodel then ViewmodelController.RefreshViewmodel() end
 			State.sprinting(false)
 		end
 
 		local currentOffset = State.wepStats and State.wepStats.viewmodelOffset or CFrame.new()
-		ViewmodelController.UpdateViewmodelPosition(dt, currentOffset, State.sightIndex())
-	elseif State.viewmodelVisible() and not State.equipping() then
-		State.viewmodelVisible(false)
+		ViewmodelController.UpdateViewmodelPosition(dt, currentOffset, State.wepState.sightIndex())
+	elseif State.wepState.viewmodelVisible() and not State.equipping() then
+		State.wepState.viewmodelVisible(false)
 	end
 end
 

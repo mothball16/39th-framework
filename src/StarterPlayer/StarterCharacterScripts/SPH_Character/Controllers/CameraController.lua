@@ -113,7 +113,7 @@ function CameraController.UpdateRender(dt)
 			State.firstPerson(true)
 		elseif State.firstPerson() and character.Head.LocalTransparencyModifier <= fpThreshold then
 			State.firstPerson(false)
-			State.viewmodelVisible(false)
+			State.wepState.viewmodelVisible(false)
 			CameraController.cameraOffsetTarget = Vector3.zero
 		end
 	end
@@ -227,7 +227,7 @@ function CameraController.UpdateFOV(dt)
 	local camSensFactor = camera.FieldOfView / config.defaultFOV
 	if State.aiming() then
 		camera.FieldOfView = LerpNumber(camera.FieldOfView, State.aimFOVTarget(), 0.3 * (dt * 60))
-		UserInputService.MouseDeltaSensitivity = State.aimSens() * camSensFactor
+		UserInputService.MouseDeltaSensitivity = State.wepState.aimSens() * camSensFactor
 	else
 		UserInputService.MouseDeltaSensitivity = 1 * camSensFactor
 	end
