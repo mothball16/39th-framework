@@ -232,10 +232,6 @@ local function RefreshViewmodel()
 	if callbacks.onViewmodelRefresh then callbacks.onViewmodelRefresh(player,rig) end
 end
 
-local function ToggleAiming(toggle)
-	State.aiming(toggle)
-end
-
 local function OnScrollIntent(scrollAmount, holdForZoom)
 	if State.aiming() then
 		--[[
@@ -299,7 +295,6 @@ MovementController.Initialize({
 	rootJoint = rootJoint,
 	rigType = rigType,
 	script = script,
-	ToggleAiming = ToggleAiming,
 	ChangeHoldStance = WeaponController.ChangeHoldStance,
 	PlayAnimation = AnimationController.PlayAnimation,
 	StopAnimation = AnimationController.StopAnimation,
@@ -316,7 +311,6 @@ ViewmodelController.Initialize({
 	ChangeHoldStance = WeaponController.ChangeHoldStance,
 	PlayAnimation = AnimationController.PlayAnimation,
 	StopAnimation = AnimationController.StopAnimation,
-	ToggleAiming = ToggleAiming,
 	RefreshViewmodel = RefreshViewmodel,
 })
 
@@ -350,7 +344,6 @@ WeaponController.Initialize({
 	MovementController = MovementController,
 	InputController = InputController,
 	RefreshViewmodel = RefreshViewmodel,
-	ToggleAiming = ToggleAiming,
 })
 
 ReplicationController.Initialize({
@@ -365,7 +358,6 @@ humanoid.Died:Connect(function()
 		WeaponController.Unequip(State.equipped())
 	end
 	userInputService.MouseIconEnabled = true
-	ToggleAiming(false)
 	WeaponState.viewmodelVisible(false)
 	animBase.CFrame = storageCFrame
 

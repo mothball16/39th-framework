@@ -55,7 +55,6 @@ local WC = {
 	InputController = nil,
 	
 	RefreshViewmodel = nil,
-	ToggleAiming = nil,
 }
 
 WC.switchWeapon = bridgeNet.CreateBridge("SwitchWeapon")
@@ -93,7 +92,6 @@ function WC.Initialize(params)
 	WC.InputController = params.InputController
 	
 	WC.RefreshViewmodel = params.RefreshViewmodel
-	WC.ToggleAiming = params.ToggleAiming
 	
 	WC.character.ChildAdded:Connect(function(child)
 		WC.Equip(child)
@@ -415,7 +413,6 @@ function WC.Unequip(tool)
 		WeaponState.reset()
 	end
 	UserInputService.MouseIconEnabled = true
-	WC.ToggleAiming(false)
 	WC.AnimationController.StopAll()
 
 	if config.lockFirstPerson then
@@ -725,20 +722,20 @@ function WC.OnAimIntent(inputState, inputObject)
 			WeaponState.aimHeld(true)
 			State.sprinting(false)
 			if State.stance() == 0 then WC.MovementController.UpdateWalkSpeed(config.walkSpeed) end
-			WC.ToggleAiming(true)
+			State.aiming(true)
 		elseif not State.sprinting() and State.aiming() then -- Not aiming
 			WeaponState.aimHeld(false)
-			WC.ToggleAiming(false)
+			State.aiming(false)
 		end
 	elseif inputState == inputBegan then -- Mobile and toggle aiming
 		if State.firstPerson() and not State.freeLook() and not WeaponState.blocked() and not State.aiming() then
 			WeaponState.aimHeld(true)
 			State.sprinting(false)
 			if State.stance() == 0 then WC.MovementController.UpdateWalkSpeed(config.walkSpeed) end
-			WC.ToggleAiming(true)
+			State.aiming(true)
 		else
 			WeaponState.aimHeld(false)
-			WC.ToggleAiming(false)
+			State.aiming(false)
 		end
 	end
 end

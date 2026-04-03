@@ -33,7 +33,6 @@ ViewmodelController.rayParams = nil
 ViewmodelController.ChangeHoldStance = nil
 ViewmodelController.PlayAnimation = nil
 ViewmodelController.StopAnimation = nil
-ViewmodelController.ToggleAiming = nil
 ViewmodelController.RefreshViewmodel = nil
 
 local function LerpNumber(number: number, target: number, speed: number)
@@ -54,7 +53,6 @@ function ViewmodelController.Initialize(params)
 	ViewmodelController.ChangeHoldStance = params.ChangeHoldStance
 	ViewmodelController.PlayAnimation = params.PlayAnimation
 	ViewmodelController.StopAnimation = params.StopAnimation
-	ViewmodelController.ToggleAiming = params.ToggleAiming
 	ViewmodelController.RefreshViewmodel = params.RefreshViewmodel
 end
 
@@ -132,13 +130,13 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 					ViewmodelController.ChangeholdStance(Enums.HoldStance.Ready)
 					ViewmodelController.PlayAnimation(WeaponState.wepStats.holdUpAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
 					WeaponState.blocked(true)
-					if State.aiming() then ViewmodelController.ToggleAiming(false) end
+					State.aiming(false)
 				end
 			elseif isBlocked then
 				ViewmodelController.StopAnimation(WeaponState.wepStats.holdUpAnim, 0.3)
 				WeaponState.blocked(false)
-				if WeaponState.aimHeld() and not State.aiming() and State.firstPerson() then
-					ViewmodelController.ToggleAiming(true)
+				if WeaponState.aimHeld() and State.firstPerson() then
+					State.aiming(true)
 				end
 			end
 		end
@@ -147,8 +145,8 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 			ViewmodelController.StopAnimation(WeaponState.wepStats.holdUpAnim, 0.3)
 		end
 		WeaponState.blocked(false)
-		if WeaponState.aimHeld() and not State.aiming() and State.firstPerson() and not State.sprinting() then
-			ViewmodelController.ToggleAiming(true)
+		if WeaponState.aimHeld() and State.firstPerson() and not State.sprinting() then
+			State.aiming(true)
 		end
 		pushbackOffset = LerpNumber(pushbackOffset, 0, 0.2 * 60 * dt)
 	end

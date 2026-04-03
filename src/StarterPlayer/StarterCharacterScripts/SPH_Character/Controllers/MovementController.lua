@@ -27,7 +27,6 @@ local MovementController = {
     script = nil,
 
     -- Callbacks
-    ToggleAiming = nil,
     ChangeHoldStance = nil,
     AdjustMoveAnimSpeed = nil,
     PlayCharSound = nil,
@@ -47,7 +46,6 @@ function MovementController.Initialize(params)
 	MovementController.script = params.script
 	MovementController.baseCharacterHipHeight = params.humanoid.HipHeight
 	
-	MovementController.ToggleAiming = params.ToggleAiming
 	MovementController.ChangeHoldStance = params.ChangeHoldStance
 	MovementController.AdjustMoveAnimSpeed = params.AdjustMoveAnimSpeed
 	MovementController.PlayCharSound = params.PlayCharSound
@@ -134,7 +132,7 @@ end
 
 function MovementController.UpdateSprint(sprinting)
 	if sprinting then
-		if State.aiming() then MovementController.ToggleAiming(false) end
+		State.aiming(false)
 		State.stance(0)
 		State.lean(0)
 		MovementController.UpdateWalkSpeed(config.sprintSpeed)
