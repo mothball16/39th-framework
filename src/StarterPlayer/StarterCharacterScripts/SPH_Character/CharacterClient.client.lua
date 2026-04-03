@@ -469,24 +469,6 @@ end)
 runService.Heartbeat:Connect(function(dt:number)
 	MovementController.UpdateHeartbeat(dt)
 	WeaponController.UpdateHeartbeat(dt)
-
-	-- TODO: figure out wtf this does
-	if State.stance() == 2 and config.proneAngle then
-		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances = {character}
-		params.IgnoreWater = true
-		params.RespectCanCollide = true
-
-		local rayResult = workspace:Raycast(humanoidRootPart.Position, Vector3.new(0, -2, 0), params)
-		if rayResult and rayResult.Instance then
-			local dot, uxv = humanoidRootPart.CFrame.UpVector:Dot(rayResult.Normal), humanoidRootPart.CFrame.UpVector:Cross(rayResult.Normal)
-			local rotateToFloorCFrame = (dot < -0.99999) and CFrame.fromAxisAngle(Vector3.new(1,0,0), math.pi) or CFrame.new(0, 0, 0, uxv.x, uxv.y, uxv.z, 1 + dot)
-			rootJoint.C0 *= CFrame.Angles(rotateToFloorCFrame.X, rotateToFloorCFrame.Y, rotateToFloorCFrame.Z)
-		end
-	end
-
-
 end)
 
 InputController.ScrollFired = function(scrollAmount, holdForZoom)

@@ -184,6 +184,21 @@ function MovementController.UpdateStance(stance, oldStance)
 	end
 end
 
+function MovementController.UpdateCharacterProneAngle()
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = {State.Parts.Character}
+	params.IgnoreWater = true
+	params.RespectCanCollide = true
+
+	local rayResult = workspace:Raycast(State.Parts.HRP.Position, Vector3.new(0, -2, 0), params)
+	if rayResult and rayResult.Instance then
+		local dot, uxv = State.Parts.HRP.CFrame.UpVector:Dot(rayResult.Normal), State.Parts.HRP.CFrame.UpVector:Cross(rayResult.Normal)
+		local rotateToFloorCFrame = (dot < -0.99999) and CFrame.fromAxisAngle(Vector3.new(1,0,0), math.pi) or CFrame.new(0, 0, 0, uxv.x, uxv.y, uxv.z, 1 + dot)
+		State.Parts.RootJoint.C0 *= CFrame.Angles(rotateToFloorCFrame.X, rotateToFloorCFrame.Y, rotateToFloorCFrame.Z)
+	end
+end
+
 local function UpdateCharacterTilt(character, dt)
 	local humanoid = character:FindFirstChild("Humanoid")
 	local rootPart
@@ -262,6 +277,10 @@ function MovementController.UpdateHeartbeat(dt)
 	end
 
 	humanoid.WalkSpeed = LerpNumber(humanoid.WalkSpeed, MovementController.tempWalkSpeed, 0.2 * dt * 60)
+
+	if State.stance() == 2 and config.proneAngle then
+		MovementController.UpdateCharacterProneAngle()
+	end
 end
 
 function MovementController.Jump()
