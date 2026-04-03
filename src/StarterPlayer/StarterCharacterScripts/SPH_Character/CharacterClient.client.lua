@@ -297,6 +297,17 @@ InputController.Initialize({
 		[Intents.FREELOOK] = CameraController.OnFreelookIntent,
 		[Intents.SCROLL] = OnScrollIntent,
 		[Intents.JUMP] = MovementController.Jump,
+		[Intents.TRIGGER] = WeaponController.OnTriggerIntent,
+		[Intents.DROP_GUN] = WeaponController.OnDropGunIntent,
+		[Intents.RELOAD] = WeaponController.OnReloadIntent,
+		[Intents.CHAMBER] = WeaponController.OnChamberIntent,
+		[Intents.SWITCH_SIGHTS] = WeaponController.OnSwitchSightsIntent,
+		[Intents.HOLD_UP] = WeaponController.OnHoldUpIntent,
+		[Intents.HOLD_PATROL] = WeaponController.OnHoldPatrolIntent,
+		[Intents.HOLD_DOWN] = WeaponController.OnHoldDownIntent,
+		[Intents.SWITCH_FIRE_MODE] = WeaponController.OnSwitchFireModeIntent,
+		[Intents.TOGGLE_LASER] = WeaponController.OnToggleLaserIntent,
+		[Intents.TOGGLE_FLASHLIGHT] = WeaponController.OnToggleFlashlightIntent,
 	}
 })
 
@@ -361,11 +372,6 @@ ReplicationController.Initialize({
 	character = character
 })
 
-InputController.ActionFired = function(actionName, inputState, inputObject)
-	if State.equipped() then
-		WeaponController.HandleInput(actionName, inputState)
-	end
-end
 InputController.BindCharacterInputs()
 
 humanoid.Died:Connect(function()
@@ -500,4 +506,3 @@ runService.Heartbeat:Connect(function(dt:number)
 	MovementController.UpdateHeartbeat(dt)
 	WeaponController.UpdateHeartbeat(dt)
 end)
-

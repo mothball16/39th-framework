@@ -10,9 +10,6 @@ local InputController = {}
 InputController._callbacks = {}
 
 
--- Callbacks to be assigned by the main CharacterClient
-InputController.ActionFired = nil
-
 function InputController.Initialize(args)
 	for intentKey, _ in pairs(Intents) do
 		local callback = args.callbacks[intentKey]
@@ -23,12 +20,6 @@ function InputController.Initialize(args)
 		InputController._callbacks[intentKey] = callback or function(inputState, inputObject)
 			warn(`[pearhead] no callback defined for intent key {intentKey}`)
 		end
-	end
-end
-
-local function InternalHandleInput(actionName, inputState, inputObject)
-	if InputController.ActionFired then
-		InputController.ActionFired(actionName, inputState, inputObject)
 	end
 end
 
@@ -73,44 +64,47 @@ function InputController.UnbindAiming()
 end
 
 function InputController.BindGunInputs(isFirstPerson)
-	ContextActionService:BindActionAtPriority("SPH_Trigger", InternalHandleInput, config.mobileButtons, config.gunInputPriority, unpack(config.fireGun))
-	ContextActionService:BindActionAtPriority("SPH_DropGun", InternalHandleInput, false, config.gunInputPriority, unpack(config.dropKey))
-	ContextActionService:BindActionAtPriority("SPH_Reload", InternalHandleInput, config.mobileButtons, config.gunInputPriority, unpack(config.keyReload))
-	ContextActionService:BindActionAtPriority("SPH_Chamber", InternalHandleInput, false, config.gunInputPriority, unpack(config.keyChamber))
-	ContextActionService:BindActionAtPriority("SPH_SwitchSights", InternalHandleInput, false, config.gunInputPriority, unpack(config.sightSwitch))
-	InputController.BindInput(Intents.FREELOOK, false, config.gunInputPriority, unpack(config.freeLook))
-	ContextActionService:BindActionAtPriority("SPH_HoldUp", InternalHandleInput, false, config.gunInputPriority, unpack(config.holdUp))
-	ContextActionService:BindActionAtPriority("SPH_HoldPatrol", InternalHandleInput, false, config.gunInputPriority, unpack(config.holdPatrol))
-	ContextActionService:BindActionAtPriority("SPH_HoldDown", InternalHandleInput, false, config.gunInputPriority, unpack(config.holdDown))
-	ContextActionService:BindActionAtPriority("SPH_SwitchFireMode", InternalHandleInput, false, config.gunInputPriority, unpack(config.switchFireMode))
-	ContextActionService:BindActionAtPriority("SPH_ToggleLaser", InternalHandleInput, false, config.gunInputPriority, unpack(config.toggleLaser))
-	ContextActionService:BindActionAtPriority("SPH_ToggleFlashlight", InternalHandleInput, false, config.gunInputPriority, unpack(config.toggleFlashlight))
+	InputController
+		.BindInput(Intents.TRIGGER, config.mobileButtons, config.gunInputPriority, unpack(config.fireGun))
+		.BindInput(Intents.DROP_GUN, false, config.gunInputPriority, unpack(config.dropKey))
+		.BindInput(Intents.RELOAD, config.mobileButtons, config.gunInputPriority, unpack(config.keyReload))
+		.BindInput(Intents.CHAMBER, false, config.gunInputPriority, unpack(config.keyChamber))
+		.BindInput(Intents.SWITCH_SIGHTS, false, config.gunInputPriority, unpack(config.sightSwitch))
+		.BindInput(Intents.FREELOOK, false, config.gunInputPriority, unpack(config.freeLook))
+		.BindInput(Intents.HOLD_UP, false, config.gunInputPriority, unpack(config.holdUp))
+		.BindInput(Intents.HOLD_PATROL, false, config.gunInputPriority, unpack(config.holdPatrol))
+		.BindInput(Intents.HOLD_DOWN, false, config.gunInputPriority, unpack(config.holdDown))
+		.BindInput(Intents.SWITCH_FIRE_MODE, false, config.gunInputPriority, unpack(config.switchFireMode))
+		.BindInput(Intents.TOGGLE_LASER, false, config.gunInputPriority, unpack(config.toggleLaser))
+		.BindInput(Intents.TOGGLE_FLASHLIGHT, false, config.gunInputPriority, unpack(config.toggleFlashlight))
 
 	if isFirstPerson then
 		InputController.BindAiming()
 	end
 
-	ContextActionService:SetTitle("SPH_Trigger", "Fire")
-	ContextActionService:SetPosition("SPH_Trigger", UDim2.fromScale(0.3, 0.6))
+	ContextActionService:SetTitle(Intents.TRIGGER, "Fire")
+	ContextActionService:SetPosition(Intents.TRIGGER, UDim2.fromScale(0.3, 0.6))
 
-	ContextActionService:SetTitle("SPH_Reload", "Reload")
-	ContextActionService:SetPosition("SPH_Reload", UDim2.fromScale(0, 0.6))
+	ContextActionService:SetTitle(Intents.RELOAD, "Reload")
+	ContextActionService:SetPosition(Intents.RELOAD, UDim2.fromScale(0, 0.6))
 end
 
 function InputController.UnbindGunInputs()
-	ContextActionService:UnbindAction("SPH_Trigger")
-	ContextActionService:UnbindAction("SPH_DropGun")
-	ContextActionService:UnbindAction("SPH_Reload")
-	InputController.UnbindInput(Intents.HOLD_AIM)
-	ContextActionService:UnbindAction("SPH_Chamber")
-	ContextActionService:UnbindAction("SPH_SwitchSights")
-	InputController.UnbindInput(Intents.FREELOOK)
-	ContextActionService:UnbindAction("SPH_HoldUp")
-	ContextActionService:UnbindAction("SPH_HoldPatrol")
-	ContextActionService:UnbindAction("SPH_HoldDown")
-	ContextActionService:UnbindAction("SPH_SwitchFireMode")
-	ContextActionService:UnbindAction("SPH_ToggleLaser")
-	ContextActionService:UnbindAction("SPH_ToggleFlashlight")
+	InputController.UnbindInput(
+		Intents.TRIGGER,
+		Intents.DROP_GUN,
+		Intents.RELOAD,
+		Intents.HOLD_AIM,
+		Intents.CHAMBER,
+		Intents.SWITCH_SIGHTS,
+		Intents.FREELOOK,
+		Intents.HOLD_UP,
+		Intents.HOLD_PATROL,
+		Intents.HOLD_DOWN,
+		Intents.SWITCH_FIRE_MODE,
+		Intents.TOGGLE_LASER,
+		Intents.TOGGLE_FLASHLIGHT
+	)
 end
 
 function InputController.BindCharacterInputs()

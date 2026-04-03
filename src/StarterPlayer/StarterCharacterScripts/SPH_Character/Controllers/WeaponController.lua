@@ -685,26 +685,34 @@ function WC.Equip(newChild)
 	end
 end
 
-function WC.HandleInput(actionName, inputState)
+function WC.OnTriggerIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
-	if actionName == "SPH_Trigger" then
-		if inputState == inputBegan then
-			WC.cancelReload = true
-			if not (State.sprinting() or State.reloading()) then
-				WC.holdingM1 = true
-				if not WC.IsLoaded() and not (State.equipped():GetAttribute("FireMode") == WC.fireModes.Manual and State.equipped():GetAttribute("MagAmmo") > 0) then
-					WC.PlayRepSound("Click")
-				end
+	if inputState == inputBegan then
+		WC.cancelReload = true
+		if not (State.sprinting() or State.reloading()) then
+			WC.holdingM1 = true
+			if not WC.IsLoaded() and not (State.equipped():GetAttribute("FireMode") == WC.fireModes.Manual and State.equipped():GetAttribute("MagAmmo") > 0) then
+				WC.PlayRepSound("Click")
 			end
-		else
-			WC.holdingM1 = false
-			WC.canFire = true
-			WC.bulletsCurrentlyFired = 0
 		end
-	elseif actionName == "SPH_DropGun" and inputState == inputBegan then
+	else
+		WC.holdingM1 = false
+		WC.canFire = true
+		WC.bulletsCurrentlyFired = 0
+	end
+end
+
+function WC.OnDropGunIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan then
 		WC.Unequip(State.equipped())
 		WC.playerDropGun:Fire()
-	elseif actionName == "SPH_Reload" and inputState == inputBegan and not State.reloading() and WC.cycled then
+	end
+end
+
+function WC.OnReloadIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan and not State.reloading() and WC.cycled then
 		if WC.curFireMode == WC.fireModes.UBGL and State.wepStats.hasUBGL then
 			local ubglAmmoPool = State.equipped():FindFirstChild("UBGLAmmoPool")
 			if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
@@ -724,9 +732,19 @@ function WC.HandleInput(actionName, inputState)
 				end
 			end
 		end
-	elseif actionName == "SPH_Chamber" and inputState == inputBegan and not State.reloading() and WC.cycled then
+	end
+end
+
+function WC.OnChamberIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan and not State.reloading() and WC.cycled then
 		WC.ChamberAnim()
-	elseif actionName == "SPH_SwitchSights" and inputState == inputBegan and State.aiming() and (State.gunModel:FindFirstChild("AimPart2") or (State.attStats.aimParts and State.attStats.aimParts["AimPart2"])) then
+	end
+end
+
+function WC.OnSwitchSightsIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan and State.aiming() and (State.gunModel:FindFirstChild("AimPart2") or (State.attStats.aimParts and State.attStats.aimParts["AimPart2"])) then
 		-- TODO: move this out to the CharacterClient - it should modify state and WC should do the rest.
 		local tempIndex = State.sightIndex() + 1
 		if State.gunModel:FindFirstChild("AimPart"..tempIndex) or (State.attStats.aimParts and State.attStats.aimParts["AimPart"..tempIndex]) then
@@ -736,15 +754,40 @@ function WC.HandleInput(actionName, inputState)
 			State.sightIndex(1)
 			WC.PlayRepSound("AimDown")
 		end
-	elseif actionName == "SPH_HoldUp" and inputState == inputBegan and not State.reloading() then
+	end
+end
+
+function WC.OnHoldUpIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan and not State.reloading() then
 		WC.ChangeHoldStance(1)
-	elseif actionName == "SPH_HoldPatrol" and inputState == inputBegan and not State.reloading() then
+	end
+end
+
+function WC.OnHoldPatrolIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan and not State.reloading() then
 		WC.ChangeHoldStance(2)
-	elseif actionName == "SPH_HoldDown" and inputState == inputBegan and not State.reloading() then
+	end
+end
+
+function WC.OnHoldDownIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan and not State.reloading() then
 		WC.ChangeHoldStance(3)
-	elseif actionName == "SPH_SwitchFireMode" and inputState == inputBegan then
+	end
+end
+
+function WC.OnSwitchFireModeIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan then
 		WC.AnimationController.PlayAnimation(State.wepStats.switchAnim, {transSpeed = 0.2})
-	elseif actionName == "SPH_ToggleLaser" and inputState == inputBegan then
+	end
+end
+
+function WC.OnToggleLaserIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan then
 		local lazerbeem = State.gunModel.Grip:FindFirstChild("Laser")
 		if State.attStats.laserOrigin then lazerbeem = State.gunModel[State.attStats.laserOrigin].Main:FindFirstChild("Laser") end
 		if lazerbeem then
@@ -754,7 +797,12 @@ function WC.HandleInput(actionName, inputState)
 			WC.playerToggleAttachment:Fire(1, WC.laserEnabled)
 			WC.laserDotUI.Dot.ImageColor3 = lazerbeem.Color.Value
 		end
-	elseif actionName == "SPH_ToggleFlashlight" and inputState == inputBegan then
+	end
+end
+
+function WC.OnToggleFlashlightIntent(inputState, inputObject)
+	local inputBegan = Enum.UserInputState.Begin
+	if inputState == inputBegan then
 		WC.flashlightEnabled = not WC.flashlightEnabled
 		WC.PlayRepSound("Button")
 		WC.playerToggleAttachment:Fire(0, WC.flashlightEnabled)
