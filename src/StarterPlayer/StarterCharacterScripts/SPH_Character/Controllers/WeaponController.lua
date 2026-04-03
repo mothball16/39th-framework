@@ -113,6 +113,7 @@ function WC.Initialize(params)
 	Charm.subscribe(WeaponState.flashlightEnabled, WC.OnFlashlightToggled)
 	Charm.subscribe(WeaponState.bipodEnabled, WC.OnBipodToggled)
 	Charm.subscribe(WeaponState.fireMode, WC.OnFireModeChanged)
+	Charm.subscribe(WeaponState.chambering, WC.UpdateChamber)
 end
 
 function WC.UpdateAttachmentsVisibility()
@@ -677,16 +678,18 @@ end
 
 function WC.OnChamberIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
-	if inputState == inputBegan and not WeaponState.reloading() and WC.cycled then
-		WC.ChangeHoldStance(0)
-		WC.AnimationController.WeaponChamber()
+	if inputState == inputBegan and WeaponState.canManipulate() and WC.cycled then
+		WeaponState.chambering(true)
 	end
+end
+
+function WC.UpdateChamber(chambering)
+	WC.ChangeHoldStance(0)
 end
 
 function WC.OnSwitchSightsIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan and State.aiming() and (WeaponState.gunModel:FindFirstChild("AimPart2") or (WeaponState.attStats.aimParts and WeaponState.attStats.aimParts["AimPart2"])) then
-		-- TODO: move this out to the CharacterClient - it should modify state and WC should do the rest.
 		local tempIndex = WeaponState.sightIndex() + 1
 		if WeaponState.gunModel:FindFirstChild("AimPart"..tempIndex) or (WeaponState.attStats.aimParts and WeaponState.attStats.aimParts["AimPart"..tempIndex]) then
 			WeaponState.sightIndex(tempIndex)
@@ -921,14 +924,14 @@ function WC.UpdateHeartbeat(dt)
 
 			if currentStats.autoChamber and fireMode == Enums.FireModes.Manual and not WeaponState.reloading() then
 				WC.ChangeHoldStance(0)
-				WC.AnimationController.WeaponChamber()
+				WeaponState.chambering(true)
 			end
 			WC.cycled = true
 		else
 			if not WC.IsLoaded() then
 				if fireMode == Enums.FireModes.Manual and WeaponState.gunAmmo.MagAmmo.Value > 0 and not WeaponState.reloading() and not WeaponState.chambering() then
 					WC.ChangeHoldStance(0)
-					WC.AnimationController.WeaponChamber()
+					WeaponState.chambering(true)
 					WC.holdingM1 = false
 				end
 			elseif WeaponState.wepStats.emptyCloseBolt then

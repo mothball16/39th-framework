@@ -45,4 +45,8 @@ function WepState.reset()
 	WepState.holdStance(0)
 end
 
+function WepState.canManipulate()
+	return WepState.viewmodelVisible() and not WepState.reloading() and not WepState.chambering() and WepState.wepStats
+end
+
 return WepState

@@ -40,6 +40,8 @@ local hitFX = require(modules.HitFX)
 local shellEjection = require(modules.ShellEjection)
 local bulletHandler = require(modules.BulletHandler)
 local callbacks = require(assets.Mods)
+local Packages = replicatedStorage.Packages
+local Charm = require(Packages.Charm)
 
 local Controllers = script.Parent:WaitForChild("Controllers")
 local State = require(Controllers:WaitForChild("CharacterState"))

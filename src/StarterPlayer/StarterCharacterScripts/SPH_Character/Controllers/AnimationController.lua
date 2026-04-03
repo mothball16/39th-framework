@@ -82,6 +82,7 @@ function AnimationController.Initialize(params)
 	Charm.subscribe(State.stance, AnimationController.OnStanceChanged)
 	Charm.subscribe(State.moving, AnimationController.OnMovingChanged)
 	Charm.subscribe(WeaponState.holdStance, AnimationController.OnHoldStanceChanged)
+	Charm.subscribe(WeaponState.chambering, AnimationController.OnWeaponChamber)
 end
 
 function AnimationController.OnStanceChanged(stance, oldStance)
@@ -233,18 +234,29 @@ function AnimationController.WeaponIdle()
 	AnimationController.PlayAnimation(WeaponState.wepStats.idleAnim, {looped = true, priority = Enum.AnimationPriority.Idle}, "Idle")
 end
 
-function AnimationController.WeaponChamber()
-	if not WeaponState.wepStats or not State.equipped() then return end
-	local animNameToPlay = (State.equipped().BoltReady.Value or WeaponState.fireMode() == 5) and WeaponState.wepStats.boltChamber or WeaponState.wepStats.boltClose
+function AnimationController.OnWeaponChamber(value)
+	if value == false or not WeaponState.wepStats or not State.equipped() then
+		return
+	end
+	local animNameToPlay = (State.equipped().BoltReady.Value or WeaponState.fireMode() == 5)
+		and WeaponState.wepStats.boltChamber
+		or WeaponState.wepStats.boltClose
 
-	if animNameToPlay then
-		WeaponState.reloading(true)
-		WeaponState.chambering(true)
-		WeaponState.holdStance(0)
-		local playingAnim = AnimationController.PlayAnimation(animNameToPlay, {priority = Enum.AnimationPriority.Action2, transSpeed = 0.05}, "Chamber")
-		if playingAnim then playingAnim.Stopped:Once(function() WeaponState.chambering(false) end) end
+	local playingAnim = AnimationController.PlayAnimation(
+		animNameToPlay,
+		{priority = Enum.AnimationPriority.Action2, transSpeed = 0.05},
+		"Chamber")
+
+	if playingAnim then
+		playingAnim.Stopped:Once(function()
+			WeaponState.chambering(false)
+		end)
+	else
+		warn("no chamber anim")
+		WeaponState.chambering(false)
 	end
 end
+
 
 function AnimationController.WeaponReload(lastGunModelName)
 	if not State.equipped() or not WeaponState.wepStats then return end
