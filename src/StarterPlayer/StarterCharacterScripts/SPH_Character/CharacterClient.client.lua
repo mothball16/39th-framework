@@ -226,8 +226,6 @@ local function RefreshViewmodel()
 		end
 	end -- </DD_SPH>
 
-	WeaponController.IdleAnim()
-
 	if callbacks.onViewmodelRefresh then callbacks.onViewmodelRefresh(player,rig) end
 end
 

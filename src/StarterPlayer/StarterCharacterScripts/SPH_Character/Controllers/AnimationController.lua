@@ -80,6 +80,7 @@ function AnimationController.Initialize(params)
 	Charm.subscribe(State.sprinting, AnimationController.OnSprintChanged)
 	Charm.subscribe(State.stance, AnimationController.OnStanceChanged)
 	Charm.subscribe(State.moving, AnimationController.OnMovingChanged)
+	Charm.subscribe(State.holdStance, AnimationController.OnHoldStanceChanged)
 end
 
 function AnimationController.OnStanceChanged(stance, oldStance)
@@ -164,6 +165,137 @@ function AnimationController.AdjustMoveAnimSpeed(speed: number)
 	if AnimationController.moveAnim then
 		AnimationController.moveAnim:AdjustSpeed(speed)
 	end
+end
+
+AnimationController.holdAnim = nil
+function AnimationController.OnHoldStanceChanged(newStance)
+	if AnimationController.holdAnim then
+		AnimationController.StopAnimation(AnimationController.holdAnim.Name, 0.3)
+		AnimationController.holdAnim = nil
+	end
+	if not State.equipped() or not State.wepStats then return end
+
+	local animToPlay
+	if newStance == 1 and State.wepStats.holdUpAnim then
+		animToPlay = State.wepStats.holdUpAnim
+	elseif newStance == 2 and State.wepStats.patrolAnim then
+		animToPlay = State.wepStats.patrolAnim
+	elseif newStance == 3 and State.wepStats.holdDownAnim then
+		animToPlay = State.wepStats.holdDownAnim
+	end
+
+	if animToPlay then
+		AnimationController.holdAnim = AnimationController.PlayAnimation(animToPlay, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
+	end
+end
+
+function AnimationController.WeaponEquipPreload()
+	if not State.wepStats then return end
+	local newEquipAnim = AnimationController.PlayAnimation(State.wepStats.equipAnim, {priority = Enum.AnimationPriority.Action2}, "Equip", true)
+	if newEquipAnim then
+		newEquipAnim.Stopped:Connect(function() State.equipping(false) end)
+	else
+		State.equipping(false)
+	end
+
+	AnimationController.PlayAnimation(State.wepStats.boltChamber, {priority = Enum.AnimationPriority.Action2, transSpeed = 0.05, looped = false}, "Chamber", true)
+	if State.wepStats.operationType == 2 or State.wepStats.operationType == 3 then
+		AnimationController.PlayAnimation(State.wepStats.boltOpen, {priority = Enum.AnimationPriority.Action2, transSpeed = 0, looped = false}, "BoltOpen", true)
+		AnimationController.PlayAnimation(State.wepStats.boltClose, {priority = Enum.AnimationPriority.Action2, looped = false}, "BoltClose", true)
+	end
+	
+	local animSpeed = State.wepStats.reloadSpeedModifier
+	if State.attStats and State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
+
+	if State.wepStats.magType == 1 then
+		AnimationController.PlayAnimation(State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload", true)
+	else
+		local gunAmmo = State.equipped():FindFirstChild("Ammo")
+		AnimationController.PlayAnimation(State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0, looped = gunAmmo and gunAmmo.MagAmmo.MaxValue > 1}, "Reload", true)
+		if State.wepStats.magType == 3 then
+			AnimationController.PlayAnimation(State.wepStats.clipReloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17, looped = false}, "Reload", true)
+		end
+	end
+	
+	if State.wepStats.hasUBGL and State.wepStats.ubgl and State.wepStats.ubgl.reloadAnim then
+		AnimationController.PlayAnimation(State.wepStats.ubgl.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload", true)
+	end
+end
+
+function AnimationController.WeaponEquip()
+	if not State.wepStats then return end
+	AnimationController.PlayAnimation(State.wepStats.equipAnim, {priority = Enum.AnimationPriority.Action2}, "Equip")
+end
+
+function AnimationController.WeaponIdle()
+	if not State.wepStats then return end
+	AnimationController.PlayAnimation(State.wepStats.idleAnim, {looped = true, priority = Enum.AnimationPriority.Idle}, "Idle")
+end
+
+function AnimationController.WeaponChamber()
+	if not State.wepStats or not State.equipped() then return end
+	local animNameToPlay = (State.equipped().BoltReady.Value or State.fireMode() == 5) and State.wepStats.boltChamber or State.wepStats.boltClose
+
+	if animNameToPlay then
+		State.reloading(true)
+		State.chambering(true)
+		State.holdStance(0)
+		local playingAnim = AnimationController.PlayAnimation(animNameToPlay, {priority = Enum.AnimationPriority.Action2, transSpeed = 0.05}, "Chamber")
+		if playingAnim then playingAnim.Stopped:Once(function() State.chambering(false) end) end
+	end
+end
+
+function AnimationController.WeaponReload(lastGunModelName)
+	if not State.equipped() or not State.wepStats then return end
+	State.reloading(true)
+	State.holdStance(0)
+	
+	local animSpeed = State.wepStats.reloadSpeedModifier
+	if State.attStats and State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
+
+	if State.fireMode() == 4 and State.wepStats.hasUBGL then
+		local ubglStats = State.wepStats.getStatsForMode(4)
+		AnimationController.PlayAnimation(ubglStats.reloadAnim or State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
+		return
+	end
+
+	local gunAmmo = State.equipped():FindFirstChild("Ammo")
+	if State.wepStats.operationType == 3 or (State.wepStats.operationType == 2 and gunAmmo and gunAmmo.MagAmmo.Value <= 0 and not State.equipped().Chambered.Value) then
+		local boltOpenTrack = AnimationController.PlayAnimation(State.wepStats.boltOpen, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "BoltOpen")
+		if not boltOpenTrack then State.reloading(false) return end
+		boltOpenTrack.Stopped:Once(function()
+			if not State.equipped() or not gunAmmo then return end
+			local cap = State.wepStats.clipSize or (State.attStats and State.attStats.magazineCapacity) or State.wepStats.magazineCapacity
+			if State.wepStats.magType == 3 and (gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value) >= cap and gunAmmo.ArcadeAmmoPool.Value >= cap then
+				AnimationController.PlayAnimation(State.wepStats.clipReloadAnim, {looped = true, speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
+			else
+				if lastGunModelName and State.gunModel and lastGunModelName ~= State.gunModel.Name then return end
+				AnimationController.PlayAnimation(State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17, looped = State.wepStats.magType > 1}, "Reload")
+			end
+		end)
+	else
+		AnimationController.PlayAnimation(State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
+	end
+end
+
+function AnimationController.PlayBoltAction(boltReady)
+	if not State.wepStats then return end
+	AnimationController.PlayAnimation(boltReady and State.wepStats.boltChamber or State.wepStats.boltClose, {priority = Enum.AnimationPriority.Action2, transSpeed = 0.05}, "BoltAction")
+end
+
+function AnimationController.PlayReloadAction(useClip)
+	if not State.wepStats then return end
+	local animSpeed = State.wepStats.reloadSpeedModifier
+	if State.attStats and State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
+	AnimationController.PlayAnimation(useClip and State.wepStats.clipReloadAnim or State.wepStats.reloadAnim, {looped = useClip, speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
+end
+
+function AnimationController.PlayFireAnim()
+	if State.wepStats and State.wepStats.fireAnim then AnimationController.PlayAnimation(State.wepStats.fireAnim, {priority = Enum.AnimationPriority.Action2, looped = false}, "Fire") end
+end
+
+function AnimationController.PlaySwitchFireModeAnim()
+	if State.wepStats and State.wepStats.switchAnim then AnimationController.PlayAnimation(State.wepStats.switchAnim, {transSpeed = 0.2}, "Switch") end
 end
 
 return AnimationController

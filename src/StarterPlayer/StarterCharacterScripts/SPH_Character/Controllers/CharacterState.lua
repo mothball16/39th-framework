@@ -46,6 +46,7 @@ local CharacterState = {
 	viewmodelVisible = Charm.atom(false)				:: Charm.Atom<boolean>,
 	sprinting = Charm.atom(false)						:: Charm.Atom<boolean>,
 	reloading = Charm.atom(false)						:: Charm.Atom<boolean>,
+	chambering = Charm.atom(false)						:: Charm.Atom<boolean>,
 	firstPerson = Charm.atom(false)						:: Charm.Atom<boolean>,
 	dead = Charm.atom(false)							:: Charm.Atom<boolean>,
 	stance = Charm.atom(0) 								:: Charm.Atom<number>,

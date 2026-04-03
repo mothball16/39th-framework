@@ -30,13 +30,11 @@ local WC = {
 	bipodRayIgnore = {},
 	ejected = true,
 	cancelReload = false,
-	chambering = false,
 	bulletsCurrentlyFired = 0,
 	ubglAmmo = nil,
 	sights = {},
 	lastGunModel = nil,
 	fireModes = { Safe = 0, Semi = 1, Auto = 2, Burst = 3, UBGL = 4, Manual = 5 },
-	holdAnim = nil,
 
 	-- Dependencies
 	player = nil,
@@ -116,7 +114,6 @@ function WC.Initialize(params)
 	Charm.subscribe(State.flashlightEnabled, WC.OnFlashlightToggled)
 	Charm.subscribe(State.bipodEnabled, WC.OnBipodToggled)
 	Charm.subscribe(State.fireMode, WC.OnFireModeChanged)
-	Charm.subscribe(State.holdStance, WC.OnHoldStanceChanged)
 end
 
 function WC.UpdateAttachmentsVisibility()
@@ -398,109 +395,20 @@ end
 
 function WC.ChangeHoldStance(newStance)
 	if State.aiming() then return end
-	if State.holdStance() == newStance and WC.holdAnim then
+	if State.holdStance() == newStance then
 		State.holdStance(0)
 	else
 		State.holdStance(newStance)
 	end
 end
 
-function WC.OnHoldStanceChanged(newStance, oldStance)
-	if WC.holdAnim then
-		WC.AnimationController.StopAnimation(WC.holdAnim.Name, 0.3)
-		WC.holdAnim = nil
-	end
-
-	if not State.equipped() then return end
-
-	local animToPlay
-	if newStance == 1 and State.wepStats.holdUpAnim then
-		animToPlay = State.wepStats.holdUpAnim
-	elseif newStance == 2 and State.wepStats.patrolAnim then
-		animToPlay = State.wepStats.patrolAnim
-	elseif newStance == 3 and State.wepStats.holdDownAnim then
-		animToPlay = State.wepStats.holdDownAnim
-	end
-
-	if animToPlay then
-		WC.holdAnim = WC.AnimationController.PlayAnimation(animToPlay, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
-		if WC.holdAnim then WC.holdAnim:Play() end
-	end
-end
-
-function WC.ChamberAnim()
-	local animNameToPlay
-	if State.equipped().BoltReady.Value or State.fireMode() == WC.fireModes.Manual then
-		animNameToPlay = State.wepStats.boltChamber
-	else
-		animNameToPlay = State.wepStats.boltClose
-	end
-
-	if animNameToPlay then
-		State.reloading(true)
-		WC.chambering = true
-		WC.ChangeHoldStance(0)
-		local playingAnim:AnimationTrack = WC.AnimationController.PlayAnimation(animNameToPlay, {priority = Enum.AnimationPriority.Action2, transSpeed = 0.05})
-		playingAnim.Stopped:Once(function()
-			WC.chambering = false
-		end)
-	end
-end
-
-function WC.IdleAnim()
-	WC.AnimationController.PlayAnimation(State.wepStats.idleAnim, {looped = true, priority = Enum.AnimationPriority.Idle})
-end
-
 function WC.EquipAnim()
-	WC.AnimationController.PlayAnimation(State.wepStats.equipAnim, {priority = Enum.AnimationPriority.Action2}, "Equip")
+	WC.AnimationController.WeaponEquip()
 	task.wait(0.1)
 	
 	if not State.wepStats then return end
 	if State.wepStats.openBolt or not State.equipped().Chambered.Value then
 		WC.SetProjectileTransparency(State.gunModel, 1)
-	end
-end
-
-function WC.ReloadAnim()
-	if not State.equipped() then return end
-	WC.cancelReload = false
-	WC.ChangeHoldStance(0)
-	State.reloading(true)
-	
-	local animSpeed = State.wepStats.reloadSpeedModifier
-	if State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
-
-	if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
-		local ubglStats = State.wepStats.getStatsForMode(4)
-		if ubglStats.reloadAnim then
-			WC.AnimationController.PlayAnimation(ubglStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
-		else
-			WC.AnimationController.PlayAnimation(State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
-		end
-		return
-	end
-
-	if State.wepStats.operationType == 3 or (State.wepStats.operationType == 2 and State.gunAmmo.MagAmmo.Value <= 0 and not State.equipped().Chambered.Value) then
-		local boltOpenTrack = WC.AnimationController.PlayAnimation(State.wepStats.boltOpen, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17})
-		if not boltOpenTrack then
-			warn("To use operation type "..State.wepStats.operationType..", a 'boltOpen' animation is required.")
-			State.reloading(false)
-			return
-		end
-		boltOpenTrack.Stopped:Once(function()
-			if State.wepStats.magType == 3
-				and (State.gunAmmo.MagAmmo.MaxValue - State.gunAmmo.MagAmmo.Value) >= (State.wepStats.clipSize or State.attStats.magazineCapacity or State.wepStats.magazineCapacity)
-				and State.gunAmmo.ArcadeAmmoPool.Value >= (State.wepStats.clipSize or State.attStats.magazineCapacity or State.wepStats.magazineCapacity) then
-				
-				WC.AnimationController.PlayAnimation(State.wepStats.clipReloadAnim, {looped = true, speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17})
-			else
-				if WC.lastGunModel and WC.lastGunModel.Name ~= State.gunModel.Name then return end
-				local bulletInsert = WC.AnimationController.PlayAnimation(State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17, looped = true}, "Reload")
-				if State.wepStats.magType > 1 then bulletInsert.Looped = true end
-			end
-		end)
-	else
-		WC.AnimationController.PlayAnimation(State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
 	end
 end
 
@@ -525,7 +433,6 @@ function WC.Unequip(tool)
 
 	WC.sights = {}
 
-	WC.holdAnim = nil
 	State.laserEnabled(false)
 	State.flashlightEnabled(false)
 	State.bipodEnabled(false)
@@ -603,7 +510,6 @@ function WC.Equip(newChild)
 		State.flashlightEnabled(false)
 		State.bipodEnabled(false)
 		WC.cycled = true
-		WC.chambering = false
 
 		WC.switchWeapon:Fire(newChild)
 
@@ -669,7 +575,7 @@ function WC.Equip(newChild)
 		if State.firstPerson() then WC.RefreshViewmodel() end
 		WC.InputController.BindGunInputs(State.firstPerson())
 		WC.EquipAnim()
-		WC.IdleAnim()
+		WC.AnimationController.WeaponIdle()
 
 		State.gunAmmo = State.equipped():WaitForChild("Ammo")
 
@@ -714,27 +620,7 @@ function WC.Equip(newChild)
 			WC.laserBeamFP.Attachment0 = State.gunModel[State.attStats.laserOrigin].Main.Laser		
 		end
 
-		local animSpeed = State.wepStats.reloadSpeedModifier
-		if State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
-
-		if State.wepStats.magType == 1 then
-			WC.AnimationController.PlayAnimation(State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload", true)
-		else
-			WC.AnimationController.PlayAnimation(State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0, looped = State.gunAmmo.MagAmmo.MaxValue > 1}, "Reload", true)
-			if State.wepStats.magType == 3 then
-				WC.AnimationController.PlayAnimation(State.wepStats.clipReloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17, looped = false}, "Reload", true)
-			end
-		end
-
-		local newEquipAnim = WC.AnimationController.PlayAnimation(State.wepStats.equipAnim, {priority = Enum.AnimationPriority.Action2}, "Equip", true)
-		newEquipAnim.Stopped:Connect(function() State.equipping(false) end)
-
-		WC.AnimationController.PlayAnimation(State.wepStats.boltChamber, {priority = Enum.AnimationPriority.Action2, transSpeed = 0.05, looped = false}, "Chamber", true)
-		if State.wepStats.operationType == 2 or State.wepStats.operationType == 3 then
-			WC.AnimationController.PlayAnimation(State.wepStats.boltOpen, {priority = Enum.AnimationPriority.Action2, transSpeed = 0, looped = false}, "BoltOpen", true)
-			WC.AnimationController.PlayAnimation(State.wepStats.boltClose, {priority = Enum.AnimationPriority.Action2, looped = false}, "BoltClose", true)
-		end
-		
+		WC.AnimationController.WeaponEquipPreload()
 		task.delay(1, function() WC.lastGunModel = newChild end)
 	end
 end
@@ -770,19 +656,25 @@ function WC.OnReloadIntent(inputState, inputObject)
 		if State.fireMode() == WC.fireModes.UBGL and State.wepStats.hasUBGL then
 			local ubglAmmoPool = State.equipped():FindFirstChild("UBGLAmmoPool")
 			if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
-				WC.ReloadAnim()
+				WC.cancelReload = false
+				WC.ChangeHoldStance(0)
+				WC.AnimationController.WeaponReload(WC.lastGunModel and WC.lastGunModel.Name)
 			end
 		else
 			if State.wepStats.infiniteAmmo or State.gunAmmo.ArcadeAmmoPool.Value > 0 then
 				if (State.wepStats.openBolt and State.gunAmmo.MagAmmo.Value < State.gunAmmo.MagAmmo.MaxValue) then
-					WC.ReloadAnim()
+					WC.cancelReload = false
+					WC.ChangeHoldStance(0)
+					WC.AnimationController.WeaponReload(WC.lastGunModel and WC.lastGunModel.Name)
 				else
 					if (State.wepStats.operationType == 4 and State.equipped().Chambered.Value)
 						or (State.wepStats.operationType == 3 and State.gunAmmo.MagAmmo.Value + 1 >= State.gunAmmo.MagAmmo.MaxValue)
 						or (State.wepStats.operationType == 2 and State.gunAmmo.MagAmmo.Value >= State.gunAmmo.MagAmmo.MaxValue) then
 						return
 					end
-					WC.ReloadAnim()
+					WC.cancelReload = false
+					WC.ChangeHoldStance(0)
+					WC.AnimationController.WeaponReload(WC.lastGunModel and WC.lastGunModel.Name)
 				end
 			end
 		end
@@ -792,7 +684,8 @@ end
 function WC.OnChamberIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan and not State.reloading() and WC.cycled then
-		WC.ChamberAnim()
+		WC.ChangeHoldStance(0)
+		WC.AnimationController.WeaponChamber()
 	end
 end
 
@@ -835,7 +728,7 @@ end
 function WC.OnSwitchFireModeIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then
-		WC.AnimationController.PlayAnimation(State.wepStats.switchAnim, {transSpeed = 0.2})
+		WC.AnimationController.PlaySwitchFireModeAnim()
 	end
 end
 
@@ -897,7 +790,7 @@ function WC.UpdateHeartbeat(dt)
 			if not State.firstPerson() and not config.thirdPersonFiring then return end
 
 			local currentStats = WC.GetCurrentWepStats()
-			if currentStats.fireAnim then WC.AnimationController.PlayAnimation(currentStats.fireAnim, {priority = Enum.AnimationPriority.Action2, looped = false}) end
+			WC.AnimationController.PlayFireAnim()
 
 			WC.bulletsCurrentlyFired += 1
 			WC.ejected = false
@@ -1033,13 +926,15 @@ function WC.UpdateHeartbeat(dt)
 			if not State.equipped() then return end
 
 			if currentStats.autoChamber and fireMode == WC.fireModes.Manual and not State.reloading() then
-				WC.ChamberAnim()
+				WC.ChangeHoldStance(0)
+				WC.AnimationController.WeaponChamber()
 			end
 			WC.cycled = true
 		else
 			if not WC.IsLoaded() then
-				if fireMode == WC.fireModes.Manual and State.gunAmmo.MagAmmo.Value > 0 and not State.reloading() and not WC.chambering then
-					WC.ChamberAnim()
+				if fireMode == WC.fireModes.Manual and State.gunAmmo.MagAmmo.Value > 0 and not State.reloading() and not State.chambering() then
+					WC.ChangeHoldStance(0)
+					WC.AnimationController.WeaponChamber()
 					WC.holdingM1 = false
 				end
 			elseif State.wepStats.emptyCloseBolt then
@@ -1114,9 +1009,8 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 	if keyframeName == "MagIn" then
 		if State.equipped() and (not State.equipped().Chambered.Value or State.wepStats.openBolt) and State.wepStats.autoChamber then
 			State.reloading(true)
-			local animNameToPlay = State.equipped().BoltReady.Value and State.wepStats.boltChamber or State.wepStats.boltClose
 			WC.AnimationController.StopAnimation(animName, 0.4)
-			WC.AnimationController.PlayAnimation(animNameToPlay, {priority = Enum.AnimationPriority.Action2, transSpeed = 0.05})
+			WC.AnimationController.PlayBoltAction(State.equipped().BoltReady.Value)
 		end
 		local bulletHandlerPart = State.wepStats.bulletHandler and State.gunModel:FindFirstChild(State.wepStats.bulletHolder)
 		if bulletHandlerPart then
@@ -1134,7 +1028,7 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 				if not State.equipped() then return end
 				WC.AnimationController.StopAnimation(newAnim.Name)
 				if not State.equipped().BoltReady.Value or State.wepStats.openBolt then
-					WC.AnimationController.PlayAnimation(State.wepStats.boltClose, {priority = Enum.AnimationPriority.Action2})
+					WC.AnimationController.PlayBoltAction(false)
 				else
 					State.reloading(false)
 				end
@@ -1144,7 +1038,7 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 				if not State.equipped() then return end
 				WC.AnimationController.StopAnimation(newAnim.Name)
 				if not State.equipped().BoltReady.Value or State.wepStats.operationType == 3 or State.wepStats.openBolt then
-					WC.AnimationController.PlayAnimation(State.wepStats.boltClose, {priority = Enum.AnimationPriority.Action2})
+					WC.AnimationController.PlayBoltAction(false)
 				else
 					State.reloading(false)
 				end
@@ -1160,15 +1054,9 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 	elseif keyframeName == "ClipInsertEnd" then
 		local ammoNeeded = State.gunAmmo.MagAmmo.MaxValue - State.gunAmmo.MagAmmo.Value
 		local clipSize = State.wepStats.clipSize or State.attStats.magazineCapacity or State.wepStats.magazineCapacity
-		local animSpeed = State.wepStats.reloadSpeedModifier
-		if State.attStats.reloadSpeedModifier then animSpeed *= State.attStats.reloadSpeedModifier end
 		if ammoNeeded > 0 then
 			WC.AnimationController.StopAnimation(newAnim.Name)
-			if ammoNeeded >= clipSize then
-				WC.AnimationController.PlayAnimation(State.wepStats.clipReloadAnim, {looped = true, speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17})
-			else
-				WC.AnimationController.PlayAnimation(State.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
-			end
+			WC.AnimationController.PlayReloadAction(ammoNeeded >= clipSize)
 		end
 	elseif keyframeName == "ClipInsert" then
 		WC.repReload:Fire()
