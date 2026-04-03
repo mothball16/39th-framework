@@ -25,4 +25,24 @@ local WepState = {
 	holdStance = Charm.atom(0)							:: Charm.Atom<number>,
 }
 
+function WepState.reset()
+	WepState.wepStats = nil
+	WepState.attStats = {}
+	WepState.gunModel = nil
+	WepState.gunAmmo = nil
+
+	WepState.aimSens(config.defaultAimSensitivity)
+	WepState.sightIndex(1)
+	WepState.viewmodelVisible(false)
+	WepState.reloading(false)
+	WepState.chambering(false)
+	WepState.aimHeld(false)
+	WepState.blocked(false)
+	WepState.laserEnabled(false)
+	WepState.flashlightEnabled(false)
+	WepState.bipodEnabled(false)
+	WepState.fireMode(0)
+	WepState.holdStance(0)
+end
+
 return WepState

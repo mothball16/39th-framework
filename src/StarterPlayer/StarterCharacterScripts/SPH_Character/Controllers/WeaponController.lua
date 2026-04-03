@@ -419,8 +419,7 @@ function WC.Unequip(tool)
 	WC.switchWeapon:Fire()
 	if tool == State.equipped() then
 		State.equipped(nil)
-		WeaponState.wepStats = nil
-		WeaponState.attStats = {}
+		WeaponState.reset()
 	end
 	UserInputService.MouseIconEnabled = true
 	WC.ToggleAiming(false)
@@ -432,10 +431,6 @@ function WC.Unequip(tool)
 
 	WC.sights = {}
 
-	WeaponState.laserEnabled(false)
-	WeaponState.flashlightEnabled(false)
-	WeaponState.bipodEnabled(false)
-	WeaponState.holdStance(0)
 	WC.laserDotUI.Enabled = false
 	WC.laserBeamFP.Enabled = false
 	WC.laserBeamTP.Enabled = false
