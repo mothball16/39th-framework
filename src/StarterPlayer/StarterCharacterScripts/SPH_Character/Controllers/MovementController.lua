@@ -167,7 +167,7 @@ function MovementController.UpdateStance(stance, oldStance)
 		MovementController.PlayCharSound(oldStance == 0 and "Crouch" or "Unprone")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), {HipHeight = targetCharacterHeight}):Play()
 	elseif stance == 2 then -- Prone
-		MovementController.UpdateLean(0)
+		State.lean(0)
 		MovementController.PlayCharSound("Prone")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime * 1.5), {HipHeight = targetCharacterHeight}):Play()
 	end
