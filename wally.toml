@@ -7,3 +7,4 @@ realm = "shared"
 [dependencies]
 Charm = "littensy/charm@0.11.0-rc.5"
 signal = "sleitnick/signal@2.0.3"
+maid = "nightcycle/maid@2.2.2"
