@@ -49,6 +49,7 @@ local MovementController = require(Controllers:WaitForChild("MovementController"
 local AnimationController = require(Controllers:WaitForChild("AnimationController"))
 local WeaponController = require(Controllers:WaitForChild("WeaponController"))
 local CameraController = require(Controllers:WaitForChild("CameraController"))
+local ReplicationController = require(Controllers:WaitForChild("ReplicationController"))
 
 bulletHandler.Initialize(player)
 
@@ -64,7 +65,6 @@ rayParams.RespectCanCollide = true
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 rayParams.FilterDescendantsInstances = {character,camera,shellFolder}
 
-local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")
 local playCharSound = bridgeNet.CreateBridge("PlayCharacterSound")
 
 local fpThreshold = 0.6
@@ -259,7 +259,6 @@ end
 
 local function ToggleAiming(toggle)
 	State.aiming(toggle)
-	character:SetAttribute("Aiming", toggle)
 end
 
 InputController.Initialize({
@@ -329,6 +328,10 @@ WeaponController.Initialize({
 	InputController = InputController,
 	RefreshViewmodel = RefreshViewmodel,
 	ToggleAiming = ToggleAiming,
+})
+
+ReplicationController.Initialize({
+	character = character
 })
 
 InputController.ActionFired = function(actionName, inputState, inputObject)
@@ -411,7 +414,7 @@ runService.RenderStepped:Connect(function(dt:number)
 
 			if headRotationEventCooldown <= 0 and not State.dead() and not config.disableHeadRotation then
 				headRotationEventCooldown = config.headRotationEventRate
-				bodyAnimRequest:Fire(neckJoint.C1)
+				ReplicationController.ReplicateHeadRotation(neckJoint.C1)
 			end
 		end
 

@@ -9,11 +9,6 @@ local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local State = require(script.Parent.CharacterState)
 
-local assets = game.ReplicatedStorage.SPH_Assets
-local modules = assets.Modules
-local bridgeNet = require(modules.BridgeNet)
-local playerLean = bridgeNet.CreateBridge("PlayerLean")
-
 local c0Ref = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
 
 local MovementController = {
@@ -34,8 +29,6 @@ local MovementController = {
     -- Callbacks
     ToggleAiming = nil,
     ChangeHoldStance = nil,
-    PlayAnimation = nil,
-    StopAnimation = nil,
     AdjustMoveAnimSpeed = nil,
     PlayCharSound = nil,
 }
@@ -56,8 +49,6 @@ function MovementController.Initialize(params)
 	
 	MovementController.ToggleAiming = params.ToggleAiming
 	MovementController.ChangeHoldStance = params.ChangeHoldStance
-	MovementController.PlayAnimation = params.PlayAnimation
-	MovementController.StopAnimation = params.StopAnimation
 	MovementController.AdjustMoveAnimSpeed = params.AdjustMoveAnimSpeed
 	MovementController.PlayCharSound = params.PlayCharSound
 
@@ -83,7 +74,7 @@ local function _canLean()
 	local notCrawling = State.stance() < 2
 	local notSprinting = not State.sprinting()
 	local notSitting = not State.Parts.Humanoid.Sit
-	return notCrawling and notSprinting and notSitting
+	return config.canLean and notCrawling and notSprinting and notSitting
 end
 
 function MovementController.OnLeanLeftIntent(inputState, _)
@@ -142,7 +133,6 @@ function MovementController.UpdateWalkSpeed(newSpeed)
 end
 
 function MovementController.UpdateSprint(sprinting)
-	MovementController.humanoid.Parent:SetAttribute("Sprinting", sprinting)
 	if sprinting then
 		if State.aiming() then MovementController.ToggleAiming(false) end
 		State.stance(0)
@@ -156,11 +146,10 @@ end
 
 
 function MovementController.UpdateLean(lean, oldLean)
-	if not config.canLean or lean == oldLean then
+	if lean == oldLean then
 		return
 	end
 	MovementController.PlayCharSound("Lean")
-	playerLean:Fire(lean)
 end
 
 function MovementController.UpdateStance(stance, oldStance)
