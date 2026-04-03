@@ -258,6 +258,13 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 		-- Sensitivity
 		WeaponState.aimSens(math.clamp(WeaponState.aimSens() + (0.01 * scrollAmount), 0.01, 1))
 		WeaponState.wepStats.aimSpeed = WeaponState.aimSens()
+	else
+		if not WeaponState.canManipulate() then
+			return
+		end
+		WeaponState.holdStance(math.clamp(WeaponState.holdStance() + (scrollAmount > 0 and -1 or 1),
+			Enums.HoldStance.High,
+			Enums.HoldStance.Patrol))
 	end
 end
 
@@ -280,9 +287,6 @@ InputController.Initialize({
 		[Intents.RELOAD] = WeaponController.OnReloadIntent,
 		[Intents.CHAMBER] = WeaponController.OnChamberIntent,
 		[Intents.SWITCH_SIGHTS] = WeaponController.OnSwitchSightsIntent,
-		[Intents.HOLD_UP] = WeaponController.OnHoldUpIntent,
-		[Intents.HOLD_PATROL] = WeaponController.OnHoldPatrolIntent,
-		[Intents.HOLD_DOWN] = WeaponController.OnHoldDownIntent,
 		[Intents.SWITCH_FIRE_MODE] = WeaponController.OnSwitchFireModeIntent,
 		[Intents.TOGGLE_LASER] = WeaponController.OnToggleLaserIntent,
 		[Intents.TOGGLE_FLASHLIGHT] = WeaponController.OnToggleFlashlightIntent,

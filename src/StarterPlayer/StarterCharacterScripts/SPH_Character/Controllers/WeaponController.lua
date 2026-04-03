@@ -106,9 +106,10 @@ function WC.Initialize(params)
 	end)
 
 	Charm.subscribe(State.aiming, WC.OnAimToggled)
-	Charm.subscribe(WeaponState.sightIndex, WC.OnSightIndexSwitched)
 	Charm.subscribe(State.firstPerson, WC.OnFirstPersonToggled)
 	Charm.subscribe(State.sprinting, WC.OnSprintToggled)
+
+	Charm.subscribe(WeaponState.sightIndex, WC.OnSightIndexSwitched)
 	Charm.subscribe(WeaponState.laserEnabled, WC.OnLaserToggled)
 	Charm.subscribe(WeaponState.flashlightEnabled, WC.OnFlashlightToggled)
 	Charm.subscribe(WeaponState.bipodEnabled, WC.OnBipodToggled)
@@ -214,7 +215,7 @@ end
 
 function WC.OnAimToggled(aiming)
 	if aiming then
-		WC.ChangeHoldStance(0)
+		WeaponState.holdStance(Enums.HoldStance.Ready)
 		local ADSMeshEnabled = WC._adsMeshEnabled(WeaponState.sightIndex())
 
 		WC.PlayRepSound("AimUp")
@@ -251,7 +252,7 @@ function WC.OnSprintToggled(sprinting)
 	if sprinting then
 		State.aiming(false)
 		WC.holdingM1 = false
-		WC.ChangeHoldStance(0)
+		WeaponState.holdStance(Enums.HoldStance.Ready)
 	end
 end
 
@@ -391,15 +392,6 @@ function WC.SwitchFireMode()
 		if mode > 5 then mode = 0 break end
 	until WeaponState.wepStats.fireSwitch[mode]
 	WeaponState.fireMode(mode)
-end
-
-function WC.ChangeHoldStance(newStance)
-	if State.aiming() then return end
-	if WeaponState.holdStance() == newStance then
-		WeaponState.holdStance(0)
-	else
-		WeaponState.holdStance(newStance)
-	end
 end
 
 function WC.EquipAnim()
@@ -606,7 +598,7 @@ function WC.Equip(newChild)
 
 		if config.lockFirstPerson then WC.player.CameraMode = Enum.CameraMode.LockFirstPerson end
 		WeaponState.fireMode(State.equipped().FireMode.Value)
-		WeaponState.holdStance(0)
+		WeaponState.holdStance(Enums.HoldStance.Ready)
 
 		if WeaponState.gunModel.Grip:FindFirstChild("Laser") then
 			WC.laserBeamFP.Attachment0 = WeaponState.gunModel.Grip.Laser
@@ -652,14 +644,14 @@ function WC.OnReloadIntent(inputState, inputObject)
 			local ubglAmmoPool = State.equipped():FindFirstChild("UBGLAmmoPool")
 			if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
 				WC.cancelReload = false
-				WC.ChangeHoldStance(0)
+				WeaponState.holdStance(Enums.HoldStance.Ready)
 				WC.AnimationController.WeaponReload(WC.lastGunModel and WC.lastGunModel.Name)
 			end
 		else
 			if WeaponState.wepStats.infiniteAmmo or WeaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
 				if (WeaponState.wepStats.openBolt and WeaponState.gunAmmo.MagAmmo.Value < WeaponState.gunAmmo.MagAmmo.MaxValue) then
 					WC.cancelReload = false
-					WC.ChangeHoldStance(0)
+					WeaponState.holdStance(Enums.HoldStance.Ready)
 					WC.AnimationController.WeaponReload(WC.lastGunModel and WC.lastGunModel.Name)
 				else
 					if (WeaponState.wepStats.operationType == 4 and State.equipped().Chambered.Value)
@@ -668,7 +660,7 @@ function WC.OnReloadIntent(inputState, inputObject)
 						return
 					end
 					WC.cancelReload = false
-					WC.ChangeHoldStance(0)
+					WeaponState.holdStance(Enums.HoldStance.Ready)
 					WC.AnimationController.WeaponReload(WC.lastGunModel and WC.lastGunModel.Name)
 				end
 			end
@@ -684,7 +676,7 @@ function WC.OnChamberIntent(inputState, inputObject)
 end
 
 function WC.UpdateChamber(chambering)
-	WC.ChangeHoldStance(0)
+	WeaponState.holdStance(Enums.HoldStance.Ready)
 end
 
 function WC.OnSwitchSightsIntent(inputState, inputObject)
@@ -698,27 +690,6 @@ function WC.OnSwitchSightsIntent(inputState, inputObject)
 			WeaponState.sightIndex(1)
 			WC.PlayRepSound("AimDown")
 		end
-	end
-end
-
-function WC.OnHoldUpIntent(inputState, inputObject)
-	local inputBegan = Enum.UserInputState.Begin
-	if inputState == inputBegan and not WeaponState.reloading() then
-		WC.ChangeHoldStance(1)
-	end
-end
-
-function WC.OnHoldPatrolIntent(inputState, inputObject)
-	local inputBegan = Enum.UserInputState.Begin
-	if inputState == inputBegan and not WeaponState.reloading() then
-		WC.ChangeHoldStance(2)
-	end
-end
-
-function WC.OnHoldDownIntent(inputState, inputObject)
-	local inputBegan = Enum.UserInputState.Begin
-	if inputState == inputBegan and not WeaponState.reloading() then
-		WC.ChangeHoldStance(3)
 	end
 end
 
@@ -783,7 +754,7 @@ function WC.UpdateHeartbeat(dt)
 		and not WeaponState.reloading()
 		and WC.holdingM1 
 		and WC.cycled then
-		if WC.canFire and not blocked and WeaponState.holdStance() == 0 and WC.IsLoaded() and fireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not State.equipping() then
+		if WC.canFire and not blocked and WeaponState.holdStance() == Enums.HoldStance.Ready and WC.IsLoaded() and fireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not State.equipping() then
 			if not State.firstPerson() and not config.thirdPersonFiring then return end
 
 			local currentStats = WC.GetCurrentWepStats()
@@ -923,14 +894,14 @@ function WC.UpdateHeartbeat(dt)
 			if not State.equipped() then return end
 
 			if currentStats.autoChamber and fireMode == Enums.FireModes.Manual and not WeaponState.reloading() then
-				WC.ChangeHoldStance(0)
+				WeaponState.holdStance(Enums.HoldStance.Ready)
 				WeaponState.chambering(true)
 			end
 			WC.cycled = true
 		else
 			if not WC.IsLoaded() then
 				if fireMode == Enums.FireModes.Manual and WeaponState.gunAmmo.MagAmmo.Value > 0 and not WeaponState.reloading() and not WeaponState.chambering() then
-					WC.ChangeHoldStance(0)
+					WeaponState.holdStance(Enums.HoldStance.Ready)
 					WeaponState.chambering(true)
 					WC.holdingM1 = false
 				end

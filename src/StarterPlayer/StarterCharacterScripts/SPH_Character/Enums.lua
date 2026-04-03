@@ -24,13 +24,17 @@ return {
         RELOAD = "RELOAD",
         CHAMBER = "CHAMBER",
         SWITCH_SIGHTS = "SWITCH_SIGHTS",
-        HOLD_UP = "HOLD_UP",
-        HOLD_PATROL = "HOLD_PATROL",
-        HOLD_DOWN = "HOLD_DOWN",
         SWITCH_FIRE_MODE = "SWITCH_FIRE_MODE",
         TOGGLE_LASER = "TOGGLE_LASER",
         TOGGLE_FLASHLIGHT = "TOGGLE_FLASHLIGHT",
         DROP_GUN = "DROP_GUN",
+    },
+
+    HoldStance = {
+        High = 0,
+        Ready = 1,
+        Low = 2,
+        Patrol = 3,
     },
 
     FireModes = {

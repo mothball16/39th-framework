@@ -4,6 +4,7 @@ local Charm = require(Packages.Charm)
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
 local config = require(ReplicatedStorage:WaitForChild("SPH_Assets").GameConfig)
+local Enums = require(script.Parent.Parent.Enums)
 local AnimationController = {}
 
 AnimationController.loadedAnims = {}
@@ -170,7 +171,7 @@ function AnimationController.AdjustMoveAnimSpeed(speed: number)
 end
 
 AnimationController.holdAnim = nil
-function AnimationController.OnHoldStanceChanged(newStance)
+function AnimationController.OnHoldStanceChanged(newStance, oldStance)
 	if AnimationController.holdAnim then
 		AnimationController.StopAnimation(AnimationController.holdAnim.Name, 0.3)
 		AnimationController.holdAnim = nil
@@ -178,16 +179,23 @@ function AnimationController.OnHoldStanceChanged(newStance)
 	if not State.equipped() or not WeaponState.wepStats then return end
 
 	local animToPlay
-	if newStance == 1 and WeaponState.wepStats.holdUpAnim then
+	if newStance == Enums.HoldStance.High and WeaponState.wepStats.holdUpAnim then
 		animToPlay = WeaponState.wepStats.holdUpAnim
-	elseif newStance == 2 and WeaponState.wepStats.patrolAnim then
+	elseif newStance == Enums.HoldStance.Patrol and WeaponState.wepStats.patrolAnim then
 		animToPlay = WeaponState.wepStats.patrolAnim
-	elseif newStance == 3 and WeaponState.wepStats.holdDownAnim then
+	elseif newStance == Enums.HoldStance.Low and WeaponState.wepStats.holdDownAnim then
 		animToPlay = WeaponState.wepStats.holdDownAnim
 	end
 
 	if animToPlay then
 		AnimationController.holdAnim = AnimationController.PlayAnimation(animToPlay, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
+	else
+		-- patrol override (bleh)
+		if oldStance == Enums.HoldStance.Ready and newStance == Enums.HoldStance.Low then
+			WeaponState.holdStance(Enums.HoldStance.Patrol)
+		else
+			WeaponState.holdStance(Enums.HoldStance.Ready)
+		end
 	end
 end
 
@@ -261,7 +269,7 @@ end
 function AnimationController.WeaponReload(lastGunModelName)
 	if not State.equipped() or not WeaponState.wepStats then return end
 	WeaponState.reloading(true)
-	WeaponState.holdStance(0)
+	WeaponState.holdStance(Enums.HoldStance.Ready)
 	
 	local animSpeed = WeaponState.wepStats.reloadSpeedModifier
 	if WeaponState.attStats and WeaponState.attStats.reloadSpeedModifier then animSpeed *= WeaponState.attStats.reloadSpeedModifier end

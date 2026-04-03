@@ -2,6 +2,7 @@ local assets = game.ReplicatedStorage:WaitForChild("SPH_Assets")
 local Packages = game.ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local config = require(assets.GameConfig)
+local Enums = require(script.Parent.Parent.Enums)
 
 local WepState = {
 	wepStats = nil,
@@ -42,7 +43,7 @@ function WepState.reset()
 	WepState.flashlightEnabled(false)
 	WepState.bipodEnabled(false)
 	WepState.fireMode(0)
-	WepState.holdStance(0)
+	WepState.holdStance(Enums.HoldStance.Ready)
 end
 
 function WepState.canManipulate()

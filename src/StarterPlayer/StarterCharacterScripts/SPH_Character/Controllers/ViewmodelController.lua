@@ -6,6 +6,7 @@ local config = require(assets.GameConfig)
 local springMod = require(assets.Modules.SpringModule)
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
+local Enums = require(script.Parent.Parent.Enums)
 
 local ViewmodelController = {}
 
@@ -128,7 +129,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 		if config.raiseGunAtWall then
 			if distance >= WeaponState.wepStats.maxPushback then
 				if not isBlocked then
-					ViewmodelController.ChangeHoldStance(0)
+					ViewmodelController.ChangeholdStance(Enums.HoldStance.Ready)
 					ViewmodelController.PlayAnimation(WeaponState.wepStats.holdUpAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
 					WeaponState.blocked(true)
 					if State.aiming() then ViewmodelController.ToggleAiming(false) end
