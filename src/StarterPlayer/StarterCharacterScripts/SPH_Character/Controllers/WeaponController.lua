@@ -213,22 +213,23 @@ end
 
 function WC.OnAimToggled(aiming)
 	if aiming then
-		WeaponState.holdStance(Enums.HoldStance.Ready)
+		-- effects n stuff
 		local ADSMeshEnabled = WC._adsMeshEnabled(WeaponState.sightIndex())
-
 		WC.PlayRepSound("AimUp")
-		WC.ToggleADS(ADSMeshEnabled)
-
+		WC.ToggleADSMesh(ADSMeshEnabled)
 		if not config.lockFirstPerson then
 			Player.CameraMode = Enum.CameraMode.LockFirstPerson
 		end
+
+		-- ready the character
+		State.sprinting(false)
+		WeaponState.holdStance(Enums.HoldStance.Ready)
+
+
 	else
 		WC.PlayRepSound("AimDown")
-		UserInputService.MouseDeltaSensitivity = 1
+		WC.ToggleADSMesh(false)
 
-		local aimOutTime = WeaponState.wepStats and WeaponState.wepStats.aimTime / 2 or 0.3
-
-		TweenService:Create(Camera,TweenInfo.new(aimOutTime),{FieldOfView = config.defaultFOV}):Play()
 		if not config.lockFirstPerson then
 			Player.CameraMode = defaultCameraMode
 		end
@@ -256,9 +257,9 @@ end
 
 function WC.OnSightIndexSwitched(index)
 	if WC._adsMeshEnabled(index) then
-		WC.ToggleADS(true)
+		WC.ToggleADSMesh(true)
 	else
-		WC.ToggleADS(false)
+		WC.ToggleADSMesh(false)
 	end
 end
 
@@ -330,7 +331,7 @@ function WC.MoveBolt(direction:CFrame, silent:boolean)
 	WC.moveBolt:Fire(direction, WeaponState.gunAmmo.MagAmmo.Value)
 end
 
-function WC.ToggleADS(toggle)
+function WC.ToggleADSMesh(toggle)
 	if not ((WeaponState.wepStats and WeaponState.wepStats.ADSEnabled) or (WeaponState.attStats and WeaponState.attStats.ADSEnabled)) then
 		return
 	end
@@ -716,22 +717,18 @@ function WC.OnToggleFlashlightIntent(inputState, inputObject)
 end
 
 function WC.OnAimIntent(inputState, inputObject)
-	local inputBegan = Enum.UserInputState.Begin
+	local inputBegan = inputState == Enum.UserInputState.Begin
 	if not UserInputService.TouchEnabled and not config.toggleAiming then -- Hold aiming
-		if inputState == inputBegan and State.firstPerson() and not State.freeLook() and not WeaponState.blocked() then
+		if inputBegan and State.firstPerson() and not State.freeLook() and not WeaponState.blocked() then
 			WeaponState.aimHeld(true)
-			State.sprinting(false)
-			if State.stance() == 0 then WC.MovementController.UpdateWalkSpeed(config.walkSpeed) end
 			State.aiming(true)
-		elseif not State.sprinting() and State.aiming() then -- Not aiming
+		else
 			WeaponState.aimHeld(false)
 			State.aiming(false)
 		end
-	elseif inputState == inputBegan then -- Mobile and toggle aiming
+	elseif inputBegan then -- Mobile and toggle aiming
 		if State.firstPerson() and not State.freeLook() and not WeaponState.blocked() and not State.aiming() then
 			WeaponState.aimHeld(true)
-			State.sprinting(false)
-			if State.stance() == 0 then WC.MovementController.UpdateWalkSpeed(config.walkSpeed) end
 			State.aiming(true)
 		else
 			WeaponState.aimHeld(false)
