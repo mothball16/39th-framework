@@ -187,7 +187,8 @@ AnimationController.Initialize({
 
 -- Makes the viewmodel visible and refreshes its appearance
 local function RefreshViewmodel()
-	if State.firstPerson() and not State.equipping() then
+	print("hey hey!")
+	if State.firstPerson() then
 		WeaponState.viewmodelVisible(true)
 	end
 
