@@ -25,6 +25,8 @@ local CameraController = {
 	
 	MovementController = nil,
 	ReplicationController = nil,
+
+	aimTween = nil :: Tween
 }
 
 local function LerpNumber(number, target, speed)
@@ -44,6 +46,7 @@ function CameraController.Initialize(params)
 	CameraController.ReplicationController = params.ReplicationController
 	
 	Charm.subscribe(State.sprinting, CameraController.OnSprintChanged)
+	Charm.subscribe(State.aiming, CameraController.OnAimingChanged)
 end
 
 
@@ -55,6 +58,24 @@ function CameraController.OnSprintChanged(sprinting)
 		end
 	end]]
 end
+
+function CameraController.OnAimingChanged(aiming)
+	if CameraController.aimTween then
+		CameraController.aimTween:Cancel()
+		CameraController.aimTween = nil
+	end
+	
+	if aiming then
+		-- nothin yet
+	else
+		local aimOutTime = WeaponState.wepStats and WeaponState.wepStats.aimTime / 2 or 0.3
+		CameraController.aimTween = TweenService:Create(
+			CameraController.camera, TweenInfo.new(aimOutTime),{FieldOfView = config.defaultFOV})
+		CameraController.aimTween:Play()
+	end
+end
+
+
 
 function CameraController.OnFreelookIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
