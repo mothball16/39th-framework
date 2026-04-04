@@ -746,7 +746,8 @@ function WC.UpdateHeartbeat(dt)
 		and not State.dead()
 		and not State.sprinting()
 		and not WeaponState.reloading()
-		and WC.holdingM1 
+		and not WeaponState.chambering()
+		and WC.holdingM1
 		and WC.cycled then
 		if WC.canFire and not blocked and WeaponState.holdStance() == Enums.HoldStance.Ready and WC.IsLoaded() and fireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not State.equipping() then
 			if not State.firstPerson() and not config.thirdPersonFiring then return end
