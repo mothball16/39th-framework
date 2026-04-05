@@ -22,7 +22,6 @@ local hipRotation = Vector2.zero
 local aimingOffset = CFrame.new()
 local proneViewmodelOffset = 0
 local rollAngle = 0
-local recoilUpdateCD = 0
 local aimTarget = CFrame.new()
 
 ViewmodelController.animBase = nil
@@ -63,7 +62,6 @@ end
 
 function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	local fps = 1 / dt
-	recoilUpdateCD -= dt
 
 	local animBase = ViewmodelController.animBase
 	local camera = ViewmodelController.camera
@@ -128,13 +126,12 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 		if config.raiseGunAtWall then
 			if distance >= WeaponState.wepStats.maxPushback then
 				if not isBlocked then
-					ViewmodelController.ChangeholdStance(Enums.HoldStance.Ready)
-					ViewmodelController.PlayAnimation(WeaponState.wepStats.holdUpAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
+					WeaponState.holdStance(Enums.HoldStance.High)
 					WeaponState.blocked(true)
 					State.aiming(false)
 				end
 			elseif isBlocked then
-				ViewmodelController.StopAnimation(WeaponState.wepStats.holdUpAnim, 0.3)
+				WeaponState.holdStance(Enums.HoldStance.Ready)
 				WeaponState.blocked(false)
 				if WeaponState.aimHeld() and State.firstPerson() then
 					State.aiming(true)
@@ -179,28 +176,24 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	end
 	animBase.CFrame *= CFrame.Angles(math.rad(hipRotation.Y), math.rad(hipRotation.X), 0)
 
+	-- walk sway
 	ViewmodelController.swaySpring:shove(Vector3.new(-mouseDelta.X / 500, mouseDelta.Y / 200, 0))
 	local updatedSway = ViewmodelController.swaySpring:update(dt)
 	animBase.CFrame *= CFrame.new(updatedSway.X, updatedSway.Y, 0)
 
+	-- breathing sway
 	local tickTime = tick() * 0.15
 	local tempDist = config.breathingDist
 	if State.aiming() then tempDist *= config.breathingAimMultiplier end
 	animBase.CFrame *= CFrame.new(tempDist * math.sin(tickTime * config.breathingSpeed / 2), tempDist * math.sin(tickTime * config.breathingSpeed), 0)
 
-	--[[local updatedRecoil = ViewmodelController.recoilSpring.Position
-	local updatedGunRecoil = ViewmodelController.gunRecoilSpring:update(dt)
-	if recoilUpdateCD <= 0 then
-		recoilUpdateCD = 1 / 60
-		local currentFPS = 1 / dt
-		local dtMult = (currentFPS / 60) - 1
-		dtMult = dtMult / 2
-		updatedRecoil = ViewmodelController.recoilSpring:update(0.016 + (0.016 * dtMult))
-	end]]
-	local RecoilCF2 = CFrame.lookAt(WeaponState.RecoilPos.p,WeaponState.RecoilDir.p,WeaponState.RecoilUp.p)
-	animBase.CFrame *= RecoilCF2
-	--camera.CFrame *= CFrame.Angles(math.rad(updatedRecoil.X), math.rad(updatedRecoil.Y), math.rad(updatedRecoil.Z))
 
+	-- recoil impact
+	local RecoilImpact = CFrame.lookAt(WeaponState.RecoilPos.p,WeaponState.RecoilDir.p,WeaponState.RecoilUp.p)
+	animBase.CFrame *= RecoilImpact
+
+
+	-- hide viewmodel (wtf)
 	if not WeaponState.viewmodelVisible() then
 		animBase.CFrame *= storageCFrame
 	end
@@ -208,7 +201,7 @@ end
 
 function ViewmodelController.UpdateRender(dt)
 	local camera = ViewmodelController.camera
-	if State.equipped() and camera.CameraType == Enum.CameraType.Custom then
+	if State.equipped() and WeaponState.gunModel and camera.CameraType == Enum.CameraType.Custom then
 		if State.firstPerson() and not WeaponState.viewmodelVisible() then
 			if ViewmodelController.RefreshViewmodel then ViewmodelController.RefreshViewmodel() end
 			State.sprinting(false)
