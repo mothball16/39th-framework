@@ -895,19 +895,9 @@ function WC.UpdateHeartbeat(dt)
 			end
 			WC.cycled = false
 			local curModel = WeaponState.gunModel
-			local recoilStats = currentStats.recoil
-			local vertRecoil = recoilStats.vertical
-			local horzRecoil = recoilStats.horizontal
-			local camShake = recoilStats.camShake
-			local aimReduction = recoilStats.aimReduction or 1
+			
 
-			if WeaponState.attStats.recoil then
-				vertRecoil *= WeaponState.attStats.recoil.vertical
-				horzRecoil *= WeaponState.attStats.recoil.horizontal
-				camShake *= WeaponState.attStats.recoil.camShake
-				aimReduction *= WeaponState.attStats.recoil.aimReduction
-			end
-
+			
 
 			if fireMode ~= Enums.FireModes.Manual and fireMode ~= Enums.FireModes.UBGL then
 				WC.EjectShell()
