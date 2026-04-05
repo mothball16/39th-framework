@@ -805,14 +805,29 @@ function WC.PerformRecoil(wepStats)
 
 		local VRecoil = RANDF(wepStats.VRecoil[1], wepStats.VRecoil[2])/1000
 		local HRecoil = RANDF(wepStats.HRecoil[1], wepStats.HRecoil[2])/1000
+		local finalRecoilPunch = wepStats.RecoilPunch
+		
+		-- if State.aiming() then
+		-- 	VRecoil /= wepStats.AimRecoilReduction
+		-- 	HRecoil /= wepStats.AimRecoilReduction
+		-- end
 
-		vr = RecoilCalc(VRecoil, wepStats.VRecoilDir, "Up")
+		vr = RecoilCalc(VRecoil, wepStats.VRecoilDir, "Up") 
 		hr = RecoilCalc(HRecoil, wepStats.HRecoilDir, "Side")
 
-		vP = PunchCalc(wepStats.VPunchBase, wepStats.VPunchDir,"Up")
+		vP = PunchCalc(wepStats.VPunchBase, wepStats.VPunchDir,"Up") 
 		hP = PunchCalc(wepStats.HPunchBase, wepStats.HPunchDir,"Side")
 		dP = PunchCalc(wepStats.DPunchBase, wepStats.DPunchDir,"Side")
 
+
+		if State.aiming() then
+			vr /= wepStats.AimRecoilReduction
+			hr /= wepStats.AimRecoilReduction
+			vP /= wepStats.AimRotationalPunchReduction
+			hP /= wepStats.AimRotationalPunchReduction
+			dP /= wepStats.AimRotationalPunchReduction
+			finalRecoilPunch /= wepStats.AimBackwardPunchReduction
+		end
 
 		if WeaponState.bipodEnabled() then
 			vr  = vr/3
@@ -822,26 +837,14 @@ function WC.PerformRecoil(wepStats)
 
 			hP = hP/2.5
 			dP = dP/2.5
-			if not State.aiming() then
-				WeaponState.RecoilCF = RecoilModule.BipodHipRecoil(
-					WeaponState.RecoilCF, wepStats.RecoilPunch, wepStats.RecoilPower,vP,hP,dP)
-			else
-				WeaponState.RecoilCF = RecoilModule.BipodAimRecoil(
-					WeaponState.RecoilCF, wepStats.RecoilPunch, wepStats.RecoilPower,vP,hP,dP, wepStats.AimRecoilReduction)
-			end
+
+			WeaponState.RecoilCF = RecoilModule.BipodRecoil(
+				WeaponState.RecoilCF, finalRecoilPunch, wepStats.RecoilPower,vP,hP,dP)
 		else
-
-			if not State.aiming() then
-				WeaponState.RecoilCF = RecoilModule.HipRecoil(
-					WeaponState.RecoilCF, wepStats.RecoilPunch, wepStats.RecoilPower,vP,hP,dP)
-			else
-				WeaponState.RecoilCF = RecoilModule.AimRecoil(
-					WeaponState.RecoilCF, wepStats.RecoilPunch, wepStats.RecoilPower,vP,hP,dP, wepStats.AimRecoilReduction)
-			end
-
-
+			WeaponState.RecoilCF = RecoilModule.Recoil(
+				WeaponState.RecoilCF, finalRecoilPunch, wepStats.RecoilPower,vP,hP,dP)
 		end
-			
+
 		WeaponState.RecoilPos.t = WeaponState.RecoilCF.Position
 		WeaponState.RecoilDir.t = WeaponState.RecoilCF.LookVector
 		WeaponState.RecoilUp.t = WeaponState.RecoilCF.UpVector
