@@ -31,7 +31,7 @@ local CharacterState = {
 	aimFOVTarget = 	Charm.atom(config.defaultFOV) 		:: Charm.Atom<number>,
 
 	aiming = Charm.atom(false) 							:: Charm.Atom<boolean>,
-	equipped = Charm.atom(nil) 							:: Charm.Atom<Instance>,
+	equippedTool = Charm.atom(nil) 						:: Charm.Atom<Instance>,
 	equipping = Charm.atom(false)						:: Charm.Atom<boolean>,
 	sprinting = Charm.atom(false)						:: Charm.Atom<boolean>,
 

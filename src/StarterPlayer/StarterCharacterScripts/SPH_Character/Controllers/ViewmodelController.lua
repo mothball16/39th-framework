@@ -201,7 +201,7 @@ end
 
 function ViewmodelController.UpdateRender(dt)
 	local camera = ViewmodelController.camera
-	if State.equipped() and WeaponState.gunModel and camera.CameraType == Enum.CameraType.Custom then
+	if State.equippedTool() and WeaponState.gunModel and camera.CameraType == Enum.CameraType.Custom then
 		if State.firstPerson() and not WeaponState.viewmodelVisible() then
 			if ViewmodelController.RefreshViewmodel then ViewmodelController.RefreshViewmodel() end
 			State.sprinting(false)

@@ -354,8 +354,8 @@ InputController.BindCharacterInputs()
 
 humanoid.Died:Connect(function()
 	State.dead(true)
-	if State.equipped() then
-		WeaponController.Unequip(State.equipped())
+	if State.equippedTool() then
+		WeaponController.Unequip(State.equippedTool())
 	end
 	userInputService.MouseIconEnabled = true
 	WeaponState.viewmodelVisible(false)

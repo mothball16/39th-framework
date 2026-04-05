@@ -176,7 +176,7 @@ function AnimationController.OnHoldStanceChanged(newStance, oldStance)
 		AnimationController.StopAnimation(AnimationController.holdAnim.Name, 0.3)
 		AnimationController.holdAnim = nil
 	end
-	if not State.equipped() or not WeaponState.wepStats then return end
+	if not State.equippedTool() or not WeaponState.wepStats then return end
 
 	local animToPlay
 	if newStance == Enums.HoldStance.High and WeaponState.wepStats.holdUpAnim then
@@ -220,7 +220,7 @@ function AnimationController.WeaponEquipPreload()
 	if WeaponState.wepStats.magType == 1 then
 		AnimationController.PlayAnimation(WeaponState.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload", true)
 	else
-		local gunAmmo = State.equipped():FindFirstChild("Ammo")
+		local gunAmmo = State.equippedTool():FindFirstChild("Ammo")
 		AnimationController.PlayAnimation(WeaponState.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0, looped = gunAmmo and gunAmmo.MagAmmo.MaxValue > 1}, "Reload", true)
 		if WeaponState.wepStats.magType == 3 then
 			AnimationController.PlayAnimation(WeaponState.wepStats.clipReloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17, looped = false}, "Reload", true)
@@ -243,10 +243,10 @@ function AnimationController.WeaponIdle()
 end
 
 function AnimationController.OnWeaponChamber(value)
-	if value == false or not WeaponState.wepStats or not State.equipped() then
+	if value == false or not WeaponState.wepStats or not State.equippedTool() then
 		return
 	end
-	local animNameToPlay = (State.equipped().BoltReady.Value or WeaponState.fireMode() == 5)
+	local animNameToPlay = (State.equippedTool().BoltReady.Value or WeaponState.fireMode() == 5)
 		and WeaponState.wepStats.boltChamber
 		or WeaponState.wepStats.boltClose
 
@@ -267,7 +267,7 @@ end
 
 
 function AnimationController.WeaponReload(lastGunModelName)
-	if not State.equipped() or not WeaponState.wepStats then return end
+	if not State.equippedTool() or not WeaponState.wepStats then return end
 	WeaponState.reloading(true)
 	WeaponState.holdStance(Enums.HoldStance.Ready)
 	
@@ -280,12 +280,12 @@ function AnimationController.WeaponReload(lastGunModelName)
 		return
 	end
 
-	local gunAmmo = State.equipped():FindFirstChild("Ammo")
-	if WeaponState.wepStats.operationType == 3 or (WeaponState.wepStats.operationType == 2 and gunAmmo and gunAmmo.MagAmmo.Value <= 0 and not State.equipped().Chambered.Value) then
+	local gunAmmo = State.equippedTool():FindFirstChild("Ammo")
+	if WeaponState.wepStats.operationType == 3 or (WeaponState.wepStats.operationType == 2 and gunAmmo and gunAmmo.MagAmmo.Value <= 0 and not State.equippedTool().Chambered.Value) then
 		local boltOpenTrack = AnimationController.PlayAnimation(WeaponState.wepStats.boltOpen, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "BoltOpen")
 		if not boltOpenTrack then WeaponState.reloading(false) return end
 		boltOpenTrack.Stopped:Once(function()
-			if not State.equipped() or not gunAmmo then return end
+			if not State.equippedTool() or not gunAmmo then return end
 			local cap = WeaponState.wepStats.clipSize or (WeaponState.attStats and WeaponState.attStats.magazineCapacity) or WeaponState.wepStats.magazineCapacity
 			if WeaponState.wepStats.magType == 3 and (gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value) >= cap and gunAmmo.ArcadeAmmoPool.Value >= cap then
 				AnimationController.PlayAnimation(WeaponState.wepStats.clipReloadAnim, {looped = true, speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
