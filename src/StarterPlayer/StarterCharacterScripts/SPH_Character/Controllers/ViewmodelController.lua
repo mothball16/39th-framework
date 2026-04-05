@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
-
+local Packages = ReplicatedStorage:WaitForChild("Packages")
+local Charm = require(Packages.Charm)
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local modules = assets.Modules
@@ -54,6 +55,14 @@ function ViewmodelController.Initialize(params)
 	ViewmodelController.PlayAnimation = params.PlayAnimation
 	ViewmodelController.StopAnimation = params.StopAnimation
 	ViewmodelController.RefreshViewmodel = params.RefreshViewmodel
+
+
+	Charm.subscribe(State.equippedTool, ViewmodelController.OnEquippedToolChanged)
+end
+
+function ViewmodelController.OnEquippedToolChanged(tool, oldTool)
+	if not tool then return end
+	ViewmodelController.ResetHipRotation()
 end
 
 function ViewmodelController.ResetHipRotation()

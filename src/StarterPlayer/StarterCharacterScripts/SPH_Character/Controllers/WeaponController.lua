@@ -496,14 +496,15 @@ function WC.Equip(newChild)
 		return
 	end
 	UserInputService.MouseIconEnabled = false
+
 	WeaponState.reset()
-	WC.ViewmodelController.ResetHipRotation()
 	State.equipping(true)
+
 	State.equippedTool(newChild)
+	WeaponState.wepStats = require(State.equippedTool().SPH_Weapon.WeaponStats)
 
 	WC.cycled = true
 	WC.switchWeapon:Fire(newChild)
-	WeaponState.wepStats = require(State.equippedTool().SPH_Weapon.WeaponStats)
 
 
 	if WeaponState.wepStats.PunchSpeed then
@@ -514,21 +515,30 @@ function WC.Equip(newChild)
 	if WeaponState.wepStats.PunchDamper then
 		WeaponState.RecoilPos.d = WeaponState.wepStats.PunchDamper
 		WeaponState.RecoilDir.d = WeaponState.wepStats.PunchDamper
-		WeaponState.RecoilUp.s = WeaponState.wepStats.PunchSpeed
+		WeaponState.RecoilUp.d = WeaponState.wepStats.PunchDamper
 	end
 
 
 	State.aimFOVTarget(WeaponState.wepStats.aimFovDefault or config.defaultFOV)
 
-	if not WeaponState.wepStats.operationType or type(WeaponState.wepStats.operationType) == "string" then WeaponState.wepStats.operationType = 1 end
-	if not WeaponState.wepStats.magType then WeaponState.wepStats.magType = 1 end
+	-- fallbacks
+	if not WeaponState.wepStats.operationType or type(WeaponState.wepStats.operationType) == "string" then
+		WeaponState.wepStats.operationType = 1
+	end
+	if not WeaponState.wepStats.magType then
+		WeaponState.wepStats.magType = 1
+	end
 
 	local oldGun = WC.viewmodelRig.Weapon:FindFirstChildWhichIsA("Model")
-	if oldGun then oldGun:Destroy() end
+	if oldGun then
+		oldGun:Destroy()
+	end
 
+	
 	local gun = assets.WeaponModels:FindFirstChild(newChild.Name):Clone()
 	weldMod.WeldModel(gun, gun.Grip, false)
 
+	--[[
 	if WeaponState.wepStats.Attachments then
 		WeaponState.attStats = gunsmith.getAttStats(WeaponState.wepStats.Attachments)
 		for slot, item in pairs(WeaponState.wepStats.Attachments) do
@@ -539,18 +549,10 @@ function WC.Equip(newChild)
 			end
 		end
 	end
-
-	if WeaponState.attStats.recoil then
-		WC.ViewmodelController.recoilSpring.Damping *= WeaponState.attStats.recoil.damping
-		WC.ViewmodelController.recoilSpring.Speed *= WeaponState.attStats.recoil.speed
-	end
-	if WeaponState.attStats.gunRecoil then
-		WC.ViewmodelController.gunRecoilSpring.Damping *= WeaponState.attStats.gunRecoil.damping
-		WC.ViewmodelController.gunRecoilSpring.Speed *= WeaponState.attStats.gunRecoil.speed
-	end
 	if WeaponState.attStats.aimFovDefault then
 		State.aimFOVTarget(WeaponState.attStats.aimFovDefault)
 	end
+	]]
 
 	for _, partName in ipairs(WeaponState.wepStats.rigParts) do
 		if gun:FindFirstChild(partName) then

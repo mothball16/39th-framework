@@ -63,7 +63,6 @@ function WepState.reset()
 	WepState.bipodEnabled(false)
 	WepState.fireMode(0)
 	WepState.holdStance(Enums.HoldStance.Ready)
-	
 end
 
 function WepState.canManipulate()
