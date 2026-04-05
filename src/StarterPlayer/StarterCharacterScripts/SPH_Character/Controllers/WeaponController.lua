@@ -489,12 +489,14 @@ end
 
 function WC.Equip(newChild)
 	if
-		(newChild:FindFirstChild("SPH_Weapon") and not assets.WeaponModels:FindFirstChild(newChild.Name))
+		not newChild:FindFirstChild("SPH_Weapon")
+		or (newChild:FindFirstChild("SPH_Weapon") and not assets.WeaponModels:FindFirstChild(newChild.Name))
 		or State.dead()
 		or (WC.humanoid.Sit and not WC.MovementController.vehicleSeated)
 	then
 		return
 	end
+
 	UserInputService.MouseIconEnabled = false
 
 	WeaponState.reset()
@@ -1006,7 +1008,6 @@ end
 function WC.UpdateRender(dt)
 	local adjust = dt * 60
 	if not State.equippedTool() or WC.camera.CameraType ~= Enum.CameraType.Custom then return end
-
 
 	--recoil logic
 	WeaponState.RecoilCF = WeaponState.RecoilCF:Lerp(CFrame.new(),math.min(1, WeaponState.wepStats.PunchRecover * adjust))
