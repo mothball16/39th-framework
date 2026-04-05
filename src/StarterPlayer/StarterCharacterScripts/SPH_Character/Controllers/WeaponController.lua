@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
@@ -13,6 +14,9 @@ local bulletHandler = require(modules.BulletHandler)
 local shellEjection = require(modules.ShellEjection)
 local weldMod = require(modules.WeldMod)
 local bridgeNet = require(modules.BridgeNet)
+
+
+local RecoilModule = require(modules.Recoil.Default)
 
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
@@ -495,9 +499,7 @@ function WC.Equip(newChild)
 		WeaponState.flashlightEnabled(false)
 		WeaponState.bipodEnabled(false)
 		WC.cycled = true
-
 		WC.switchWeapon:Fire(newChild)
-
 		State.equipped(newChild)
 		WeaponState.wepStats = require(State.equipped().SPH_Weapon.WeaponStats)
 		
@@ -506,6 +508,19 @@ function WC.Equip(newChild)
 		WC.ViewmodelController.gunRecoilSpring.Damping = WeaponState.wepStats.gunRecoil.damping
 		WC.ViewmodelController.gunRecoilSpring.Speed = WeaponState.wepStats.gunRecoil.speed
 		
+
+		if WeaponState.wepStats.PunchSpeed then
+			WeaponState.RecoilPos.s = WeaponState.wepStats.PunchSpeed
+			WeaponState.RecoilDir.s = WeaponState.wepStats.PunchSpeed
+			WeaponState.RecoilUp.s = WeaponState.wepStats.PunchSpeed
+		end
+		if WeaponState.wepStats.PunchDamper then
+			WeaponState.RecoilPos.d = WeaponState.wepStats.PunchDamper
+			WeaponState.RecoilDir.d = WeaponState.wepStats.PunchDamper
+			WeaponState.RecoilUp.s = WeaponState.wepStats.PunchSpeed
+		end
+
+
 		State.aimFOVTarget(WeaponState.wepStats.aimFovDefault or config.defaultFOV)
 
 		if not WeaponState.wepStats.operationType or type(WeaponState.wepStats.operationType) == "string" then WeaponState.wepStats.operationType = 1 end
@@ -737,6 +752,121 @@ function WC.OnAimIntent(inputState, inputObject)
 	end
 end
 
+function RANDF(Min, Max)
+	return Min + math.random() * Max
+end
+
+function RAND(Min, Max, Accuracy)
+	local Inverse = 1 / (Accuracy or 1)
+	return (math.random(Min * Inverse, Max * Inverse) / Inverse)
+end
+
+function RAND2(mean,range)
+	return (math.random()-0.5)*range + mean
+end
+
+function CFRot(CF)
+	return CFrame.Angles(CF:ToEulerAnglesXYZ())
+end
+
+function PunchCalc(PunchBase,Dir,Default)
+	if not Dir then
+		return PunchCalc(PunchBase,Default)
+	elseif Dir == "Up" or Dir == "Left" or Dir == "ACW" then
+		return PunchBase
+	elseif Dir == "Side" or Dir == "Both" then
+		return RAND2(0, PunchBase * 2)
+	elseif Dir == "Down" or Dir == "Right" or Dir == "CW" then
+		return -PunchBase
+	else
+		return PunchCalc(PunchBase,Default)
+	end
+end
+
+function RecoilCalc(Recoil,Dir,Default)
+	if not Dir then
+		return RecoilCalc(Recoil,Default)
+	elseif Dir == "Up" or Dir == "Left" then
+		return Recoil
+	elseif Dir == "Side" or Dir == "Both" then
+		return RAND2(0, Recoil*2)
+	elseif Dir == "Down" or Dir == "Right" then
+		return -Recoil
+	else
+		return RecoilCalc(Recoil,Default)
+	end
+end
+
+local SP = require(modules.Spring.Default)
+
+function WC.PerformRecoil(wepStats)
+	coroutine.wrap(function()
+		local vr, hr, vP, hP, dP
+
+		local VRecoil = RANDF(wepStats.VRecoil[1], wepStats.VRecoil[2])/1000
+		local HRecoil = RANDF(wepStats.HRecoil[1], wepStats.HRecoil[2])/1000
+
+		vr = RecoilCalc(VRecoil, wepStats.VRecoilDir, "Up")
+		hr = RecoilCalc(HRecoil, wepStats.HRecoilDir, "Side")
+
+		vP = PunchCalc(wepStats.VPunchBase, wepStats.VPunchDir,"Up")
+		hP = PunchCalc(wepStats.HPunchBase, wepStats.HPunchDir,"Side")
+		dP = PunchCalc(wepStats.DPunchBase, wepStats.DPunchDir,"Side")
+
+
+		if WeaponState.bipodEnabled() then
+			vr  = vr/3
+			hr = hr/3
+
+			vP = vP*0.75
+
+			hP = hP/2.5
+			dP = dP/2.5
+			if not State.aiming() then
+				WeaponState.RecoilCF = RecoilModule.BipodHipRecoil(
+					WeaponState.RecoilCF, wepStats.RecoilPunch, wepStats.RecoilPower,vP,hP,dP)
+			else
+				WeaponState.RecoilCF = RecoilModule.BipodAimRecoil(
+					WeaponState.RecoilCF, wepStats.RecoilPunch, wepStats.RecoilPower,vP,hP,dP, wepStats.AimRecoilReduction)
+			end
+		else
+
+			if not State.aiming() then
+				WeaponState.RecoilCF = RecoilModule.HipRecoil(
+					WeaponState.RecoilCF, wepStats.RecoilPunch, wepStats.RecoilPower,vP,hP,dP)
+			else
+				WeaponState.RecoilCF = RecoilModule.AimRecoil(
+					WeaponState.RecoilCF, wepStats.RecoilPunch, wepStats.RecoilPower,vP,hP,dP, wepStats.AimRecoilReduction)
+			end
+
+
+		end
+			
+		WeaponState.RecoilPos.t = WeaponState.RecoilCF.Position
+		WeaponState.RecoilDir.t = WeaponState.RecoilCF.LookVector
+		WeaponState.RecoilUp.t = WeaponState.RecoilCF.UpVector
+		
+		WeaponState.CameraSpring.t = WeaponState.CameraSpring.t + Vector3.new(vr, hr, 0)
+		WeaponState.CameraSpring.p = WeaponState.CameraSpring.p + Vector3.new(vr, hr, 0) * 0.5
+		local duration = 0.25 --ServerConfig.AimRecoverDuration
+		task.wait(duration/5 * WeaponState.CameraSpring.s / SP.cs)
+		--cwait(duration/5 * CameraSpring.s / SP.cs)
+		local t = 0
+		if wepStats.AimRecoverDuration then
+			duration = wepStats.AimRecoverDuration
+		end
+		while t <= duration do
+			local step = RunService.Heartbeat:Wait()
+			t = t + step
+			WeaponState.CameraSpring.t = WeaponState.CameraSpring.t - Vector3.new(vr, hr, 0) 
+				* wepStats.AimRecover * step / duration
+		end
+	end)()
+	
+end
+
+
+
 function WC.UpdateHeartbeat(dt)
 	local freeLook = State.freeLook()
 	local blocked = WeaponState.blocked()
@@ -754,6 +884,7 @@ function WC.UpdateHeartbeat(dt)
 
 			local currentStats = WC.GetCurrentWepStats()
 			WC.AnimationController.PlayFireAnim()
+			WC.PerformRecoil(WeaponState.wepStats)
 
 			WC.bulletsCurrentlyFired += 1
 			WC.ejected = false
@@ -776,6 +907,11 @@ function WC.UpdateHeartbeat(dt)
 				camShake *= WeaponState.attStats.recoil.camShake
 				aimReduction *= WeaponState.attStats.recoil.aimReduction
 			end
+
+
+			
+
+			--[[
 			if WeaponState.bipodEnabled() then
 				vertRecoil /= 4
 				horzRecoil /= 4
@@ -789,7 +925,7 @@ function WC.UpdateHeartbeat(dt)
 				horzRecoil /= 2
 			end
 
-			WC.ViewmodelController.recoilSpring:shove(Vector3.new(vertRecoil, math.random(-horzRecoil,horzRecoil), camShake))
+			--WC.ViewmodelController.recoilSpring:shove(Vector3.new(vertRecoil, math.random(-horzRecoil,horzRecoil), camShake))
 
 			local gunRecoilStats = currentStats.gunRecoil
 			local gunVertRecoil = gunRecoilStats.vertical
@@ -811,6 +947,10 @@ function WC.UpdateHeartbeat(dt)
 			end
 
 			WC.ViewmodelController.gunRecoilSpring:shove(Vector3.new(gunVertRecoil, math.random(-gunHorzRecoil,gunHorzRecoil), punchMultiplier))
+]]
+
+
+
 
 			if fireMode ~= Enums.FireModes.Manual and fireMode ~= Enums.FireModes.UBGL then
 				WC.EjectShell()
@@ -909,7 +1049,16 @@ function WC.UpdateHeartbeat(dt)
 end
 
 function WC.UpdateRender(dt)
+	local adjust = dt * 60
 	if not State.equipped() or WC.camera.CameraType ~= Enum.CameraType.Custom then return end
+
+
+	--recoil logic
+	WeaponState.RecoilCF = WeaponState.RecoilCF:Lerp(CFrame.new(),math.min(1,WeaponState.wepStats.PunchRecover*adjust))
+	WeaponState.RecoilPos.t = WeaponState.RecoilCF.Position
+	WeaponState.RecoilDir.t = WeaponState.RecoilCF.LookVector
+	WeaponState.RecoilUp.t = WeaponState.RecoilCF.UpVector
+
 
 	local bipodPart = WeaponState.gunModel.Grip:FindFirstChild("Bipod")
 	local bipodModel = WeaponState.gunModel

@@ -3,7 +3,8 @@ local UserInputService = game:GetService("UserInputService")
 
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
-local springMod = require(assets.Modules.SpringModule)
+local modules = assets.Modules
+local springMod = require(modules.SpringModule)
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
 local Enums = require(script.Parent.Parent.Enums)
@@ -187,7 +188,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	if State.aiming() then tempDist *= config.breathingAimMultiplier end
 	animBase.CFrame *= CFrame.new(tempDist * math.sin(tickTime * config.breathingSpeed / 2), tempDist * math.sin(tickTime * config.breathingSpeed), 0)
 
-	local updatedRecoil = ViewmodelController.recoilSpring.Position
+	--[[local updatedRecoil = ViewmodelController.recoilSpring.Position
 	local updatedGunRecoil = ViewmodelController.gunRecoilSpring:update(dt)
 	if recoilUpdateCD <= 0 then
 		recoilUpdateCD = 1 / 60
@@ -195,11 +196,10 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 		local dtMult = (currentFPS / 60) - 1
 		dtMult = dtMult / 2
 		updatedRecoil = ViewmodelController.recoilSpring:update(0.016 + (0.016 * dtMult))
-	end
-
-	animBase.CFrame *= CFrame.Angles(math.rad(updatedGunRecoil.X), math.rad(updatedGunRecoil.Y), 0)
-	animBase.CFrame *= CFrame.new(0, 0, updatedGunRecoil.Z)
-	camera.CFrame *= CFrame.Angles(math.rad(updatedRecoil.X), math.rad(updatedRecoil.Y), math.rad(updatedRecoil.Z))
+	end]]
+	local RecoilCF2 = CFrame.lookAt(WeaponState.RecoilPos.p,WeaponState.RecoilDir.p,WeaponState.RecoilUp.p)
+	animBase.CFrame *= RecoilCF2
+	--camera.CFrame *= CFrame.Angles(math.rad(updatedRecoil.X), math.rad(updatedRecoil.Y), math.rad(updatedRecoil.Z))
 
 	if not WeaponState.viewmodelVisible() then
 		animBase.CFrame *= storageCFrame

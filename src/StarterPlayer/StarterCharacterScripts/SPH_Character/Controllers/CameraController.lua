@@ -96,7 +96,6 @@ function CameraController.UpdateRender(dt)
 	local camera = CameraController.camera
 	local humanoid = CameraController.humanoid
 	local humanoidRootPart = CameraController.humanoidRootPart
-	local rootJoint = CameraController.rootJoint
 	local rigType = CameraController.rigType
 	local MovementController = CameraController.MovementController
 	local character = CameraController.character
@@ -242,6 +241,11 @@ function CameraController.UpdateRender(dt)
 			camera.CFrame *= CFrame.Angles(0, 0, math.rad(CameraController.cameraRollAngle))
 		end
 	end
+
+	camera.CFrame = camera.CFrame
+		* CFrame.Angles(WeaponState.CameraSpring.p.X, WeaponState.CameraSpring.p.Y, WeaponState.CameraSpring.p.Z)
+	WeaponState.CameraSpring.t = WeaponState.CameraSpring.t - WeaponState.CameraSpring.p
+	WeaponState.CameraSpring.p = Vector3.new()
 end
 
 function CameraController.UpdateFOV(dt)

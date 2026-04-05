@@ -3,7 +3,9 @@ local Packages = game.ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local config = require(assets.GameConfig)
 local Enums = require(script.Parent.Parent.Enums)
-
+local modules = assets.Modules
+local SP = require(modules.Spring.Default)
+local legacySpring = require(modules.LegacySpring)
 local WepState = {
 	wepStats = nil,
 	attStats = {},
@@ -24,9 +26,26 @@ local WepState = {
 	bipodEnabled = Charm.atom(false)					:: Charm.Atom<boolean>,
 	fireMode = Charm.atom(0)							:: Charm.Atom<number>,
 	holdStance = Charm.atom(0)							:: Charm.Atom<number>,
+
+
+	CameraSpring = legacySpring.new(Vector3.new()),
+	RecoilPos = legacySpring.new(Vector3.new()),
+	RecoilDir = legacySpring.new(Vector3.new()),
+	RecoilUp = legacySpring.new(Vector3.new()),
+	RecoilCF = CFrame.new(),
 }
 
 function WepState.reset()
+	WepState.RecoilUp.s = SP.rs
+	WepState.RecoilUp.d = SP.rd
+	WepState.RecoilPos.s = SP.rs
+	WepState.RecoilPos.d = SP.rd
+	WepState.RecoilDir.s = SP.rs
+	WepState.RecoilDir.d = SP.rd
+	WepState.CameraSpring.s = SP.cs
+	WepState.CameraSpring.d = SP.cd
+	WepState.RecoilCF = CFrame.new()
+
 	WepState.wepStats = nil
 	WepState.attStats = {}
 	WepState.gunModel = nil
@@ -44,10 +63,13 @@ function WepState.reset()
 	WepState.bipodEnabled(false)
 	WepState.fireMode(0)
 	WepState.holdStance(Enums.HoldStance.Ready)
+	
 end
 
 function WepState.canManipulate()
 	return WepState.viewmodelVisible() and not WepState.reloading() and not WepState.chambering() and WepState.wepStats
 end
+
+WepState.reset()
 
 return WepState
