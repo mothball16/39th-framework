@@ -488,141 +488,137 @@ function WC.setRecursiveAttachments(weapon, attachmentSlot, weaponAttachment, pa
 end
 
 function WC.Equip(newChild)
-	if newChild:FindFirstChild("SPH_Weapon") and not assets.WeaponModels:FindFirstChild(newChild.Name) then return end
-
-	if newChild:FindFirstChild("SPH_Weapon") and not State.dead() and (not WC.humanoid.Sit or WC.humanoid.Sit and not WC.MovementController.vehicleSeated) then
-		WeaponState.reloading(false)
-		UserInputService.MouseIconEnabled = false
-		WC.ViewmodelController.ResetHipRotation()
-		State.equipping(true)
-		WeaponState.laserEnabled(false)
-		WeaponState.flashlightEnabled(false)
-		WeaponState.bipodEnabled(false)
-		WC.cycled = true
-		WC.switchWeapon:Fire(newChild)
-		State.equipped(newChild)
-		WeaponState.wepStats = require(State.equipped().SPH_Weapon.WeaponStats)
-		
-		WC.ViewmodelController.recoilSpring.Damping = WeaponState.wepStats.recoil.damping
-		WC.ViewmodelController.recoilSpring.Speed = WeaponState.wepStats.recoil.speed
-		WC.ViewmodelController.gunRecoilSpring.Damping = WeaponState.wepStats.gunRecoil.damping
-		WC.ViewmodelController.gunRecoilSpring.Speed = WeaponState.wepStats.gunRecoil.speed
-		
-
-		if WeaponState.wepStats.PunchSpeed then
-			WeaponState.RecoilPos.s = WeaponState.wepStats.PunchSpeed
-			WeaponState.RecoilDir.s = WeaponState.wepStats.PunchSpeed
-			WeaponState.RecoilUp.s = WeaponState.wepStats.PunchSpeed
-		end
-		if WeaponState.wepStats.PunchDamper then
-			WeaponState.RecoilPos.d = WeaponState.wepStats.PunchDamper
-			WeaponState.RecoilDir.d = WeaponState.wepStats.PunchDamper
-			WeaponState.RecoilUp.s = WeaponState.wepStats.PunchSpeed
-		end
-
-
-		State.aimFOVTarget(WeaponState.wepStats.aimFovDefault or config.defaultFOV)
-
-		if not WeaponState.wepStats.operationType or type(WeaponState.wepStats.operationType) == "string" then WeaponState.wepStats.operationType = 1 end
-		if not WeaponState.wepStats.magType then WeaponState.wepStats.magType = 1 end
-
-		local oldGun = WC.viewmodelRig.Weapon:FindFirstChildWhichIsA("Model")
-		if oldGun then oldGun:Destroy() end
-
-		local gun = assets.WeaponModels:FindFirstChild(newChild.Name):Clone()
-		weldMod.WeldModel(gun, gun.Grip, false)
-
-		if WeaponState.wepStats.Attachments then
-			WeaponState.attStats = gunsmith.getAttStats(WeaponState.wepStats.Attachments)
-			for slot, item in pairs(WeaponState.wepStats.Attachments) do
-				if typeof(item) == "string" then
-					if gun:FindFirstChild(slot) then WC.SetAttachment(gun, slot, item, gun) end
-				elseif typeof(item) == "table" then
-					WC.setRecursiveAttachments(gun, slot, item, gun)
-				end
-			end
-		end
-
-		if WeaponState.attStats.recoil then
-			WC.ViewmodelController.recoilSpring.Damping *= WeaponState.attStats.recoil.damping
-			WC.ViewmodelController.recoilSpring.Speed *= WeaponState.attStats.recoil.speed
-		end
-		if WeaponState.attStats.gunRecoil then
-			WC.ViewmodelController.gunRecoilSpring.Damping *= WeaponState.attStats.gunRecoil.damping
-			WC.ViewmodelController.gunRecoilSpring.Speed *= WeaponState.attStats.gunRecoil.speed
-		end
-		if WeaponState.attStats.aimFovDefault then
-			State.aimFOVTarget(WeaponState.attStats.aimFovDefault)
-		end
-
-		for _, partName in ipairs(WeaponState.wepStats.rigParts) do
-			if gun:FindFirstChild(partName) then
-				gun.Grip["Grip_"..partName]:Destroy()
-				local newMotor = weldMod.M6D(gun.Grip, gun[partName])
-				newMotor.Name = partName
-				newMotor.Parent = gun.Grip
-			end
-		end
-
-		for _, part in ipairs(gun:GetDescendants()) do
-			if part.Name == "SightReticle" then table.insert(WC.sights, part) end
-		end
-
-		gun.Parent = WC.viewmodelRig.Weapon
-		WeaponState.gunModel = gun
-		weldMod.BlankM6D(WC.viewmodelRig.AnimBase, gun.Grip)
-
-		if State.firstPerson() then WC.RefreshViewmodel() end
-		WC.InputController.BindGunInputs(State.firstPerson())
-		WC.EquipAnim()
-		WC.AnimationController.WeaponIdle()
-
-		WeaponState.gunAmmo = State.equipped():WaitForChild("Ammo")
-
-		if WeaponState.wepStats.hasUBGL then
-			WC.ubglAmmo = newChild:FindFirstChild("UBGLAmmo")
-			local ubglAmmoPool = newChild:FindFirstChild("UBGLAmmoPool")
-			if not WC.ubglAmmo then
-				WC.ubglAmmo = Instance.new("IntValue", newChild)
-				WC.ubglAmmo.Name = "UBGLAmmo"
-				local totalStartAmmo = WeaponState.wepStats.ubgl.startAmmoPool or 6
-				WC.ubglAmmo.Value = (totalStartAmmo > 0 and (not ubglAmmoPool or ubglAmmoPool.Value > 0)) and 1 or 0
-			end
-			if not ubglAmmoPool then
-				ubglAmmoPool = Instance.new("DoubleConstrainedValue", newChild)
-				ubglAmmoPool.Name = "UBGLAmmoPool"
-				ubglAmmoPool.MaxValue = WeaponState.wepStats.ubgl.maxAmmoPool or 12
-				local totalStartAmmo = WeaponState.wepStats.ubgl.startAmmoPool or 6
-				ubglAmmoPool.Value = totalStartAmmo > 0 and (totalStartAmmo - WC.ubglAmmo.Value) or 0
-			end
-
-			if WeaponState.wepStats.ubgl.reloadAnim then
-				local animSpeed = WeaponState.wepStats.reloadSpeedModifier
-				if WeaponState.attStats.reloadSpeedModifier then animSpeed *= WeaponState.attStats.reloadSpeedModifier end
-				WC.AnimationController.PlayAnimation(WeaponState.wepStats.ubgl.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload", true)
-			end
-		else
-			WC.ubglAmmo = nil
-		end
-
-		if not State.equipped().BoltReady.Value then
-			WC.MoveBolt(WeaponState.wepStats.boltDist, true)
-		end
-
-		if config.lockFirstPerson then WC.player.CameraMode = Enum.CameraMode.LockFirstPerson end
-		WeaponState.fireMode(State.equipped().FireMode.Value)
-		WeaponState.holdStance(Enums.HoldStance.Ready)
-
-		if WeaponState.gunModel.Grip:FindFirstChild("Laser") then
-			WC.laserBeamFP.Attachment0 = WeaponState.gunModel.Grip.Laser
-		end
-		if WeaponState.attStats.laserOrigin and WeaponState.gunModel[WeaponState.attStats.laserOrigin].Main:FindFirstChild("Laser") then
-			WC.laserBeamFP.Attachment0 = WeaponState.gunModel[WeaponState.attStats.laserOrigin].Main.Laser		
-		end
-
-		WC.AnimationController.WeaponEquipPreload()
-		task.delay(1, function() WC.lastGunModel = newChild end)
+	if
+		(newChild:FindFirstChild("SPH_Weapon") and not assets.WeaponModels:FindFirstChild(newChild.Name))
+		or State.dead()
+		or (WC.humanoid.Sit and not WC.MovementController.vehicleSeated)
+	then
+		return
 	end
+	UserInputService.MouseIconEnabled = false
+	WeaponState.reset()
+	WC.ViewmodelController.ResetHipRotation()
+	State.equipping(true)
+	State.equipped(newChild)
+
+	WC.cycled = true
+	WC.switchWeapon:Fire(newChild)
+	WeaponState.wepStats = require(State.equipped().SPH_Weapon.WeaponStats)
+
+
+	if WeaponState.wepStats.PunchSpeed then
+		WeaponState.RecoilPos.s = WeaponState.wepStats.PunchSpeed
+		WeaponState.RecoilDir.s = WeaponState.wepStats.PunchSpeed
+		WeaponState.RecoilUp.s = WeaponState.wepStats.PunchSpeed
+	end
+	if WeaponState.wepStats.PunchDamper then
+		WeaponState.RecoilPos.d = WeaponState.wepStats.PunchDamper
+		WeaponState.RecoilDir.d = WeaponState.wepStats.PunchDamper
+		WeaponState.RecoilUp.s = WeaponState.wepStats.PunchSpeed
+	end
+
+
+	State.aimFOVTarget(WeaponState.wepStats.aimFovDefault or config.defaultFOV)
+
+	if not WeaponState.wepStats.operationType or type(WeaponState.wepStats.operationType) == "string" then WeaponState.wepStats.operationType = 1 end
+	if not WeaponState.wepStats.magType then WeaponState.wepStats.magType = 1 end
+
+	local oldGun = WC.viewmodelRig.Weapon:FindFirstChildWhichIsA("Model")
+	if oldGun then oldGun:Destroy() end
+
+	local gun = assets.WeaponModels:FindFirstChild(newChild.Name):Clone()
+	weldMod.WeldModel(gun, gun.Grip, false)
+
+	if WeaponState.wepStats.Attachments then
+		WeaponState.attStats = gunsmith.getAttStats(WeaponState.wepStats.Attachments)
+		for slot, item in pairs(WeaponState.wepStats.Attachments) do
+			if typeof(item) == "string" then
+				if gun:FindFirstChild(slot) then WC.SetAttachment(gun, slot, item, gun) end
+			elseif typeof(item) == "table" then
+				WC.setRecursiveAttachments(gun, slot, item, gun)
+			end
+		end
+	end
+
+	if WeaponState.attStats.recoil then
+		WC.ViewmodelController.recoilSpring.Damping *= WeaponState.attStats.recoil.damping
+		WC.ViewmodelController.recoilSpring.Speed *= WeaponState.attStats.recoil.speed
+	end
+	if WeaponState.attStats.gunRecoil then
+		WC.ViewmodelController.gunRecoilSpring.Damping *= WeaponState.attStats.gunRecoil.damping
+		WC.ViewmodelController.gunRecoilSpring.Speed *= WeaponState.attStats.gunRecoil.speed
+	end
+	if WeaponState.attStats.aimFovDefault then
+		State.aimFOVTarget(WeaponState.attStats.aimFovDefault)
+	end
+
+	for _, partName in ipairs(WeaponState.wepStats.rigParts) do
+		if gun:FindFirstChild(partName) then
+			gun.Grip["Grip_"..partName]:Destroy()
+			local newMotor = weldMod.M6D(gun.Grip, gun[partName])
+			newMotor.Name = partName
+			newMotor.Parent = gun.Grip
+		end
+	end
+
+	for _, part in ipairs(gun:GetDescendants()) do
+		if part.Name == "SightReticle" then table.insert(WC.sights, part) end
+	end
+
+	gun.Parent = WC.viewmodelRig.Weapon
+	WeaponState.gunModel = gun
+	weldMod.BlankM6D(WC.viewmodelRig.AnimBase, gun.Grip)
+
+	if State.firstPerson() then WC.RefreshViewmodel() end
+	WC.InputController.BindGunInputs(State.firstPerson())
+	WC.EquipAnim()
+	WC.AnimationController.WeaponIdle()
+
+	WeaponState.gunAmmo = State.equipped():WaitForChild("Ammo")
+
+	if WeaponState.wepStats.hasUBGL then
+		WC.ubglAmmo = newChild:FindFirstChild("UBGLAmmo")
+		local ubglAmmoPool = newChild:FindFirstChild("UBGLAmmoPool")
+		if not WC.ubglAmmo then
+			WC.ubglAmmo = Instance.new("IntValue", newChild)
+			WC.ubglAmmo.Name = "UBGLAmmo"
+			local totalStartAmmo = WeaponState.wepStats.ubgl.startAmmoPool or 6
+			WC.ubglAmmo.Value = (totalStartAmmo > 0 and (not ubglAmmoPool or ubglAmmoPool.Value > 0)) and 1 or 0
+		end
+		if not ubglAmmoPool then
+			ubglAmmoPool = Instance.new("DoubleConstrainedValue", newChild)
+			ubglAmmoPool.Name = "UBGLAmmoPool"
+			ubglAmmoPool.MaxValue = WeaponState.wepStats.ubgl.maxAmmoPool or 12
+			local totalStartAmmo = WeaponState.wepStats.ubgl.startAmmoPool or 6
+			ubglAmmoPool.Value = totalStartAmmo > 0 and (totalStartAmmo - WC.ubglAmmo.Value) or 0
+		end
+
+		if WeaponState.wepStats.ubgl.reloadAnim then
+			local animSpeed = WeaponState.wepStats.reloadSpeedModifier
+			if WeaponState.attStats.reloadSpeedModifier then animSpeed *= WeaponState.attStats.reloadSpeedModifier end
+			WC.AnimationController.PlayAnimation(WeaponState.wepStats.ubgl.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload", true)
+		end
+	else
+		WC.ubglAmmo = nil
+	end
+
+	if not State.equipped().BoltReady.Value then
+		WC.MoveBolt(WeaponState.wepStats.boltDist, true)
+	end
+
+	if config.lockFirstPerson then WC.player.CameraMode = Enum.CameraMode.LockFirstPerson end
+	WeaponState.fireMode(State.equipped().FireMode.Value)
+	WeaponState.holdStance(Enums.HoldStance.Ready)
+
+	if WeaponState.gunModel.Grip:FindFirstChild("Laser") then
+		WC.laserBeamFP.Attachment0 = WeaponState.gunModel.Grip.Laser
+	end
+	if WeaponState.attStats.laserOrigin and WeaponState.gunModel[WeaponState.attStats.laserOrigin].Main:FindFirstChild("Laser") then
+		WC.laserBeamFP.Attachment0 = WeaponState.gunModel[WeaponState.attStats.laserOrigin].Main.Laser		
+	end
+
+	WC.AnimationController.WeaponEquipPreload()
+	task.delay(1, function() WC.lastGunModel = newChild end)
 end
 
 function WC.OnTriggerIntent(inputState, inputObject)
@@ -909,49 +905,6 @@ function WC.UpdateHeartbeat(dt)
 			end
 
 
-			
-
-			--[[
-			if WeaponState.bipodEnabled() then
-				vertRecoil /= 4
-				horzRecoil /= 4
-			end
-			if State.aiming() then
-				vertRecoil /= aimReduction
-				horzRecoil /= aimReduction
-			end
-			if State.stance() == 2 then
-				vertRecoil /= 2
-				horzRecoil /= 2
-			end
-
-			--WC.ViewmodelController.recoilSpring:shove(Vector3.new(vertRecoil, math.random(-horzRecoil,horzRecoil), camShake))
-
-			local gunRecoilStats = currentStats.gunRecoil
-			local gunVertRecoil = gunRecoilStats.vertical
-			local gunHorzRecoil = gunRecoilStats.horizontal
-			local punchMultiplier = gunRecoilStats.punchMultiplier
-
-			if WeaponState.attStats.gunRecoil then
-				gunVertRecoil *= WeaponState.attStats.gunRecoil.vertical
-				gunHorzRecoil *= WeaponState.attStats.gunRecoil.horizontal
-				punchMultiplier *= WeaponState.attStats.gunRecoil.punchMultiplier
-			end
-			if State.stance() == 2 then
-				gunVertRecoil /= 1.5
-				gunHorzRecoil /= 1.5
-			end
-			if WeaponState.bipodEnabled() then
-				gunVertRecoil /= 3
-				gunHorzRecoil /= 3
-			end
-
-			WC.ViewmodelController.gunRecoilSpring:shove(Vector3.new(gunVertRecoil, math.random(-gunHorzRecoil,gunHorzRecoil), punchMultiplier))
-]]
-
-
-
-
 			if fireMode ~= Enums.FireModes.Manual and fireMode ~= Enums.FireModes.UBGL then
 				WC.EjectShell()
 			end
@@ -1054,7 +1007,7 @@ function WC.UpdateRender(dt)
 
 
 	--recoil logic
-	WeaponState.RecoilCF = WeaponState.RecoilCF:Lerp(CFrame.new(),math.min(1,WeaponState.wepStats.PunchRecover*adjust))
+	WeaponState.RecoilCF = WeaponState.RecoilCF:Lerp(CFrame.new(),math.min(1, WeaponState.wepStats.PunchRecover * adjust))
 	WeaponState.RecoilPos.t = WeaponState.RecoilCF.Position
 	WeaponState.RecoilDir.t = WeaponState.RecoilCF.LookVector
 	WeaponState.RecoilUp.t = WeaponState.RecoilCF.UpVector
