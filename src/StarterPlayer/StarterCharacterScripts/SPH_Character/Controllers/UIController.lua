@@ -77,7 +77,13 @@ function UIController.Initialize(params)
 	end
 	
 	Charm.subscribe(State.equippedTool, UIController.OnEquippedToolChanged)
+    Charm.subscribe(State.aiming, UIController.OnAimToggled)
 end
+
+function UIController.OnAimToggled(aiming)
+    UIController.aimSens.TextTransparency = aiming and 0 or 1
+end
+
 
 function UIController.OnEquippedToolChanged(tool)
 	if tool then
@@ -180,7 +186,7 @@ function UIController.UpdateHeartbeat(dt)
 		end
 
 		UIController.fireMode.Text = UIController.fireModeNames[fireModeVal + 1]
-		UIController.aimSens.Text = string.format("%.2f", UserInputService.MouseDeltaSensitivity)
+		UIController.aimSens.Text = string.format("%.2f", WeaponState.aimSens())
 	else
 		UIController.ammoUI.Visible = false
 	end
