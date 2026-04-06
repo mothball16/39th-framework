@@ -53,6 +53,7 @@ local AnimationController = require(Controllers:WaitForChild("AnimationControlle
 local WeaponController = require(Controllers:WaitForChild("WeaponController"))
 local CameraController = require(Controllers:WaitForChild("CameraController"))
 local ReplicationController = require(Controllers:WaitForChild("ReplicationController"))
+local UIController = require(Controllers:WaitForChild("UIController"))
 
 bulletHandler.Initialize(player)
 
@@ -350,6 +351,8 @@ ReplicationController.Initialize({
 	character = character
 })
 
+UIController.Initialize({})
+
 InputController.BindCharacterInputs()
 
 humanoid.Died:Connect(function()
@@ -391,4 +394,5 @@ end)
 runService.Heartbeat:Connect(function(dt:number)
 	MovementController.UpdateHeartbeat(dt)
 	WeaponController.UpdateHeartbeat(dt)
+	UIController.UpdateHeartbeat(dt)
 end)
