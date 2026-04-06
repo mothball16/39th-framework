@@ -1048,21 +1048,6 @@ function WC.UpdateRender(dt)
 			end
 		end
 	end
-
-	for _, sight:BasePart in ipairs(WC.sights) do
-		local frame = sight:FindFirstChild("SurfaceGui") and sight.SurfaceGui:FindFirstChild("Frame")
-		if not frame then continue end
-		local sightUI = frame:FindFirstChild("Reticle") or frame:FindFirstChild("Holo")
-		if not sightUI then continue end
-
-		local dist = sight.CFrame:PointToObjectSpace(WC.camera.CFrame.Position)/sight.Size
-		sightUI.Position = UDim2.fromScale(0.5 + dist.X, 0.5 - dist.Y)	
-
-		if sightUI.Name == "Holo" then
-			local newSize = WC.camera.FieldOfView / 70
-			sightUI.Size = UDim2.fromScale(newSize,newSize)
-		end
-	end
 end
 
 function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
