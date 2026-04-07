@@ -8,6 +8,9 @@
       "$path": "src/ReplicatedStorage",
       "Packages": {
         "$path": "Packages"
+      },
+      "Utility": {
+        "$path":"Utility"
       }
     },
     "ServerScriptService": {
