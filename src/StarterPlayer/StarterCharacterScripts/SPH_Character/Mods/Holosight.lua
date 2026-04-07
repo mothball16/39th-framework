@@ -10,10 +10,10 @@ local State = require(script.Parent.Parent.Controllers.CharacterState)
 local WeaponState = require(script.Parent.Parent.Controllers.WeaponState)
 
 local Camera = workspace.CurrentCamera
-
 local HolosightMod = {}
 local activeSights = {}
 local gunModelConnection = nil
+
 
 local invDefaultFOV = 1 / config.defaultFOV
 
@@ -22,17 +22,22 @@ function HolosightMod.Initialize(params)
 end
 
 function HolosightMod.OnGunModelChanged(gunModel)
+	if gunModelConnection then
+		gunModelConnection:Disconnect()
+		gunModelConnection = nil
+	end
 	activeSights = {}
-	if gunModelConnection then gunModelConnection:Disconnect() gunModelConnection = nil end
 
 	if not gunModel then
 		return
 	end
+
 	for _, part in ipairs(gunModel:GetDescendants()) do
 		if part.Name == "SightReticle" and part:IsA("BasePart") then
 			table.insert(activeSights, {part = part, ui = nil})
 		end
 	end
+
 	gunModelConnection = gunModel.DescendantAdded:Connect(function(descendant)
 		if descendant.Name == "SightReticle" and descendant:IsA("BasePart") then
 			table.insert(activeSights, {part = descendant, ui = nil})
