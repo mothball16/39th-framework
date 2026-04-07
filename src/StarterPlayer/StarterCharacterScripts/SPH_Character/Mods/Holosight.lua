@@ -12,63 +12,58 @@ local WeaponState = require(script.Parent.Parent.Controllers.WeaponState)
 local Camera = workspace.CurrentCamera
 
 local HolosightMod = {}
-local renderConnection = nil
-local gunModelConnection = nil
 local activeSights = {}
+local gunModelConnection = nil
+
+local invDefaultFOV = 1 / config.defaultFOV
 
 function HolosightMod.Initialize(params)
-	Charm.subscribe(State.equippedTool, HolosightMod.OnEquippedToolChanged)
+	Charm.subscribe(WeaponState.gunModel, HolosightMod.OnGunModelChanged)
 end
 
-function HolosightMod.OnEquippedToolChanged(tool)
-	if renderConnection then
-		renderConnection:Disconnect()
-		renderConnection = nil
-	end
-	if gunModelConnection then
-		gunModelConnection:Disconnect()
-		gunModelConnection = nil
-	end
-	
+function HolosightMod.OnGunModelChanged(gunModel)
 	activeSights = {}
+	if gunModelConnection then gunModelConnection:Disconnect() gunModelConnection = nil end
 
-	if tool then
-		task.defer(function()
-			if State.equippedTool() ~= tool then return end
-			
-			local gunModel = WeaponState.gunModel
-			if gunModel then
-				for _, part in ipairs(gunModel:GetDescendants()) do
-					if part.Name == "SightReticle" and part:IsA("BasePart") then
-						table.insert(activeSights, part)
-					end
-				end
-				
-				gunModelConnection = gunModel.DescendantAdded:Connect(function(descendant)
-					if descendant.Name == "SightReticle" and descendant:IsA("BasePart") then
-						table.insert(activeSights, descendant)
-					end
-				end)
-			end
-			
-			renderConnection = RunService.RenderStepped:Connect(HolosightMod.OnRenderStep)
-		end)
+	if not gunModel then
+		return
 	end
+	for _, part in ipairs(gunModel:GetDescendants()) do
+		if part.Name == "SightReticle" and part:IsA("BasePart") then
+			table.insert(activeSights, {part = part, ui = nil})
+		end
+	end
+	gunModelConnection = gunModel.DescendantAdded:Connect(function(descendant)
+		if descendant.Name == "SightReticle" and descendant:IsA("BasePart") then
+			table.insert(activeSights, {part = descendant, ui = nil})
+		end
+	end)
 end
 
 function HolosightMod.UpdateRender(dt)
-	for _, sight:BasePart in ipairs(activeSights) do
-		local frame = sight:FindFirstChild("SurfaceGui") and sight.SurfaceGui:FindFirstChild("Frame")
-		if not frame then continue end
-		local sightUI = frame:FindFirstChild("Reticle") or frame:FindFirstChild("Holo")
-		if not sightUI then continue end
+	if #activeSights == 0 then return end
 
-		local dist = sight.CFrame:PointToObjectSpace(Camera.CFrame.Position) / sight.Size
+	local camPos = Camera.CFrame.Position
+	local fovScale = Camera.FieldOfView * invDefaultFOV
+
+	for _, sightData in ipairs(activeSights) do
+		local sight: BasePart = sightData.part
+		local sightUI: GuiObject? = sightData.ui
+
+		if not sightUI then
+			local frame = sight:FindFirstChild("SurfaceGui") and sight.SurfaceGui:FindFirstChild("Frame")
+			if not frame then continue end
+			sightUI = frame:FindFirstChild("Reticle") or frame:FindFirstChild("Holo")
+			if not sightUI then continue end
+			sightData.ui = sightUI
+			sightData.isHolo = (sightUI.Name == "Holo")
+		end
+
+		local dist = sight.CFrame:PointToObjectSpace(camPos) / sight.Size
 		sightUI.Position = UDim2.fromScale(0.5 + dist.X, 0.5 - dist.Y)
 
-		if sightUI.Name == "Holo" then
-			local newSize = Camera.FieldOfView / config.defaultFOV
-			sightUI.Size = UDim2.fromScale(newSize, newSize)
+		if sightData.isHolo then
+			sightUI.Size = UDim2.fromScale(fovScale, fovScale)
 		end
 	end
 end

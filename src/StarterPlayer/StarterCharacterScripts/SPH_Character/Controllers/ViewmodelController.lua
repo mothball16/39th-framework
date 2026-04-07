@@ -98,10 +98,10 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	State.freeLookOffset(newFlOffset)
 	animBase.CFrame *= newFlOffset:Inverse()
 
-	local aimPart = WeaponState.gunModel:FindFirstChild("AimPart" .. sightIndex) or WeaponState.gunModel.AimPart
+	local aimPart = WeaponState.gunModel():FindFirstChild("AimPart" .. sightIndex) or WeaponState.gunModel().AimPart
 	if WeaponState.attStats.aimParts then
 		if WeaponState.attStats.aimParts["AimPart" .. sightIndex] then
-			aimPart = WeaponState.gunModel[WeaponState.attStats.aimParts["AimPart" .. sightIndex]]:FindFirstChild("AimPart" .. sightIndex)
+			aimPart = WeaponState.gunModel()[WeaponState.attStats.aimParts["AimPart" .. sightIndex]]:FindFirstChild("AimPart" .. sightIndex)
 		end
 	end
 	aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
@@ -210,7 +210,7 @@ end
 
 function ViewmodelController.UpdateRender(dt)
 	local camera = ViewmodelController.camera
-	if State.equippedTool() and WeaponState.gunModel and camera.CameraType == Enum.CameraType.Custom then
+	if State.equippedTool() and WeaponState.gunModel() and camera.CameraType == Enum.CameraType.Custom then
 		if State.firstPerson() and not WeaponState.viewmodelVisible() then
 			if ViewmodelController.RefreshViewmodel then ViewmodelController.RefreshViewmodel() end
 			State.sprinting(false)

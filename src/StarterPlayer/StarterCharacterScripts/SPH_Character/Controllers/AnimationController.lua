@@ -290,7 +290,7 @@ function AnimationController.WeaponReload(lastGunModelName)
 			if WeaponState.wepStats.magType == 3 and (gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value) >= cap and gunAmmo.ArcadeAmmoPool.Value >= cap then
 				AnimationController.PlayAnimation(WeaponState.wepStats.clipReloadAnim, {looped = true, speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
 			else
-				if lastGunModelName and WeaponState.gunModel and lastGunModelName ~= WeaponState.gunModel.Name then return end
+				if lastGunModelName and WeaponState.gunModel() and lastGunModelName ~= WeaponState.gunModel().Name then return end
 				AnimationController.PlayAnimation(WeaponState.wepStats.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17, looped = WeaponState.wepStats.magType > 1}, "Reload")
 			end
 		end)

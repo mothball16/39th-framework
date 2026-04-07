@@ -10,7 +10,7 @@ local WepState = {
 	wepStats = nil,
 	attStats = {},
 
-	gunModel = nil,
+	gunModel = Charm.atom(nil) 							:: Charm.Atom<Instance>,
 	gunAmmo = nil,
 
 	aimSens = Charm.atom(config.defaultAimSensitivity) 	:: Charm.Atom<number>,
@@ -48,7 +48,7 @@ function WepState.reset()
 
 	WepState.wepStats = nil
 	WepState.attStats = {}
-	WepState.gunModel = nil
+	WepState.gunModel(nil)
 	WepState.gunAmmo = nil
 
 	WepState.aimSens(config.defaultAimSensitivity)
