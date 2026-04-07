@@ -492,7 +492,7 @@ function WC.Equip(newChild)
 		not newChild:FindFirstChild("SPH_Weapon")
 		or (newChild:FindFirstChild("SPH_Weapon") and not assets.WeaponModels:FindFirstChild(newChild.Name))
 		or State.dead()
-		or (WC.humanoid.Sit and not WC.MovementController.vehicleSeated)
+		or (WC.humanoid.Sit and not State.vehicleSeated())
 	then
 		return
 	end

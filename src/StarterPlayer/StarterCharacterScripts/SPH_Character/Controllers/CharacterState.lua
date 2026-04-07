@@ -40,6 +40,7 @@ local CharacterState = {
 	stance = Charm.atom(0) 								:: Charm.Atom<number>,
 	lean = Charm.atom(0) 								:: Charm.Atom<number>,
 	moving = Charm.atom(false)							:: Charm.Atom<boolean>,
+	vehicleSeated = Charm.atom(false)					:: Charm.Atom<boolean>,
 
 	freeLook = Charm.atom(false)						:: Charm.Atom<boolean>,
 	freeLookRotation = Charm.atom(CFrame.new())			:: Charm.Atom<CFrame>,

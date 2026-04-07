@@ -123,7 +123,7 @@ function CC.UpdateRender(dt)
 	end
 	
 	-- Limit camera rotation
-	if (State.Parts.Humanoid.Sit and not MovementController.vehicleSeated and State.firstPerson() or State.freeLook()) and config.cameraLimitInSeats then
+	if (State.Parts.Humanoid.Sit and not State.vehicleSeated() and State.firstPerson() or State.freeLook()) and config.cameraLimitInSeats then
 		local cameraCFrame = State.Parts.HRP.CFrame:ToObjectSpace(CC.camera.CFrame)
 		local x, y, z = cameraCFrame:ToOrientation()
 		local a = CC.camera.CFrame.Position.X
@@ -201,7 +201,7 @@ function CC.UpdateRender(dt)
 		end
 	end --</DD_SPH>
 
-	if not MovementController.vehicleSeated and CC.camera.CameraType == Enum.CameraType.Custom then
+	if not State.vehicleSeated() and CC.camera.CameraType == Enum.CameraType.Custom then
 		-- Update camera offset
 		if State.Parts.IsR6 then -- DD_SPH: Different offsets for different rigs
 			CC.cameraOffsetTarget = Vector3.new(xOffset, yOffset, zOffset)

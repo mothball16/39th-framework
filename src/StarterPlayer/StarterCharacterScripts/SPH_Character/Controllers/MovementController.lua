@@ -15,7 +15,6 @@ local MovementController = {
     -- state vars
     targetWalkSpeed = config.walkSpeed,
     tempWalkSpeed = config.walkSpeed,
-    vehicleSeated = false,
     canJump = true,
     baseCharacterHipHeight = 0,
 

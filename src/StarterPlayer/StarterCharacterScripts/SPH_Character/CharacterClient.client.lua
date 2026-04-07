@@ -401,7 +401,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		CameraController.UpdateFOV(dt)
 	end
 
-	ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, MovementController.vehicleSeated)
+	ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, State.vehicleSeated())
 	ModController.UpdateRender(dt)
 end)
 
