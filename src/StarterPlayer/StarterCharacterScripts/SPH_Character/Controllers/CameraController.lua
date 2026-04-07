@@ -17,7 +17,6 @@ local CC = {
 	cameraOffsetTarget = Vector3.zero,
 	headRotationEventCooldown = 0,
 
-	MovementController = nil,
 	ReplicationController = nil,
 
 	aimTween = nil :: Tween
@@ -30,7 +29,6 @@ end
 function CC.Initialize(params)
 	CC.camera = params.camera
 
-	CC.MovementController = params.MovementController
 	CC.ReplicationController = params.ReplicationController
 
 	Charm.subscribe(State.sprinting, CC.OnSprintChanged)
@@ -81,8 +79,6 @@ end
 
 
 function CC.UpdateRender(dt)
-	local MovementController = CC.MovementController
-
 	if not State.dead() and State.Parts.Character:FindFirstChild("Head") then
 		local torsoDirection
 		if State.Parts.IsR6 then

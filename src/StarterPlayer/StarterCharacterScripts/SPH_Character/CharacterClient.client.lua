@@ -324,7 +324,6 @@ CameraController.Initialize({
 	rootJoint = rootJoint,
 	neckJoint = neckJoint,
 	rigType = rigType,
-	MovementController = MovementController,
 	ReplicationController = ReplicationController,
 })
 
@@ -342,8 +341,6 @@ WeaponController.Initialize({
 	laserBeamFP = laserBeamFP,
 	laserBeamTP = laserBeamTP,
 	AnimationController = AnimationController,
-	ViewmodelController = ViewmodelController,
-	MovementController = MovementController,
 	InputController = InputController,
 	RefreshViewmodel = RefreshViewmodel,
 })

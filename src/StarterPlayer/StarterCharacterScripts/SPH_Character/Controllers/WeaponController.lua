@@ -54,8 +54,6 @@ local WC = {
 	laserBeamTP = nil,
 
 	AnimationController = nil,
-	ViewmodelController = nil,
-	MovementController = nil,
 	InputController = nil,
 	
 	RefreshViewmodel = nil,
@@ -91,8 +89,6 @@ function WC.Initialize(params)
 	WC.bipodRayIgnore = {params.character}
 	
 	WC.AnimationController = params.AnimationController
-	WC.ViewmodelController = params.ViewmodelController
-	WC.MovementController = params.MovementController
 	WC.InputController = params.InputController
 	
 	WC.RefreshViewmodel = params.RefreshViewmodel
