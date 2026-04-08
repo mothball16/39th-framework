@@ -166,7 +166,8 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	rollAngle = LerpNumber(rollAngle, targetRollAngle, 0.07 * dt * 60)
 	animBase.CFrame *= CFrame.Angles(0, 0, math.rad(rollAngle))
 
-	local mouseDelta = UserInputService:GetMouseDelta()
+	local viewportSize = camera.ViewportSize
+	local mouseDelta = UserInputService:GetMouseDelta() / viewportSize
 
 	local tempHipRotation = hipRotation
 	if config.hipfireMove and (not State.aiming() or State.aiming() and config.offCenterAiming) then
@@ -185,8 +186,11 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	end
 	animBase.CFrame *= CFrame.Angles(math.rad(hipRotation.Y), math.rad(hipRotation.X), 0)
 
-	-- walk sway
-	ViewmodelController.swaySpring:shove(Vector3.new(-mouseDelta.X / 500, mouseDelta.Y / 200, 0))
+	-- mouse move sway
+	ViewmodelController.swaySpring:shove(Vector3.new(
+		-mouseDelta.X * WeaponState.wepStats.DeltaInstability.X,
+		mouseDelta.Y * WeaponState.wepStats.DeltaInstability.Y,
+		0))
 	local updatedSway = ViewmodelController.swaySpring:update(dt)
 	animBase.CFrame *= CFrame.new(updatedSway.X, updatedSway.Y, 0)
 
@@ -229,24 +233,31 @@ function ViewmodelController.UpdateMovementSway(dt, tempWalkSpeed, vehicleSeated
 	local humanoid = ViewmodelController.humanoidRootPart.Parent.Humanoid
 
 	local tempDampening = config.bobDampening
-	local difference = tempDampening - (tempDampening / (tempWalkSpeed / config.walkSpeed))
-	difference /= 2
-	tempDampening -= difference
+	local speedRatio = tempWalkSpeed / config.walkSpeed
+	if speedRatio > 0 then
+		local difference = tempDampening - (tempDampening / speedRatio)
+		tempDampening -= difference / 2
+	end
 	if State.aiming() then tempDampening *= config.aimBobDampening end
 
-	local tempBobSpeed = config.bobSpeed
-	tempBobSpeed *= tempWalkSpeed / config.walkSpeed
+	local tempBobSpeed = config.bobSpeed * speedRatio
+	local velocityMag = ViewmodelController.humanoidRootPart.Velocity.Magnitude
 
-	if not humanoid.Sit then
+	if not humanoid.Sit and velocityMag > 0.1 then
 		local moveSway = Vector3.new(GetSineOffset(tempBobSpeed), GetSineOffset(tempBobSpeed / 2), GetSineOffset(tempBobSpeed / 2))
-		ViewmodelController.moveSpring:shove(moveSway / tempDampening * ViewmodelController.humanoidRootPart.Velocity.Magnitude / tempDampening * dt * 60)
+		local moveInstability = (WeaponState.wepStats and WeaponState.wepStats.MoveInstability) or 1
+		
+		ViewmodelController.moveSpring:shove(moveSway * moveInstability * velocityMag / (tempDampening * tempDampening) * dt * 60)
 	end
 
 	local updatedMoveSway = ViewmodelController.moveSpring:update(dt)
-	animBase.CFrame = animBase.CFrame:ToWorldSpace(CFrame.new(updatedMoveSway.Y, updatedMoveSway.X, 0) * CFrame.Angles(updatedMoveSway.Y * 0.3, 0, updatedMoveSway.Y * 0.8))
 
-	if config.cameraMovement and (State.firstPerson() and not humanoid.Sit) and not vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
-		camera.CFrame *= CFrame.Angles(math.rad(updatedMoveSway.X / config.cameraBobDampening), math.rad(updatedMoveSway.Y / config.cameraBobDampening), 0)
+	if updatedMoveSway.Magnitude > 0.001 then
+		animBase.CFrame = animBase.CFrame:ToWorldSpace(CFrame.new(updatedMoveSway.Y, updatedMoveSway.X, 0) * CFrame.Angles(updatedMoveSway.Y * 0.3, 0, updatedMoveSway.Y * 0.8))
+
+		if config.cameraMovement and (State.firstPerson() and not humanoid.Sit) and not vehicleSeated and camera.CameraType == Enum.CameraType.Custom then
+			camera.CFrame *= CFrame.Angles(math.rad(updatedMoveSway.X / config.cameraBobDampening), math.rad(updatedMoveSway.Y / config.cameraBobDampening), 0)
+		end
 	end
 end
 

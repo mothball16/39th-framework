@@ -214,7 +214,8 @@ function CC.UpdateRender(dt)
 		if config.cameraTilting and State.firstPerson() then
 			local maxTiltAngle = 2
 			local relativeVelocity = State.Parts.HRP.CFrame:VectorToObjectSpace(State.Parts.HRP.Velocity)
-			local mouseDelta = UserInputService:GetMouseDelta()
+			local viewportSize = CC.camera.ViewportSize
+			local mouseDelta = UserInputService:GetMouseDelta() / viewportSize
 			local targetRollAngle = math.clamp(-relativeVelocity.X, -maxTiltAngle, maxTiltAngle) + mouseDelta.X / 2
 			CC.cameraRollAngle = LerpNumber(CC.cameraRollAngle, targetRollAngle, 0.07 * dt * 60)
 			CC.camera.CFrame *= CFrame.Angles(0, 0, math.rad(CC.cameraRollAngle))
