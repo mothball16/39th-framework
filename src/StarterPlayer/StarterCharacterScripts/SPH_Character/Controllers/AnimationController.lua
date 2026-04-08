@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local State = require(script.Parent.CharacterState)
@@ -8,6 +9,7 @@ local Enums = require(script.Parent.Parent.Enums)
 local AnimationController = {}
 
 AnimationController.loadedAnims = {}
+AnimationController.activeTweens = {}
 AnimationController.vmAnimator = nil
 AnimationController.characterAnimator = nil
 AnimationController.animationsFolder = nil
@@ -66,6 +68,61 @@ local function _preloadAnimation(track, looped, priority)
 	return anim
 end
 
+local function _fadeTrack(track: AnimationTrack, targetWeight, time, speed)
+	if targetWeight == 0 and not track.IsPlaying then return end
+	
+	if AnimationController.activeTweens[track] then
+		AnimationController.activeTweens[track].onEnd:Disconnect()
+		AnimationController.activeTweens[track].tween:Cancel()
+		AnimationController.activeTweens[track].conn:Disconnect()
+		AnimationController.activeTweens[track].val:Destroy()
+		AnimationController.activeTweens[track] = nil
+	end
+	
+	if not time or time <= 0 then
+		if targetWeight > 0 then
+			if not track.IsPlaying then track:Play(0, targetWeight) end
+			track:AdjustWeight(targetWeight, 0)
+			if speed then track:AdjustSpeed(speed) end
+		else
+			track:Stop(0)
+		end
+		return
+	end
+	
+	if targetWeight > 0 and not track.IsPlaying then
+		track:Play(0, 0.001)
+	end
+	if speed then track:AdjustSpeed(speed) end
+	
+	local val = Instance.new("NumberValue")
+	val.Value = track.WeightCurrent
+	local conn = val.Changed:Connect(function(w)
+		track:AdjustWeight(w, 0)
+	end)
+	
+	local tween = TweenService:Create(val, TweenInfo.new(time, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Value = targetWeight})
+	
+	local onEnd = tween.Completed:Once(function()
+		if AnimationController.activeTweens[track] == nil then return end
+		conn:Disconnect()
+		val:Destroy()
+		AnimationController.activeTweens[track] = nil
+		if targetWeight == 0 then
+			track:Stop(0)
+		end
+	end)
+
+	AnimationController.activeTweens[track] = {
+		tween = tween,
+		conn = conn,
+		val = val,
+		onEnd = onEnd
+	}
+
+	tween:Play()
+end
+
 function AnimationController.Initialize(params)
 	AnimationController.vmAnimator = params.vmAnimator
 	AnimationController.characterAnimator = params.characterAnimator
@@ -87,41 +144,41 @@ function AnimationController.Initialize(params)
 end
 
 function AnimationController.OnStanceChanged(stance, oldStance)
-	if AnimationController.moveAnim then AnimationController.moveAnim:Stop(config.stanceChangeTime) end
+	if AnimationController.moveAnim then _fadeTrack(AnimationController.moveAnim, 0, config.stanceChangeTime) end
 
 	if stance == 0 then -- Walking
 		AnimationController.moveAnim = nil
-		AnimationController.crouchIdleAnim:Stop(config.stanceChangeTime)
-		AnimationController.proneIdleAnim:Stop(config.stanceChangeTime)
+		_fadeTrack(AnimationController.crouchIdleAnim, 0, config.stanceChangeTime)
+		_fadeTrack(AnimationController.proneIdleAnim, 0, config.stanceChangeTime)
 	elseif stance == 1 then -- Crouching
 		AnimationController.moveAnim = AnimationController.crouchMoveAnim
-		if State.moving() then AnimationController.moveAnim:Play(config.stanceChangeTime) end
-		AnimationController.proneIdleAnim:Stop(config.stanceChangeTime)
-		AnimationController.crouchIdleAnim:Play(config.stanceChangeTime)
+		if State.moving() then _fadeTrack(AnimationController.moveAnim, 1, config.stanceChangeTime) end
+		_fadeTrack(AnimationController.proneIdleAnim, 0, config.stanceChangeTime)
+		_fadeTrack(AnimationController.crouchIdleAnim, 1, config.stanceChangeTime)
 	elseif stance == 2 then -- Prone
 		AnimationController.moveAnim = AnimationController.proneMoveAnim
-		AnimationController.crouchIdleAnim:Stop(config.stanceChangeTime)
-		AnimationController.proneIdleAnim:Play(config.stanceChangeTime)
-		if State.moving() then AnimationController.moveAnim:Play(config.stanceChangeTime) end
+		_fadeTrack(AnimationController.crouchIdleAnim, 0, config.stanceChangeTime)
+		_fadeTrack(AnimationController.proneIdleAnim, 1, config.stanceChangeTime)
+		if State.moving() then _fadeTrack(AnimationController.moveAnim, 1, config.stanceChangeTime) end
 	end
 end
 
 function AnimationController.OnMovingChanged(moving)
 	if moving then
-		if AnimationController.moveAnim then AnimationController.moveAnim:Play(config.stanceChangeTime) end
+		if AnimationController.moveAnim then _fadeTrack(AnimationController.moveAnim, 1, config.stanceChangeTime) end
 	else
-		if AnimationController.moveAnim then AnimationController.moveAnim:Stop(config.stanceChangeTime) end
+		if AnimationController.moveAnim then _fadeTrack(AnimationController.moveAnim, 0, config.stanceChangeTime) end
 	end
 end
 
 function AnimationController.OnSprintChanged(sprinting)
 	if sprinting then
 		if WeaponState.wepStats and WeaponState.wepStats.sprintAnim then
-			AnimationController.PlayAnimation(WeaponState.wepStats.sprintAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.2})
+			AnimationController.PlayAnimation(WeaponState.wepStats.sprintAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.5})
 		end
 	else
 		if WeaponState.wepStats and WeaponState.wepStats.sprintAnim then
-			AnimationController.StopAnimation(WeaponState.wepStats.sprintAnim, 0.2)
+			AnimationController.StopAnimation(WeaponState.wepStats.sprintAnim, 0.5)
 		end
 	end
 end
@@ -129,8 +186,8 @@ end
 function AnimationController.StopAnimation(animName: string, transTime: number)
 	local tracks = AnimationController.loadedAnims[animName]
 	if tracks then
-		tracks.vm:Stop(transTime)
-		tracks.tp:Stop(transTime)
+		_fadeTrack(tracks.vm, 0, transTime)
+		_fadeTrack(tracks.tp, 0, transTime)
 	end
 end
 
@@ -142,10 +199,8 @@ function AnimationController.PlayAnimation(animName: string, parameters: table, 
 		local transSpeed = parameters.transSpeed
 		local speed = parameters.speed or 1
 
-		tracks.vm:Play(transSpeed)
-		tracks.vm:AdjustSpeed(speed)
-		tracks.tp:Play(transSpeed)
-		tracks.tp:AdjustSpeed(speed)
+		_fadeTrack(tracks.vm, 1, transSpeed, speed)
+		_fadeTrack(tracks.tp, 1, transSpeed, speed)
 	end
 
 	return tracks and tracks.vm
@@ -154,12 +209,12 @@ end
 function AnimationController.StopAll()
 	if AnimationController.vmAnimator then
 		for _, track in ipairs(AnimationController.vmAnimator:GetPlayingAnimationTracks()) do
-			track:Stop()
+			_fadeTrack(track, 0, 0)
 		end
 	end
 	if AnimationController.characterAnimator then
 		for _, track in ipairs(AnimationController.characterAnimator:GetPlayingAnimationTracks()) do
-			track:Stop()
+			_fadeTrack(track, 0, 0)
 		end
 	end
 end
