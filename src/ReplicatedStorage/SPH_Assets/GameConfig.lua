@@ -164,12 +164,12 @@ config.breathingAimMultiplier = 0.17 -- Breathing dist is multiplied by this whe
 config.bobSpeed = 10 -- How quickly the viewmodel should move back and forth, this is scaled based on walk speed
 config.bobDampening = 10 -- Higher number = less bobbing
 config.aimBobDampening = 1.5 -- Higher number = less bobbing while aiming
-config.cameraMovement = false -- Should the camera bob around?
+config.cameraMovement = true -- Should the camera bob around?
 config.cameraBobDampening = 1 -- Higher number = less bobbing
-config.cameraTilting = false -- Should the camera tilt when looking and moving around?
+config.cameraTilting = true -- Should the camera tilt when looking and moving around?
 config.cameraLimitInSeats = true -- Limit camera angle to 180 degrees when sitting in a seat (Disabling this may cause issues with other camera settings)
 
-config.hipfireMove = true -- Allows you to move your gun off center while hip firing
+config.hipfireMove = false -- Allows you to move your gun off center while hip firing
 config.hipfireMoveX = 15 -- Max angle that the gun can move horizontally
 config.hipfireMoveY = 10 -- Max angle that the gun can move vertically
 config.hipfireMoveSpeed = 0.05
@@ -181,6 +181,8 @@ config.raiseGunAtWall = true -- Should the gun be raised when too close to a wal
 config.fireWithFreelook = false -- Can the player fire their gun while freelook is active?
 
 config.maxStrafeRoll = 20 -- How much the viewmodel can lean left and right when strafing
+config.maxStrafeShift = 6 -- How much the model can yaw left and right when strafing
+config.strafeShiftAimMult = 0.3 -- What to multiply strafeshift by when aiming
 
 config.showAccessoriesFP = true -- Should accessories be shown in first person?
 
@@ -191,7 +193,7 @@ config.lowHealthEffects = true -- Low health gui and reduced movement speed
 config.suppressionEffects = true -- Tunnel vision and crack sounds
 config.footstepSounds = true -- Replaces the default walk sound with material based sounds
 
-config.tracerStartDistance = 15 -- Tracers and arcade bullets don't appear until they're this distance away from you
+config.tracerStartDistance = 0 -- Tracers and arcade bullets don't appear until they're this distance away from you
 config.fireSoundVariation = 500 -- Lowering this number increases the variation in pitch (playback speed) of fire and echo sounds
 
 config.firstPersonEcho = true -- If this is set to false other players will hear echo sounds, but not yourself
