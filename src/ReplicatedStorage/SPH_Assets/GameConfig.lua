@@ -198,7 +198,7 @@ config.fireSoundVariation = 500 -- Lowering this number increases the variation 
 
 config.firstPersonEcho = true -- If this is set to false other players will hear echo sounds, but not yourself
 
-config.laserTrail = false -- Should lasers have a trail
+config.laserTrail = true -- Should lasers have a trail
 
 
 
