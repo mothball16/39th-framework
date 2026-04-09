@@ -52,7 +52,6 @@ explosionOverlapParams.MaxParts = 500
 local gunsmith = require(modules.Gunsmith)
 -- </DD_SPH>
 
-local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest") -- Client > Server asking and receiving info about head rotation
 --local bodyAnimCommand = bridgeNet.CreateBridge("BodyAnimCommand") -- Server > Client sending info about head rotation
 local switchWeapon = bridgeNet.CreateBridge("SwitchWeapon") -- Client > Server sending info about what weapon was equipped or unequipped
 local repFire = bridgeNet.CreateBridge("ReplicateFire") -- Server > Client
@@ -78,7 +77,7 @@ local repBoltOpen = bridgeNet.CreateBridge("RepBoltOpen")
 local magGrab = bridgeNet.CreateBridge("MagGrab")
 local repMagGrab = bridgeNet.CreateBridge("ReplicateMagGrab")
 local playerLean = bridgeNet.CreateBridge("PlayerLean")
-local repLean = bridgeNet.CreateBridge("ReplicateLean")
+local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")
 
 local naughtyList = {} -- Used to prevent exploiters from rejoining a server, and stopping any scripts they might be running.
 
@@ -985,6 +984,13 @@ bodyAnimRequest:Connect(function(player:Player, angle)
 	end
 end)
 
+playerLean:Connect(function(player:Player, lean)
+	local char = player.Character
+	if char then
+		char:SetAttribute("Lean", lean)
+	end
+end)
+
 -- Player equipped or unequipped a weapon
 switchWeapon:Connect(function(player:Player, tool:Tool)
 	--if player.Character and player.Character:FindFirstChild("WeaponRig") and player.Character.Humanoid.Health > 0 then
@@ -1818,12 +1824,5 @@ magGrab:Connect(function(player)
 	end
 end)
 
-playerLean:Connect(function(player,leanDirection)
-	if player.Character then
-		local humanoid = player.Character:FindFirstChild("Humanoid")
-		if not humanoid or humanoid.Health <= 0 then return end
-		repLean:FireToAllExcept(player,player.Character,leanDirection)
-	end
-end)
 
 print(warnPrefix.."Main Server loaded successfully!")
