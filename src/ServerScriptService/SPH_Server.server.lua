@@ -52,7 +52,6 @@ explosionOverlapParams.MaxParts = 500
 local gunsmith = require(modules.Gunsmith)
 -- </DD_SPH>
 
-local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest") -- Client > Server asking and receiving info about head rotation
 --local bodyAnimCommand = bridgeNet.CreateBridge("BodyAnimCommand") -- Server > Client sending info about head rotation
 local switchWeapon = bridgeNet.CreateBridge("SwitchWeapon") -- Client > Server sending info about what weapon was equipped or unequipped
 local repFire = bridgeNet.CreateBridge("ReplicateFire") -- Server > Client
@@ -77,8 +76,6 @@ local repToggleAttachment = bridgeNet.CreateBridge("ReplicateToggleAttachment")
 local repBoltOpen = bridgeNet.CreateBridge("RepBoltOpen")
 local magGrab = bridgeNet.CreateBridge("MagGrab")
 local repMagGrab = bridgeNet.CreateBridge("ReplicateMagGrab")
-local playerLean = bridgeNet.CreateBridge("PlayerLean")
-local repLean = bridgeNet.CreateBridge("ReplicateLean")
 
 local naughtyList = {} -- Used to prevent exploiters from rejoining a server, and stopping any scripts they might be running.
 
@@ -976,14 +973,8 @@ players.PlayerRemoving:Connect(function(player)
 	end
 end)
 
--- Update head movement for other players
-bodyAnimRequest:Connect(function(player:Player, angle)
-	local char = player.Character
-	if char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")) and char.Humanoid.Health > 0 then
-		char:SetAttribute("BodyRot", angle)
-		--bodyAnimCommand:FireAllInRangeExcept(player,player.Character.HumanoidRootPart.Position,config.animDistance,player.Character,angle)
-	end
-end)
+-- Head rotation (BodyRot), lean, and stance are now replicated via client-set
+-- attributes and picked up by StanceReplicationController on other clients.
 
 -- Player equipped or unequipped a weapon
 switchWeapon:Connect(function(player:Player, tool:Tool)
@@ -1818,12 +1809,5 @@ magGrab:Connect(function(player)
 	end
 end)
 
-playerLean:Connect(function(player,leanDirection)
-	if player.Character then
-		local humanoid = player.Character:FindFirstChild("Humanoid")
-		if not humanoid or humanoid.Health <= 0 then return end
-		repLean:FireToAllExcept(player,player.Character,leanDirection)
-	end
-end)
 
 print(warnPrefix.."Main Server loaded successfully!")

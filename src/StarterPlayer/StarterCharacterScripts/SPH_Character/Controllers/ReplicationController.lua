@@ -3,13 +3,6 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local State = require(script.Parent.CharacterState)
 
-local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
-local modules = assets:WaitForChild("Modules")
-local bridgeNet = require(modules.BridgeNet)
-
-local playerLean = bridgeNet.CreateBridge("PlayerLean")
-local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")
-
 local ReplicationController = {}
 ReplicationController.character = nil
 
@@ -25,14 +18,22 @@ function ReplicationController.Initialize(params)
 	end)
 
 	Charm.subscribe(State.lean, function(lean, oldLean)
-		if lean ~= oldLean then
-			playerLean:Fire(lean)
+		if lean ~= oldLean and ReplicationController.character then
+			ReplicationController.character:SetAttribute("Lean", lean)
+		end
+	end)
+
+	Charm.subscribe(State.stance, function(stance, oldStance)
+		if stance ~= oldStance and ReplicationController.character then
+			ReplicationController.character:SetAttribute("Stance", stance)
 		end
 	end)
 end
 
 function ReplicationController.ReplicateHeadRotation(c1)
-	bodyAnimRequest:Fire(c1)
+	if ReplicationController.character then
+		ReplicationController.character:SetAttribute("BodyRot", c1)
+	end
 end
 
 return ReplicationController
