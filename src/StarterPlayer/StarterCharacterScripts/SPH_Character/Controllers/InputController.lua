@@ -9,6 +9,15 @@ local InputController = {}
 
 InputController._callbacks = {}
 
+local function isValidIntent(actionName)
+	for _, intentName in pairs(Intents) do
+		if intentName == actionName then
+			return true
+		end
+	end
+	return false
+end
+
 
 function InputController.Initialize(args)
 	for intentKey, _ in pairs(Intents) do
@@ -23,6 +32,32 @@ function InputController.Initialize(args)
 	end
 end
 
+function InputController.SetIntentCallback(actionName, callback)
+	if not isValidIntent(actionName) then
+		warn(`[pearhead] {actionName} isn't a valid intent in Enums.Intents`)
+		return false
+	end
+	if type(callback) ~= "function" then
+		warn(`[pearhead] callback for {actionName} must be a function`)
+		return false
+	end
+
+	InputController._callbacks[actionName] = callback
+	return true
+end
+
+function InputController.ClearIntentCallback(actionName)
+	if not isValidIntent(actionName) then
+		warn(`[pearhead] {actionName} isn't a valid intent in Enums.Intents`)
+		return false
+	end
+
+	InputController._callbacks[actionName] = function(inputState, inputObject)
+		warn(`[pearhead] no callback defined for intent key {actionName}`)
+	end
+	return true
+end
+
 
 function InputController.HandleInput(actionName, inputState, inputObject)
 	if not InputController._callbacks[actionName] then
@@ -33,14 +68,7 @@ function InputController.HandleInput(actionName, inputState, inputObject)
 end
 
 function InputController.BindInput(actionName, touchButton, priority, ...)
-	local isValidIntent = false
-	for _, intentName in pairs(Intents) do
-		if intentName == actionName then
-			isValidIntent = true
-			break
-		end
-	end
-	if not isValidIntent then
+	if not isValidIntent(actionName) then
 		warn(`[pearhead] {actionName} isn't a valid intent in Enums.Intents`)
 	end
 	ContextActionService:BindActionAtPriority(actionName, InputController.HandleInput,touchButton, priority, ...)
