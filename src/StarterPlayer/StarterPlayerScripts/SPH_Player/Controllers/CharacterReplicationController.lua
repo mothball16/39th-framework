@@ -3,7 +3,6 @@ local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local modules = assets:WaitForChild("Modules")
 local bridgeNet = require(modules.BridgeNet)
 
-local bodyAnimCommand = bridgeNet.CreateBridge("BodyAnimCommand")
 local repLean = bridgeNet.CreateBridge("ReplicateLean")
 
 local CharacterReplicationController = {}
@@ -12,21 +11,7 @@ local targetNeckC1s = {}
 local targetRootC1s = {}
 
 function CharacterReplicationController.Initialize()
-	bodyAnimCommand:Connect(function(character: Model, angle: CFrame)
-		local humanoid = character:FindFirstChild("Humanoid")
-		if not humanoid or humanoid.Health <= 0 or (not character:FindFirstChild("Torso") and not character:FindFirstChild("UpperTorso")) then return end
 
-		local joint
-		if humanoid.RigType == Enum.HumanoidRigType.R6 then
-			joint = character.Torso:FindFirstChild("Neck")
-		else
-			joint = character:FindFirstChild("Head") and character.Head:FindFirstChild("Neck")
-		end
-
-		if joint then
-			targetNeckC1s[joint] = angle
-		end
-	end)
 
 	repLean:Connect(function(character: Model, leanDirection: number)
 		local rootPart = character:FindFirstChild("HumanoidRootPart")

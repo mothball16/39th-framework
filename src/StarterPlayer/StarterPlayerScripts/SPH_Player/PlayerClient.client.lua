@@ -13,10 +13,11 @@ local Controllers = script.Parent:WaitForChild("Controllers")
 local WeaponReplicationController = require(Controllers:WaitForChild("WeaponReplicationController"))
 local CharacterReplicationController = require(Controllers:WaitForChild("CharacterReplicationController"))
 local AttachmentReplicationController = require(Controllers:WaitForChild("AttachmentReplicationController"))
-
+local StanceReplicationController = require(Controllers:WaitForChild("StanceReplicationController"))
 WeaponReplicationController.Initialize()
 CharacterReplicationController.Initialize()
 AttachmentReplicationController.Initialize()
+StanceReplicationController.Initialize()
 
 runService.RenderStepped:Connect(function(dt)
 	AttachmentReplicationController.UpdateRender(dt)

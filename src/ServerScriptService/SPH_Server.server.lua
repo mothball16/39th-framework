@@ -53,7 +53,7 @@ local gunsmith = require(modules.Gunsmith)
 -- </DD_SPH>
 
 local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest") -- Client > Server asking and receiving info about head rotation
-local bodyAnimCommand = bridgeNet.CreateBridge("BodyAnimCommand") -- Server > Client sending info about head rotation
+--local bodyAnimCommand = bridgeNet.CreateBridge("BodyAnimCommand") -- Server > Client sending info about head rotation
 local switchWeapon = bridgeNet.CreateBridge("SwitchWeapon") -- Client > Server sending info about what weapon was equipped or unequipped
 local repFire = bridgeNet.CreateBridge("ReplicateFire") -- Server > Client
 local repReload = bridgeNet.CreateBridge("Reload") -- Client > Server
@@ -790,6 +790,9 @@ players.PlayerAdded:Connect(function(newPlayer:Player)
 	end
 
 	newPlayer.CharacterAdded:Connect(function(newChar:Model)
+		newChar.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+		newChar:AddTag("SPH_Character")
+
 		print(warnPrefix..newPlayer.Name.." spawned.")
 		local humanoid = newChar:WaitForChild("Humanoid", 20)
 		local animator = humanoid:WaitForChild("Animator", 20)
@@ -975,8 +978,10 @@ end)
 
 -- Update head movement for other players
 bodyAnimRequest:Connect(function(player:Player, angle)
-	if player.Character and (player.Character:FindFirstChild("Torso") or player.Character:FindFirstChild("UpperTorso")) and player.Character.Humanoid.Health > 0 then
-		bodyAnimCommand:FireAllInRangeExcept(player,player.Character.HumanoidRootPart.Position,config.animDistance,player.Character,angle)
+	local char = player.Character
+	if char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")) and char.Humanoid.Health > 0 then
+		char:SetAttribute("BodyRot", angle)
+		--bodyAnimCommand:FireAllInRangeExcept(player,player.Character.HumanoidRootPart.Position,config.animDistance,player.Character,angle)
 	end
 end)
 
