@@ -76,6 +76,8 @@ local repToggleAttachment = bridgeNet.CreateBridge("ReplicateToggleAttachment")
 local repBoltOpen = bridgeNet.CreateBridge("RepBoltOpen")
 local magGrab = bridgeNet.CreateBridge("MagGrab")
 local repMagGrab = bridgeNet.CreateBridge("ReplicateMagGrab")
+local playerLean = bridgeNet.CreateBridge("PlayerLean")
+local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")
 
 local naughtyList = {} -- Used to prevent exploiters from rejoining a server, and stopping any scripts they might be running.
 
@@ -973,8 +975,21 @@ players.PlayerRemoving:Connect(function(player)
 	end
 end)
 
--- Head rotation (BodyRot), lean, and stance are now replicated via client-set
--- attributes and picked up by StanceReplicationController on other clients.
+-- Update head movement for other players
+bodyAnimRequest:Connect(function(player:Player, angle)
+	local char = player.Character
+	if char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")) and char.Humanoid.Health > 0 then
+		char:SetAttribute("BodyRot", angle)
+		--bodyAnimCommand:FireAllInRangeExcept(player,player.Character.HumanoidRootPart.Position,config.animDistance,player.Character,angle)
+	end
+end)
+
+playerLean:Connect(function(player:Player, lean)
+	local char = player.Character
+	if char then
+		char:SetAttribute("Lean", lean)
+	end
+end)
 
 -- Player equipped or unequipped a weapon
 switchWeapon:Connect(function(player:Player, tool:Tool)
