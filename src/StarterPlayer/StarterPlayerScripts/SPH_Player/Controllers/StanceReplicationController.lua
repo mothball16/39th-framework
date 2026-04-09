@@ -190,6 +190,7 @@ function SRC.DisconnectChar(character: Instance)
 end
 
 function SRC.UpdateRender(dt)
+    debug.profilebegin("SPH.StanceReplication.UpdateRender")
     for character, entry in pairs(SRC.data) do
         if not character.Parent then
             SRC.DisconnectChar(character)
@@ -201,6 +202,7 @@ function SRC.UpdateRender(dt)
             end
         end
     end
+    debug.profileend()
 end
 
 function SRC.Initialize()

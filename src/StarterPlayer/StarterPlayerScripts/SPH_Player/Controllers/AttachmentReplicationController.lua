@@ -55,6 +55,7 @@ function AttachmentReplicationController.OnToggleAttachment(attachment, toggle, 
 end
 
 function AttachmentReplicationController.UpdateRender(dt)
+	debug.profilebegin("SPH.AttachmentReplication.UpdateRender")
 	for i = #lasers, 1, -1 do
 		local laserObject = lasers[i]
 		local laserPoint = laserObject.attachment
@@ -77,6 +78,7 @@ function AttachmentReplicationController.UpdateRender(dt)
 			table.remove(lasers, i)
 		end
 	end
+	debug.profileend()
 end
 
 return AttachmentReplicationController

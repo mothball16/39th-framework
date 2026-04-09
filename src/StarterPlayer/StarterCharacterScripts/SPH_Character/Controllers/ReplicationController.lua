@@ -35,11 +35,13 @@ function RC.Initialize(params)
 end
 
 function RC.UpdateRender(dt)
+	debug.profilebegin("SPH.CharacterReplication.UpdateRender")
 	RC.headRotationEventCooldown -= dt
 	if RC.headRotationEventCooldown <= 0 and not config.disableHeadRotation then
 		RC.headRotationEventCooldown = config.headRotationEventRate
 		bodyAnimRequest:Fire(State.Parts.NeckJoint.C1)
 	end
+	debug.profileend()
 end
 
 return RC
