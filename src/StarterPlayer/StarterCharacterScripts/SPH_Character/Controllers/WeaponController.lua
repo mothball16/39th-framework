@@ -49,10 +49,6 @@ local WC = {
 	viewmodelRig = nil,
 	thirdPersonRig = nil,
 	rigType = nil,
-	laserDotUI = nil,
-	laserDotPoint = nil,
-	laserBeamFP = nil,
-	laserBeamTP = nil,
 
 	InputController = nil,
 	
@@ -81,11 +77,6 @@ function WC.Initialize(params)
 	WC.thirdPersonRig = params.thirdPersonRig
 	WC.rigType = params.rigType
 	
-	WC.laserDotUI = params.laserDotUI
-	WC.laserDotPoint = params.laserDotPoint
-	WC.laserBeamFP = params.laserBeamFP
-	WC.laserBeamTP = params.laserBeamTP
-	
 	WC.bipodRayIgnore = {params.character}
 	
 	WC.InputController = params.InputController
@@ -107,7 +98,6 @@ function WC.Initialize(params)
 	Charm.subscribe(State.sprinting, WC.OnSprintToggled)
 
 	Charm.subscribe(WeaponState.sightIndex, WC.OnSightIndexSwitched)
-	Charm.subscribe(WeaponState.laserEnabled, WC.OnLaserToggled)
 	Charm.subscribe(WeaponState.flashlightEnabled, WC.OnFlashlightToggled)
 	Charm.subscribe(WeaponState.bipodEnabled, WC.OnBipodToggled)
 	Charm.subscribe(WeaponState.fireMode, WC.OnFireModeChanged)
@@ -122,25 +112,8 @@ function WC.UpdateAttachmentsVisibility()
 	if not State.equippedTool() then return end
 	
 	local isFirstPerson = State.firstPerson()
-	local laserOn = WeaponState.laserEnabled()
 	local flashlightOn = WeaponState.flashlightEnabled()
 	local tpModel = WC.GetThirdPersonGunModel()
-	
-	if laserOn and config.laserTrail then
-		WC.laserBeamFP.Enabled = isFirstPerson
-		WC.laserBeamTP.Enabled = not isFirstPerson
-		
-		if not isFirstPerson and tpModel then
-			if WeaponState.attStats.laserOrigin and WeaponState.gunModel()[WeaponState.attStats.laserOrigin].Main:FindFirstChild("Laser") then
-				WC.laserBeamTP.Attachment0 = tpModel[WeaponState.attStats.laserOrigin].Main.Laser
-			elseif tpModel.Grip:FindFirstChild("Laser") then
-				WC.laserBeamTP.Attachment0 = tpModel.Grip.Laser
-			end
-		end
-	else
-		WC.laserBeamFP.Enabled = false
-		WC.laserBeamTP.Enabled = false
-	end
 	
 	local function updateLight(model, enabled)
 		if not model then return end
@@ -160,26 +133,6 @@ function WC.UpdateAttachmentsVisibility()
 	
 	updateLight(WeaponState.gunModel(), flashlightOn and isFirstPerson)
 	updateLight(tpModel, flashlightOn and not isFirstPerson)
-end
-
-function WC.OnLaserToggled(enabled)
-	if not State.equippedTool() then return end
-	WC.PlayRepSound("Button")
-	WC.playerToggleAttachment:Fire(1, enabled)
-	
-	WC.laserDotUI.Enabled = enabled
-	if enabled then
-		local lazerbeem = WeaponState.gunModel().Grip:FindFirstChild("Laser")
-		if WeaponState.attStats.laserOrigin then lazerbeem = WeaponState.gunModel()[WeaponState.attStats.laserOrigin].Main:FindFirstChild("Laser") end
-		if lazerbeem then
-			WC.laserDotUI.Dot.ImageColor3 = lazerbeem.Color.Value
-			if config.laserTrail then
-				WC.laserBeamFP.Color = ColorSequence.new(lazerbeem.Color.Value)
-				WC.laserBeamTP.Color = ColorSequence.new(lazerbeem.Color.Value)
-			end
-		end
-	end
-	WC.UpdateAttachmentsVisibility()
 end
 
 function WC.OnFlashlightToggled(enabled)
@@ -425,10 +378,6 @@ function WC.Unequip(tool)
 
 	WC.sights = {}
 
-	WC.laserDotUI.Enabled = false
-	WC.laserBeamFP.Enabled = false
-	WC.laserBeamTP.Enabled = false
-
 	WC.InputController.UnbindGunInputs()
 end
 
@@ -614,13 +563,6 @@ function WC.Equip(newChild)
 	WeaponState.fireMode(State.equippedTool().FireMode.Value)
 	WeaponState.holdStance(Enums.HoldStance.Ready)
 
-	if WeaponState.gunModel().Grip:FindFirstChild("Laser") then
-		WC.laserBeamFP.Attachment0 = WeaponState.gunModel().Grip.Laser
-	end
-	if WeaponState.attStats.laserOrigin and WeaponState.gunModel()[WeaponState.attStats.laserOrigin].Main:FindFirstChild("Laser") then
-		WC.laserBeamFP.Attachment0 = WeaponState.gunModel()[WeaponState.attStats.laserOrigin].Main.Laser		
-	end
-
 	AnimationEvents.WeaponEquipPreloadRequested:Fire()
 	task.delay(1, function() WC.lastGunModel = newChild end)
 end
@@ -710,17 +652,6 @@ function WC.OnSwitchFireModeIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then
 		AnimationEvents.SwitchFireModeAnimRequested:Fire()
-	end
-end
-
-function WC.OnToggleLaserIntent(inputState, inputObject)
-	local inputBegan = Enum.UserInputState.Begin
-	if inputState == inputBegan then
-		local lazerbeem = WeaponState.gunModel().Grip:FindFirstChild("Laser")
-		if WeaponState.attStats.laserOrigin then lazerbeem = WeaponState.gunModel()[WeaponState.attStats.laserOrigin].Main:FindFirstChild("Laser") end
-		if lazerbeem then
-			WeaponState.laserEnabled(not WeaponState.laserEnabled())
-		end
 	end
 end
 
@@ -1029,25 +960,6 @@ function WC.UpdateRender(dt)
 		end
 	end
 
-	if WeaponState.laserEnabled() then
-		local laserPoint
-		if WeaponState.gunModel().Grip:FindFirstChild("Laser") then laserPoint = State.firstPerson() and WeaponState.gunModel().Grip.Laser or WC.GetThirdPersonGunModel().Grip.Laser end
-		if WeaponState.attStats.laserOrigin then laserPoint = State.firstPerson() and WeaponState.gunModel()[WeaponState.attStats.laserOrigin].Main.Laser or WC.GetThirdPersonGunModel()[WeaponState.attStats.laserOrigin].Main.Laser end
-		if not WC.laserDotPoint then return end
-		
-		local laserRayParams = RaycastParams.new()
-		laserRayParams.FilterType = Enum.RaycastFilterType.Exclude
-		laserRayParams.FilterDescendantsInstances = {WeaponState.gunModel(), WC.character}
-		laserRayParams.RespectCanCollide = true
-		if laserPoint then
-			local rayResult = workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * 600, laserRayParams)
-			if rayResult then
-				WC.laserDotPoint.WorldPosition = rayResult.Position
-			else
-				WC.laserDotPoint.WorldPosition = laserPoint.WorldCFrame.LookVector * 600
-			end
-		end
-	end
 end
 
 function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)

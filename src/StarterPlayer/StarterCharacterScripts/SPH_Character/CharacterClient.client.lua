@@ -83,31 +83,6 @@ else
 end
 -- </DD_SPH>
 
-local laserDotUI = assets.HUD.LaserDotUI:Clone()
-local laserDotPoint = Instance.new("Attachment")
-laserDotPoint.Parent = workspace.Terrain
-laserDotUI.Enabled = false
-laserDotUI.Parent = laserDotPoint
---laserDotUI.AlwaysOnTop = true
-
-local laserBeamFP = Instance.new("Beam")
-laserBeamFP.Attachment1 = laserDotPoint
-laserBeamFP.LightInfluence = 0
-laserBeamFP.Brightness = 3
-laserBeamFP.Segments = 1
-laserBeamFP.Width0 = 0.02
-laserBeamFP.Width1 = 0.02
-laserBeamFP.FaceCamera = true
-laserBeamFP.Transparency = NumberSequence.new(0.5)
-laserBeamFP.Name = "FirstPersonLaser"
-laserBeamFP.Parent = laserDotPoint
-laserBeamFP.Enabled = false
-
-local laserBeamTP = laserBeamFP:Clone()
-laserBeamTP.Name = "ThirdPersonLaser"
-laserBeamTP.Parent = laserDotPoint
-laserBeamTP.Enabled = false
-
 -- Disable default death sound
 if humanoidRootPart:FindFirstChild("Died") then
 	humanoidRootPart.Died.Volume = 0
@@ -284,7 +259,6 @@ InputController.Initialize({
 		[Intents.CHAMBER] = WeaponController.OnChamberIntent,
 		[Intents.SWITCH_SIGHTS] = WeaponController.OnSwitchSightsIntent,
 		[Intents.SWITCH_FIRE_MODE] = WeaponController.OnSwitchFireModeIntent,
-		[Intents.TOGGLE_LASER] = WeaponController.OnToggleLaserIntent,
 		[Intents.TOGGLE_FLASHLIGHT] = WeaponController.OnToggleFlashlightIntent,
 	}
 })
@@ -334,10 +308,6 @@ WeaponController.Initialize({
 	viewmodelRig = rig,
 	thirdPersonRig = weaponRig,
 	rigType = rigType,
-	laserDotUI = laserDotUI,
-	laserDotPoint = laserDotPoint,
-	laserBeamFP = laserBeamFP,
-	laserBeamTP = laserBeamTP,
 	InputController = InputController,
 	RefreshViewmodel = RefreshViewmodel,
 })
