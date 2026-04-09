@@ -17,3 +17,6 @@ ServerPackages/
 
 # Build stuff
 sourcemap.json
+
+# Cursor
+.cursor/
