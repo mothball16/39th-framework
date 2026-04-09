@@ -15,7 +15,6 @@ local CC = {
 	cameraRollAngle = 0,
 	cameraLeanRotation = 0,
 	cameraOffsetTarget = Vector3.zero,
-	headRotationEventCooldown = 0,
 
 	ReplicationController = nil,
 
@@ -102,11 +101,6 @@ function CC.UpdateRender(dt)
 		end
 		State.Parts.NeckJoint.C1 = State.Parts.NeckJoint.C1:Lerp(neckCFrame, 1 - math.exp(-config.headRotationSpeed * dt))
 
-		CC.headRotationEventCooldown -= dt
-		if CC.headRotationEventCooldown <= 0 and not config.disableHeadRotation then
-			CC.headRotationEventCooldown = config.headRotationEventRate
-			CC.ReplicationController.ReplicateHeadRotation(State.Parts.NeckJoint.C1)
-		end
 
 		local fpThreshold = 0.6
 		if not State.firstPerson() and State.Parts.Character.Head.LocalTransparencyModifier >= fpThreshold then

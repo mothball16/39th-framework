@@ -3,37 +3,43 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local State = require(script.Parent.CharacterState)
 
-local ReplicationController = {}
-ReplicationController.character = nil
+local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
+local config = require(assets.GameConfig)
+local modules = assets:WaitForChild("Modules")
+local bridgeNet = require(modules.BridgeNet)
 
-function ReplicationController.Initialize(params)
-	ReplicationController.character = params.character
+local playerLean = bridgeNet.CreateBridge("PlayerLean")
+local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")
+
+local RC = {
+	headRotationEventCooldown = 0
+}
+RC.character = nil
+
+function RC.Initialize(params)
+	RC.character = params.character
 
 	Charm.subscribe(State.sprinting, function(sprinting)
-		if ReplicationController.character then ReplicationController.character:SetAttribute("Sprinting", sprinting) end
+		if RC.character then RC.character:SetAttribute("Sprinting", sprinting) end
 	end)
 
 	Charm.subscribe(State.aiming, function(aiming)
-		if ReplicationController.character then ReplicationController.character:SetAttribute("Aiming", aiming) end
+		if RC.character then RC.character:SetAttribute("Aiming", aiming) end
 	end)
 
 	Charm.subscribe(State.lean, function(lean, oldLean)
-		if lean ~= oldLean and ReplicationController.character then
-			ReplicationController.character:SetAttribute("Lean", lean)
-		end
-	end)
-
-	Charm.subscribe(State.stance, function(stance, oldStance)
-		if stance ~= oldStance and ReplicationController.character then
-			ReplicationController.character:SetAttribute("Stance", stance)
+		if lean ~= oldLean then
+			playerLean:Fire(lean)
 		end
 	end)
 end
 
-function ReplicationController.ReplicateHeadRotation(c1)
-	if ReplicationController.character then
-		ReplicationController.character:SetAttribute("BodyRot", c1)
+function RC.UpdateRender(dt)
+	RC.headRotationEventCooldown -= dt
+	if RC.headRotationEventCooldown <= 0 and not config.disableHeadRotation then
+		RC.headRotationEventCooldown = config.headRotationEventRate
+		bodyAnimRequest:Fire(State.Parts.NeckJoint.C1)
 	end
 end
 
-return ReplicationController
+return RC
