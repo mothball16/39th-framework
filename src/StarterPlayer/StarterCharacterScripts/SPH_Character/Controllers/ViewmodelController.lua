@@ -23,6 +23,7 @@ local hipRotation = Vector2.zero
 local aimingOffset = CFrame.new()
 local proneViewmodelOffset = 0
 local rollAngle = 0
+local strafeShift = 0
 local aimTarget = CFrame.new()
 
 ViewmodelController.animBase = nil
@@ -161,10 +162,20 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 
 	local relativeVelocity = humanoidRootPart.CFrame:VectorToObjectSpace(humanoidRootPart.Velocity)
 	local targetRollAngle = 0
-	if not State.aiming() then targetRollAngle = math.clamp(-relativeVelocity.X, -config.maxStrafeRoll, config.maxStrafeRoll) end
+	local targetStrafeShift = 0
+
+	targetRollAngle = math.clamp(-relativeVelocity.X, -config.maxStrafeRoll, config.maxStrafeRoll) 
+	targetStrafeShift = math.clamp(-relativeVelocity.X / config.sprintSpeed, -1, 1)
+
+	if State.aiming() then
+		targetRollAngle = 0
+		targetStrafeShift *= config.strafeShiftAimMult
+	end
+
 	if config.cameraTilting then targetRollAngle /= 2 end
 	rollAngle = LerpNumber(rollAngle, targetRollAngle, 0.07 * dt * 60)
-	animBase.CFrame *= CFrame.Angles(0, 0, math.rad(rollAngle))
+	strafeShift = LerpNumber(strafeShift, targetStrafeShift, 0.07 * dt * 60)
+	animBase.CFrame *=  CFrame.Angles(0, math.rad(-strafeShift * config.maxStrafeShift), math.rad(rollAngle))
 
 	local viewportSize = camera.ViewportSize
 	local mouseDelta = UserInputService:GetMouseDelta() / viewportSize
