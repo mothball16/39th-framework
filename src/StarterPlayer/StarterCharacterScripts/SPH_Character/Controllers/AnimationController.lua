@@ -4,6 +4,7 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
+local AnimationEvents = require(script.Parent.AnimationEvents)
 local config = require(ReplicatedStorage:WaitForChild("SPH_Assets").GameConfig)
 local Enums = require(script.Parent.Parent.Enums)
 local AnimationController = {}
@@ -19,9 +20,6 @@ AnimationController.crouchMoveAnim = nil
 AnimationController.proneIdleAnim = nil
 AnimationController.proneMoveAnim = nil
 AnimationController.moveAnim = nil
-
-AnimationController.OnKeyframeReached = nil
-AnimationController.OnAnimationStopped = nil
 
 local function _getAnimationTracks(animName, parameters, animType)
 	if AnimationController.loadedAnims[animName] then
@@ -44,15 +42,11 @@ local function _getAnimationTracks(animName, parameters, animType)
 	tpTrack.Priority = parameters.priority or Enum.AnimationPriority.Action
 
 	vmTrack.KeyframeReached:Connect(function(keyframeName)
-		if AnimationController.OnKeyframeReached then
-			AnimationController.OnKeyframeReached(animName, keyframeName, vmTrack, animType)
-		end
+		AnimationEvents.KeyframeReached:Fire(animName, keyframeName, vmTrack, animType)
 	end)
 
 	vmTrack.Stopped:Connect(function()
-		if AnimationController.OnAnimationStopped then
-			AnimationController.OnAnimationStopped(animName, vmTrack, animType)
-		end
+		AnimationEvents.AnimationStopped:Fire(animName, vmTrack, animType)
 	end)
 
 	local tracks = { vm = vmTrack, tp = tpTrack }
@@ -127,20 +121,31 @@ function AnimationController.Initialize(params)
 	AnimationController.vmAnimator = params.vmAnimator
 	AnimationController.characterAnimator = params.characterAnimator
 	AnimationController.animationsFolder = params.animationsFolder
-	AnimationController.OnKeyframeReached = params.OnKeyframeReached
-	AnimationController.OnAnimationStopped = params.OnAnimationStopped
 
 	AnimationController.crouchIdleAnim = _preloadAnimation(params.animationsFolder.Crouch_Idle, true, Enum.AnimationPriority.Idle)
 	AnimationController.crouchMoveAnim = _preloadAnimation(params.animationsFolder.Crouch_Move, true, Enum.AnimationPriority.Movement)
 	AnimationController.proneIdleAnim = _preloadAnimation(params.animationsFolder.Prone_Idle, true, Enum.AnimationPriority.Idle)
 	AnimationController.proneMoveAnim = _preloadAnimation(params.animationsFolder.Prone_Move, true, Enum.AnimationPriority.Movement)
 
-
+	-- Reactive state subscriptions
 	Charm.subscribe(State.sprinting, AnimationController.OnSprintChanged)
 	Charm.subscribe(State.stance, AnimationController.OnStanceChanged)
 	Charm.subscribe(State.moving, AnimationController.OnMovingChanged)
 	Charm.subscribe(WeaponState.holdStance, AnimationController.OnHoldStanceChanged)
 	Charm.subscribe(WeaponState.chambering, AnimationController.OnWeaponChamber)
+
+	-- Listen for animation requests from other controllers via signals
+	AnimationEvents.WeaponEquipRequested:Connect(function() AnimationController.WeaponEquip() end)
+	AnimationEvents.WeaponIdleRequested:Connect(function() AnimationController.WeaponIdle() end)
+	AnimationEvents.WeaponEquipPreloadRequested:Connect(function() AnimationController.WeaponEquipPreload() end)
+	AnimationEvents.FireAnimRequested:Connect(function() AnimationController.PlayFireAnim() end)
+	AnimationEvents.ReloadRequested:Connect(function(lastGunModelName) AnimationController.WeaponReload(lastGunModelName) end)
+	AnimationEvents.SwitchFireModeAnimRequested:Connect(function() AnimationController.PlaySwitchFireModeAnim() end)
+	AnimationEvents.StopAllRequested:Connect(function() AnimationController.StopAll() end)
+	AnimationEvents.PlayAnimationRequested:Connect(function(animName, params, animType, preload) AnimationController.PlayAnimation(animName, params, animType, preload) end)
+	AnimationEvents.StopAnimationRequested:Connect(function(animName, transTime) AnimationController.StopAnimation(animName, transTime) end)
+	AnimationEvents.BoltActionRequested:Connect(function(boltReady) AnimationController.PlayBoltAction(boltReady) end)
+	AnimationEvents.ReloadActionRequested:Connect(function(useClip) AnimationController.PlayReloadAction(useClip) end)
 end
 
 function AnimationController.OnStanceChanged(stance, oldStance)

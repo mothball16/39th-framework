@@ -183,8 +183,6 @@ AnimationController.Initialize({
 	vmAnimator = vmAnimator,
 	characterAnimator = characterAnimator,
 	animationsFolder = animations,
-	OnKeyframeReached = WeaponController.OnKeyframeReached,
-	OnAnimationStopped = WeaponController.OnAnimationStopped
 })
 
 -- Makes the viewmodel visible and refreshes its appearance
@@ -340,7 +338,6 @@ WeaponController.Initialize({
 	laserDotPoint = laserDotPoint,
 	laserBeamFP = laserBeamFP,
 	laserBeamTP = laserBeamTP,
-	AnimationController = AnimationController,
 	InputController = InputController,
 	RefreshViewmodel = RefreshViewmodel,
 })
