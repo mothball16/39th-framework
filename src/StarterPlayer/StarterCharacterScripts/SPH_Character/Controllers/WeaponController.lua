@@ -14,6 +14,7 @@ local bulletHandler = require(modules.BulletHandler)
 local shellEjection = require(modules.ShellEjection)
 local weldMod = require(modules.WeldMod)
 local bridgeNet = require(modules.BridgeNet)
+local weaponClientPersist = require(modules.WeaponClientPersist)
 
 
 local RecoilModule = require(modules.Recoil.Default)
@@ -108,6 +109,150 @@ function WC.Initialize(params)
 	AnimationEvents.AnimationStopped:Connect(WC.OnAnimationStopped)
 end
 
+function WC._getLaserAttachmentPoint(model)
+	if not model then
+		return nil
+	end
+	if WeaponState.attStats.laserOrigin then
+		local laserOrigin = model:FindFirstChild(WeaponState.attStats.laserOrigin)
+		if laserOrigin and laserOrigin:FindFirstChild("Main") then
+			return laserOrigin.Main:FindFirstChild("Laser")
+		end
+	end
+	local grip = model:FindFirstChild("Grip")
+	if grip then
+		return grip:FindFirstChild("Laser")
+	end
+	return nil
+end
+
+function WC._weaponHasFlashlightClient(gun)
+	if not gun or not gun.Grip then
+		return false
+	end
+	if gun.Grip:FindFirstChild("Flashlight") then
+		return true
+	end
+	if WeaponState.attStats.flashlights_client and #WeaponState.attStats.flashlights_client > 0 then
+		return true
+	end
+	return false
+end
+
+function WC._weaponHasBipodClient(gun)
+	if not gun or not WeaponState.attStats.Bipod then
+		return false
+	end
+	local host = gun[WeaponState.attStats.Bipod]
+	if not (host and host.Main and host.Main:FindFirstChild("Bipod")) then
+		return false
+	end
+	return true
+end
+
+function WC._fireModeSupported(mode)
+	if type(mode) ~= "number" or mode % 1 ~= 0 or mode < 0 or mode > 5 then
+		return false
+	end
+	local fs = WeaponState.wepStats and WeaponState.wepStats.fireSwitch
+	return fs and fs[mode] ~= nil and fs[mode] ~= false
+end
+
+function WC._sightIndexSupported(idx, gun)
+	if type(idx) ~= "number" or idx % 1 ~= 0 or idx < 1 or idx > 8 then
+		return false
+	end
+	local name = "AimPart" .. idx
+	if gun:FindFirstChild(name) then
+		return true
+	end
+	if idx == 1 and gun:FindFirstChild("AimPart") then
+		return true
+	end
+	if WeaponState.attStats.aimParts and WeaponState.attStats.aimParts[name] then
+		return true
+	end
+	return false
+end
+
+
+-- TODO: refactor this to be less ugly
+function WC._applyPersistedWeaponPrefs(weaponName)
+	local prefs = weaponClientPersist.get(weaponName)
+	if not prefs or not State.equippedTool() then
+		return
+	end
+	local gun = WeaponState.gunModel()
+	if not gun then
+		return
+	end
+
+	local baselineFireMode = WeaponState.fireMode()
+	local validated = {}
+
+	for key, val in pairs(prefs) do
+		if key == "laserEnabled" and WC._getLaserAttachmentPoint(gun) then
+			validated.laserEnabled = val
+		elseif key == "flashlightEnabled" and WC._weaponHasFlashlightClient(gun) then
+			validated.flashlightEnabled = val
+		elseif key == "bipodEnabled" and WC._weaponHasBipodClient(gun) then
+			validated.bipodEnabled = val
+		elseif key == "fireMode" and WC._fireModeSupported(val) then
+			validated.fireMode = val
+		elseif key == "aimSens" then
+			validated.aimSens = math.clamp(val, 0.01, 1)
+		elseif key == "sightIndex" and WC._sightIndexSupported(val, gun) then
+			validated.sightIndex = val
+		end
+	end
+
+	local pruned = {}
+	for k, v in pairs(prefs) do
+		if validated[k] ~= nil then
+			pruned[k] = validated[k]
+		end
+	end
+	weaponClientPersist.set(weaponName, pruned)
+
+	if next(validated) == nil then
+		return
+	end
+
+		weaponClientPersist.beginApply()
+
+	if validated.aimSens then
+		WeaponState.aimSens(validated.aimSens)
+		if WeaponState.wepStats then
+			WeaponState.wepStats.aimSpeed = validated.aimSens
+		end
+	end
+	if validated.sightIndex then
+		WeaponState.sightIndex(validated.sightIndex)
+	end
+	if validated.fireMode ~= nil then
+		WeaponState.fireMode(validated.fireMode)
+		State.equippedTool().FireMode.Value = validated.fireMode
+			if validated.fireMode ~= baselineFireMode then
+				WC.switchFireMode:Fire(validated.fireMode)
+			end
+	end
+	if validated.flashlightEnabled ~= nil then
+		WeaponState.flashlightEnabled(validated.flashlightEnabled)
+			WC.playerToggleAttachment:Fire(0, validated.flashlightEnabled)
+	end
+	if validated.laserEnabled ~= nil then
+		WeaponState.laserEnabled(validated.laserEnabled)
+			WC.playerToggleAttachment:Fire(1, validated.laserEnabled)
+	end
+	if validated.bipodEnabled ~= nil then
+		WeaponState.bipodEnabled(validated.bipodEnabled)
+			WC.playerToggleAttachment:Fire(2, validated.bipodEnabled)
+	end
+
+	WC.UpdateAttachmentsVisibility()
+	weaponClientPersist.endApply()
+end
+
 function WC.UpdateAttachmentsVisibility()
 	if not State.equippedTool() then return end
 	
@@ -137,6 +282,10 @@ end
 
 function WC.OnFlashlightToggled(enabled)
 	if not State.equippedTool() then return end
+	if weaponClientPersist.isApplying then
+		WC.UpdateAttachmentsVisibility()
+		return
+	end
 	WC.PlayRepSound("Button")
 	WC.playerToggleAttachment:Fire(0, enabled)
 	WC.UpdateAttachmentsVisibility()
@@ -150,6 +299,9 @@ function WC.OnBipodToggled(enabled)
 	end
 	if bipodModel then
 		WC.ToggleBipod(bipodModel, enabled)
+		if weaponClientPersist.isApplying then
+			return
+		end
 		WC.PlayRepSound("Switch")
 		WC.playerToggleAttachment:Fire(2, enabled)
 	end
@@ -157,6 +309,9 @@ end
 
 function WC.OnFireModeChanged(mode)
 	if not State.equippedTool() then return end
+	if weaponClientPersist.isApplying then
+		return
+	end
 	WC.switchFireMode:Fire(mode)
 end
 
@@ -366,6 +521,14 @@ function WC.Unequip(tool)
 	
 	WC.switchWeapon:Fire()
 	if tool == State.equippedTool() then
+		weaponClientPersist.set(tool.Name, {
+			laserEnabled = WeaponState.laserEnabled(),
+			flashlightEnabled = WeaponState.flashlightEnabled(),
+			bipodEnabled = WeaponState.bipodEnabled(),
+			fireMode = WeaponState.fireMode(),
+			aimSens = WeaponState.aimSens(),
+			sightIndex = WeaponState.sightIndex(),
+		})
 		State.equippedTool(nil)
 		WeaponState.reset()
 	end
@@ -562,6 +725,8 @@ function WC.Equip(newChild)
 	if config.lockFirstPerson then WC.player.CameraMode = Enum.CameraMode.LockFirstPerson end
 	WeaponState.fireMode(State.equippedTool().FireMode.Value)
 	WeaponState.holdStance(Enums.HoldStance.Ready)
+
+	WC._applyPersistedWeaponPrefs(newChild.Name)
 
 	AnimationEvents.WeaponEquipPreloadRequested:Fire()
 	task.delay(1, function() WC.lastGunModel = newChild end)
