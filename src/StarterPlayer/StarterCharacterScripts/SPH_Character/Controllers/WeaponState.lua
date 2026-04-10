@@ -27,12 +27,12 @@ local WepState = {
 	fireMode = Charm.atom(0)							:: Charm.Atom<number>,
 	holdStance = Charm.atom(0)							:: Charm.Atom<number>,
 
-
 	CameraSpring = legacySpring.new(Vector3.new()),
 	RecoilPos = legacySpring.new(Vector3.new()),
 	RecoilDir = legacySpring.new(Vector3.new()),
 	RecoilUp = legacySpring.new(Vector3.new()),
 	RecoilCF = CFrame.new(),
+	RecoilFactor = 0,
 }
 
 function WepState.reset()
@@ -45,6 +45,7 @@ function WepState.reset()
 	WepState.CameraSpring.s = SP.cs
 	WepState.CameraSpring.d = SP.cd
 	WepState.RecoilCF = CFrame.new()
+	WepState.RecoilFactor = 0
 
 	WepState.wepStats = nil
 	WepState.attStats = {}
@@ -66,7 +67,11 @@ function WepState.reset()
 end
 
 function WepState.canManipulate()
-	return WepState.viewmodelVisible() and not WepState.reloading() and not WepState.chambering() and WepState.wepStats
+	return WepState.viewmodelVisible()
+	and not WepState.reloading()
+	and not WepState.chambering()
+	--and not WepState.equipping()
+	and WepState.wepStats
 end
 
 WepState.reset()

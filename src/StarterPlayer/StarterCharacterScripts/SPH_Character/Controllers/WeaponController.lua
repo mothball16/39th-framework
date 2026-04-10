@@ -759,7 +759,7 @@ end
 
 function WC.OnReloadIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
-	if inputState == inputBegan and not WeaponState.reloading() and WC.cycled then
+	if inputState == inputBegan and WeaponState.canManipulate() and WC.cycled then
 		if WeaponState.fireMode() == Enums.FireModes.UBGL and WeaponState.wepStats.hasUBGL then
 			local ubglAmmoPool = State.equippedTool():FindFirstChild("UBGLAmmoPool")
 			if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
@@ -935,10 +935,10 @@ function WC.PerformRecoil(wepStats)
 			dP = dP/2.5
 
 			WeaponState.RecoilCF = RecoilModule.BipodRecoil(
-				WeaponState.RecoilCF, finalRecoilPunch, wepStats.RecoilPower,vP,hP,dP)
+				WeaponState.RecoilCF, finalRecoilPunch, WeaponState.RecoilFactor,vP,hP,dP)
 		else
 			WeaponState.RecoilCF = RecoilModule.Recoil(
-				WeaponState.RecoilCF, finalRecoilPunch, wepStats.RecoilPower,vP,hP,dP)
+				WeaponState.RecoilCF, finalRecoilPunch, WeaponState.RecoilFactor,vP,hP,dP)
 		end
 
 		WeaponState.RecoilPos.t = WeaponState.RecoilCF.Position
@@ -1103,7 +1103,8 @@ function WC.UpdateRender(dt)
 	WeaponState.RecoilPos.t = WeaponState.RecoilCF.Position
 	WeaponState.RecoilDir.t = WeaponState.RecoilCF.LookVector
 	WeaponState.RecoilUp.t = WeaponState.RecoilCF.UpVector
-
+	WeaponState.RecoilFactor = math.clamp(WeaponState.RecoilFactor - WeaponState.wepStats.RecoilRecoverPerSecond * dt,
+		WeaponState.wepStats.MinRecoilFactor, WeaponState.wepStats.MaxRecoilFactor)
 
 	local bipodPart = WeaponState.gunModel().Grip:FindFirstChild("Bipod")
 	local bipodModel = WeaponState.gunModel()
