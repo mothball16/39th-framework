@@ -4,7 +4,7 @@
     {
       "label": "Update Wally & Sourcemap",
       "type": "shell",
-      "command": "wally install; rojo sourcemap default.project.json --output sourcemap.json",
+      "command": "Stop-Process -Id (Get-NetTCPConnection -LocalPort 34872).OwningProcess -ErrorAction SilentlyContinue;wally install; rojo sourcemap default.project.json --output sourcemap.json",
       "group": {
         "kind": "build",
         "isDefault": true
