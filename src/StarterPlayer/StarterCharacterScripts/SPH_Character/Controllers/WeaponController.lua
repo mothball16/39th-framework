@@ -962,135 +962,135 @@ end
 
 
 function WC.UpdateHeartbeat(dt)
+	if not State.equippedTool() or State.dead() then return end
+	
+	-- General state checks: prevents execution if sprinting, reloading, chambering, or not holding M1
+	if State.sprinting() or WeaponState.reloading() or WeaponState.chambering() then return end
+	if not WC.holdingM1 or not WC.cycled then return end
+
 	local freeLook = State.freeLook()
 	local blocked = WeaponState.blocked()
 	local fireMode = WeaponState.fireMode()
-	if
-		State.equippedTool()
-		and not State.dead()
-		and not State.sprinting()
-		and not WeaponState.reloading()
-		and not WeaponState.chambering()
-		and WC.holdingM1
-		and WC.cycled then
-		if WC.canFire 
-		and not blocked 
+
+	local canFireShot = WC.canFire
+		and not blocked
 		and WeaponState.holdStance() == Enums.HoldStance.Ready
 		and WC.IsLoaded()
 		and fireMode > 0
-		and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook))
-		and not WeaponState.equipping() then
-			if not State.firstPerson() and not config.thirdPersonFiring then return end
+		and (config.fireWithFreelook or not freeLook)
+		and not WeaponState.equipping()
 
-			local currentStats = WC.GetCurrentWepStats()
-			AnimationEvents.FireAnimRequested:Fire()
-			WC.PerformRecoil(WeaponState.wepStats)
+	if canFireShot then
+		if not State.firstPerson() and not config.thirdPersonFiring then return end
 
-			WC.bulletsCurrentlyFired += 1
-			WC.ejected = false
+		local currentStats = WC.GetCurrentWepStats()
+		AnimationEvents.FireAnimRequested:Fire()
+		WC.PerformRecoil(WeaponState.wepStats)
 
-			if fireMode == Enums.FireModes.Semi or fireMode == Enums.FireModes.Manual or fireMode == Enums.FireModes.UBGL or (fireMode == Enums.FireModes.Burst and WC.bulletsCurrentlyFired >= currentStats.burstNumber) then
-				WC.canFire = false
-				WC.holdingM1 = false
+		WC.bulletsCurrentlyFired += 1
+		WC.ejected = false
+
+		if fireMode == Enums.FireModes.Semi or fireMode == Enums.FireModes.Manual or fireMode == Enums.FireModes.UBGL or (fireMode == Enums.FireModes.Burst and WC.bulletsCurrentlyFired >= currentStats.burstNumber) then
+			WC.canFire = false
+			WC.holdingM1 = false
+		end
+		
+		WeaponState.RecoilFactor = math.clamp(WeaponState.RecoilFactor + WeaponState.wepStats.RecoilStepAmount,
+			WeaponState.wepStats.MinRecoilFactor, WeaponState.wepStats.MaxRecoilFactor)
+
+		WC.cycled = false
+		local curModel = WeaponState.gunModel()
+
+		if fireMode ~= Enums.FireModes.Manual and fireMode ~= Enums.FireModes.UBGL then
+			WC.EjectShell()
+		end
+
+		if fireMode ~= Enums.FireModes.UBGL then
+			local bulletHandlerPart = WeaponState.wepStats.bulletHandler and WeaponState.gunModel():FindFirstChild(WeaponState.wepStats.bulletHolder)
+			if bulletHandlerPart then
+				local bulletNumber = WeaponState.gunAmmo.MagAmmo.MaxValue - (WeaponState.gunAmmo.MagAmmo.Value - 1)
+				local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
+				if tempBulletPart then tempBulletPart.Transparency = 1 end
 			end
-			WC.cycled = false
-			local curModel = WeaponState.gunModel()
-			
+		end
 
-			
+		local tempGunModel = WeaponState.gunModel()
+		if not State.firstPerson() then tempGunModel = WC.GetThirdPersonGunModel() end
 
-			if fireMode ~= Enums.FireModes.Manual and fireMode ~= Enums.FireModes.UBGL then
-				WC.EjectShell()
-			end
+		local muzzleName = (fireMode == Enums.FireModes.UBGL) and "UBGLMuzzle" or "Muzzle"
+		local muCh = WeaponState.attStats.muzzleChance or WeaponState.wepStats.muzzleChance
+		if WeaponState.attStats.newMuzzleDevice then tempGunModel = tempGunModel[WeaponState.attStats.newMuzzleDevice] end
+		
+		bulletHandler.FireFX(WC.player, tempGunModel, muzzleName, muCh, fireMode == Enums.FireModes.UBGL)
+		WC.PlayRepSound("Fire")
 
-			if fireMode ~= Enums.FireModes.UBGL then
-				local bulletHandlerPart = WeaponState.wepStats.bulletHandler and WeaponState.gunModel():FindFirstChild(WeaponState.wepStats.bulletHolder)
-				if bulletHandlerPart then
-					local bulletNumber = WeaponState.gunAmmo.MagAmmo.MaxValue - (WeaponState.gunAmmo.MagAmmo.Value - 1)
-					local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
-					if tempBulletPart then tempBulletPart.Transparency = 1 end
-				end
-			end
+		if fireMode ~= Enums.FireModes.UBGL then
+			WC.MoveBolt(currentStats.boltDist)
+		end
 
-			local tempGunModel = WeaponState.gunModel()
-			if not State.firstPerson() then tempGunModel = WC.GetThirdPersonGunModel() end
+		local shotCount = (currentStats.shotgun and currentStats.shotgunPellets) or 1
+		for _ = 1, shotCount do
+			local bulletOrigin, bulletDirection
+			local tempSpread = currentStats.spread * 100
+			local spreadCFrame = CFrame.Angles(math.rad(math.random(-tempSpread, tempSpread) / 100), math.rad(math.random(-tempSpread, tempSpread) / 100), 0)
 
-			local muzzleName = "Muzzle"
-			if fireMode == Enums.FireModes.UBGL then muzzleName = "UBGLMuzzle" end
-			local muCh = WeaponState.attStats.muzzleChance or WeaponState.wepStats.muzzleChance
-			if WeaponState.attStats.newMuzzleDevice then tempGunModel = tempGunModel[WeaponState.attStats.newMuzzleDevice] end
-			bulletHandler.FireFX(WC.player, tempGunModel, muzzleName, muCh, fireMode == Enums.FireModes.UBGL)
+			local muzzlePoint = WC.GetMuzzlePoint(State.firstPerson() and curModel or WC.GetThirdPersonGunModel())
+			bulletOrigin = muzzlePoint.WorldCFrame.Position
+			bulletDirection = (muzzlePoint.WorldCFrame * spreadCFrame).LookVector
 
-			WC.PlayRepSound("Fire")
+			local muVe = currentStats.muzzleVelocity
+			if WeaponState.attStats.muzzleVelocityReplace then muVe = WeaponState.attStats.muzzleVelocityReplace end
+			if WeaponState.attStats.muzzleVelocity then muVe *= WeaponState.attStats.muzzleVelocity end
+			local bulletVelocity = (bulletDirection * muVe * 3.5)
 
-			if fireMode ~= Enums.FireModes.UBGL then
-				WC.MoveBolt(currentStats.boltDist)
-			end
-
-			local shotCount = (currentStats.shotgun and currentStats.shotgunPellets) or 1
-			for _ = 1, shotCount do
-				local bulletOrigin, bulletDirection
-				local tempSpread = currentStats.spread * 100
-				local spreadCFrame = CFrame.Angles(math.rad(math.random(-tempSpread, tempSpread) / 100), math.rad(math.random(-tempSpread, tempSpread) / 100), 0)
-
-				local muzzlePoint = WC.GetMuzzlePoint(State.firstPerson() and curModel or WC.GetThirdPersonGunModel())
-				bulletOrigin = muzzlePoint.WorldCFrame.Position
-				bulletDirection = (muzzlePoint.WorldCFrame * spreadCFrame).LookVector
-
-				local muVe = currentStats.muzzleVelocity
-				if WeaponState.attStats.muzzleVelocityReplace then muVe = WeaponState.attStats.muzzleVelocityReplace end
-				if WeaponState.attStats.muzzleVelocity then muVe *= WeaponState.attStats.muzzleVelocity end
-				local bulletVelocity = (bulletDirection * muVe * 3.5)
-
-				local tracerColor = nil
-				local TrTi = currentStats.tracerTiming
-				if TrTi and WeaponState.attStats.tracerTiming then TrTi = currentStats.tracerTiming end
-				if fireMode ~= Enums.FireModes.UBGL and currentStats.tracers and WeaponState.gunAmmo.MagAmmo.Value % TrTi == 0 then
-					tracerColor = WeaponState.attStats.tracerColor or currentStats.tracerColor
-				end
-
-				local bulletData = State.equippedTool()
-				if fireMode == Enums.FireModes.UBGL then
-					bulletData = {
-						Tool = State.equippedTool(),
-						fireMode = fireMode,
-						SPH_Weapon = State.equippedTool().SPH_Weapon
-					}
-				end
-
-				bulletHandler.FireBullet(WC.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, bulletData, WC.player, tracerColor)
+			local tracerColor = nil
+			local TrTi = currentStats.tracerTiming
+			if TrTi and WeaponState.attStats.tracerTiming then TrTi = currentStats.tracerTiming end
+			if fireMode ~= Enums.FireModes.UBGL and currentStats.tracers and WeaponState.gunAmmo.MagAmmo.Value % TrTi == 0 then
+				tracerColor = WeaponState.attStats.tracerColor or currentStats.tracerColor
 			end
 
-			local firePoint = State.firstPerson() and WC.GetMuzzlePoint(curModel) or WC.GetMuzzlePoint(WC.GetThirdPersonGunModel())
-			WC.playerFire:Fire(firePoint.WorldCFrame)
-
-			local cycleTime = currentStats.fireRate
-			if fireMode == Enums.FireModes.Burst and currentStats.burstFireRate then cycleTime = currentStats.burstFireRate end
-			if WeaponState.attStats.fireRate then cycleTime *= WeaponState.attStats.fireRate end
-
-			if currentStats.projectile ~= "Bullet" then
-				WC.SetProjectileTransparency(WeaponState.gunModel(), 1)
+			local bulletData = State.equippedTool()
+			if fireMode == Enums.FireModes.UBGL then
+				bulletData = {
+					Tool = State.equippedTool(),
+					fireMode = fireMode,
+					SPH_Weapon = State.equippedTool().SPH_Weapon
+				}
 			end
 
-			task.wait(60 / cycleTime)
-			if not State.equippedTool() then return end
+			bulletHandler.FireBullet(WC.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, bulletData, WC.player, tracerColor)
+		end
 
-			if currentStats.autoChamber and fireMode == Enums.FireModes.Manual and not WeaponState.reloading() then
+		local firePoint = State.firstPerson() and WC.GetMuzzlePoint(curModel) or WC.GetMuzzlePoint(WC.GetThirdPersonGunModel())
+		WC.playerFire:Fire(firePoint.WorldCFrame)
+
+		local cycleTime = currentStats.fireRate
+		if fireMode == Enums.FireModes.Burst and currentStats.burstFireRate then cycleTime = currentStats.burstFireRate end
+		if WeaponState.attStats.fireRate then cycleTime *= WeaponState.attStats.fireRate end
+
+		if currentStats.projectile ~= "Bullet" then
+			WC.SetProjectileTransparency(WeaponState.gunModel(), 1)
+		end
+
+		task.wait(60 / cycleTime)
+		if not State.equippedTool() then return end
+
+		if currentStats.autoChamber and fireMode == Enums.FireModes.Manual and not WeaponState.reloading() then
+			WeaponState.holdStance(Enums.HoldStance.Ready)
+			WeaponState.chambering(true)
+		end
+		WC.cycled = true
+	else
+		if not WC.IsLoaded() then
+			if fireMode == Enums.FireModes.Manual and WeaponState.gunAmmo.MagAmmo.Value > 0 then
 				WeaponState.holdStance(Enums.HoldStance.Ready)
 				WeaponState.chambering(true)
+				WC.holdingM1 = false
 			end
-			WC.cycled = true
-		else
-			if not WC.IsLoaded() then
-				if fireMode == Enums.FireModes.Manual and WeaponState.gunAmmo.MagAmmo.Value > 0 and not WeaponState.reloading() and not WeaponState.chambering() then
-					WeaponState.holdStance(Enums.HoldStance.Ready)
-					WeaponState.chambering(true)
-					WC.holdingM1 = false
-				end
-			elseif WeaponState.wepStats.emptyCloseBolt then
-				WC.repChamber:Fire()
-				WC.MoveBolt(CFrame.new())
-			end
+		elseif WeaponState.wepStats.emptyCloseBolt then
+			WC.repChamber:Fire()
+			WC.MoveBolt(CFrame.new())
 		end
 	end
 end
