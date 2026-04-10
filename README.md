@@ -2,6 +2,16 @@
 * The spaghetti bowl holding together 39th ACR games
 * Currently, the only system being actively worked on is Spearhead (SPH). DTS re-works are planned but not priority at the moment
 
+### prerequisites
+* [Aftman](https://github.com/LPGhatguy/aftman) for toolchain management
+* [Rojo](https://rojo.space/) for project synchronization
+* [Wally](https://wally.run/) for package management
+
+### installation
+1. Clone the repo to your machine
+2. Assuming you have the above installed, run the default build task (CTRL + SHIFT + B by default in VS code) to install packages and update the sourcemap.
+3. Serve to Roblox Studio with 'rojo serve' or with the Rojo plugin. 
+
 ### standards
 * Controllers are reactive. Avoid calling controllers directly if possible, aside from intent methods.
 * Input controller wires input actions to controller intent methods.
