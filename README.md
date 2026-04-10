@@ -1,35 +1,13 @@
 # 39th-framework
-
-Those who troll
-
-The spaghetti bowl holding together 39th acr games
-
-
-### current goals or somethig
-Spearhead tweaks
-Spearhead has a couple issues QOL and optimization wise currently keeping it from being a well-rounded system. The following patches should improve general enjoyment when using spearhead
-
-* save sensitivity
-* preset FOV for guns
-* replication buffer to unfuck networking
-* fix weird glitches with gun too close feature
-
-NOTE: this is mostly for me + @AwesomeSauce but if in the future someone else hops on for scripts let me know and i can add u to the repo https://github.com/mothball16/39th-framework 
-
-* considering moving to reactive state using Charm so we can decouple controllers 
-
-* Reference for replication in larger scale sgames https://devforum.roblox.com/t/how-do-some-games-replicate-body-part-rotation-so-smoothly/1240146/13
-
-* Update inputcontroller @AwesomeSauce
-
-
+* The spaghetti bowl holding together 39th ACR games
+* Currently, the only system being actively worked on is Spearhead (SPH). DTS re-works are planned but not priority at the moment
 
 ### standards
-
-
-* Controllers are reactive. Avoid calling controllers directly if possible, aside from intent methods
-* Input controller wires input actions to controller intent methods
-
+* Controllers are reactive. Avoid calling controllers directly if possible, aside from intent methods.
+* Input controller wires input actions to controller intent methods.
+* Any method wired to an input should be named On(action_name)Intent. (todo: maybe this isn't the best naming for lookup purposes)
+* Any method reacting to a change should be named Sync(atom_name).
+* If the order of reactions matter then something has gone wrong.
 
 ### example pipeline
 1. Player presses Shift --> InputController picks up Shift input
