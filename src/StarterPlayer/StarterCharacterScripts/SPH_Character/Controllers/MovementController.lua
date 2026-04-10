@@ -8,7 +8,8 @@ local Charm = require(Packages.Charm)
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local State = require(script.Parent.CharacterState)
-
+local WeaponState = require(script.Parent.WeaponState)
+local Enums = require(script.Parent.Parent.Enums)
 local c0Ref = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
 
 local MovementController = {
@@ -49,9 +50,10 @@ function MovementController.Initialize(params)
 	MovementController.AdjustMoveAnimSpeed = params.AdjustMoveAnimSpeed
 	MovementController.PlayCharSound = params.PlayCharSound
 
-	Charm.subscribe(State.sprinting, MovementController.UpdateSprint)
-	Charm.subscribe(State.stance, MovementController.UpdateStance)
-	Charm.subscribe(State.lean, MovementController.UpdateLean)
+	Charm.subscribe(State.sprinting, MovementController.SyncSprinting)
+	Charm.subscribe(State.stance, MovementController.SyncStance)
+	Charm.subscribe(State.lean, MovementController.SyncLean)
+	Charm.subscribe(WeaponState.holdStance, MovementController.SyncHoldStance)
 end
 
 --#region ----------------------------[intent]----------------------------
@@ -129,7 +131,7 @@ function MovementController.UpdateWalkSpeed(newSpeed)
 	MovementController.targetWalkSpeed = newSpeed
 end
 
-function MovementController.UpdateSprint(sprinting)
+function MovementController.SyncSprinting(sprinting)
 	if sprinting then
 		State.aiming(false)
 		State.stance(0)
@@ -142,14 +144,21 @@ function MovementController.UpdateSprint(sprinting)
 end
 
 
-function MovementController.UpdateLean(lean, oldLean)
+function MovementController.SyncLean(lean, oldLean)
 	if lean == oldLean then
 		return
 	end
 	MovementController.PlayCharSound("Lean")
 end
 
-function MovementController.UpdateStance(stance, oldStance)
+function MovementController.SyncHoldStance(holdStance, oldHoldStance)
+	if holdStance ~= Enums.HoldStance.Ready then
+		State.sprinting(false)
+		return
+	end
+end
+
+function MovementController.SyncStance(stance, oldStance)
 	local targetCharacterHeight = MovementController.GetTargetCharacterHeight(stance)
 
 	local humanoid = MovementController.humanoid

@@ -94,15 +94,15 @@ function WC.Initialize(params)
 		end
 	end)
 
-	Charm.subscribe(State.aiming, WC.OnAimToggled)
-	Charm.subscribe(State.firstPerson, WC.OnFirstPersonToggled)
-	Charm.subscribe(State.sprinting, WC.OnSprintToggled)
+	Charm.subscribe(State.aiming, WC.SyncAiming)
+	Charm.subscribe(State.firstPerson, WC.SyncFirstPerson)
+	Charm.subscribe(State.sprinting, WC.SyncSprinting)
 
-	Charm.subscribe(WeaponState.sightIndex, WC.OnSightIndexSwitched)
-	Charm.subscribe(WeaponState.flashlightEnabled, WC.OnFlashlightToggled)
-	Charm.subscribe(WeaponState.bipodEnabled, WC.OnBipodToggled)
-	Charm.subscribe(WeaponState.fireMode, WC.OnFireModeChanged)
-	Charm.subscribe(WeaponState.chambering, WC.UpdateChamber)
+	Charm.subscribe(WeaponState.sightIndex, WC.SyncSightIndex)
+	Charm.subscribe(WeaponState.flashlightEnabled, WC.SyncFlashlightEnabled)
+	Charm.subscribe(WeaponState.bipodEnabled, WC.SyncBipodEnabled)
+	Charm.subscribe(WeaponState.fireMode, WC.SyncFireMode)
+	Charm.subscribe(WeaponState.chambering, WC.SyncChambering)
 
 	-- Listen for animation events via signals
 	AnimationEvents.KeyframeReached:Connect(WC.OnKeyframeReached)
@@ -280,7 +280,7 @@ function WC.UpdateAttachmentsVisibility()
 	updateLight(tpModel, flashlightOn and not isFirstPerson)
 end
 
-function WC.OnFlashlightToggled(enabled)
+function WC.SyncFlashlightEnabled(enabled)
 	if not State.equippedTool() then return end
 	if weaponClientPersist.isApplying then
 		WC.UpdateAttachmentsVisibility()
@@ -291,7 +291,7 @@ function WC.OnFlashlightToggled(enabled)
 	WC.UpdateAttachmentsVisibility()
 end
 
-function WC.OnBipodToggled(enabled)
+function WC.SyncBipodEnabled(enabled)
 	if not State.equippedTool() then return end
 	local bipodModel = WeaponState.gunModel()
 	if WeaponState.attStats.Bipod and WeaponState.gunModel()[WeaponState.attStats.Bipod].Main:FindFirstChild("Bipod") then
@@ -307,7 +307,7 @@ function WC.OnBipodToggled(enabled)
 	end
 end
 
-function WC.OnFireModeChanged(mode)
+function WC.SyncFireMode(mode)
 	if not State.equippedTool() then return end
 	if weaponClientPersist.isApplying then
 		return
@@ -322,7 +322,7 @@ function WC._adsMeshEnabled(sightIndex)
 end
 
 
-function WC.OnAimToggled(aiming)
+function WC.SyncAiming(aiming)
 	if aiming then
 		-- effects n stuff
 		local ADSMeshEnabled = WC._adsMeshEnabled(WeaponState.sightIndex())
@@ -347,7 +347,7 @@ function WC.OnAimToggled(aiming)
 	end
 end
 
-function WC.OnFirstPersonToggled(isFirstPerson)
+function WC.SyncFirstPerson(isFirstPerson)
 	if isFirstPerson then
 		if State.equippedTool() then
 			WC.InputController.BindAiming()
@@ -358,15 +358,15 @@ function WC.OnFirstPersonToggled(isFirstPerson)
 	WC.UpdateAttachmentsVisibility()
 end
 
-function WC.OnSprintToggled(sprinting)
+function WC.SyncSprinting(sprinting)
 	if sprinting then
 		State.aiming(false)
-		WC.holdingM1 = false
 		WeaponState.holdStance(Enums.HoldStance.Ready)
+		WC.holdingM1 = false
 	end
 end
 
-function WC.OnSightIndexSwitched(index)
+function WC.SyncSightIndex(index)
 	if WC._adsMeshEnabled(index) then
 		WC.ToggleADSMesh(true)
 	else
@@ -790,7 +790,7 @@ function WC.OnChamberIntent(inputState, inputObject)
 	end
 end
 
-function WC.UpdateChamber(chambering)
+function WC.SyncChambering(chambering)
 	WeaponState.holdStance(Enums.HoldStance.Ready)
 end
 

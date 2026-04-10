@@ -130,11 +130,11 @@ function AnimationController.Initialize(params)
 	AnimationController.proneMoveAnim = _preloadAnimation(params.animationsFolder.Prone_Move, true, Enum.AnimationPriority.Movement)
 
 	-- Reactive state subscriptions
-	Charm.subscribe(State.sprinting, AnimationController.OnSprintChanged)
-	Charm.subscribe(State.stance, AnimationController.OnStanceChanged)
-	Charm.subscribe(State.moving, AnimationController.OnMovingChanged)
-	Charm.subscribe(WeaponState.holdStance, AnimationController.OnHoldStanceChanged)
-	Charm.subscribe(WeaponState.chambering, AnimationController.OnWeaponChamber)
+	Charm.subscribe(State.sprinting, AnimationController.SyncSprinting)
+	Charm.subscribe(State.stance, AnimationController.SyncStance)
+	Charm.subscribe(State.moving, AnimationController.SyncMoving)
+	Charm.subscribe(WeaponState.holdStance, AnimationController.SyncHoldStance)
+	Charm.subscribe(WeaponState.chambering, AnimationController.SyncChambering)
 
 	-- Listen for animation requests from other controllers via signals
 	AnimationEvents.WeaponEquipRequested:Connect(function() AnimationController.WeaponEquip() end)
@@ -149,7 +149,7 @@ function AnimationController.Initialize(params)
 	AnimationEvents.ReloadActionRequested:Connect(function(useClip) AnimationController.PlayReloadAction(useClip) end)
 end
 
-function AnimationController.OnStanceChanged(stance, oldStance)
+function AnimationController.SyncStance(stance, oldStance)
 	if AnimationController.moveAnim then _fadeTrack(AnimationController.moveAnim, 0, config.stanceChangeTime) end
 
 	if stance == 0 then -- Walking
@@ -169,7 +169,7 @@ function AnimationController.OnStanceChanged(stance, oldStance)
 	end
 end
 
-function AnimationController.OnMovingChanged(moving)
+function AnimationController.SyncMoving(moving)
 	if moving then
 		if AnimationController.moveAnim then _fadeTrack(AnimationController.moveAnim, 1, config.stanceChangeTime) end
 	else
@@ -177,7 +177,7 @@ function AnimationController.OnMovingChanged(moving)
 	end
 end
 
-function AnimationController.OnSprintChanged(sprinting)
+function AnimationController.SyncSprinting(sprinting)
 	if sprinting then
 		if WeaponState.wepStats and WeaponState.wepStats.sprintAnim then
 			AnimationController.PlayAnimation(WeaponState.wepStats.sprintAnim, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.5})
@@ -237,12 +237,11 @@ function AnimationController.AdjustMoveAnimSpeed(speed: number)
 end
 
 AnimationController.holdAnim = nil
-function AnimationController.OnHoldStanceChanged(newStance, oldStance)
+function AnimationController.SyncHoldStance(newStance, oldStance)
 	if AnimationController.holdAnim then
 		AnimationController.StopAnimation(AnimationController.holdAnim.Name, 0.3)
 		AnimationController.holdAnim = nil
 	end
-	State.sprinting(false)
 	if not State.equippedTool() or not WeaponState.wepStats then return end
 
 	local animToPlay
@@ -283,7 +282,7 @@ function AnimationController.WeaponIdle()
 	AnimationController.PlayAnimation(WeaponState.wepStats.idleAnim, {looped = true, priority = Enum.AnimationPriority.Idle}, "Idle")
 end
 
-function AnimationController.OnWeaponChamber(value)
+function AnimationController.SyncChambering(value)
 	if value == false or not WeaponState.wepStats or not State.equippedTool() then
 		return
 	end

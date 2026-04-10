@@ -30,12 +30,12 @@ function CC.Initialize(params)
 
 	CC.ReplicationController = params.ReplicationController
 
-	Charm.subscribe(State.sprinting, CC.OnSprintChanged)
-	Charm.subscribe(State.aiming, CC.OnAimingChanged)
+	Charm.subscribe(State.sprinting, CC.SyncSprinting)
+	Charm.subscribe(State.aiming, CC.SyncAiming)
 end
 
 
-function CC.OnSprintChanged(sprinting)
+function CC.SyncSprinting(sprinting)
 	--[[
 	if sprinting then
 		if depthOfField then
@@ -44,7 +44,7 @@ function CC.OnSprintChanged(sprinting)
 	end]]
 end
 
-function CC.OnAimingChanged(aiming)
+function CC.SyncAiming(aiming)
 	if CC.aimTween then
 		CC.aimTween:Cancel()
 		CC.aimTween = nil

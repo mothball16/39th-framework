@@ -58,10 +58,10 @@ function ViewmodelController.Initialize(params)
 	ViewmodelController.RefreshViewmodel = params.RefreshViewmodel
 
 
-	Charm.subscribe(State.equippedTool, ViewmodelController.OnEquippedToolChanged)
+	Charm.subscribe(State.equippedTool, ViewmodelController.SyncEquippedTool)
 end
 
-function ViewmodelController.OnEquippedToolChanged(tool, oldTool)
+function ViewmodelController.SyncEquippedTool(tool, oldTool)
 	if not tool then return end
 	ViewmodelController.ResetHipRotation()
 end

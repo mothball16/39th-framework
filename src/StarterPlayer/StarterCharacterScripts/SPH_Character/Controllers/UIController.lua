@@ -76,16 +76,16 @@ function UIController.Initialize(params)
 		UIController.ammoUI.Position = UDim2.new(1, -30, 1, -100)
 	end
 	
-	Charm.subscribe(State.equippedTool, UIController.OnEquippedToolChanged)
-    Charm.subscribe(State.aiming, UIController.OnAimToggled)
+	Charm.subscribe(State.equippedTool, UIController.SyncEquippedTool)
+    Charm.subscribe(State.aiming, UIController.SyncAiming)
 end
 
-function UIController.OnAimToggled(aiming)
+function UIController.SyncAiming(aiming)
     UIController.aimSens.TextTransparency = aiming and 0 or 1
 end
 
 
-function UIController.OnEquippedToolChanged(tool)
+function UIController.SyncEquippedTool(tool)
 	if tool then
 		if WeaponState.wepStats and WeaponState.wepStats.hasUBGL then
 			UIController.ubglAmmo = tool:FindFirstChild("UBGLAmmo")
