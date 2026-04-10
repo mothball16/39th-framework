@@ -18,7 +18,6 @@ local AnimationEvents = {}
 -- Weapon → Animation requests
 AnimationEvents.WeaponEquipRequested = Signal.new()
 AnimationEvents.WeaponIdleRequested = Signal.new()
-AnimationEvents.WeaponEquipPreloadRequested = Signal.new()
 AnimationEvents.FireAnimRequested = Signal.new()
 AnimationEvents.ReloadRequested = Signal.new() -- (lastGunModelName: string?)
 AnimationEvents.SwitchFireModeAnimRequested = Signal.new()

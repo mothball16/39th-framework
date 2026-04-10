@@ -32,7 +32,6 @@ local CharacterState = {
 
 	aiming = Charm.atom(false) 							:: Charm.Atom<boolean>,
 	equippedTool = Charm.atom(nil) 						:: Charm.Atom<Instance>,
-	equipping = Charm.atom(false)						:: Charm.Atom<boolean>,
 	sprinting = Charm.atom(false)						:: Charm.Atom<boolean>,
 
 	firstPerson = Charm.atom(false)						:: Charm.Atom<boolean>,

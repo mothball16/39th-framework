@@ -504,18 +504,9 @@ function WC.SwitchFireMode()
 	WeaponState.fireMode(mode)
 end
 
-function WC.EquipAnim()
-	AnimationEvents.WeaponEquipRequested:Fire()
-	task.wait(0.1)
-	
-	if not WeaponState.wepStats then return end
-	if WeaponState.wepStats.openBolt or not State.equippedTool().Chambered.Value then
-		WC.SetProjectileTransparency(WeaponState.gunModel(), 1)
-	end
-end
 
 function WC.Unequip(tool)
-	State.equipping(false)
+	WeaponState.equipping(false)
 	WC.viewmodelRig.AnimBase.CFrame = storageCFrame
 	WC.lastGunModel = WeaponState.gunModel()
 	
@@ -611,7 +602,7 @@ function WC.Equip(newChild)
 	UserInputService.MouseIconEnabled = false
 
 	WeaponState.reset()
-	State.equipping(true)
+	WeaponState.equipping(true)
 
 	State.equippedTool(newChild)
 	WeaponState.wepStats = require(State.equippedTool().SPH_Weapon.WeaponStats)
@@ -687,8 +678,14 @@ function WC.Equip(newChild)
 
 	if State.firstPerson() then WC.RefreshViewmodel() end
 	WC.InputController.BindGunInputs(State.firstPerson())
-	WC.EquipAnim()
+
+	AnimationEvents.WeaponEquipRequested:Fire()
 	AnimationEvents.WeaponIdleRequested:Fire()
+
+	if not WeaponState.wepStats then return end
+	if WeaponState.wepStats.openBolt or not State.equippedTool().Chambered.Value then
+		WC.SetProjectileTransparency(WeaponState.gunModel(), 1)
+	end
 
 	WeaponState.gunAmmo = State.equippedTool():WaitForChild("Ammo")
 
@@ -712,7 +709,7 @@ function WC.Equip(newChild)
 		if WeaponState.wepStats.ubgl.reloadAnim then
 			local animSpeed = WeaponState.wepStats.reloadSpeedModifier
 			if WeaponState.attStats.reloadSpeedModifier then animSpeed *= WeaponState.attStats.reloadSpeedModifier end
-			AnimationEvents.PlayAnimationRequested:Fire(WeaponState.wepStats.ubgl.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload", true)
+			AnimationEvents.PlayAnimationRequested:Fire(WeaponState.wepStats.ubgl.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
 		end
 	else
 		WC.ubglAmmo = nil
@@ -728,7 +725,6 @@ function WC.Equip(newChild)
 
 	WC._applyPersistedWeaponPrefs(newChild.Name)
 
-	AnimationEvents.WeaponEquipPreloadRequested:Fire()
 	task.delay(1, function() WC.lastGunModel = newChild end)
 end
 
@@ -760,18 +756,18 @@ end
 function WC.OnReloadIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan and WeaponState.canManipulate() and WC.cycled then
+		WeaponState.holdStance(Enums.HoldStance.Ready)
+
 		if WeaponState.fireMode() == Enums.FireModes.UBGL and WeaponState.wepStats.hasUBGL then
 			local ubglAmmoPool = State.equippedTool():FindFirstChild("UBGLAmmoPool")
 			if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
 				WC.cancelReload = false
-				WeaponState.holdStance(Enums.HoldStance.Ready)
 				AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
 			end
 		else
 			if WeaponState.wepStats.infiniteAmmo or WeaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
 				if (WeaponState.wepStats.openBolt and WeaponState.gunAmmo.MagAmmo.Value < WeaponState.gunAmmo.MagAmmo.MaxValue) then
 					WC.cancelReload = false
-					WeaponState.holdStance(Enums.HoldStance.Ready)
 					AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
 				else
 					if (WeaponState.wepStats.operationType == 4 and State.equippedTool().Chambered.Value)
@@ -780,7 +776,6 @@ function WC.OnReloadIntent(inputState, inputObject)
 						return
 					end
 					WC.cancelReload = false
-					WeaponState.holdStance(Enums.HoldStance.Ready)
 					AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
 				end
 			end
@@ -978,7 +973,13 @@ function WC.UpdateHeartbeat(dt)
 		and not WeaponState.chambering()
 		and WC.holdingM1
 		and WC.cycled then
-		if WC.canFire and not blocked and WeaponState.holdStance() == Enums.HoldStance.Ready and WC.IsLoaded() and fireMode > 0 and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook)) and not State.equipping() then
+		if WC.canFire 
+		and not blocked 
+		and WeaponState.holdStance() == Enums.HoldStance.Ready
+		and WC.IsLoaded()
+		and fireMode > 0
+		and (config.fireWithFreelook or (not config.fireWithFreelook and not freeLook))
+		and not WeaponState.equipping() then
 			if not State.firstPerson() and not config.thirdPersonFiring then return end
 
 			local currentStats = WC.GetCurrentWepStats()

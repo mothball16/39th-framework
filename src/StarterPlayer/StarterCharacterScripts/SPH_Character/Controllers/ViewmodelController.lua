@@ -233,7 +233,7 @@ function ViewmodelController.UpdateRender(dt)
 
 		local currentOffset = WeaponState.wepStats and WeaponState.wepStats.viewmodelOffset or CFrame.new()
 		ViewmodelController.UpdateViewmodelPosition(dt, currentOffset, WeaponState.sightIndex())
-	elseif WeaponState.viewmodelVisible() and not State.equipping() then
+	elseif WeaponState.viewmodelVisible() and not WeaponState.equipping() then
 		WeaponState.viewmodelVisible(false)
 	end
 end

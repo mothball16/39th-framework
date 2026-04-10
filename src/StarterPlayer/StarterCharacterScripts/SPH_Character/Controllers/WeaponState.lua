@@ -9,6 +9,7 @@ local legacySpring = require(modules.LegacySpring)
 local WepState = {
 	wepStats = nil,
 	attStats = {},
+	equipping = Charm.atom(false)						:: Charm.Atom<boolean>,
 
 	gunModel = Charm.atom(nil) 							:: Charm.Atom<Instance>,
 	gunAmmo = nil,
@@ -64,13 +65,14 @@ function WepState.reset()
 	WepState.bipodEnabled(false)
 	WepState.fireMode(0)
 	WepState.holdStance(Enums.HoldStance.Ready)
+	WepState.equipping(false)
 end
 
 function WepState.canManipulate()
 	return WepState.viewmodelVisible()
 	and not WepState.reloading()
 	and not WepState.chambering()
-	--and not WepState.equipping()
+	and not WepState.equipping()
 	and WepState.wepStats
 end
 
