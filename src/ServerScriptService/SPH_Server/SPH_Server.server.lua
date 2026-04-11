@@ -34,7 +34,7 @@ local warnPrefix = "【 SPEARHEAD 】 "
 print(warnPrefix.."Loading Server "..config.version)
 
 -- DD Assets
-local dd_settings = require(replicatedStorage.DD_Settings)
+local dd_settings = replicatedStorage:FindFirstChild("DD_Settings") and require(replicatedStorage.DD_Settings) or nil
 
 -- DD_SPH: Dragoon Tank System Compatibility
 local dtsInstall = replicatedStorage:FindFirstChild("DTS_Assets")
@@ -406,11 +406,14 @@ function setRecursiveAttachments(weapon, attachmentSlot, weaponAttachment, paren
 end
 -- </DD_SPH>
 
--- DD_SPH Gunsmith: Applying attachments to a weapon from gunsmith table
-replicatedStorage.DD_GunsmithHandler.ApplyAttachments.OnServerEvent:Connect(function(player, weapon:Tool, attachments)
-	local wepStats = require(weapon.SPH_Weapon.WeaponStats)
-	wepStats.Attachments = attachments
-end)
+if replicatedStorage:FindFirstChild("DD_GunsmithHandler") then
+	-- DD_SPH Gunsmith: Applying attachments to a weapon from gunsmith table
+	replicatedStorage.DD_GunsmithHandler.ApplyAttachments.OnServerEvent:Connect(function(player, weapon:Tool, attachments)
+		local wepStats = require(weapon.SPH_Weapon.WeaponStats)
+		wepStats.Attachments = attachments
+	end)
+end
+
 
 local function EquipGun(rig:Model, tool:Tool, rigType:Enum.HumanoidRigType) -- DD_SPH: Modified EquipGun function to accept rigType
 	if tool.Parent == rig.Parent and assets.WeaponModels:FindFirstChild(tool.Name) then
@@ -798,7 +801,10 @@ players.PlayerAdded:Connect(function(newPlayer:Player)
 		-- Set up all new characters with an animation rig
 		local newRig = MakeCharacterRig(newChar)
 		humanoid.BreakJointsOnDeath = not config.ragdolls
-		humanoid.MaxHealth = dd_settings.maxHealth
+
+		if dd_settings then
+			humanoid.MaxHealth = dd_settings.maxHealth
+		end
 		--humanoid.RequiresNeck = config.ragdolls
 		humanoid.Died:Connect(function()
 			if not newChar:FindFirstChild("HumanoidRootPart") then return end
