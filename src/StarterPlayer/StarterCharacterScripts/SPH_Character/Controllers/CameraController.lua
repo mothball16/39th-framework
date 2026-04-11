@@ -92,7 +92,7 @@ function CC.UpdateRender(dt)
 		end
 
 		local cameraDirection = State.Parts.HRP.CFrame:ToObjectSpace(lookDirection).LookVector
-		local rotationCFrame = CFrame.Angles(0, math.asin(cameraDirection.X)/1.15, 0) * CFrame.Angles(-math.asin(math.clamp(lookDirection.LookVector.Y,-.8,.15)) + math.asin(math.clamp(torsoDirection.Y, -.6,.6)), 0, 0)
+		local rotationCFrame = CFrame.Angles(0, math.asin(cameraDirection.X)/1.15, 0) * CFrame.Angles(-math.asin(math.clamp(lookDirection.LookVector.Y,-.8,.15)), 0, 0)
 		local neckCFrame
 		if State.Parts.IsR6 then
 			neckCFrame = CFrame.new(0, -.5, 0) * rotationCFrame * CFrame.Angles(-math.rad(90), 0, math.rad(180))
@@ -148,7 +148,7 @@ function CC.UpdateRender(dt)
 			yOffset = -1
 			if State.firstPerson() then zOffset -= 0.3 end
 		elseif State.stance() == 2 then
-			yOffset = -1.5
+			yOffset = -1.2
 			if State.firstPerson() then zOffset = -1.7 end
 		end
 
