@@ -35,6 +35,7 @@ local WepState = {
 	RecoilUp = legacySpring.new(Vector3.new()),
 	RecoilCF = CFrame.new(),
 	RecoilFactor = 0,
+	Spread = 0,
 }
 WepState.aimFOVTarget = Charm.computed(function()
 	if not WepState.wepStats or not WepState.gunModel() then
@@ -54,6 +55,7 @@ function WepState.reset()
 	WepState.CameraSpring.d = SP.cd
 	WepState.RecoilCF = CFrame.new()
 	WepState.RecoilFactor = 0
+	WepState.Spread = 0
 
 	WepState.wepStats = nil
 	WepState.attStats = {}

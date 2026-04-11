@@ -86,12 +86,10 @@ export type WeaponStats = {
 	
     burstFireRate: number?,
 
-	spread: number,
 	shotgun: boolean,
 	shotgunPellets: number?,
 
 	aimTime: number,
-	
     aimFovs: {number},
 
 	suppressionLevel: number,

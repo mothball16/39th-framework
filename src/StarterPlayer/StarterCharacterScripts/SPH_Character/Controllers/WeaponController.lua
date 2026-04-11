@@ -1003,9 +1003,6 @@ function WC.UpdateHeartbeat(dt)
 			WC.holdingM1 = false
 		end
 		
-		WeaponState.RecoilFactor = math.clamp(WeaponState.RecoilFactor + WeaponState.wepStats.RecoilStepAmount,
-			WeaponState.wepStats.MinRecoilFactor, WeaponState.wepStats.MaxRecoilFactor)
-
 		WC.cycled = false
 		local curModel = WeaponState.gunModel()
 
@@ -1039,7 +1036,7 @@ function WC.UpdateHeartbeat(dt)
 		local shotCount = (currentStats.shotgun and currentStats.shotgunPellets) or 1
 		for _ = 1, shotCount do
 			local bulletOrigin, bulletDirection
-			local tempSpread = currentStats.spread * 100
+			local tempSpread = WeaponState.Spread * 100
 			local spreadCFrame = CFrame.Angles(math.rad(math.random(-tempSpread, tempSpread) / 100), math.rad(math.random(-tempSpread, tempSpread) / 100), 0)
 
 			local muzzlePoint = WC.GetMuzzlePoint(State.firstPerson() and curModel or WC.GetThirdPersonGunModel())
@@ -1081,6 +1078,15 @@ function WC.UpdateHeartbeat(dt)
 			WC.SetProjectileTransparency(WeaponState.gunModel(), 1)
 		end
 
+		-- spread and recoil step
+		WeaponState.RecoilFactor = math.clamp(WeaponState.RecoilFactor + WeaponState.wepStats.RecoilStepAmount,
+			WeaponState.wepStats.MinRecoilFactor, WeaponState.wepStats.MaxRecoilFactor)
+
+		local spreadStep = WeaponState.wepStats.SpreadStepAmount
+		local minSpread = WeaponState.wepStats.MinSpread
+		local maxSpread = WeaponState.wepStats.MaxSpread
+		WeaponState.Spread = math.clamp(math.max(WeaponState.Spread, minSpread) + spreadStep, minSpread, maxSpread)
+
 		task.wait(60 / cycleTime)
 		if not State.equippedTool() then return end
 
@@ -1114,6 +1120,11 @@ function WC.UpdateRender(dt)
 	WeaponState.RecoilUp.t = WeaponState.RecoilCF.UpVector
 	WeaponState.RecoilFactor = math.clamp(WeaponState.RecoilFactor - WeaponState.wepStats.RecoilRecoverPerSecond * dt,
 		WeaponState.wepStats.MinRecoilFactor, WeaponState.wepStats.MaxRecoilFactor)
+
+	local spreadRecover = WeaponState.wepStats.SpreadRecoverPerSecond
+	local minSpread = WeaponState.wepStats.MinSpread
+	local maxSpread = WeaponState.wepStats.MaxSpread
+	WeaponState.Spread = math.clamp(math.max(WeaponState.Spread, minSpread) - (spreadRecover * dt), minSpread, maxSpread)
 
 	local bipodPart = WeaponState.gunModel().Grip:FindFirstChild("Bipod")
 	local bipodModel = WeaponState.gunModel()
