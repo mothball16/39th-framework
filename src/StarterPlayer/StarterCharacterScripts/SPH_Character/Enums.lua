@@ -44,5 +44,23 @@ return {
         Burst = 3,
         UBGL = 4,
         Manual = 5
-    }
+    },
+
+    OperationType = {
+        -- Tactical/Closed Bolt behavior (AR-15, Glock)
+        ClosedBoltRetained = 1,
+        -- Open-bolt or specific manual cycling (MP40, some Shotguns)
+        OpenBoltOnEmpty = 2,
+        -- Forced cycling every time (Bolt-action, Pump-action)
+        ManualCycleAlways = 3,
+        -- Static breech/Cell based (RPG, Railgun)
+        NonReciprocating = 4
+    },
+
+    MagType = {
+        MagFed = 1,
+        ClipFed = 2,
+        Manual = 3,
+    },
+
 }
