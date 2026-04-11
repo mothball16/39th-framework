@@ -153,9 +153,6 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 			ViewmodelController.StopAnimation(WeaponState.wepStats.holdUpAnim, 0.3)
 		end
 		WeaponState.blocked(false)
-		if WeaponState.aimHeld() and State.firstPerson() and not State.sprinting() then
-			State.aiming(true)
-		end
 		pushbackOffset = LerpNumber(pushbackOffset, 0, 0.2 * 60 * dt)
 	end
 	animBase.CFrame *= CFrame.new(0, 0, pushbackOffset)

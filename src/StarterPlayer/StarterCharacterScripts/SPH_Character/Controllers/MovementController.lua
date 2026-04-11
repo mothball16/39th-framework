@@ -230,7 +230,7 @@ function MovementController.UpdateRender(dt)
 		State.moving(true)
 	elseif humanoid.MoveDirection.Magnitude <= 0 and State.moving() then
 		State.moving(false)
-		State.sprinting(false)
+		--State.sprinting(false)
 	end
 
 	-- lean logic

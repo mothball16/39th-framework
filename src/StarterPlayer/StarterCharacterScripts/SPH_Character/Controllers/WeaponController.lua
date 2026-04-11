@@ -755,32 +755,32 @@ end
 
 function WC.OnReloadIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
-	if inputState == inputBegan and WeaponState.canManipulate() and WC.cycled then
-		WeaponState.holdStance(Enums.HoldStance.Ready)
-
-		if WeaponState.fireMode() == Enums.FireModes.UBGL and WeaponState.wepStats.hasUBGL then
-			local ubglAmmoPool = State.equippedTool():FindFirstChild("UBGLAmmoPool")
-			if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
+	if inputState ~= inputBegan or not WeaponState.canManipulate() or not WC.cycled then return end
+	WeaponState.holdStance(Enums.HoldStance.Ready)
+	State.aiming(false)
+	if WeaponState.fireMode() == Enums.FireModes.UBGL and WeaponState.wepStats.hasUBGL then
+		local ubglAmmoPool = State.equippedTool():FindFirstChild("UBGLAmmoPool")
+		if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
+			WC.cancelReload = false
+			AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
+		end
+	else
+		if WeaponState.wepStats.infiniteAmmo or WeaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
+			if (WeaponState.wepStats.openBolt and WeaponState.gunAmmo.MagAmmo.Value < WeaponState.gunAmmo.MagAmmo.MaxValue) then
+				WC.cancelReload = false
+				AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
+			else
+				if (WeaponState.wepStats.operationType == 4 and State.equippedTool().Chambered.Value)
+					or (WeaponState.wepStats.operationType == 3 and WeaponState.gunAmmo.MagAmmo.Value + 1 >= WeaponState.gunAmmo.MagAmmo.MaxValue)
+					or (WeaponState.wepStats.operationType == 2 and WeaponState.gunAmmo.MagAmmo.Value >= WeaponState.gunAmmo.MagAmmo.MaxValue) then
+					return
+				end
 				WC.cancelReload = false
 				AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
 			end
-		else
-			if WeaponState.wepStats.infiniteAmmo or WeaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
-				if (WeaponState.wepStats.openBolt and WeaponState.gunAmmo.MagAmmo.Value < WeaponState.gunAmmo.MagAmmo.MaxValue) then
-					WC.cancelReload = false
-					AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
-				else
-					if (WeaponState.wepStats.operationType == 4 and State.equippedTool().Chambered.Value)
-						or (WeaponState.wepStats.operationType == 3 and WeaponState.gunAmmo.MagAmmo.Value + 1 >= WeaponState.gunAmmo.MagAmmo.MaxValue)
-						or (WeaponState.wepStats.operationType == 2 and WeaponState.gunAmmo.MagAmmo.Value >= WeaponState.gunAmmo.MagAmmo.MaxValue) then
-						return
-					end
-					WC.cancelReload = false
-					AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
-				end
-			end
 		end
 	end
+	
 end
 
 function WC.OnChamberIntent(inputState, inputObject)
@@ -825,7 +825,11 @@ end
 function WC.OnAimIntent(inputState, inputObject)
 	local inputBegan = inputState == Enum.UserInputState.Begin
 	if not UserInputService.TouchEnabled and not config.toggleAiming then -- Hold aiming
-		if inputBegan and State.firstPerson() and not State.freeLook() and not WeaponState.blocked() then
+		if inputBegan
+			and State.firstPerson()
+			and not State.freeLook()
+			and not WeaponState.blocked()
+			and not WeaponState.reloading() then
 			WeaponState.aimHeld(true)
 			State.aiming(true)
 		else
@@ -833,7 +837,11 @@ function WC.OnAimIntent(inputState, inputObject)
 			State.aiming(false)
 		end
 	elseif inputBegan then -- Mobile and toggle aiming
-		if State.firstPerson() and not State.freeLook() and not WeaponState.blocked() and not State.aiming() then
+		if State.firstPerson()
+		and not State.freeLook()
+		and not WeaponState.blocked()
+		and not State.aiming()
+		and not WeaponState.reloading() then
 			WeaponState.aimHeld(true)
 			State.aiming(true)
 		else
