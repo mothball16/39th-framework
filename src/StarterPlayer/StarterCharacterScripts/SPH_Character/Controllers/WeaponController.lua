@@ -791,7 +791,10 @@ function WC.OnChamberIntent(inputState, inputObject)
 end
 
 function WC.SyncChambering(chambering)
-	WeaponState.holdStance(Enums.HoldStance.Ready)
+	if chambering then
+		WeaponState.holdStance(Enums.HoldStance.Ready)
+		State.aiming(false)
+	end
 end
 
 function WC.OnSwitchSightsIntent(inputState, inputObject)
@@ -829,7 +832,8 @@ function WC.OnAimIntent(inputState, inputObject)
 			and State.firstPerson()
 			and not State.freeLook()
 			and not WeaponState.blocked()
-			and not WeaponState.reloading() then
+			and not WeaponState.reloading() 
+			and not WeaponState.chambering() then
 			WeaponState.aimHeld(true)
 			State.aiming(true)
 		else
@@ -841,7 +845,8 @@ function WC.OnAimIntent(inputState, inputObject)
 		and not State.freeLook()
 		and not WeaponState.blocked()
 		and not State.aiming()
-		and not WeaponState.reloading() then
+		and not WeaponState.reloading()
+		and not WeaponState.chambering() then
 			WeaponState.aimHeld(true)
 			State.aiming(true)
 		else
