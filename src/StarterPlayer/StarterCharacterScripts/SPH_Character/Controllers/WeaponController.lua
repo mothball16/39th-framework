@@ -688,7 +688,7 @@ function WC.Equip(newChild)
 	end
 
 	WeaponState.gunAmmo = State.equippedTool():WaitForChild("Ammo")
-
+	WeaponState.localAmmo(WeaponState.gunAmmo.MagAmmo.Value)
 	if WeaponState.wepStats.hasUBGL then
 		WC.ubglAmmo = newChild:FindFirstChild("UBGLAmmo")
 		local ubglAmmoPool = newChild:FindFirstChild("UBGLAmmoPool")

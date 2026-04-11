@@ -1,0 +1,49 @@
+{
+  "name": "v1",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$ignoreUnknownInstances": true,
+      "Packages": {
+        "$path": "Packages"
+      },
+      "Utility": {
+        "$path":"Utility"
+      },
+      "SPH_Assets": {
+        "$path": "src/ReplicatedStorage/SPH_Assets"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$ignoreUnknownInstances": true,
+      
+      "SPH_Server": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/ServerScriptService/SPH_Server"
+      }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$ignoreUnknownInstances": true,
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
+        "$ignoreUnknownInstances": true,
+        "SPH_Character":{
+          "$ignoreUnknownInstances": false,
+          "$path": "src/StarterPlayer/StarterCharacterScripts/SPH_Character"
+        }
+      },
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true,
+        "SPH_Player":{
+          "$ignoreUnknownInstances": false,
+          "$path": "src/StarterPlayer/StarterPlayerScripts/SPH_Player"
+        }
+      }
+    }
+  }
+}

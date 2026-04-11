@@ -13,7 +13,7 @@ local WepState = {
 
 	gunModel = Charm.atom(nil) 							:: Charm.Atom<Instance>,
 	gunAmmo = nil,
-
+	localAmmo = Charm.atom(0)							:: Charm.Atom<number>,
 	aimSens = Charm.atom(config.defaultAimSensitivity) 	:: Charm.Atom<number>,
 	sightIndex = Charm.atom(1) 							:: Charm.Atom<number>,
 	viewmodelVisible = Charm.atom(false)				:: Charm.Atom<boolean>,
@@ -53,6 +53,7 @@ function WepState.reset()
 	WepState.gunModel(nil)
 	WepState.gunAmmo = nil
 
+	WepState.localAmmo(0)
 	WepState.aimSens(config.defaultAimSensitivity)
 	WepState.sightIndex(1)
 	WepState.viewmodelVisible(false)
