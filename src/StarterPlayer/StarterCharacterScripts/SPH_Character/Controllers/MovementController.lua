@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
+local CollectionService = game:GetService("CollectionService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 
@@ -250,9 +251,9 @@ function MovementController.UpdateRender(dt)
 
 		-- TODO: this is probably an optimization issue. consider caching and determining how this would work under StreamingEnabled
 		if config.replicateMovementLeaning then
-			for _, player in ipairs(Players:GetPlayers()) do
-				if player ~= Players.LocalPlayer and player.Character then
-					UpdateCharacterTilt(player.Character, dt)
+			for _, character in ipairs(CollectionService:GetTagged("SPH_Character")) do
+				if character ~= Players.LocalPlayer.Character then
+					UpdateCharacterTilt(character, dt)
 				end
 			end
 		end
