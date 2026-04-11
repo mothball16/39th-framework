@@ -46,7 +46,12 @@ local ReplicatedAttributes = {
         end,
         onChanged = function(state, value)
             if state.joint and value then
+                local dist = (workspace.CurrentCamera.CFrame.Position - state.joint.Parent.Position).Magnitude
                 state.targetC1 = value
+                -- just snap if its beyond smooth render distance
+                if dist > config.headRotationDistance then
+                    state.joint.C1 = value
+                end
             end
         end,
         onRender = function(state, dt)
