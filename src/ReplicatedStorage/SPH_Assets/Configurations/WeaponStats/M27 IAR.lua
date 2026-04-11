@@ -1,3 +1,4 @@
+--!strict
 local Types = require(script.Parent.Parent.ConfigurationTypes)
 
 local wepStats: Types.WeaponStats = {
@@ -23,11 +24,10 @@ local wepStats: Types.WeaponStats = {
 	RecoilStepAmount = 0.34,
 	RecoilRecoverPerSecond = 2.25 - 1,
 	
-	MinSpread = 5,					--- Min bullet spread value | Studs
-	MaxSpread = 7,
-
-	AimInaccuracyStepAmount = .5,		--- Increase in bullet spread when firing
-	AimInaccuracyDecrease = .25,		--- Decrease in bullet spread when not firing
+	MinSpread = 0.1,					--- Min bullet spread value | Studs
+	MaxSpread = 0.4,
+	SpreadStepAmount = 0.1,		--- Increase in bullet spread when firing
+	SpreadRecoverPerSecond = 0.5,		--- Decrease in bullet spread when not firing
 	
 	DeltaInstability = Vector2.new(5, 3),	--- Weapon sway when moving camera around. Stocked weapons should default at 3-5. 
 	MoveInstability = 0.75,					--- Weapon sway when moving while walking. Stocked weapons should default at 0.5-0.75.
@@ -71,7 +71,6 @@ local wepStats: Types.WeaponStats = {
 	burstNumber = 3, -- If this gun can fire in bursts, what should the shot limit be?
 	burstFireRate = nil, -- Use this if you want a separate burst fire rate, leave it as nil if you want to use the regular fire rate
 
-	spread = 0, -- Adds some random variation to the bullet direction
 	shotgun = false,
 	shotgunPellets = 10, -- If shotgun is true, how many pellets should be fired at once?
 
@@ -107,7 +106,7 @@ local wepStats: Types.WeaponStats = {
 
 	-- Tracers
 	tracers = true,
-	tracerTiming = 4, -- Every x number of shots will be a tracer
+	tracerTiming = 3, -- Every x number of shots will be a tracer
 	tracerColor = Color3.fromRGB(255, 55, 55),
 
 	-- Ammo
