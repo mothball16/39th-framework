@@ -225,7 +225,7 @@ end
 function CC.UpdateFOV(dt)
 	local camSensFactor = CC.camera.FieldOfView / config.defaultFOV
 	if State.aiming() then
-		CC.camera.FieldOfView = LerpNumber(CC.camera.FieldOfView, State.aimFOVTarget(), 0.3 * (dt * 60))
+		CC.camera.FieldOfView = LerpNumber(CC.camera.FieldOfView, WeaponState.aimFOVTarget(), 0.3 * (dt * 60))
 		UserInputService.MouseDeltaSensitivity = WeaponState.aimSens() * camSensFactor
 	else
 		UserInputService.MouseDeltaSensitivity = 1 * camSensFactor

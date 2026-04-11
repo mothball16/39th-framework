@@ -14,6 +14,7 @@ local WepState = {
 	gunModel = Charm.atom(nil) 							:: Charm.Atom<Instance>,
 	gunAmmo = nil,
 	localAmmo = Charm.atom(0)							:: Charm.Atom<number>,
+
 	aimSens = Charm.atom(config.defaultAimSensitivity) 	:: Charm.Atom<number>,
 	sightIndex = Charm.atom(1) 							:: Charm.Atom<number>,
 	viewmodelVisible = Charm.atom(false)				:: Charm.Atom<boolean>,
@@ -35,6 +36,12 @@ local WepState = {
 	RecoilCF = CFrame.new(),
 	RecoilFactor = 0,
 }
+WepState.aimFOVTarget = Charm.computed(function()
+	if not WepState.wepStats or not WepState.gunModel() then
+		return config.defaultFOV
+	end
+	return WepState.wepStats.aimFovs[WepState.sightIndex()] or config.defaultFOV
+end)
 
 function WepState.reset()
 	WepState.RecoilUp.s = SP.rs

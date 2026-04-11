@@ -228,7 +228,6 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 
 		-- Sensitivity
 		WeaponState.aimSens(math.clamp(WeaponState.aimSens() + (0.01 * scrollAmount), 0.01, 1))
-		WeaponState.wepStats.aimSpeed = WeaponState.aimSens()
 	else
 		if not WeaponState.canManipulate() then
 			return

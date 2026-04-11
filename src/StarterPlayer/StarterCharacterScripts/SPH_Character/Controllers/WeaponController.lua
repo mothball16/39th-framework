@@ -222,9 +222,6 @@ function WC._applyPersistedWeaponPrefs(weaponName)
 
 	if validated.aimSens then
 		WeaponState.aimSens(validated.aimSens)
-		if WeaponState.wepStats then
-			WeaponState.wepStats.aimSpeed = validated.aimSens
-		end
 	end
 	if validated.sightIndex then
 		WeaponState.sightIndex(validated.sightIndex)
@@ -335,8 +332,6 @@ function WC.SyncAiming(aiming)
 		-- ready the character
 		State.sprinting(false)
 		WeaponState.holdStance(Enums.HoldStance.Ready)
-
-
 	else
 		WC.PlayRepSound("AimDown")
 		WC.ToggleADSMesh(false)
@@ -623,7 +618,6 @@ function WC.Equip(newChild)
 	end
 
 
-	State.aimFOVTarget(WeaponState.wepStats.aimFovDefault or config.defaultFOV)
 
 	-- fallbacks
 	if not WeaponState.wepStats.operationType or type(WeaponState.wepStats.operationType) == "string" then
@@ -654,7 +648,7 @@ function WC.Equip(newChild)
 		end
 	end
 	if WeaponState.attStats.aimFovDefault then
-		State.aimFOVTarget(WeaponState.attStats.aimFovDefault)
+		WeaponState.aimFOVTarget(WeaponState.attStats.aimFovDefault)
 	end
 	]]
 

@@ -108,7 +108,6 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
 
 	local aimTime = WeaponState.wepStats.aimTime
-	if WeaponState.attStats.aimTime then aimTime *= WeaponState.attStats.aimTime end
 
 	if State.aiming() then
 		aimingOffset = aimingOffset:Lerp(aimTarget, (0.7 / aimTime) * 0.3 * dt * 60)
@@ -118,7 +117,6 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	animBase.CFrame *= aimingOffset
 
 	local rayDistance = WeaponState.wepStats.gunLength
-	if WeaponState.attStats.gunLength then rayDistance += WeaponState.attStats.gunLength end
 	local originCFrame = State.firstPerson() and animBase.CFrame or weaponRig.AnimBase.CFrame
 	local newRay = workspace:Raycast(originCFrame.Position, originCFrame.LookVector * rayDistance, rayParams)
 	
