@@ -31,6 +31,7 @@ config.headRotationSpeed = 15
 config.disableHeadRotation = false -- Disables head rotation entirely for both first and third person (Your viewmodel will still move up and down)
 config.headRotationEventRate = 0.5 -- How often should head rotation be replicated
 config.replicatedHeadRotationSpeed = 0.6 -- How quickly should other player's head's be rotated
+config.headRotationDistance = 100 -- Maximum distance to replicate head rotation for other players
 
 config.useDeathCameraSubject = true -- If this is true, your camera will follow your corpse when you die
 

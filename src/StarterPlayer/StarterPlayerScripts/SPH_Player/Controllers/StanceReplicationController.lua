@@ -51,7 +51,10 @@ local ReplicatedAttributes = {
         end,
         onRender = function(state, dt)
             if state.joint and state.joint.Parent and state.targetC1 then
-                state.joint.C1 = state.joint.C1:Lerp(state.targetC1, 1 - math.exp(-12 * dt))
+                local dist = (workspace.CurrentCamera.CFrame.Position - state.joint.Parent.Position).Magnitude
+                if dist <= config.headRotationDistance then
+                    state.joint.C1 = state.joint.C1:Lerp(state.targetC1, 1 - math.exp(-12 * dt))
+                end
             end
         end,
     },

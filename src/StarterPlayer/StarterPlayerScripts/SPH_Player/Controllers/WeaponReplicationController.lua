@@ -4,6 +4,7 @@ local Debris = game:GetService("Debris")
 
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local modules = assets:WaitForChild("Modules")
+local config = require(assets:WaitForChild("GameConfig"))
 
 local hitFX = require(modules.HitFX)
 local shellEjection = require(modules.ShellEjection)
@@ -93,7 +94,9 @@ function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: 
 		bulletHandler.FireBullet(rig, bulletOrigin, bulletDirection, bulletVelocity, tool, player, tracerColor, true)
 
 		if wepStats.fireMode ~= "Manual" and wepStats.shellEject then
-			shellEjection.ejectShell(player, tool, gunModel)
+			if (bulletOrigin - workspace.CurrentCamera.CFrame.Position).Magnitude <= config.shellDistance then
+				shellEjection.ejectShell(player, tool, gunModel)
+			end
 		end
 	end 
 end
