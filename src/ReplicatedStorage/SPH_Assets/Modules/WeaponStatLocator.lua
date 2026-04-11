@@ -9,14 +9,22 @@ local function getConfig(sphWeapon, configName)
 	if attr then
 		local folder = configs:FindFirstChild(configName)
 		local module = folder and folder:FindFirstChild(attr)
-		if module then return table.freeze(require(module)) end
+		if module then
+            local tbl = require(module)
+            if not table.isfrozen(tbl) then
+                tbl = table.freeze(tbl)
+            end
+            return tbl
+        end
 	end
 
 	local direct = sphWeapon:FindFirstChild(configName)
 	if direct then
         warn(`using fallback config method for {sphWeapon.Parent.Name}. switch to storing configs in SPH_Assets.Configurations`)
-        return table.freeze(require(direct))
+        return require(direct)
     end
+
+
 
 	warn(`no {configName} found for {sphWeapon.Parent.Name}`)
 	return nil
