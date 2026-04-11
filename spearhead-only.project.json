@@ -1,5 +1,5 @@
 {
-  "name": "v1",
+  "name": "Spearhead standalone",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
