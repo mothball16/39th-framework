@@ -13,7 +13,10 @@ local function getConfig(sphWeapon, configName)
 	end
 
 	local direct = sphWeapon:FindFirstChild(configName)
-	if direct then return table.freeze(require(direct)) end
+	if direct then
+        warn(`using fallback config method for {sphWeapon.Parent.Name}. switch to storing configs in SPH_Assets.Configurations`)
+        return table.freeze(require(direct))
+    end
 
 	warn(`no {configName} found for {sphWeapon.Parent.Name}`)
 	return nil

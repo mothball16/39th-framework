@@ -15,6 +15,7 @@ local shellEjection = require(modules.ShellEjection)
 local weldMod = require(modules.WeldMod)
 local bridgeNet = require(modules.BridgeNet)
 local weaponClientPersist = require(modules.WeaponClientPersist)
+local weaponStatLocator = require(modules.WeaponStatLocator)
 
 
 local RecoilModule = require(modules.Recoil.Default)
@@ -600,7 +601,7 @@ function WC.Equip(newChild)
 	WeaponState.equipping(true)
 
 	State.equippedTool(newChild)
-	WeaponState.wepStats = require(State.equippedTool().SPH_Weapon.WeaponStats)
+	WeaponState.wepStats = weaponStatLocator.getWeaponStats(State.equippedTool().SPH_Weapon)
 
 	WC.cycled = true
 	WC.switchWeapon:Fire(newChild)
