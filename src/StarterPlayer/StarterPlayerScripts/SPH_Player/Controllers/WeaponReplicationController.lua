@@ -18,7 +18,7 @@ local repHit = bridgeNet.CreateBridge("ReplicateHit")
 local repBolt = bridgeNet.CreateBridge("ReplicateBolt")
 local repCharSound = bridgeNet.CreateBridge("ReplicateCharacterSound")
 local repMagGrab = bridgeNet.CreateBridge("ReplicateMagGrab")
-local InitiateGunsmith = bridgeNet.CreateBridge("InitiateGunsmith")
+--local InitiateGunsmith = bridgeNet.CreateBridge("InitiateGunsmith")
 
 local WeaponReplicationController = {}
 
@@ -29,7 +29,7 @@ function WeaponReplicationController.Initialize()
 	repBolt:Connect(WeaponReplicationController.OnReplicateBolt)
 	repCharSound:Connect(WeaponReplicationController.OnReplicateCharacterSound)
 	repMagGrab:Connect(WeaponReplicationController.OnReplicateMagGrab)
-	InitiateGunsmith:Connect(WeaponReplicationController.OnInitiateGunsmith)
+	--InitiateGunsmith:Connect(WeaponReplicationController.OnInitiateGunsmith)
 end
 
 function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: CFrame, tracer: boolean)
