@@ -9,7 +9,7 @@ local hitFX = require(modules.HitFX)
 local shellEjection = require(modules.ShellEjection)
 local bulletHandler = require(modules.BulletHandler)
 local gunsmith = require(modules.Gunsmith)
-local gunsmithHandler = require(ReplicatedStorage:WaitForChild("DD_GunsmithHandler"))
+--local gunsmithHandler = require(ReplicatedStorage:WaitForChild("DD_GunsmithHandler"))
 
 local bridgeNet = require(modules.BridgeNet)
 local repFire = bridgeNet.CreateBridge("ReplicateFire")
@@ -177,8 +177,9 @@ function WeaponReplicationController.OnReplicateMagGrab(magPart: BasePart)
 	end
 end
 
+--[[
 function WeaponReplicationController.OnInitiateGunsmith(weaponTool, weaponModel)
 	gunsmithHandler.Init(weaponTool, weaponModel)
-end
+end]]
 
 return WeaponReplicationController
