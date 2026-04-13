@@ -314,16 +314,10 @@ function WC.SyncFireMode(mode)
 end
 
 
-function WC._adsMeshEnabled(sightIndex)
-	return (WeaponState.attStats and WeaponState.attStats.ADSEnabled and WeaponState.attStats.ADSEnabled[sightIndex])
-	or (WeaponState.wepStats and WeaponState.wepStats.ADSEnabled and WeaponState.wepStats.ADSEnabled[sightIndex])
-end
-
-
 function WC.SyncAiming(aiming)
 	if aiming then
 		-- effects n stuff
-		local ADSMeshEnabled = WC._adsMeshEnabled(WeaponState.sightIndex())
+		local ADSMeshEnabled = WeaponState.adsMeshEnabledForActiveSight()
 		WC.PlayRepSound("AimUp")
 		WC.ToggleADSMesh(ADSMeshEnabled)
 		if not config.lockFirstPerson then
@@ -363,7 +357,7 @@ function WC.SyncSprinting(sprinting)
 end
 
 function WC.SyncSightIndex(index)
-	if WC._adsMeshEnabled(index) then
+	if WeaponState.adsMeshLayerEnabled(index) then
 		WC.ToggleADSMesh(true)
 	else
 		WC.ToggleADSMesh(false)
@@ -375,7 +369,7 @@ end
 function WC.PlayRepSound(soundName)
 	if not State.dead() and WeaponState.wepStats then
 		local soundToPlay
-		if WeaponState.fireMode() == Enums.FireModes.UBGL and WeaponState.wepStats.hasUBGL then
+		if WeaponState.ubglActive() then
 			soundToPlay = WeaponState.gunModel().Grip:FindFirstChild("UBGL_" .. soundName)
 			if not soundToPlay then
 				soundToPlay = WeaponState.gunModel().Grip:FindFirstChild(soundName)
@@ -405,7 +399,7 @@ function WC.PlayRepSound(soundName)
 end
 
 function WC.GetCurrentWepStats()
-	if WeaponState.fireMode() == Enums.FireModes.UBGL and WeaponState.wepStats.hasUBGL then
+	if WeaponState.ubglActive() then
 		return WeaponState.wepStats.getStatsForMode(4)
 	else
 		return WeaponState.wepStats
@@ -414,7 +408,7 @@ end
 
 function WC.IsLoaded()
 	local currentStats = WC.GetCurrentWepStats()
-	if WeaponState.fireMode() == Enums.FireModes.UBGL and WeaponState.wepStats.hasUBGL then
+	if WeaponState.ubglActive() then
 		return WC.ubglAmmo and WC.ubglAmmo.Value > 0
 	else
 		return not currentStats.openBolt and State.equippedTool().Chambered.Value or currentStats.openBolt and WeaponState.gunAmmo.MagAmmo.Value > 0
@@ -422,7 +416,7 @@ function WC.IsLoaded()
 end
 
 function WC.GetMuzzlePoint(gunModel)
-	if WeaponState.fireMode() == Enums.FireModes.UBGL and WeaponState.wepStats.hasUBGL then
+	if WeaponState.ubglActive() then
 		local ubglMuzzle = gunModel.Grip:FindFirstChild("UBGLMuzzle")
 		if ubglMuzzle then return ubglMuzzle end
 	end
@@ -439,7 +433,7 @@ function WC.MoveBolt(direction:CFrame, silent:boolean)
 end
 
 function WC.ToggleADSMesh(toggle)
-	if not ((WeaponState.wepStats and WeaponState.wepStats.ADSEnabled) or (WeaponState.attStats and WeaponState.attStats.ADSEnabled)) then
+	if not WeaponState.hasAdsMeshLayers() then
 		return
 	end
 
@@ -753,7 +747,7 @@ function WC.OnReloadIntent(inputState, inputObject)
 	if inputState ~= inputBegan or not WeaponState.canManipulate() or not WC.cycled then return end
 	WeaponState.holdStance(Enums.HoldStance.Ready)
 	State.aiming(false)
-	if WeaponState.fireMode() == Enums.FireModes.UBGL and WeaponState.wepStats.hasUBGL then
+	if WeaponState.ubglActive() then
 		local ubglAmmoPool = State.equippedTool():FindFirstChild("UBGLAmmoPool")
 		if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
 			WC.cancelReload = false
@@ -826,9 +820,7 @@ function WC.OnAimIntent(inputState, inputObject)
 		if inputBegan
 			and State.firstPerson()
 			and not State.freeLook()
-			and not WeaponState.blocked()
-			and not WeaponState.reloading() 
-			and not WeaponState.chambering() then
+			and WeaponState.canTrackAimInput() then
 			WeaponState.aimHeld(true)
 			State.aiming(true)
 		else
@@ -838,10 +830,8 @@ function WC.OnAimIntent(inputState, inputObject)
 	elseif inputBegan then -- Mobile and toggle aiming
 		if State.firstPerson()
 		and not State.freeLook()
-		and not WeaponState.blocked()
-		and not State.aiming()
-		and not WeaponState.reloading()
-		and not WeaponState.chambering() then
+		and WeaponState.canTrackAimInput()
+		and not State.aiming() then
 			WeaponState.aimHeld(true)
 			State.aiming(true)
 		else

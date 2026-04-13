@@ -14,6 +14,8 @@ local WepState = {
 	gunModel = Charm.atom(nil) 							:: Charm.Atom<Instance>,
 	gunAmmo = nil,
 	localAmmo = Charm.atom(0)							:: Charm.Atom<number>,
+	localUbglAmmo = Charm.atom(0)						:: Charm.Atom<number>,
+	predictedChambered = Charm.atom(true)				:: Charm.Atom<boolean>,
 
 	aimSens = Charm.atom(config.defaultAimSensitivity) 	:: Charm.Atom<number>,
 	sightIndex = Charm.atom(1) 							:: Charm.Atom<number>,
@@ -44,6 +46,54 @@ WepState.aimFOVTarget = Charm.computed(function()
 	return WepState.wepStats.aimFovs[WepState.sightIndex()] or config.defaultFOV
 end)
 
+function WepState.adsMeshLayerEnabled(sightIndex: number): boolean
+	return (WepState.attStats and WepState.attStats.ADSEnabled and WepState.attStats.ADSEnabled[sightIndex])
+		or (WepState.wepStats and WepState.wepStats.ADSEnabled and WepState.wepStats.ADSEnabled[sightIndex])
+end
+
+function WepState.hasAdsMeshLayers(): boolean
+	local v = (WepState.wepStats and WepState.wepStats.ADSEnabled) or (WepState.attStats and WepState.attStats.ADSEnabled)
+	return if v then true else false
+end
+
+WepState.ubglActive = Charm.computed(function()
+	local ws = WepState.wepStats
+	return ws ~= nil
+		and ws.hasUBGL == true
+		and WepState.fireMode() == Enums.FireModes.UBGL
+end)
+
+WepState.hasAmmoForMode = Charm.computed(function()
+	if not WepState.wepStats then
+		return false
+	end
+	if WepState.ubglActive() then
+		return WepState.localUbglAmmo() > 0
+	elseif WepState.wepStats.openBolt then
+		return WepState.localAmmo() > 0
+	else
+		return WepState.predictedChambered()
+	end
+end)
+
+WepState.canManipulate = Charm.computed(function()
+	return WepState.viewmodelVisible()
+	and not WepState.reloading()
+	and not WepState.chambering()
+	and not WepState.equipping()
+	and WepState.wepStats
+end)
+
+WepState.canTrackAimInput = Charm.computed(function()
+	return not WepState.blocked()
+		and not WepState.reloading()
+		and not WepState.chambering()
+end)
+
+WepState.adsMeshEnabledForActiveSight = Charm.computed(function()
+	return WepState.adsMeshLayerEnabled(WepState.sightIndex())
+end)
+
 function WepState.reset()
 	WepState.RecoilUp.s = SP.rs
 	WepState.RecoilUp.d = SP.rd
@@ -63,6 +113,8 @@ function WepState.reset()
 	WepState.gunAmmo = nil
 
 	WepState.localAmmo(0)
+	WepState.localUbglAmmo(0)
+	WepState.predictedChambered(true)
 	WepState.aimSens(config.defaultAimSensitivity)
 	WepState.sightIndex(1)
 	WepState.viewmodelVisible(false)
@@ -78,13 +130,9 @@ function WepState.reset()
 	WepState.equipping(false)
 end
 
-function WepState.canManipulate()
-	return WepState.viewmodelVisible()
-	and not WepState.reloading()
-	and not WepState.chambering()
-	and not WepState.equipping()
-	and WepState.wepStats
-end
+
+
+
 
 WepState.reset()
 
