@@ -71,9 +71,7 @@ export type WeaponStats = {
     muzzleChance: number,
 
     muzzleVelocity: number,
-	
-    aimSpeed: number,
-	
+		
     gunLength: number,
 	
     maxPushback: number,
