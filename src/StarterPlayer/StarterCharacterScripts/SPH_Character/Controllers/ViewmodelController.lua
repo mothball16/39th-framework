@@ -100,11 +100,6 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	animBase.CFrame *= newFlOffset:Inverse()
 
 	local aimPart = WeaponState.gunModel():FindFirstChild("AimPart" .. sightIndex) or WeaponState.gunModel().AimPart
-	if WeaponState.attStats.aimParts then
-		if WeaponState.attStats.aimParts["AimPart" .. sightIndex] then
-			aimPart = WeaponState.gunModel()[WeaponState.attStats.aimParts["AimPart" .. sightIndex]]:FindFirstChild("AimPart" .. sightIndex)
-		end
-	end
 	aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
 
 	local aimTime = WeaponState.wepStats.aimTime

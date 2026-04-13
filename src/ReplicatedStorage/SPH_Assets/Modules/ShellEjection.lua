@@ -12,8 +12,6 @@ local shells = {}
 
 local module = {}
 
-local gunsmith = require(assets.Modules.Gunsmith) -- DD_SPH Gunsmith
-
 module.ejectShell = function(player:Player,tool,gunModel)
 	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	if not tool or not gunModel or not gunModel:FindFirstChild("Grip") then return end
@@ -23,16 +21,6 @@ module.ejectShell = function(player:Player,tool,gunModel)
 	local distance = player:DistanceFromCharacter(origin.Position)
 	local shellModelFolder = ammoTypes:FindFirstChild(wepStats.ammoType) or ammoTypes.Default
 	
-	-- DD_SPH Gunsmith: Different shell types
-	local plrAttStats
-	if wepStats.Attachments then
-		plrAttStats = gunsmith.getAttStats(wepStats.Attachments)
-	end
-	if plrAttStats and plrAttStats.ammoType then
-		shellModelFolder = ammoTypes:FindFirstChild(plrAttStats.ammoType) or ammoTypes.Default
-	end
-	-- </DD_SPH>
-
 	if distance <= config.shellDistance then
 		local newShell:BasePart = shellModelFolder.Casing:Clone()
 		newShell.Anchored = false

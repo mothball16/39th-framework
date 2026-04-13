@@ -141,30 +141,27 @@ function M.Initialize(c)
 				wepStats = ctx.WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 			end
 
-			local attStats
-			if wepStats and wepStats.Attachments then
-				attStats = ctx.gunsmith.getAttStats(wepStats.Attachments, weaponModel)
-				if attachmentType == 0 and attStats.flashlights_server then
-					for _, lightAttachment in ipairs(attStats.flashlights_server) do
-						local flashlite = lightAttachment.Main:FindFirstChild("Flashlight")
-						if flashlite then
-							ctx.bridges.repToggleAttachment:FireToAllExcept(player, flashlite, toggle)
+			if wepStats then
+				for _, child in ipairs(weaponModel:GetChildren()) do
+					if child:IsA("Model") and child:FindFirstChild("Main") then
+						local main = child.Main
+						if attachmentType == 0 then
+							local flashlite = main:FindFirstChild("Flashlight")
+							if flashlite then
+								ctx.bridges.repToggleAttachment:FireToAllExcept(player, flashlite, toggle)
+							end
+						elseif attachmentType == 1 then
+							local laser = main:FindFirstChild("Laser")
+							if laser then
+								ctx.bridges.repToggleAttachment:FireToAllExcept(player, laser, toggle, player.Character)
+							end
+						elseif attachmentType == 2 then
+							local bip = main:FindFirstChild("Bipod")
+							if bip then
+								ctx.bridges.repToggleAttachment:FireToAllExcept(player, bip, toggle, player.Character)
+							end
 						end
 					end
-				elseif attachmentType == 1 and attStats.laserOrigin then
-					ctx.bridges.repToggleAttachment:FireToAllExcept(
-						player,
-						weaponModel[attStats.laserOrigin].Main:FindFirstChild("Laser"),
-						toggle,
-						player.Character
-					)
-				elseif attachmentType == 2 and attStats.Bipod then
-					ctx.bridges.repToggleAttachment:FireToAllExcept(
-						player,
-						weaponModel[attStats.Bipod].Main:FindFirstChild("Bipod"),
-						toggle,
-						player.Character
-					)
 				end
 			end
 		end

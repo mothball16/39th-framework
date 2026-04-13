@@ -309,9 +309,7 @@ end
 function AnimationController.WeaponReload(lastGunModelName)
 	if not State.equippedTool() or not WeaponState.wepStats then return end
 	WeaponState.reloading(true)
-	--[[]]
 	local animSpeed = WeaponState.wepStats.reloadSpeedModifier
-	if WeaponState.attStats and WeaponState.attStats.reloadSpeedModifier then animSpeed *= WeaponState.attStats.reloadSpeedModifier end
 
 	if WeaponState.fireMode() == 4 and WeaponState.wepStats.hasUBGL then
 		local ubglStats = WeaponState.wepStats.getStatsForMode(4)
@@ -328,7 +326,7 @@ function AnimationController.WeaponReload(lastGunModelName)
 		if not boltOpenTrack then WeaponState.reloading(false) return end
 		boltOpenTrack.Stopped:Once(function()
 			if not State.equippedTool() or not gunAmmo then return end
-			local cap = WeaponState.wepStats.clipSize or (WeaponState.attStats and WeaponState.attStats.magazineCapacity) or WeaponState.wepStats.magazineCapacity
+			local cap = WeaponState.wepStats.clipSize or WeaponState.wepStats.magazineCapacity
 			if WeaponState.wepStats.magType == 3 and (gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value) >= cap and gunAmmo.ArcadeAmmoPool.Value >= cap then
 				AnimationController.PlayAnimation(WeaponState.wepStats.clipReloadAnim, {looped = true, speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
 			else
@@ -349,7 +347,6 @@ end
 function AnimationController.PlayReloadAction(useClip)
 	if not WeaponState.wepStats then return end
 	local animSpeed = WeaponState.wepStats.reloadSpeedModifier
-	if WeaponState.attStats and WeaponState.attStats.reloadSpeedModifier then animSpeed *= WeaponState.attStats.reloadSpeedModifier end
 	AnimationController.PlayAnimation(useClip and WeaponState.wepStats.clipReloadAnim or WeaponState.wepStats.reloadAnim, {looped = useClip, speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
 end
 

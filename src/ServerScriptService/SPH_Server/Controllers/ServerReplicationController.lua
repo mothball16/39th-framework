@@ -34,12 +34,11 @@ function M.Initialize(c)
 			return
 		end
 
-		local wepStats = ctx.WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
-		if wepStats.Attachments then
-			local plrAttStats = ctx.gunsmith.getAttStats(wepStats.Attachments)
-			if plrAttStats then
-				if plrAttStats.newFireSound and soundName == "Fire" then
-					soundToPlay = weapon[plrAttStats.newMuzzleDevice]:FindFirstChild(soundName)
+		if soundName == "Fire" then
+			for _, child in ipairs(weapon:GetChildren()) do
+				if child:IsA("Model") and child:FindFirstChild("Main") and child.Main:FindFirstChild("Fire") then
+					soundToPlay = child.Main.Fire
+					break
 				end
 			end
 		end

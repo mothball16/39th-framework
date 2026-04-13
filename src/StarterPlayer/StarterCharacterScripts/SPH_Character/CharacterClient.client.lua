@@ -138,10 +138,6 @@ rig.Parent = camera
 local weaponRig = character:FindFirstChild("WeaponRig") or character:WaitForChild("WeaponRig")
 local characterAnimator:Animator = weaponRig:WaitForChild("AnimationController").Animator
 
--- DD_SPH Gunsmith
-local gunsmith = require(modules.Gunsmith)
-WeaponState.attStats = gunsmith.attStats
-
 local function PlayCharSound(soundType)
 	local soundFolder = assets.Sounds:FindFirstChild(soundType)
 	if soundFolder then
@@ -218,8 +214,8 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 			-- DD_SPH Gunsmith: FOV adjusts with scope
 			local aimFovMinTarget = State.wepStats.aimFovMin
 			local aimFovMaxTarget = State.wepStats.aimFovMax or config.defaultFOV
-			if State.attStats.aimFovMin then aimFovMinTarget = State.attStats.aimFovMin end
-			if State.attStats.aimFovMax then aimFovMaxTarget = State.attStats.aimFovMax end
+			if WeaponState.wepStats and WeaponState.wepStats.aimFovMin then aimFovMinTarget = WeaponState.wepStats.aimFovMin end
+			if WeaponState.wepStats and WeaponState.wepStats.aimFovMax then aimFovMaxTarget = WeaponState.wepStats.aimFovMax end
 			WeaponController.aimFOVTarget = math.clamp(newFOV, aimFovMinTarget, aimFovMaxTarget)
 			-- </DD_SPH>
 		else

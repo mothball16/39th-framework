@@ -5,17 +5,19 @@ local WeaponRigController = require(script.Parent.WeaponRigController)
 local M = {}
 
 local ctx
+local attachmentPlacer
 
 local function setAttachment(weapon, attachmentSlot, weaponAttachment, parentPart)
-	local newAttachment = ctx.gunsmith.placeAttachment(weapon, attachmentSlot, weaponAttachment, parentPart)
+	local newAttachment = attachmentPlacer.place(ctx.assets, ctx.weldMod, weapon, attachmentSlot, weaponAttachment, parentPart)
+	if not newAttachment then
+		return
+	end
 
 	for _, part in ipairs(newAttachment:GetChildren()) do
 		if part.Name == "SightReticle" and part:FindFirstChild("SurfaceGui") then
 			part.SurfaceGui.Enabled = false
 		end
 	end
-
-	ctx.weldMod.WeldModel(newAttachment, parentPart[attachmentSlot], false)
 end
 
 local function setRecursiveAttachments(weapon, attachmentSlot, weaponAttachment, parentPart)
@@ -136,21 +138,6 @@ function M.SetupGun(tool: Tool, wepStats)
 		arcadeAmmoPool.MaxValue = wepStats.maxAmmoPool
 		arcadeAmmoPool.Value = wepStats.startAmmoPool
 
-		local attStats
-		if wepStats.Attachments then
-			attStats = ctx.gunsmith.getAttStats(wepStats.Attachments)
-			if attStats.magazineCapacity then
-				magAmmo.MaxValue = attStats.magazineCapacity
-				magAmmo.Value = magAmmo.MaxValue
-			end
-			if attStats.maxAmmoPool then
-				arcadeAmmoPool.MaxValue = attStats.maxAmmoPool
-			end
-			if attStats.startAmmoPool then
-				arcadeAmmoPool.Value = attStats.startAmmoPool
-			end
-		end
-
 		if wepStats.hasUBGL then
 			local ubglAmmo = Instance.new("IntValue", tool)
 			ubglAmmo.Name = "UBGLAmmo"
@@ -224,17 +211,6 @@ function M.EquipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 				end
 			end
 
-			local attStats = ctx.gunsmith.getAttStats(wepStats.Attachments)
-			local magAmmo = tool.Ammo.MagAmmo
-			local arcadeAmmoPool = tool.Ammo.ArcadeAmmoPool
-
-			if attStats.magazineCapacity and magAmmo.MaxValue ~= attStats.magazineCapacity then
-				magAmmo.MaxValue = attStats.magazineCapacity
-				magAmmo.Value = magAmmo.MaxValue
-			end
-			if attStats.maxAmmoPool and arcadeAmmoPool.MaxValue ~= attStats.maxAmmoPool then
-				arcadeAmmoPool.MaxValue = attStats.maxAmmoPool
-			end
 		end
 
 		for _, part in ipairs(gun:GetDescendants()) do
@@ -277,6 +253,7 @@ end
 
 function M.Initialize(c)
 	ctx = c
+	attachmentPlacer = require(ctx.assets.Modules.AttachmentPlacer)
 
 	if ctx.replicatedStorage:FindFirstChild("DD_GunsmithHandler") then
 		ctx.replicatedStorage.DD_GunsmithHandler.ApplyAttachments.OnServerEvent:Connect(function(player, weapon: Tool, attachments)

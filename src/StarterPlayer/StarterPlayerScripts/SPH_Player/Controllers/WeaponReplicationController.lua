@@ -9,7 +9,6 @@ local config = require(assets:WaitForChild("GameConfig"))
 local hitFX = require(modules.HitFX)
 local shellEjection = require(modules.ShellEjection)
 local bulletHandler = require(modules.BulletHandler)
-local gunsmith = require(modules.Gunsmith)
 local weaponStatLocator = require(modules.WeaponStatLocator)
 --local gunsmithHandler = require(ReplicatedStorage:WaitForChild("DD_GunsmithHandler"))
 
@@ -47,20 +46,15 @@ function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: 
 		local wepStats = weaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 		local gunAmmo = tool:FindFirstChild("Ammo")
 
-		local plrAttStats
-		if wepStats.Attachments then
-			plrAttStats = gunsmith.getAttStats(wepStats.Attachments)
-		end
-
 		local muCh = wepStats.muzzleChance
 		local fxTarget = gunModel
-		if plrAttStats then
-			if plrAttStats.muzzleChance then muCh = plrAttStats.muzzleChance end
-			if plrAttStats.newMuzzleDevice and gunModel:FindFirstChild(plrAttStats.newMuzzleDevice) then
-				fxTarget = gunModel[plrAttStats.newMuzzleDevice]
+		for _, child in ipairs(gunModel:GetChildren()) do
+			if child:IsA("Model") and child:FindFirstChild("Main") and child.Main:FindFirstChild("Muzzle") then
+				fxTarget = child
+				break
 			end
 		end
-		
+
 		bulletHandler.FireFX(player, fxTarget, "Muzzle", muCh)
 
 		local muzzle = gunModel:FindFirstChild("Grip") and gunModel.Grip:FindFirstChild("Muzzle")
@@ -70,21 +64,13 @@ function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: 
 		local bulletDirection = muzzle.WorldCFrame.LookVector
 
 		local muVe = wepStats.muzzleVelocity
-		if plrAttStats then
-			if plrAttStats.muzzleVelocityReplace then muVe = plrAttStats.muzzleVelocityReplace end
-			if plrAttStats.muzzleVelocity then muVe *= plrAttStats.muzzleVelocity end
-		end
 		local bulletVelocity = (bulletDirection * muVe * 3.5)
 
 		local TrTi = wepStats.tracerTiming
 		local possibleTracerColor = wepStats.tracerColor
 		local tracerColor = nil
 
-		if plrAttStats then
-			if plrAttStats.tracerTiming then TrTi = plrAttStats.tracerTiming end
-			if plrAttStats.tracerColor then possibleTracerColor = plrAttStats.tracerColor end
-		end
-		if wepStats.tracers and gunAmmo and gunAmmo:FindFirstChild("MagAmmo") and gunAmmo.MagAmmo.Value % TrTi == 0 then
+		if wepStats.tracers and gunAmmo and gunAmmo:FindFirstChild("MagAmmo") and TrTi and gunAmmo.MagAmmo.Value % TrTi == 0 then
 			tracerColor = possibleTracerColor
 		end
 
@@ -145,14 +131,6 @@ function WeaponReplicationController.OnReplicateBolt(player: Player, direction, 
 		emptyLockBolt = wepStats.emptyLockBolt,
 	}
 
-	local plrAttStats
-	if wepStats.Attachments then
-		plrAttStats = gunsmith.getAttStats(wepStats.Attachments)
-	end
-	if plrAttStats and plrAttStats.fireRate then
-		boltData.fireRate *= plrAttStats.fireRate
-	end
-	
 	bulletHandler.MoveBolt(gunModel, boltData, direction, magAmmo)
 end
 

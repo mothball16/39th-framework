@@ -93,13 +93,6 @@ function UIController.SyncEquippedTool(tool)
 			UIController.ubglAmmo = nil
 		end
 		
-		if WeaponState.attStats and WeaponState.attStats.flashlights_server then
-			UIController.attachmentFrame.Flashlight.Visible = true
-		end
-		if WeaponState.attStats and WeaponState.attStats.laserOrigin then
-			UIController.attachmentFrame.Laser.Visible = true
-		end
-		
 		local wepModel = assets.WeaponModels:FindFirstChild(tool.Name)
 		if wepModel and wepModel.Grip:FindFirstChild("Flashlight") then
 			UIController.attachmentFrame.Flashlight.Visible = true
@@ -108,9 +101,7 @@ function UIController.SyncEquippedTool(tool)
 			UIController.attachmentFrame.Laser.Visible = true
 		end
 		
-		if WeaponState.attStats and WeaponState.attStats.ammoType then
-			UIController.bulletType.Text = WeaponState.attStats.ammoType
-		elseif WeaponState.wepStats and WeaponState.wepStats.ammoType then
+		if WeaponState.wepStats and WeaponState.wepStats.ammoType then
 			UIController.bulletType.Text = WeaponState.wepStats.ammoType
 		end
 	else

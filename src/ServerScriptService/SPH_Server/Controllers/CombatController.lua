@@ -138,30 +138,11 @@ function M.Initialize(c)
 			wepStats = ctx.WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 		end
 
-		local attStats
-		if wepStats.Attachments then
-			attStats = ctx.gunsmith.getAttStats(wepStats.Attachments)
-		end
 		local kaboom = wepStats.explosiveAmmo
-		if attStats then
-			if attStats.explosiveAmmo then
-				kaboom = attStats.explosiveAmmo
-			end
-		end
 
 		if kaboom then
-			local expRadius
-			local expEffect
-
-			if wepStats.explosiveAmmo then
-				expRadius = wepStats.explosionRadius
-				expEffect = wepStats.explosionEffect
-			end
-
-			if attStats and attStats.explosiveAmmo then
-				expRadius = attStats.explosionRadius
-				expEffect = attStats.explosionEffect
-			end
+			local expRadius = wepStats.explosionRadius
+			local expEffect = wepStats.explosionEffect
 
 			if ctx.atmod then
 				local expDmg = math.abs(math.random(wepStats.ATDefaultDamage[1], wepStats.ATDefaultDamage[2]))
@@ -249,13 +230,6 @@ function M.Initialize(c)
 
 			if hitPart.Name == "HumanoidRootPart" then
 				damage = wepStats.damage.UpperTorso or wepStats.damage.Torso
-			end
-
-			if attStats and attStats.damage then
-				damage *= attStats.damage[hitPart.Name] or attStats.damage.Other
-				if hitPart.Name == "HumanoidRootPart" then
-					damage = attStats.damage.Torso
-				end
 			end
 
 			if humanoid.Health > 0 and humanoid.Health - damage <= 0 then
@@ -357,11 +331,6 @@ function M.Initialize(c)
 			local force = Instance.new("VectorForce", tempAtt)
 			force.Attachment0 = tempAtt
 			local buFo = wepStats.bulletForce
-			if attStats then
-				if attStats.bulletForce then
-					buFo *= attStats.bulletForce
-				end
-			end
 			force.Force = Vector3.new(0, 0, -buFo)
 			ctx.debris:AddItem(tempAtt, 0.1)
 			if not otherPlayer or humanoid.Health <= 0 then

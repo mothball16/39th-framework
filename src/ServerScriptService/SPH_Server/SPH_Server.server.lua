@@ -47,8 +47,6 @@ explosionRayParams.IgnoreWater = true
 local explosionOverlapParams = OverlapParams.new()
 explosionOverlapParams.MaxParts = 500
 
-local gunsmith = require(modules.Gunsmith)
-
 local Controllers = script.Parent.Controllers
 local ServerBridges = require(Controllers.ServerBridges)
 local bridges = ServerBridges.CreateAll(bridgeNet)
@@ -87,7 +85,6 @@ local ctx = {
 	ragdoll = ragdoll,
 	systemMessages = systemMessages,
 	fractureGlass = fractureGlass,
-	gunsmith = gunsmith,
 	WeaponStatLocator = WeaponStatLocator,
 	dd_settings = dd_settings,
 	atmod = atmod,

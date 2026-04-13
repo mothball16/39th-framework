@@ -8,7 +8,6 @@ local SP = require(modules.Spring.Default)
 local legacySpring = require(modules.LegacySpring)
 local WepState = {
 	wepStats = nil,
-	attStats = {},
 	equipping = Charm.atom(false)						:: Charm.Atom<boolean>,
 
 	gunModel = Charm.atom(nil) 							:: Charm.Atom<Instance>,
@@ -47,12 +46,16 @@ WepState.aimFOVTarget = Charm.computed(function()
 end)
 
 function WepState.adsMeshLayerEnabled(sightIndex: number): boolean
-	return (WepState.attStats and WepState.attStats.ADSEnabled and WepState.attStats.ADSEnabled[sightIndex])
-		or (WepState.wepStats and WepState.wepStats.ADSEnabled and WepState.wepStats.ADSEnabled[sightIndex])
+	local w = WepState.wepStats
+	if not w or not w.ADSEnabled then
+		return false
+	end
+	local layer = w.ADSEnabled[sightIndex]
+	return if layer then true else false
 end
 
 function WepState.hasAdsMeshLayers(): boolean
-	local v = (WepState.wepStats and WepState.wepStats.ADSEnabled) or (WepState.attStats and WepState.attStats.ADSEnabled)
+	local v = WepState.wepStats and WepState.wepStats.ADSEnabled
 	return if v then true else false
 end
 
@@ -108,7 +111,6 @@ function WepState.reset()
 	WepState.Spread = 0
 
 	WepState.wepStats = nil
-	WepState.attStats = {}
 	WepState.gunModel(nil)
 	WepState.gunAmmo = nil
 

@@ -37,10 +37,12 @@ LaserMod.playerToggleAttachment = bridgeNet.CreateBridge("PlayerToggleAttachment
 local function getLaserAttachment(model)
 	if not model then return nil end
 
-	if WeaponState.attStats.laserOrigin then
-		local laserOrigin = model:FindFirstChild(WeaponState.attStats.laserOrigin)
-		if laserOrigin and laserOrigin:FindFirstChild("Main") then
-			return laserOrigin.Main:FindFirstChild("Laser")
+	for _, child in ipairs(model:GetChildren()) do
+		if child:IsA("Model") and child:FindFirstChild("Main") then
+			local laser = child.Main:FindFirstChild("Laser")
+			if laser then
+				return laser
+			end
 		end
 	end
 
