@@ -6,7 +6,7 @@ local Charm = require(Packages.Charm)
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local bridgeNet = require(assets.Modules.BridgeNet)
-local weaponClientPersist = require(assets.Modules.WeaponClientPersist)
+local weaponPrefsClient = require(assets.Modules.WeaponPrefsClient)
 
 local Enums = require(script.Parent.Parent.Enums)
 local Intents = Enums.Intents
@@ -97,7 +97,7 @@ function LaserMod.OnLaserToggled(enabled)
 		return
 	end
 
-	local applying = weaponClientPersist.isApplying
+	local applying = weaponPrefsClient.isApplying
 	if LaserMod.WeaponController and LaserMod.WeaponController.PlayRepSound and not applying then
 		LaserMod.WeaponController.PlayRepSound("Button")
 	end
