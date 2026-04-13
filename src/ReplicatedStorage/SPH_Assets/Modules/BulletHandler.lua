@@ -8,7 +8,7 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 local modules = replicatedStorage.SPH_Assets.Modules
 local config = require(modules.Parent.GameConfig)
 local hitFX = require(modules.HitFX)
-
+local WeaponStatLocator = require(modules.WeaponStatLocator)
 local bridgeNet = require(replicatedStorage.SPH_Assets.Modules.BridgeNet)
 local bulletHit
 
@@ -119,7 +119,7 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 		if type(tool) == "table" and tool.Tool then
 			actualTool = tool.Tool
 		end
-		wepStats = require(actualTool.SPH_Weapon.WeaponStats)
+		wepStats = WeaponStatLocator.getWeaponStats(actualTool.SPH_Weapon)
 
 		-- If this is UBGL mode, get UBGL stats
 		if type(tool) == "table" and tool.fireMode == 4 and wepStats.hasUBGL then
@@ -330,7 +330,7 @@ caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBul
 		local turretModule = require(cast.UserData.IgnoreModel.Parent.TurretModule)
 		wepStats = turretModule.guns[cast.UserData.Tool]
 	else
-		wepStats = require(cast.UserData.Tool.SPH_Weapon.WeaponStats)
+		wepStats = WeaponStatLocator.getWeaponStats(cast.UserData.Tool.SPH_Weapon)
 	end
 
 	if not cast.UserData.FakeBullet then

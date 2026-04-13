@@ -10,6 +10,7 @@ local hitFX = require(modules.HitFX)
 local shellEjection = require(modules.ShellEjection)
 local bulletHandler = require(modules.BulletHandler)
 local gunsmith = require(modules.Gunsmith)
+local weaponStatLocator = require(modules.WeaponStatLocator)
 --local gunsmithHandler = require(ReplicatedStorage:WaitForChild("DD_GunsmithHandler"))
 
 local bridgeNet = require(modules.BridgeNet)
@@ -43,7 +44,7 @@ function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: 
 		local gunModel = rig:FindFirstChild("Weapon") and rig.Weapon:FindFirstChildWhichIsA("Model")
 		if not gunModel then return end
 		
-		local wepStats = require(tool.SPH_Weapon.WeaponStats)
+		local wepStats = weaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 		local gunAmmo = tool:FindFirstChild("Ammo")
 
 		local plrAttStats
@@ -123,7 +124,7 @@ end
 
 function WeaponReplicationController.OnReplicateHit(tool: Tool, raycastResult: RaycastResult)
 	local hitPart = raycastResult.Instance
-	local bulletStats = tool:FindFirstChild("SPH_Weapon") and require(tool.SPH_Weapon.WeaponStats)
+	local bulletStats = tool:FindFirstChild("SPH_Weapon") and weaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	if hitPart and bulletStats and bulletStats.projectile == "Bullet" then
 		hitFX.HitEffect(raycastResult.Position, hitPart, raycastResult.Normal)
 	end
@@ -137,7 +138,7 @@ function WeaponReplicationController.OnReplicateBolt(player: Player, direction, 
 	local tool = player.Character:FindFirstChildWhichIsA("Tool")
 	if not tool or not gunModel then return end
 	
-	local wepStats = require(tool.SPH_Weapon.WeaponStats)
+	local wepStats = weaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	local boltData = {
 		fireMoveParts = wepStats.fireMoveParts,
 		fireRate = wepStats.fireRate,

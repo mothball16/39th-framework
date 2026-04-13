@@ -22,6 +22,7 @@ local assets = replicatedStorage.SPH_Assets
 local modules = assets.Modules
 local mainui = assets.HUD.SPH_UI
 
+local WeaponStatLocator = require(modules.WeaponStatLocator)
 local weldMod = require(modules.WeldMod)
 local bridgeNet = require(replicatedStorage.SPH_Assets.Modules.BridgeNet)
 local viewMod = require(modules.ViewMod)
@@ -106,7 +107,7 @@ local dropCFrame = CFrame.new(0,1,-3)
 
 local function HolsterWeapon(player,holsterPart,tool,holsterCFrame)
 	local holsterModel
-	local wepStats = require(tool.SPH_Weapon.WeaponStats)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	if not assets.WeaponModels.HolsterModels:FindFirstChild(tool.Name) then
 		holsterModel = assets.WeaponModels:FindFirstChild(tool.Name):Clone()
 		holsterModel.Name = "Holster_"..tool.Name
@@ -149,7 +150,7 @@ local function HolsterWeapon(player,holsterPart,tool,holsterCFrame)
 end
 
 local function CheckHolster(player,tool)
-	local wepStats = require(tool.SPH_Weapon.WeaponStats)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	if wepStats.holster then
 		local holsterPart = player.Character:FindFirstChild(wepStats.holsterPart)
 		-- DD_SPH: R15 holster
@@ -409,7 +410,7 @@ end
 if replicatedStorage:FindFirstChild("DD_GunsmithHandler") then
 	-- DD_SPH Gunsmith: Applying attachments to a weapon from gunsmith table
 	replicatedStorage.DD_GunsmithHandler.ApplyAttachments.OnServerEvent:Connect(function(player, weapon:Tool, attachments)
-		local wepStats = require(weapon.SPH_Weapon.WeaponStats)
+		local wepStats = WeaponStatLocator.getWeaponStats(weapon.SPH_Weapon)
 		wepStats.Attachments = attachments
 	end)
 end
@@ -422,7 +423,7 @@ local function EquipGun(rig:Model, tool:Tool, rigType:Enum.HumanoidRigType) -- D
 
 		weldMod.WeldModel(gun, gun.Grip, false)
 
-		local wepStats = require(tool.SPH_Weapon.WeaponStats)
+		local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 		for _, partName in ipairs(wepStats.rigParts) do
 			if gun:FindFirstChild(partName) then
 				gun.Grip["Grip_"..partName]:Destroy()
@@ -494,7 +495,7 @@ local function EquipGun(rig:Model, tool:Tool, rigType:Enum.HumanoidRigType) -- D
 end
 
 local function IsGunLoaded(tool)
-	local wepStats = require(tool.SPH_Weapon.WeaponStats)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	local gunAmmo = tool.Ammo
 	local magAmmo = gunAmmo.MagAmmo
 	return not wepStats.openBolt and tool.Chambered.Value or wepStats.openBolt and gunAmmo.MagAmmo.Value > 0
@@ -540,7 +541,7 @@ end
 local function PlayerFire(player:Player, firePoint:CFrame) -- DD_SPH: Replaced PlayerFire function for UBGL
 	local tool = player.Character:FindFirstChildWhichIsA("Tool")
 	if not tool or not tool:IsA("Tool") then warn(warnPrefix.."PlayerFire Canceled: No tool was found.") return end
-	local wepStats = require(tool.SPH_Weapon.WeaponStats)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	local gunAmmo = tool.Ammo
 	local magAmmo = gunAmmo.MagAmmo
 
@@ -609,7 +610,7 @@ end
 local function CheckTool(player,tool)
 	if tool:FindFirstChild("SPH_Weapon") and assets.WeaponModels:FindFirstChild(tool.Name) then
 		CheckHolster(player,tool)
-		local wepStats = require(tool.SPH_Weapon.WeaponStats)
+		local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 		SetupGun(tool,wepStats)
 	end
 end
@@ -705,7 +706,7 @@ local function SpawnGun(tool,gunPosition,dropPlayer)
 	MakePickUpAble(tool,dropModel,dropModel.Grip)
 
 	-- DD_SPH Gunsmith: Attachments show on dropped weapons
-	local wepStats = require(tool.SPH_Weapon.WeaponStats)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	if wepStats and wepStats.Attachments then
 		for slot, item in wepStats.Attachments do
 			if typeof(item) == "string" then
@@ -1084,7 +1085,7 @@ repReload:Connect(function(player:Player)
 	local tool = player.Character:FindFirstChildWhichIsA("Tool")
 	if not tool then return end
 
-	local wepStats = require(tool.SPH_Weapon.WeaponStats)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	local magAmmo = tool.Ammo.MagAmmo
 	local arcadeAmmoPool = tool.Ammo.ArcadeAmmoPool
 
@@ -1197,7 +1198,7 @@ playSound:Connect(function(player:Player, soundName:string)
 	local tool = player.Character:FindFirstChildWhichIsA("Tool")
 	if not tool then return end
 
-	local wepStats = require(tool.SPH_Weapon.WeaponStats)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	if wepStats.Attachments then
 		local plrAttStats = gunsmith.getAttStats(wepStats.Attachments)
 		if plrAttStats then
@@ -1278,14 +1279,14 @@ bulletHit:Connect(function(player:Player, tool:Tool, raycastResult:RaycastResult
 			wepStats = require(tool.model.Parent.TurretModule).guns[tool.index]
 		else
 			-- UBGL weapon data
-			wepStats = require(tool.Tool.SPH_Weapon.WeaponStats)
+			wepStats = WeaponStatLocator.getWeaponStats(tool.Tool.SPH_Weapon)
 			-- Get UBGL stats if this is UBGL mode
 			if tool.fireMode == 4 and wepStats.hasUBGL then
 				wepStats = wepStats.getStatsForMode(4)
 			end
 		end
 	elseif tool:IsA("Tool") then
-		wepStats = require(tool.SPH_Weapon.WeaponStats)
+		wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	end
 	-- [UBGL END] - UBGL Tool Data Structure Handling
 
@@ -1634,7 +1635,7 @@ end)
 switchFireMode:Connect(function(player,newFireMode) -- UBGL
 	local tool = player.Character:FindFirstChildWhichIsA("Tool")
 	if tool and tool:FindFirstChild("SPH_Weapon") then
-		local wepStats = require(tool.SPH_Weapon.WeaponStats)
+		local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 
 		-- [UBGL START] - UBGL Fire Mode Validation
 		-- Validate fire mode for UBGL
@@ -1662,7 +1663,7 @@ proxPromptService.PromptTriggered:Connect(function(prompt,player)
 
 		for _, tool in ipairs(tools) do
 			if tool:FindFirstChild("SPH_Weapon") then
-				local wepStats = require(tool.SPH_Weapon.WeaponStats)
+				local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 				local arcadeAmmoPool = tool.Ammo.ArcadeAmmoPool
 
 				if wepStats.infiniteAmmo then
@@ -1790,7 +1791,7 @@ playerToggleAttachment:Connect(function(player, attachmentType, toggle)
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
 		local wepStats
 		if tool and tool:FindFirstChild("SPH_Weapon") then
-			wepStats = require(tool.SPH_Weapon.WeaponStats)
+			wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 		end
 
 		local attStats
@@ -1821,7 +1822,7 @@ magGrab:Connect(function(player)
 
 		local rig = player.Character.WeaponRig
 		local weaponModel = player.Character.WeaponRig.Weapon:FindFirstChildWhichIsA("Model")
-		local wepStats = require(tool.SPH_Weapon.WeaponStats)
+		local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 
 		local magPart:BasePart = wepStats.projectile ~= "Bullet" and weaponModel[wepStats.projectile] or weaponModel:FindFirstChild("Mag")
 		if magPart then

@@ -268,7 +268,7 @@ end
 
 function AnimationController.WeaponEquip()
 	if not WeaponState.wepStats then return end
-
+	AnimationController.StopAll()
 	local equipAnim = AnimationController.PlayAnimation(WeaponState.wepStats.equipAnim, {priority = Enum.AnimationPriority.Action2}, "Equip")
 	if equipAnim then
 		equipAnim.Stopped:Connect(function() WeaponState.equipping(false) end)
@@ -320,7 +320,10 @@ function AnimationController.WeaponReload(lastGunModelName)
 	end
 
 	local gunAmmo = State.equippedTool():FindFirstChild("Ammo")
-	if WeaponState.wepStats.operationType == 3 or (WeaponState.wepStats.operationType == 2 and gunAmmo and gunAmmo.MagAmmo.Value <= 0 and not State.equippedTool().Chambered.Value) then
+	if
+		WeaponState.wepStats.operationType == 3
+		or
+		(WeaponState.wepStats.operationType == 2 and gunAmmo and gunAmmo.MagAmmo.Value <= 0 and not State.equippedTool().Chambered.Value) then
 		local boltOpenTrack = AnimationController.PlayAnimation(WeaponState.wepStats.boltOpen, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "BoltOpen")
 		if not boltOpenTrack then WeaponState.reloading(false) return end
 		boltOpenTrack.Stopped:Once(function()

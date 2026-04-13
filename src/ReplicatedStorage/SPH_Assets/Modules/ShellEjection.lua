@@ -1,7 +1,10 @@
 local debris = game:GetService("Debris")
 
 local assets = game:GetService("ReplicatedStorage").SPH_Assets
+local modules = assets.Modules
+local WeaponStatLocator = require(modules.WeaponStatLocator)
 local config = require(assets.GameConfig)
+
 local ammoTypes = assets.Ammo
 local storageFolder = workspace:WaitForChild("SPH_Workspace"):FindFirstChild("Shells")
 
@@ -12,7 +15,7 @@ local module = {}
 local gunsmith = require(assets.Modules.Gunsmith) -- DD_SPH Gunsmith
 
 module.ejectShell = function(player:Player,tool,gunModel)
-	local wepStats = require(tool.SPH_Weapon.WeaponStats)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	if not tool or not gunModel or not gunModel:FindFirstChild("Grip") then return end
 	local origin:CFrame = gunModel.Grip:FindFirstChild("Chamber")
 	if not origin then warn(tool.Name.. " does not have a chamber! Add an attachment named 'Chamber' to the gun's grip to resolve this issue.") return end

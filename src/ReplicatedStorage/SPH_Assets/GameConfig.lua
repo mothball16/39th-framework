@@ -177,13 +177,13 @@ config.hipfireMoveSpeed = 0.05
 config.offCenterAiming = false -- Allow the player to move off center while aiming
 
 config.pushBackViewmodel = true -- Should the gun move back when getting close to a wall?
-config.raiseGunAtWall = true -- Should the gun be raised when too close to a wall? 
+config.raiseGunAtWall = false -- Should the gun be raised when too close to a wall? 
 
 config.fireWithFreelook = false -- Can the player fire their gun while freelook is active?
 
 config.maxStrafeRoll = 20 -- How much the viewmodel can lean left and right when strafing
-config.maxStrafeShift = 6 -- How much the model can yaw left and right when strafing
-config.strafeShiftAimMult = 0.3 -- What to multiply strafeshift by when aiming
+config.maxStrafeShift = 2 -- How much the model can yaw left and right when strafing
+config.strafeShiftAimMult = 0.75 -- What to multiply strafeshift by when aiming
 
 config.showAccessoriesFP = true -- Should accessories be shown in first person?
 

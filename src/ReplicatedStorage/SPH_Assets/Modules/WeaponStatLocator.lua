@@ -7,6 +7,10 @@ local WeaponStatLocator = {}
 local function getConfig(sphWeapon, configName)
 	local attr = sphWeapon:GetAttribute("SPH_" .. configName)
 	if attr then
+		if attr == "#name" then
+			attr = sphWeapon.Parent.Name
+		end
+
 		local folder = configs:FindFirstChild(configName)
 		local module = folder and folder:FindFirstChild(attr)
 		if module then
