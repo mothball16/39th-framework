@@ -2,16 +2,16 @@
 local Types = require(script.Parent.Parent.ConfigurationTypes)
 
 local wepStats: Types.WeaponStats = {
-	VRecoil = {12,18},
-	HRecoil = {22,26},
+	VRecoil = {20,28},
+	HRecoil = {12,16},
 	AimRecover = 0.75,
 
-	RecoilPunch = 1.5,
+	RecoilPunch = 1.25,
 	VPunchBase = 2,					--- Vertical Punch
-	HPunchBase = 3,					--- Horizontal Punch
+	HPunchBase = 1.25,					--- Horizontal Punch
 	DPunchBase = 1,				--- Tilt Punch | useless
 
-	PunchSpeed = 18,
+	PunchSpeed = 16,
 	PunchDamper = 0.75,
 
 	AimBackwardPunchReduction = 1.5,
@@ -30,7 +30,7 @@ local wepStats: Types.WeaponStats = {
 	SpreadRecoverPerSecond = 0.5,		--- Decrease in bullet spread when not firing
 	
 	DeltaInstability = Vector2.new(5, 3),	--- Weapon sway when moving camera around. Stocked weapons should default at 3-5. 
-	MoveInstability = 0.75,					--- Weapon sway when moving while walking. Stocked weapons should default at 0.5-0.75.
+	MoveInstability = 0.5,					--- Weapon sway when moving while walking. Stocked weapons should default at 0.5-0.75.
 
 	--< Weapon type >--
 	weaponType = "Gun",
@@ -54,9 +54,9 @@ local wepStats: Types.WeaponStats = {
 	]]
 
 	--< Gun settings >--
-	fireRate = 750,
+	fireRate = 610,
 	muzzleChance = 5, -- Number from 0-10 that determines how often the muzzle will flash when firing
-	muzzleVelocity = 884, -- this stat uses meters per second
+	muzzleVelocity = 700, -- this stat uses meters per second
 	gunLength = 3.5, -- How close you can get to a surface before the viewmodel moves back
 	maxPushback = 0.8, -- How far can the viewmodel move backwards until the gun is blocked
 
@@ -74,7 +74,7 @@ local wepStats: Types.WeaponStats = {
 	shotgunPellets = 10, -- If shotgun is true, how many pellets should be fired at once?
 
 	aimTime = 1,
-	aimFovs = {30, 60},
+	aimFovs = {60, 40},
 
 	suppressionLevel = 2, -- How much should this gun suppress people?
 
@@ -98,9 +98,9 @@ local wepStats: Types.WeaponStats = {
 
 	-- Damage
 	damage = {
-		Head = 150,
-		Torso = 50,
-		Other = 30, -- Default damage if body part is not included
+		Head = 120,
+		Torso = 55,
+		Other = 37, -- Default damage if body part is not included
 	},
 
 	-- Tracers
@@ -109,7 +109,7 @@ local wepStats: Types.WeaponStats = {
 	tracerColor = Color3.fromRGB(255, 55, 55),
 
 	-- Ammo
-	ammoType = "5.56×45mm", -- Gun shell models can be found in ReplicatedStorage > SPH_Assets > Shells
+	ammoType = "7.62×51mm", -- Gun shell models can be found in ReplicatedStorage > SPH_Assets > Shells
 	shellEject = true, -- Should this gun eject shells?
 	magazineCapacity = 30, -- Max ammo that can go in a mag
 	arcadeAmmo = true, -- Don't disable this until the new ammo system is added
@@ -131,8 +131,8 @@ local wepStats: Types.WeaponStats = {
 	idleAnim = "Rifle_Idle", -- Animations are located in ReplicatedStorage > SPH_Assets > Animations
 	sprintAnim = "Rifle_Sprint",
 	reloadAnim = "Rifle_Reload",
-	boltChamber = "Rifle_Chamber", -- Plays if the bolt is closed
-	boltClose = "Rifle_Close", -- Plays if the bolt is open
+	boltChamber = "AK_Chamber", -- Plays if the bolt is closed
+	boltClose = "AK_Close", -- Plays if the bolt is open
 	equipAnim = "Rifle_Equip",
 	patrolAnim = "Rifle_Sprint",
 	holdUpAnim = "Rifle_Neutral",
