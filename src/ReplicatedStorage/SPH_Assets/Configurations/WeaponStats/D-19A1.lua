@@ -1,7 +1,10 @@
 --!strict
 local assets = game.ReplicatedStorage:WaitForChild("SPH_Assets")
 local modules = assets.Modules
-local Types = require(script.Parent.Parent.ConfigurationTypes)
+local Types = require(modules.Core.ConfigurationTypes)
+local Classes = script.Parent._Classes
+local Enums = require(modules.Core.Enums)
+
 
 local wepStats: Types.WeaponStats = {
 	VRecoil = {20,22},
@@ -13,14 +16,14 @@ local wepStats: Types.WeaponStats = {
 	HPunchBase = 1.25,					--- Horizontal Punch
 	DPunchBase = 1,				--- Tilt Punch | useless
 
-	PunchSpeed = 16,
+	PunchSpeed = 20,
 	PunchDamper = 0.75,
 
 	AimBackwardPunchReduction = 1.5,
 	AimRotationalPunchReduction = 1.5,
 	AimRecoilReduction = 2, 		--- Recoil Reduction Factor While Aiming (Do not set to 0)
 	PunchRecover = .3,			--- Recoil punch recovery rate
-	
+
 	MinRecoilFactor = 1,
 	MaxRecoilFactor = 2.25,
 	RecoilStepAmount = 0.34,
@@ -37,23 +40,8 @@ local wepStats: Types.WeaponStats = {
 	--< Weapon type >--
 	weaponType = "Gun",
 	projectile = "Bullet",
-	magType = 1,
-	--[[ Ammo 
-	1 = This gun is magazine fed.
-	2 = This gun must have bullets inserted manually. (Shotguns, revolvers, etc)
-	3 = This gun can have bullets inserted manually, but also has clips.
-	If you want the gun's capacity to be higher than its clip size, add a setting called clipSize.
-	2 and 3 will use their reload anim for shell insertion.
-	3 requires a clipReloadAnim animation setting.
-	]]
-
-	operationType = 1,
-	--[[ V Operation Type Guide V
-	1 = Gun can be reloaded with the bolt closed, chambering is only necessary when there's no round in the chamber.
-	2 = The bolt should be opened before reloading if the gun is empty.
-	3 = The bolt should always be opened before reloading.
-	4 = This gun doesn't have a bolt, it's a rocket launcher or a laser gun or smth.
-	]]
+	magType = Enums.MagType.MagFed,
+	operationType = Enums.OperationType.ClosedBoltRetained,
 
 	--< Gun settings >--
 	fireRate = 610,
@@ -68,7 +56,7 @@ local wepStats: Types.WeaponStats = {
 		false, -- Burst
 		false -- Manual (bolt/pump action)
 	},
-	fireMode = 2, -- Default mode from the above table
+	fireMode = Enums.FireModes.Auto, -- Default mode from the above table
 	burstNumber = 3, -- If this gun can fire in bursts, what should the shot limit be?
 	burstFireRate = nil, -- Use this if you want a separate burst fire rate, leave it as nil if you want to use the regular fire rate
 
@@ -130,17 +118,19 @@ local wepStats: Types.WeaponStats = {
 	serverOffset = CFrame.new(0,0,0), -- Where should the viewmodel be placed in reference to the player's head
 
 	-- Animation
-	idleAnim = "Rifle_Idle", -- Animations are located in ReplicatedStorage > SPH_Assets > Animations
-	sprintAnim = "Rifle_Sprint",
-	reloadAnim = "Rifle_Reload",
-	boltChamber = "AK_Chamber", -- Plays if the bolt is closed
-	boltClose = "AK_Close", -- Plays if the bolt is open
-	equipAnim = "Rifle_Equip",
-	patrolAnim = "Rifle_HoldDown",
-	holdUpAnim = "Rifle_HoldUp",
-	holdDownAnim = nil,
-	switchAnim = "Rifle_Switch",
-	fireAnim = nil, -- Plays when the gun fires
+	Animations = {
+		idle = "Rifle_Idle",
+		sprint = "Rifle_Sprint",
+		reload = "Rifle_Reload",
+		boltChamber = "AK_Chamber", -- Plays if the bolt is closed
+		boltClose = "AK_Close", -- Plays if the bolt is open
+		equip = "Rifle_Equip",
+		patrol = "Rifle_HoldDown",
+		holdUp = "Rifle_HoldUp",
+		holdDown = nil,
+		switch = "Rifle_Switch",
+		fire = nil,
+	},
 
 	reloadSpeedModifier = 0.8, -- 1 = Normal speed, higher = faster, lower = slower
 
