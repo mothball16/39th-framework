@@ -4,11 +4,11 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
+local Enums = require(assets.Modules.Enums)
 local config = require(assets.GameConfig)
 local bridgeNet = require(assets.Modules.BridgeNet)
 local weaponPrefsClient = require(assets.Modules.WeaponPrefsClient)
 
-local Enums = require(script.Parent.Parent.Enums)
 local Intents = Enums.Intents
 local State = require(script.Parent.Parent.Controllers.CharacterState)
 local WeaponState = require(script.Parent.Parent.Controllers.WeaponState)

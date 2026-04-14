@@ -5,10 +5,10 @@ local Charm = require(Packages.Charm)
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local modules = assets.Modules
+local Enums = require(modules.Enums)
 local springMod = require(modules.SpringModule)
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
-local Enums = require(script.Parent.Parent.Enums)
 
 local ViewmodelController = {}
 

@@ -1,7 +1,7 @@
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Enums = require(script.Parent.Parent.Enums)
+local Enums = require(ReplicatedStorage:WaitForChild("SPH_Assets").Modules.Enums)
 local Intents = Enums.Intents
 local config = require(ReplicatedStorage:WaitForChild("SPH_Assets").GameConfig)
 
