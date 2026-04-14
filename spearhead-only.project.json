@@ -18,7 +18,10 @@
         "$path":"Utility"
       },
       "SPH_Assets": {
-        "$path": "src/ReplicatedStorage/SPH_Assets"
+        "$path": "src/ReplicatedStorage/SPH_Assets",
+        "WeaponModels": {
+          "$path": "Assets/WeaponModels.rbxmx"
+        }
       }
     },
     "ServerScriptService": {
