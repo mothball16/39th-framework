@@ -143,7 +143,10 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 		end
 	else
 		if isBlocked then
-			ViewmodelController.StopAnimation(WeaponState.wepStats.holdUpAnim, 0.3)
+			local holdUpAnim = WeaponState.wepStats and WeaponState.wepStats.Animations and WeaponState.wepStats.Animations.holdUp
+			if type(holdUpAnim) == "string" and holdUpAnim ~= "" then
+				ViewmodelController.StopAnimation(holdUpAnim, 0.3)
+			end
 		end
 		WeaponState.blocked(false)
 		pushbackOffset = LerpNumber(pushbackOffset, 0, 0.2 * 60 * dt)
