@@ -2,8 +2,8 @@
 local Types = require(script.Parent.Parent.ConfigurationTypes)
 
 local wepStats: Types.WeaponStats = {
-	VRecoil = {20,28},
-	HRecoil = {12,16},
+	VRecoil = {20,22},
+	HRecoil = {8,10},
 	AimRecover = 0.75,
 
 	RecoilPunch = 1.25,
@@ -124,7 +124,7 @@ local wepStats: Types.WeaponStats = {
 	bulletForce = 300, -- If a bullet hits something unanchored, this force is applied
 
 	-- Viewmodel
-	viewmodelOffset = CFrame.new(0.2,0.1,-0.3), -- Where should the viewmodel be placed in reference to the camera
+	viewmodelOffset = CFrame.new(-0.2,-0.1,-0.1), -- Where should the viewmodel be placed in reference to the camera
 	serverOffset = CFrame.new(0,0,0), -- Where should the viewmodel be placed in reference to the player's head
 
 	-- Animation
@@ -134,8 +134,8 @@ local wepStats: Types.WeaponStats = {
 	boltChamber = "AK_Chamber", -- Plays if the bolt is closed
 	boltClose = "AK_Close", -- Plays if the bolt is open
 	equipAnim = "Rifle_Equip",
-	patrolAnim = "Rifle_Sprint",
-	holdUpAnim = "Rifle_Neutral",
+	patrolAnim = "Rifle_HoldDown",
+	holdUpAnim = "Rifle_HoldUp",
 	holdDownAnim = nil,
 	switchAnim = "Rifle_Switch",
 	fireAnim = nil, -- Plays when the gun fires
