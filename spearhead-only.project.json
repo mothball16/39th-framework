@@ -8,6 +8,12 @@
       "Packages": {
         "$path": "Packages"
       },
+      "DevPackages": {
+        "$path": "DevPackages"
+      },
+      "SPH_Tests": {
+        "$path": "src/ReplicatedStorage/SPH_Tests"
+      },
       "Utility": {
         "$path":"Utility"
       },
@@ -18,7 +24,9 @@
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "$ignoreUnknownInstances": true,
-      
+      "SPH_TestRunner": {
+        "$path": "src/ServerScriptService/SPH_TestRunner.server.lua"
+      },
       "SPH_Server": {
         "$ignoreUnknownInstances": false,
         "$path": "src/ServerScriptService/SPH_Server"

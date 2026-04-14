@@ -9,6 +9,9 @@
       "Packages": {
         "$path": "Packages"
       },
+      "DevPackages": {
+        "$path": "DevPackages"
+      },
       "Utility": {
         "$path":"Utility"
       }

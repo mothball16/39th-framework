@@ -9,10 +9,14 @@
 
 ### installation
 1. Clone the repo to your machine
-2. Assuming you have the above installed, run the default build task (CTRL + SHIFT + B by default in VS code) to install packages and update the sourcemap.
+2. Assuming you have the above installed, run the default build task (CTRL + SHIFT + B by default in VS code) to install packages and update the sourcemap. That task should run `wally install`, which writes runtime packages under `Packages/` and dev dependencies (for example TestEZ) under `DevPackages/`. Commit `wally.lock` and the generated package trees as your team prefers.
 3. Grab any missing models from the SPH RBXM on https://github.com/nyemse/SPEARHEAD - particularly those in SPH_Assets.
 4. Serve to Roblox Studio with 'rojo serve' or with the Rojo plugin. 
 5. (Optional) To make your life easier, look at Utility/CommandLineStuff and execute the SpearheadAnimBulkUploader script in the command line. Instructions are located there.
+
+### testing (Studio)
+With Rojo synced, play in Studio (server run). `ServerScriptService/SPH_TestRunner.server.lua` discovers `*.spec` modules under `ReplicatedStorage/SPH_Tests` and runs them with TestEZ (text reporter in output). This only runs when `RunService:IsStudio()` is true.
+
 ### standards
 * Controllers are reactive. Avoid calling controllers directly if possible, aside from intent methods.
 * Input controller wires input actions to controller intent methods.

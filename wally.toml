@@ -8,3 +8,6 @@ realm = "shared"
 Charm = "littensy/charm@0.11.0-rc.5"
 signal = "sleitnick/signal@2.0.3"
 maid = "nightcycle/maid@2.2.2"
+
+[dev-dependencies]
+TestEZ = "roblox/testez@0.4.1"

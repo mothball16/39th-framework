@@ -5,7 +5,7 @@ registry = "test"
 [[package]]
 name = "jzou0/39th-framework"
 version = "0.1.0"
-dependencies = [["Charm", "littensy/charm@0.11.0-rc.5"], ["maid", "nightcycle/maid@2.2.2"], ["signal", "sleitnick/signal@2.0.3"]]
+dependencies = [["Charm", "littensy/charm@0.11.0-rc.5"], ["maid", "nightcycle/maid@2.2.2"], ["signal", "sleitnick/signal@2.0.3"], ["TestEZ", "roblox/testez@0.4.1"]]
 
 [[package]]
 name = "littensy/charm"
@@ -15,6 +15,11 @@ dependencies = []
 [[package]]
 name = "nightcycle/maid"
 version = "2.2.2"
+dependencies = []
+
+[[package]]
+name = "roblox/testez"
+version = "0.4.1"
 dependencies = []
 
 [[package]]
