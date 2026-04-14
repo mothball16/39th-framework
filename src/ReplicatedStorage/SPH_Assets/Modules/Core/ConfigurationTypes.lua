@@ -122,18 +122,20 @@ export type WeaponStats = {
 	serverOffset: CFrame,
 
     -- animation strings
-	idleAnim: string,
-	sprintAnim: string,
-	reloadAnim: string,
-	boltChamber: string,
-	boltClose: string,
-	equipAnim: string,
-	patrolAnim: string?,
-	holdUpAnim: string?,
-	holdDownAnim: string?,
-	switchAnim: string?,
-	fireAnim: string?,
-
+	Animations: {
+		idle: string,
+		sprint: string,
+		reload: string,
+		boltChamber: string,
+		boltClose: string,
+		equip: string,
+		patrol: string?,
+		holdUp: string?,
+		holdDown: string?,
+		switch: string?,
+		fire: string?,
+	},
+	
 	reloadSpeedModifier: number,
 
 	rigParts: {string},

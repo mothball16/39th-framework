@@ -1,5 +1,11 @@
 --!strict
-local Types = require(script.Parent.Parent.ConfigurationTypes)
+local assets = game.ReplicatedStorage:WaitForChild("SPH_Assets")
+local modules = assets.Modules
+local Configurations = assets.Configurations
+local Classes = Configurations.WeaponStats._Classes
+local Types = require(modules.Core.ConfigurationTypes)
+local Enums = require(modules.Core.Enums)
+
 
 local wepStats: Types.WeaponStats = {
 	VRecoil = {12,18},
@@ -126,19 +132,21 @@ local wepStats: Types.WeaponStats = {
 	-- Viewmodel
 	viewmodelOffset = CFrame.new(0.2,0.1,-0.3), -- Where should the viewmodel be placed in reference to the camera
 	serverOffset = CFrame.new(0,0,0), -- Where should the viewmodel be placed in reference to the player's head
-
-	-- Animation
-	idleAnim = "Rifle_Idle", -- Animations are located in ReplicatedStorage > SPH_Assets > Animations
-	sprintAnim = "Rifle_Sprint",
-	reloadAnim = "Rifle_Reload",
-	boltChamber = "Rifle_Chamber", -- Plays if the bolt is closed
-	boltClose = "Rifle_Close", -- Plays if the bolt is open
-	equipAnim = "Rifle_Equip",
-	patrolAnim = "Rifle_Sprint",
-	holdUpAnim = "Rifle_Neutral",
-	holdDownAnim = nil,
-	switchAnim = "Rifle_Switch",
-	fireAnim = nil, -- Plays when the gun fires
+	
+	
+	Animations = {
+		idle = "Rifle_Idle",
+		sprint = "Rifle_Sprint",
+		reload = "Rifle_Reload",
+		boltChamber = "Rifle_Chamber", -- Plays if the bolt is closed
+		boltClose = "Rifle_Close", -- Plays if the bolt is open
+		equip = "Rifle_Equip",
+		patrol = "Rifle_HoldDown",
+		holdUp = "Rifle_HoldUp",
+		holdDown = nil,
+		switch = "Rifle_Switch",
+		fire = nil,
+	},
 
 	reloadSpeedModifier = 0.8, -- 1 = Normal speed, higher = faster, lower = slower
 

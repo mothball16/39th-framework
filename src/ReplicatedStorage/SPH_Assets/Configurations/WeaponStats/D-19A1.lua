@@ -1,8 +1,9 @@
 --!strict
 local assets = game.ReplicatedStorage:WaitForChild("SPH_Assets")
 local modules = assets.Modules
+local Configurations = assets.Configurations
+local Classes = Configurations.WeaponStats._Classes
 local Types = require(modules.Core.ConfigurationTypes)
-local Classes = script.Parent._Classes
 local Enums = require(modules.Core.Enums)
 
 
@@ -68,7 +69,7 @@ local wepStats: Types.WeaponStats = {
 
 	suppressionLevel = 2, -- How much should this gun suppress people?
 
-	holster = true, -- Add gun models to the your character when they aren't equipped
+	holster = false, -- Add gun models to the your character when they aren't equipped
 	holsterPart = "Torso", -- The body part to attach the gun model to
 	holsterPart_R15 = "UpperTorso", -- The body part to attach the gun model to on an R15 rig
 	holsterPosition = CFrame.new(1.244, -0.912, 0.574) * CFrame.Angles(math.rad(-21),math.rad(4),math.rad(6)),
@@ -114,7 +115,7 @@ local wepStats: Types.WeaponStats = {
 	bulletForce = 300, -- If a bullet hits something unanchored, this force is applied
 
 	-- Viewmodel
-	viewmodelOffset = CFrame.new(-0.2,0,-0.1), -- Where should the viewmodel be placed in reference to the camera
+	viewmodelOffset = CFrame.new(-0.2,0,-0.3), -- Where should the viewmodel be placed in reference to the camera
 	serverOffset = CFrame.new(0,0,0), -- Where should the viewmodel be placed in reference to the player's head
 
 	-- Animation
