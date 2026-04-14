@@ -6,7 +6,7 @@ local State = require(script.Parent.CharacterState)
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local modules = assets:WaitForChild("Modules")
-local bridgeNet = require(modules.BridgeNet)
+local bridgeNet = require(modules.Network.BridgeNet)
 
 local playerLean = bridgeNet.CreateBridge("PlayerLean")
 local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")

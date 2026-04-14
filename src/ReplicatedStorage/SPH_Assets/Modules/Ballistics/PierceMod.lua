@@ -15,9 +15,8 @@ local function RandomInt(min, max)
 	return randomSeed:NextInteger(min, max)
 end
 
-local modules = game:GetService("ReplicatedStorage").SPH_Assets.Modules
-local hitFX = require(modules.HitFX)
-local GetMaterialType = require(modules.MaterialTypes)
+local hitFX = require(script.Parent.HitFX)
+local GetMaterialType = require(script.Parent.MaterialTypes)
 local config = require(game:GetService("ReplicatedStorage").SPH_Assets.GameConfig)
 
 

@@ -2,7 +2,7 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 local runService = game:GetService("RunService")
 local assets = replicatedStorage.SPH_Assets
 local config = require(assets.GameConfig)
-local bridgeNet = require(replicatedStorage.SPH_Assets.Modules.BridgeNet)
+local bridgeNet = require(replicatedStorage.SPH_Assets.Modules.Network.BridgeNet)
 local soundSets = assets.Sounds.WalkSounds
 local player = game:GetService("Players").LocalPlayer
 

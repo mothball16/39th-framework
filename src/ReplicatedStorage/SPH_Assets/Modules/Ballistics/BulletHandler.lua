@@ -5,11 +5,12 @@ local debugMode = false
 local debris = game:GetService("Debris")
 local tweenService = game:GetService("TweenService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local modules = replicatedStorage.SPH_Assets.Modules
-local config = require(modules.Parent.GameConfig)
-local hitFX = require(modules.HitFX)
-local WeaponStatLocator = require(modules.WeaponStatLocator)
-local bridgeNet = require(replicatedStorage.SPH_Assets.Modules.BridgeNet)
+local assets = replicatedStorage.SPH_Assets
+local modules = assets.Modules
+local config = require(assets.GameConfig)
+local hitFX = require(modules.Ballistics.HitFX)
+local WeaponStatLocator = require(modules.Weapons.WeaponStatLocator)
+local bridgeNet = require(modules.Network.BridgeNet)
 local bulletHit
 
 local sphWorkspace = workspace:WaitForChild("SPH_Workspace")
@@ -18,13 +19,13 @@ local cacheContainer = workspace.SPH_Workspace:WaitForChild("Cache")
 
 local suppression = replicatedStorage:WaitForChild("Suppression",100)
 
-local pierceMod = require(modules.PierceMod)
-local partCache = require(modules.PartCache)
+local pierceMod = require(modules.Ballistics.PierceMod)
+local partCache = require(modules.Ballistics.PartCache)
 
 local baseBullet = script.Bullet
 local bulletProvider = partCache.new(baseBullet:Clone(),config.maxBullets or 300,cacheContainer)
 
-local fastCast = require(modules.FastCast)
+local fastCast = require(modules.Ballistics.FastCast)
 local bulletBehavior
 local rayParams = RaycastParams.new()
 rayParams.IgnoreWater = true

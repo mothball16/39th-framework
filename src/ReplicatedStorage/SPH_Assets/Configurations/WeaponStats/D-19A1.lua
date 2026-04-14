@@ -1,4 +1,6 @@
 --!strict
+local assets = game.ReplicatedStorage:WaitForChild("SPH_Assets")
+local modules = assets.Modules
 local Types = require(script.Parent.Parent.ConfigurationTypes)
 
 local wepStats: Types.WeaponStats = {
@@ -124,7 +126,7 @@ local wepStats: Types.WeaponStats = {
 	bulletForce = 300, -- If a bullet hits something unanchored, this force is applied
 
 	-- Viewmodel
-	viewmodelOffset = CFrame.new(-0.2,-0.1,-0.1), -- Where should the viewmodel be placed in reference to the camera
+	viewmodelOffset = CFrame.new(-0.2,0,-0.1), -- Where should the viewmodel be placed in reference to the camera
 	serverOffset = CFrame.new(0,0,0), -- Where should the viewmodel be placed in reference to the player's head
 
 	-- Animation

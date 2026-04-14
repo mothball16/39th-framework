@@ -10,7 +10,7 @@ local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
-local Enums = require(assets.Modules.Enums)
+local Enums = require(assets.Modules.Core.Enums)
 local c0Ref = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
 
 local MovementController = {

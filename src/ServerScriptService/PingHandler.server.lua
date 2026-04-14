@@ -1,6 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local BridgeNet = require(ReplicatedStorage:WaitForChild("SPH_Assets").Modules.BridgeNet) -- your location of bridgenet module
+local BridgeNet = require(ReplicatedStorage:WaitForChild("SPH_Assets").Modules.Network.BridgeNet) -- your location of bridgenet module
 local server = BridgeNet.CreateBridge("PingEvent")
 
 server:Connect(function(player, position)

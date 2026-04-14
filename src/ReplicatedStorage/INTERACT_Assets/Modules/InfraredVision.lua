@@ -17,7 +17,7 @@ local flirmod = {}
 local sphInstall = replicatedStorage:FindFirstChild("SPH_Assets")
 local dtsInstall = replicatedStorage:FindFirstChild("DTS_Assets")
 local ucsInstall = replicatedStorage:FindFirstChild("UCS_Assets") --BRIDGENET ORDER: SPH -> DTS -> UCS. You need one of these!! Bad things might happen if you have SMS/USS without SPH or DTS...
-local bridgeNet = (sphInstall and require(sphInstall.Modules.BridgeNet)) or (dtsInstall and require(dtsInstall.Modules.BridgeNet)) or (ucsInstall and require(ucsInstall.Modules.BridgeNet))
+local bridgeNet = (sphInstall and require(sphInstall.Modules.Network.BridgeNet)) or (dtsInstall and require(dtsInstall.Modules.BridgeNet)) or (ucsInstall and require(ucsInstall.Modules.BridgeNet))
 if not bridgeNet then error("NightVision: No SPH/DTS/UCS systems installed, you need at least 1!!") return end
 
 local nvgAnim = bridgeNet.CreateBridge("NightVision_Anim")

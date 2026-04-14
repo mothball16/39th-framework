@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local modules = assets:WaitForChild("Modules")
-local bridgeNet = require(modules.BridgeNet)
+local bridgeNet = require(modules.Network.BridgeNet)
 
 local repToggleAttachment = bridgeNet.CreateBridge("ReplicateToggleAttachment")
 local lasers = {}

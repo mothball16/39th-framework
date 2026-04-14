@@ -14,7 +14,7 @@ local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 
-local BridgeNet = require(ReplicatedStorage:WaitForChild("SPH_Assets").Modules.BridgeNet) -- your location of bridgenet module
+local BridgeNet = require(ReplicatedStorage:WaitForChild("SPH_Assets").Modules.Network.BridgeNet) -- your location of bridgenet module
 local bindable = game.ReplicatedStorage:WaitForChild("TemporaryIndicatorSystem"):WaitForChild("IndicatorBindable")
 
 local client = BridgeNet.CreateBridge("PingEvent")

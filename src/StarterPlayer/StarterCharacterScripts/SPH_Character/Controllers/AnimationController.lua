@@ -6,7 +6,7 @@ local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
 local AnimationEvents = require(script.Parent.AnimationEvents)
 local config = require(ReplicatedStorage:WaitForChild("SPH_Assets").GameConfig)
-local Enums = require(ReplicatedStorage:WaitForChild("SPH_Assets").Modules.Enums)
+local Enums = require(ReplicatedStorage:WaitForChild("SPH_Assets").Modules.Core.Enums)
 local AnimationController = {}
 
 AnimationController.loadedAnims = {}

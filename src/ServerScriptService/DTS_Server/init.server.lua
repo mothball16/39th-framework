@@ -22,7 +22,7 @@ local projectiles = assets.Projectiles
 local sphInstall = replicatedStorage:FindFirstChild("SPH_Assets") --Spearhead compat
 local bridgeNet
 if sphInstall then 
-	bridgeNet = require(sphInstall.Modules.BridgeNet)
+	bridgeNet = require(sphInstall.Modules.Network.BridgeNet)
 else  
 	bridgeNet = require(modules.BridgeNet) 
 end

@@ -1,5 +1,5 @@
 local Debris = game:GetService("Debris")
-local config = require(script.Parent.Parent.GameConfig)
+local config = require(game:GetService("ReplicatedStorage").SPH_Assets.GameConfig)
 
 -- Impact sounds
 local Glass = {"1565824613"; "1565825075";}

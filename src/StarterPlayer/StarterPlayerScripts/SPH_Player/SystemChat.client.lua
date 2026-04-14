@@ -2,7 +2,7 @@ local playerServer = game:GetService("Players")
 local starterGui = game:GetService("StarterGui")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 
-local bridgeNet = require(replicatedStorage.SPH_Assets.Modules.BridgeNet)
+local bridgeNet = require(replicatedStorage.SPH_Assets.Modules.Network.BridgeNet)
 local sysMessage = bridgeNet.CreateBridge("SystemMessage")
 
 local textChatService = game:GetService("TextChatService")

@@ -14,8 +14,8 @@ local assets = RS:WaitForChild("SPH_Assets")
 local modules = assets.Modules
 local dd_settings = require(RS.DD_Settings)
 --< Mods >--
-local weldMod = require(modules.WeldMod)
-local SPH_Gunsmith = require(modules.Gunsmith)
+local weldMod = require(modules.Weapons.WeldMod)
+local SPH_Gunsmith = require(modules.Weapons.Gunsmith)
 local attachmentsTable = require(script.AttachmentLoader).Attachments
 
 --< Config >--

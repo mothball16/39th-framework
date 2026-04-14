@@ -8,16 +8,16 @@ local Charm = require(Packages.Charm)
 local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
 local config = require(assets.GameConfig)
 local modules = assets.Modules
-local Enums = require(modules.Enums)
-local bulletHandler = require(modules.BulletHandler)
-local shellEjection = require(modules.ShellEjection)
-local weldMod = require(modules.WeldMod)
-local bridgeNet = require(modules.BridgeNet)
-local weaponPrefsClient = require(modules.WeaponPrefsClient)
-local weaponStatLocator = require(modules.WeaponStatLocator)
+local Enums = require(modules.Core.Enums)
+local bulletHandler = require(modules.Ballistics.BulletHandler)
+local shellEjection = require(modules.Weapons.ShellEjection)
+local weldMod = require(modules.Weapons.WeldMod)
+local bridgeNet = require(modules.Network.BridgeNet)
+local weaponPrefsClient = require(modules.Weapons.WeaponPrefsClient)
+local weaponStatLocator = require(modules.Weapons.WeaponStatLocator)
 
 
-local RecoilModule = require(modules.Recoil.Default)
+local RecoilModule = require(modules.Weapons.Recoil.Default)
 
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
@@ -702,7 +702,7 @@ function RecoilCalc(Recoil,Dir,Default)
 	end
 end
 
-local SP = require(modules.Spring.Default)
+local SP = require(modules.Weapons.Spring.Default)
 
 function WC.PerformRecoil(wepStats)
 	coroutine.wrap(function()

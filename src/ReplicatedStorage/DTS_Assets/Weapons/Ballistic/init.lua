@@ -34,8 +34,8 @@ local config = require(assets.GlobalSettings)
 local sphInstall = replicatedStorage:FindFirstChild("SPH_Assets") --Spearhead compat
 local bridgeNet
 if sphInstall then 
-	bridgeNet = require(sphInstall.Modules.BridgeNet)
-	partCache = require(sphInstall.Modules.PartCache)
+	bridgeNet = require(sphInstall.Modules.Network.BridgeNet)
+	partCache = require(sphInstall.Modules.Ballistics.PartCache)
 else  
 	bridgeNet = require(modules.BridgeNet) 
 end

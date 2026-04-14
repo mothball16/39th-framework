@@ -14,7 +14,7 @@ local Vars = Assets.Vars
 
 -- Bridgenet
 local bridgeNet = nil
-if Config.useSpearhead then bridgeNet = require(replicatedStorage.SPH_Assets.Modules.BridgeNet)
+if Config.useSpearhead then bridgeNet = require(replicatedStorage.SPH_Assets.Modules.Network.BridgeNet)
 else
 	bridgeNet = require(modules.BridgeNet) end
 

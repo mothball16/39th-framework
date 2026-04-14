@@ -30,9 +30,9 @@ local bridgeNet
 local partCache
 local suppression
 if sphInstall then 
-	bridgeNet = require(sphInstall.Modules.BridgeNet)
-	partCache = require(sphInstall.Modules.PartCache)
-	--fastCast = require(sphInstall.Modules.FastCast)
+	bridgeNet = require(sphInstall.Modules.Network.BridgeNet)
+	partCache = require(sphInstall.Modules.Ballistics.PartCache)
+	--fastCast = require(sphInstall.Modules.Ballistics.FastCast)
 	suppression = replicatedStorage:WaitForChild("Suppression",100)
 else  
 	bridgeNet = require(modules.BridgeNet) 

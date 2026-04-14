@@ -21,15 +21,15 @@ local assets = replicatedStorage.SPH_Assets
 local modules = assets.Modules
 local mainui = assets.HUD.SPH_UI
 
-local WeaponStatLocator = require(modules.WeaponStatLocator)
-local weldMod = require(modules.WeldMod)
-local bridgeNet = require(replicatedStorage.SPH_Assets.Modules.BridgeNet)
-local viewMod = require(modules.ViewMod)
-local explosionMod = require(modules.ExplosionFX)
+local WeaponStatLocator = require(modules.Weapons.WeaponStatLocator)
+local weldMod = require(modules.Weapons.WeldMod)
+local bridgeNet = require(modules.Network.BridgeNet)
+local viewMod = require(modules.Weapons.ViewMod)
+local explosionMod = require(modules.Effects.ExplosionFX)
 local config = require(assets.GameConfig)
-local ragdoll = require(modules.RagdollMod)
-local systemMessages = require(modules.SystemMessages)
-local fractureGlass = require(modules.FractureGlass)
+local ragdoll = require(modules.Effects.RagdollMod)
+local systemMessages = require(modules.Core.SystemMessages)
+local fractureGlass = require(modules.Effects.FractureGlass)
 local warnPrefix = "【 SPEARHEAD 】 "
 print(warnPrefix .. "Loading Server " .. config.version)
 

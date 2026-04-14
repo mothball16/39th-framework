@@ -2,8 +2,7 @@ local gunsmith = {}
 
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local assets = replicatedStorage.SPH_Assets
-local modules = assets.Modules
-local weldMod = require(modules.WeldMod)
+local weldMod = require(script.Parent.WeldMod)
 
 -- table for player's attachment stats used clientside (clears when weapon is unequipped)
 gunsmith.attStats = {}

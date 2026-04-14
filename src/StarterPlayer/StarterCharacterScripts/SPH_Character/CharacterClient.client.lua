@@ -4,7 +4,7 @@ local userInputService = game:GetService("UserInputService")
 local debris = game:GetService("Debris")
 local players = game:GetService("Players")
 local assets = replicatedStorage:WaitForChild("SPH_Assets")
-local Enums = require(assets.Modules.Enums)
+local Enums = require(assets.Modules.Core.Enums)
 local Intents = Enums.Intents
 local modules = assets.Modules
 local config = require(assets.GameConfig)
@@ -32,13 +32,13 @@ if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
 camera.CameraType = Enum.CameraType.Custom
 if camera:FindFirstChild("WeaponRig") then camera.WeaponRig:Destroy() end
 
-local weldMod = require(modules.WeldMod)
-local bridgeNet = require(modules.BridgeNet)
-local viewMod = require(modules.ViewMod)
-local springMod = require(modules.SpringModule)
-local hitFX = require(modules.HitFX)
-local shellEjection = require(modules.ShellEjection)
-local bulletHandler = require(modules.BulletHandler)
+local weldMod = require(modules.Weapons.WeldMod)
+local bridgeNet = require(modules.Network.BridgeNet)
+local viewMod = require(modules.Weapons.ViewMod)
+local springMod = require(modules.Weapons.SpringModule)
+local hitFX = require(modules.Ballistics.HitFX)
+local shellEjection = require(modules.Weapons.ShellEjection)
+local bulletHandler = require(modules.Ballistics.BulletHandler)
 local callbacks = require(assets.Mods)
 local Packages = replicatedStorage.Packages
 local Charm = require(Packages.Charm)

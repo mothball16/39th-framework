@@ -1,8 +1,7 @@
 local debris = game:GetService("Debris")
 
 local assets = game:GetService("ReplicatedStorage").SPH_Assets
-local modules = assets.Modules
-local WeaponStatLocator = require(modules.WeaponStatLocator)
+local WeaponStatLocator = require(script.Parent.WeaponStatLocator)
 local config = require(assets.GameConfig)
 
 local ammoTypes = assets.Ammo

@@ -9,7 +9,7 @@ if config.fallDamage then
 	local humanoidRootPart:BasePart = character:WaitForChild("HumanoidRootPart")
 	local prevHeight = humanoidRootPart.Position.Y
 	
-	local bridgeNet = require(assets.Modules.BridgeNet)
+	local bridgeNet = require(assets.Modules.Network.BridgeNet)
 	local fallDamage = bridgeNet.CreateBridge("FallDamage")
 	
 	humanoid.Died:Connect(function()
