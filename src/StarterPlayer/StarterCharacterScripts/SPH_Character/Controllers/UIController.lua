@@ -88,7 +88,8 @@ end
 
 function UIController.SyncEquippedTool(tool)
 	if tool then
-		if WeaponState.wepStats and WeaponState.wepStats.hasUBGL then
+		local ws = WeaponState.wepStats()
+		if ws and ws.hasUBGL then
 			UIController.ubglAmmo = tool:FindFirstChild("UBGLAmmo")
 		else
 			UIController.ubglAmmo = nil
@@ -102,8 +103,8 @@ function UIController.SyncEquippedTool(tool)
 			UIController.attachmentFrame.Laser.Visible = true
 		end
 		
-		if WeaponState.wepStats and WeaponState.wepStats.ammoType then
-			UIController.bulletType.Text = WeaponState.wepStats.ammoType
+		if ws and ws.ammoType then
+			UIController.bulletType.Text = ws.ammoType
 		end
 	else
 		UIController.ubglAmmo = nil
@@ -116,7 +117,7 @@ end
 
 function UIController.UpdateHeartbeat(dt)
 	local tool = State.equippedTool()
-	local wepStats = WeaponState.wepStats
+	local wepStats = WeaponState.wepStats()
 	local magAmmo = WeaponState.gunAmmo and WeaponState.gunAmmo:FindFirstChild("MagAmmo")
 	
 	if not UIController.ammoUI then return end

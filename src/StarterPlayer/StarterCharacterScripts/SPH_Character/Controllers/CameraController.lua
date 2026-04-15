@@ -54,7 +54,8 @@ function CC.SyncAiming(aiming)
 	if aiming then
 		-- nothin yet
 	else
-		local aimOutTime = WeaponState.wepStats and WeaponState.wepStats.aimTime / 2 or 0.3
+		local ws = WeaponState.wepStats()
+		local aimOutTime = ws and ws.aimTime / 2 or 0.3
 		CC.aimTween = TweenService:Create(
 			CC.camera, TweenInfo.new(aimOutTime),{FieldOfView = config.defaultFOV})
 		CC.aimTween:Play()

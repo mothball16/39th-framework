@@ -215,8 +215,9 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 			-- DD_SPH Gunsmith: FOV adjusts with scope
 			local aimFovMinTarget = State.wepStats.aimFovMin
 			local aimFovMaxTarget = State.wepStats.aimFovMax or config.defaultFOV
-			if WeaponState.wepStats and WeaponState.wepStats.aimFovMin then aimFovMinTarget = WeaponState.wepStats.aimFovMin end
-			if WeaponState.wepStats and WeaponState.wepStats.aimFovMax then aimFovMaxTarget = WeaponState.wepStats.aimFovMax end
+			local ws = WeaponState.wepStats()
+			if ws and ws.aimFovMin then aimFovMinTarget = ws.aimFovMin end
+			if ws and ws.aimFovMax then aimFovMaxTarget = ws.aimFovMax end
 			WeaponController.aimFOVTarget = math.clamp(newFOV, aimFovMinTarget, aimFovMaxTarget)
 			-- </DD_SPH>
 		else

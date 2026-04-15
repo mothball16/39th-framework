@@ -8,7 +8,7 @@ local Enums = require(modules.Core.Enums)
 local SP = require(modules.Weapons.Spring.Default)
 local legacySpring = require(modules.Weapons.LegacySpring)
 local WepState = {
-	wepStats = nil,
+	wepStats = Charm.atom(nil) 							:: Charm.Atom<any>,
 	equipping = Charm.atom(false)						:: Charm.Atom<boolean>,
 
 	gunModel = Charm.atom(nil) 							:: Charm.Atom<Instance>,
@@ -40,14 +40,15 @@ local WepState = {
 	Spread = 0,
 }
 WepState.aimFOVTarget = Charm.computed(function()
-	if not WepState.wepStats or not WepState.gunModel() then
+	local ws = WepState.wepStats()
+	if not ws or not WepState.gunModel() then
 		return config.defaultFOV
 	end
-	return WepState.wepStats.aimFovs[WepState.sightIndex()] or config.defaultFOV
+	return ws.aimFovs[WepState.sightIndex()] or config.defaultFOV
 end)
 
 function WepState.adsMeshLayerEnabled(sightIndex: number): boolean
-	local w = WepState.wepStats
+	local w = WepState.wepStats()
 	if not w or not w.ADSEnabled then
 		return false
 	end
@@ -56,24 +57,26 @@ function WepState.adsMeshLayerEnabled(sightIndex: number): boolean
 end
 
 function WepState.hasAdsMeshLayers(): boolean
-	local v = WepState.wepStats and WepState.wepStats.ADSEnabled
+	local ws = WepState.wepStats()
+	local v = ws and ws.ADSEnabled
 	return if v then true else false
 end
 
 WepState.ubglActive = Charm.computed(function()
-	local ws = WepState.wepStats
+	local ws = WepState.wepStats()
 	return ws ~= nil
 		and ws.hasUBGL == true
 		and WepState.fireMode() == Enums.FireModes.UBGL
 end)
 
 WepState.hasAmmoForMode = Charm.computed(function()
-	if not WepState.wepStats then
+	local ws = WepState.wepStats()
+	if not ws then
 		return false
 	end
 	if WepState.ubglActive() then
 		return WepState.localUbglAmmo() > 0
-	elseif WepState.wepStats.openBolt then
+	elseif ws.openBolt then
 		return WepState.localAmmo() > 0
 	else
 		return WepState.predictedChambered()
@@ -85,7 +88,7 @@ WepState.canManipulate = Charm.computed(function()
 	and not WepState.reloading()
 	and not WepState.chambering()
 	and not WepState.equipping()
-	and WepState.wepStats
+	and WepState.wepStats()
 end)
 
 WepState.canTrackAimInput = Charm.computed(function()
@@ -111,7 +114,7 @@ function WepState.reset()
 	WepState.RecoilFactor = 0
 	WepState.Spread = 0
 
-	WepState.wepStats = nil
+	WepState.wepStats(nil)
 	WepState.gunModel(nil)
 	WepState.gunAmmo = nil
 

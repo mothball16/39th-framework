@@ -79,6 +79,10 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	local humanoidRootPart = ViewmodelController.humanoidRootPart
 	local weaponRig = ViewmodelController.weaponRig
 	local rayParams = ViewmodelController.rayParams
+	local ws = WeaponState.wepStats()
+	if not ws then
+		return
+	end
 
 	animBase.CFrame = CFrame.new((camera.CFrame * offset).Position)
 
@@ -103,7 +107,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	local aimPart = WeaponState.gunModel():FindFirstChild("AimPart" .. sightIndex) or WeaponState.gunModel().AimPart
 	aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
 
-	local aimTime = WeaponState.wepStats.aimTime
+	local aimTime = ws.aimTime
 
 	if State.aiming() then
 		aimingOffset = aimingOffset:Lerp(aimTarget, (0.7 / aimTime) * 0.3 * dt * 60)
@@ -112,7 +116,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	end
 	animBase.CFrame *= aimingOffset
 
-	local rayDistance = WeaponState.wepStats.gunLength
+	local rayDistance = ws.gunLength
 	local originCFrame = State.firstPerson() and animBase.CFrame or weaponRig.AnimBase.CFrame
 	local newRay = workspace:Raycast(originCFrame.Position, originCFrame.LookVector * rayDistance, rayParams)
 	
@@ -128,7 +132,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 		end
 
 		if config.raiseGunAtWall then
-			if distance >= WeaponState.wepStats.maxPushback then
+			if distance >= ws.maxPushback then
 				if not isBlocked then
 					WeaponState.holdStance(Enums.HoldStance.High)
 					WeaponState.blocked(true)
@@ -144,7 +148,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 		end
 	else
 		if isBlocked then
-			local holdUpAnim = WeaponState.wepStats and WeaponState.wepStats.Animations and WeaponState.wepStats.Animations.holdUp
+			local holdUpAnim = ws.Animations and ws.Animations.holdUp
 			if type(holdUpAnim) == "string" and holdUpAnim ~= "" then
 				ViewmodelController.StopAnimation(holdUpAnim, 0.3)
 			end
@@ -193,8 +197,8 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 
 	-- mouse move sway
 	ViewmodelController.swaySpring:shove(Vector3.new(
-		-mouseDelta.X * WeaponState.wepStats.DeltaInstability.X,
-		mouseDelta.Y * WeaponState.wepStats.DeltaInstability.Y,
+		-mouseDelta.X * ws.DeltaInstability.X,
+		mouseDelta.Y * ws.DeltaInstability.Y,
 		0))
 	local updatedSway = ViewmodelController.swaySpring:update(dt)
 	animBase.CFrame *= CFrame.new(updatedSway.X, updatedSway.Y, 0)
@@ -225,7 +229,8 @@ function ViewmodelController.UpdateRender(dt)
 			State.sprinting(false)
 		end
 
-		local currentOffset = WeaponState.wepStats and WeaponState.wepStats.viewmodelOffset or CFrame.new()
+		local ws = WeaponState.wepStats()
+		local currentOffset = ws and ws.viewmodelOffset or CFrame.new()
 		ViewmodelController.UpdateViewmodelPosition(dt, currentOffset, WeaponState.sightIndex())
 	elseif WeaponState.viewmodelVisible() and not WeaponState.equipping() then
 		WeaponState.viewmodelVisible(false)
@@ -250,7 +255,8 @@ function ViewmodelController.UpdateMovementSway(dt, tempWalkSpeed, vehicleSeated
 
 	if not humanoid.Sit and velocityMag > 0.1 then
 		local moveSway = Vector3.new(GetSineOffset(tempBobSpeed), GetSineOffset(tempBobSpeed / 2), GetSineOffset(tempBobSpeed / 2))
-		local moveInstability = (WeaponState.wepStats and WeaponState.wepStats.MoveInstability) or 1
+		local ws = WeaponState.wepStats()
+		local moveInstability = (ws and ws.MoveInstability) or 1
 		
 		ViewmodelController.moveSpring:shove(moveSway * moveInstability * velocityMag / (tempDampening * tempDampening) * dt * 60)
 	end

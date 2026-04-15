@@ -105,7 +105,7 @@ function WeaponPrefsClient.applyPersisted(weaponName, State, WeaponState, WC)
 	end
 
 	local baselineFireMode = WeaponState.fireMode()
-	local wepStats = WeaponState.wepStats
+	local wepStats = WeaponState.wepStats()
 	local validated = {}
 
 	for key, val in pairs(prefs) do

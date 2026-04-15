@@ -255,7 +255,8 @@ end
 
 
 function WC.PlayRepSound(soundName)
-	if not State.dead() and WeaponState.wepStats then
+	local ws = WeaponState.wepStats()
+	if not State.dead() and ws then
 		local soundToPlay
 		local gm = WeaponState.gunModel()
 		if WeaponState.ubglActive() then
@@ -289,9 +290,10 @@ end
 
 function WC.GetCurrentWepStats()
 	if WeaponState.ubglActive() then
-		return WeaponState.wepStats.getStatsForMode(4)
+		local ws = WeaponState.wepStats()
+		return ws and ws.getStatsForMode(4)
 	else
-		return WeaponState.wepStats
+		return WeaponState.wepStats()
 	end
 end
 
@@ -313,8 +315,9 @@ function WC.GetMuzzlePoint(gunModel)
 end
 
 function WC.MoveBolt(direction:CFrame, silent:boolean)
-	bulletHandler.MoveBolt(WeaponState.gunModel(), WeaponState.wepStats, direction, WeaponState.gunAmmo.MagAmmo.Value)
-	bulletHandler.MoveBolt(WC.thirdPersonRig.Weapon:FindFirstChildWhichIsA("Model"), WeaponState.wepStats, direction, WeaponState.gunAmmo.MagAmmo.Value)
+	local ws = WeaponState.wepStats()
+	bulletHandler.MoveBolt(WeaponState.gunModel(), ws, direction, WeaponState.gunAmmo.MagAmmo.Value)
+	bulletHandler.MoveBolt(WC.thirdPersonRig.Weapon:FindFirstChildWhichIsA("Model"), ws, direction, WeaponState.gunAmmo.MagAmmo.Value)
 	if WeaponState.gunAmmo.MagAmmo.Value <= 0 and not silent then
 		WC.PlayRepSound("Empty")
 	end
@@ -326,7 +329,8 @@ function WC.ToggleADSMesh(toggle)
 		return
 	end
 
-	local aimingTime = (WeaponState.wepStats.aimTime and WeaponState.wepStats.aimTime / 20) or 0.2
+	local ws = WeaponState.wepStats()
+	local aimingTime = (ws and ws.aimTime and ws.aimTime / 20) or 0.2
 
 	for _, child in ipairs(WeaponState.gunModel():GetDescendants()) do
 		if child.Name == "REG" then
@@ -348,8 +352,9 @@ function WC.ToggleBipod(bipodModel, toggle)
 end
 
 function WC.SetProjectileTransparency(model, transparency)
-	if not WeaponState.wepStats or WeaponState.wepStats.projectile == "Bullet" or not model then return end
-	local projectile = model:FindFirstChild(WeaponState.wepStats.projectile)
+	local ws = WeaponState.wepStats()
+	if not ws or ws.projectile == "Bullet" or not model then return end
+	local projectile = model:FindFirstChild(ws.projectile)
 	if projectile then
 		projectile.LocalTransparencyModifier = transparency
 		for _, child in ipairs(projectile:GetDescendants()) do
@@ -360,7 +365,8 @@ end
 
 function WC.EjectShell()
 	WC.ejected = true
-	if WeaponState.wepStats.shellEject then
+	local ws = WeaponState.wepStats()
+	if ws and ws.shellEject then
 		if State.firstPerson() then
 			shellEjection.ejectShell(WC.player, State.equippedTool(), WeaponState.gunModel())
 		else
@@ -375,10 +381,14 @@ end
 
 function WC.SwitchFireMode()
 	local mode = WeaponState.fireMode()
+	local ws = WeaponState.wepStats()
+	if not ws then
+		return
+	end
 	repeat
 		mode += 1
 		if mode > 5 then mode = 0 break end
-	until WeaponState.wepStats.fireSwitch[mode]
+	until ws.fireSwitch[mode]
 	WeaponState.fireMode(mode)
 end
 
@@ -429,31 +439,32 @@ function WC.Equip(newChild)
 	WeaponState.equipping(true)
 
 	State.equippedTool(newChild)
-	WeaponState.wepStats = weaponStatLocator.getWeaponStats(State.equippedTool().SPH_Weapon)
+	WeaponState.wepStats(weaponStatLocator.getWeaponStats(State.equippedTool().SPH_Weapon))
 
 	WC.cycled = true
 	WC.switchWeapon:Fire(newChild)
 
 
-	if WeaponState.wepStats.PunchSpeed then
-		WeaponState.RecoilPos.s = WeaponState.wepStats.PunchSpeed
-		WeaponState.RecoilDir.s = WeaponState.wepStats.PunchSpeed
-		WeaponState.RecoilUp.s = WeaponState.wepStats.PunchSpeed
+	local ws = WeaponState.wepStats()
+	if ws and ws.PunchSpeed then
+		WeaponState.RecoilPos.s = ws.PunchSpeed
+		WeaponState.RecoilDir.s = ws.PunchSpeed
+		WeaponState.RecoilUp.s = ws.PunchSpeed
 	end
-	if WeaponState.wepStats.PunchDamper then
-		WeaponState.RecoilPos.d = WeaponState.wepStats.PunchDamper
-		WeaponState.RecoilDir.d = WeaponState.wepStats.PunchDamper
-		WeaponState.RecoilUp.d = WeaponState.wepStats.PunchDamper
+	if ws and ws.PunchDamper then
+		WeaponState.RecoilPos.d = ws.PunchDamper
+		WeaponState.RecoilDir.d = ws.PunchDamper
+		WeaponState.RecoilUp.d = ws.PunchDamper
 	end
 
 
 
 	-- fallbacks
-	if not WeaponState.wepStats.operationType or type(WeaponState.wepStats.operationType) == "string" then
-		WeaponState.wepStats.operationType = 1
+	if ws and (not ws.operationType or type(ws.operationType) == "string") then
+		ws.operationType = 1
 	end
-	if not WeaponState.wepStats.magType then
-		WeaponState.wepStats.magType = 1
+	if ws and not ws.magType then
+		ws.magType = 1
 	end
 
 	local oldGun = WC.viewmodelRig.Weapon:FindFirstChildWhichIsA("Model")
@@ -465,7 +476,7 @@ function WC.Equip(newChild)
 	local gun = assets.WeaponModels:FindFirstChild(newChild.Name):Clone()
 	weldMod.WeldModel(gun, gun.Grip, false)
 
-	for _, partName in ipairs(WeaponState.wepStats.rigParts) do
+	for _, partName in ipairs(ws.rigParts) do
 		if gun:FindFirstChild(partName) then
 			gun.Grip["Grip_"..partName]:Destroy()
 			local newMotor = weldMod.M6D(gun.Grip, gun[partName])
@@ -489,40 +500,40 @@ function WC.Equip(newChild)
 	AnimationEvents.WeaponEquipRequested:Fire()
 	AnimationEvents.WeaponIdleRequested:Fire()
 
-	if not WeaponState.wepStats then return end
-	if WeaponState.wepStats.openBolt or not State.equippedTool().Chambered.Value then
+	if not ws then return end
+	if ws.openBolt or not State.equippedTool().Chambered.Value then
 		WC.SetProjectileTransparency(WeaponState.gunModel(), 1)
 	end
 
 	WeaponState.gunAmmo = State.equippedTool():WaitForChild("Ammo")
 	WeaponState.localAmmo(WeaponState.gunAmmo.MagAmmo.Value)
-	if WeaponState.wepStats.hasUBGL then
+	if ws.hasUBGL then
 		WC.ubglAmmo = newChild:FindFirstChild("UBGLAmmo")
 		local ubglAmmoPool = newChild:FindFirstChild("UBGLAmmoPool")
 		if not WC.ubglAmmo then
 			WC.ubglAmmo = Instance.new("IntValue", newChild)
 			WC.ubglAmmo.Name = "UBGLAmmo"
-			local totalStartAmmo = WeaponState.wepStats.ubgl.startAmmoPool or 6
+			local totalStartAmmo = ws.ubgl.startAmmoPool or 6
 			WC.ubglAmmo.Value = (totalStartAmmo > 0 and (not ubglAmmoPool or ubglAmmoPool.Value > 0)) and 1 or 0
 		end
 		if not ubglAmmoPool then
 			ubglAmmoPool = Instance.new("DoubleConstrainedValue", newChild)
 			ubglAmmoPool.Name = "UBGLAmmoPool"
-			ubglAmmoPool.MaxValue = WeaponState.wepStats.ubgl.maxAmmoPool or 12
-			local totalStartAmmo = WeaponState.wepStats.ubgl.startAmmoPool or 6
+			ubglAmmoPool.MaxValue = ws.ubgl.maxAmmoPool or 12
+			local totalStartAmmo = ws.ubgl.startAmmoPool or 6
 			ubglAmmoPool.Value = totalStartAmmo > 0 and (totalStartAmmo - WC.ubglAmmo.Value) or 0
 		end
 
-		if WeaponState.wepStats.ubgl.reloadAnim then
-			local animSpeed = WeaponState.wepStats.reloadSpeedModifier
-			AnimationEvents.PlayAnimationRequested:Fire(WeaponState.wepStats.ubgl.reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
+		if ws.ubgl.reloadAnim then
+			local animSpeed = ws.reloadSpeedModifier
+			AnimationEvents.PlayAnimationRequested:Fire(ws.ubgl.reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
 		end
 	else
 		WC.ubglAmmo = nil
 	end
 
 	if not State.equippedTool().BoltReady.Value then
-		WC.MoveBolt(WeaponState.wepStats.boltDist, true)
+		WC.MoveBolt(ws.boltDist, true)
 	end
 
 	if config.lockFirstPerson then WC.player.CameraMode = Enum.CameraMode.LockFirstPerson end
@@ -571,14 +582,18 @@ function WC.OnReloadIntent(inputState, inputObject)
 			AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
 		end
 	else
-		if WeaponState.wepStats.infiniteAmmo or WeaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
-			if (WeaponState.wepStats.openBolt and WeaponState.gunAmmo.MagAmmo.Value < WeaponState.gunAmmo.MagAmmo.MaxValue) then
+		local ws = WeaponState.wepStats()
+		if not ws then
+			return
+		end
+		if ws.infiniteAmmo or WeaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
+			if (ws.openBolt and WeaponState.gunAmmo.MagAmmo.Value < WeaponState.gunAmmo.MagAmmo.MaxValue) then
 				WC.cancelReload = false
 				AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
 			else
-				if (WeaponState.wepStats.operationType == 4 and State.equippedTool().Chambered.Value)
-					or (WeaponState.wepStats.operationType == 3 and WeaponState.gunAmmo.MagAmmo.Value + 1 >= WeaponState.gunAmmo.MagAmmo.MaxValue)
-					or (WeaponState.wepStats.operationType == 2 and WeaponState.gunAmmo.MagAmmo.Value >= WeaponState.gunAmmo.MagAmmo.MaxValue) then
+				if (ws.operationType == 4 and State.equippedTool().Chambered.Value)
+					or (ws.operationType == 3 and WeaponState.gunAmmo.MagAmmo.Value + 1 >= WeaponState.gunAmmo.MagAmmo.MaxValue)
+					or (ws.operationType == 2 and WeaponState.gunAmmo.MagAmmo.Value >= WeaponState.gunAmmo.MagAmmo.MaxValue) then
 					return
 				end
 				WC.cancelReload = false
@@ -778,6 +793,10 @@ end
 
 function WC.UpdateHeartbeat(dt)
 	if not State.equippedTool() or State.dead() then return end
+	local ws = WeaponState.wepStats()
+	if not ws then
+		return
+	end
 	
 	-- General state checks: prevents execution if sprinting, reloading, chambering, or not holding M1
 	if State.sprinting() or WeaponState.reloading() or WeaponState.chambering() then return end
@@ -800,7 +819,7 @@ function WC.UpdateHeartbeat(dt)
 
 		local currentStats = WC.GetCurrentWepStats()
 		AnimationEvents.FireAnimRequested:Fire()
-		WC.PerformRecoil(WeaponState.wepStats)
+		WC.PerformRecoil(currentStats)
 
 		WC.bulletsCurrentlyFired += 1
 		WC.ejected = false
@@ -818,7 +837,7 @@ function WC.UpdateHeartbeat(dt)
 		end
 
 		if fireMode ~= Enums.FireModes.UBGL then
-			local bulletHandlerPart = WeaponState.wepStats.bulletHandler and WeaponState.gunModel():FindFirstChild(WeaponState.wepStats.bulletHolder)
+			local bulletHandlerPart = ws.bulletHandler and WeaponState.gunModel():FindFirstChild(ws.bulletHolder)
 			if bulletHandlerPart then
 				local bulletNumber = WeaponState.gunAmmo.MagAmmo.MaxValue - (WeaponState.gunAmmo.MagAmmo.Value - 1)
 				local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
@@ -830,7 +849,7 @@ function WC.UpdateHeartbeat(dt)
 		if not State.firstPerson() then tempGunModel = WC.GetThirdPersonGunModel() end
 
 		local muzzleName = (fireMode == Enums.FireModes.UBGL) and "UBGLMuzzle" or "Muzzle"
-		local muCh = WeaponState.wepStats.muzzleChance
+		local muCh = ws.muzzleChance
 		local muzzleHost = findChildModelWithMainPartChild(tempGunModel, "Muzzle")
 		if muzzleHost then
 			tempGunModel = muzzleHost
@@ -885,12 +904,12 @@ function WC.UpdateHeartbeat(dt)
 		end
 
 		-- spread and recoil step
-		WeaponState.RecoilFactor = math.clamp(WeaponState.RecoilFactor + WeaponState.wepStats.RecoilStepAmount,
-			WeaponState.wepStats.MinRecoilFactor, WeaponState.wepStats.MaxRecoilFactor)
+		WeaponState.RecoilFactor = math.clamp(WeaponState.RecoilFactor + ws.RecoilStepAmount,
+			ws.MinRecoilFactor, ws.MaxRecoilFactor)
 
-		local spreadStep = WeaponState.wepStats.SpreadStepAmount
-		local minSpread = WeaponState.wepStats.MinSpread
-		local maxSpread = WeaponState.wepStats.MaxSpread
+		local spreadStep = ws.SpreadStepAmount
+		local minSpread = ws.MinSpread
+		local maxSpread = ws.MaxSpread
 		WeaponState.Spread = math.clamp(math.max(WeaponState.Spread, minSpread) + spreadStep, minSpread, maxSpread)
 
 		task.wait(60 / cycleTime)
@@ -908,7 +927,7 @@ function WC.UpdateHeartbeat(dt)
 				WeaponState.chambering(true)
 				WC.holdingM1 = false
 			end
-		elseif WeaponState.wepStats.emptyCloseBolt then
+		elseif ws.emptyCloseBolt then
 			WC.repChamber:Fire()
 			WC.MoveBolt(CFrame.new())
 		end
@@ -918,18 +937,22 @@ end
 function WC.UpdateRender(dt)
 	local adjust = dt * 60
 	if not State.equippedTool() or WC.camera.CameraType ~= Enum.CameraType.Custom then return end
+	local ws = WeaponState.wepStats()
+	if not ws then
+		return
+	end
 
 	--recoil logic
-	WeaponState.RecoilCF = WeaponState.RecoilCF:Lerp(CFrame.new(),math.min(1, WeaponState.wepStats.PunchRecover * adjust))
+	WeaponState.RecoilCF = WeaponState.RecoilCF:Lerp(CFrame.new(),math.min(1, ws.PunchRecover * adjust))
 	WeaponState.RecoilPos.t = WeaponState.RecoilCF.Position
 	WeaponState.RecoilDir.t = WeaponState.RecoilCF.LookVector
 	WeaponState.RecoilUp.t = WeaponState.RecoilCF.UpVector
-	WeaponState.RecoilFactor = math.clamp(WeaponState.RecoilFactor - WeaponState.wepStats.RecoilRecoverPerSecond * dt,
-		WeaponState.wepStats.MinRecoilFactor, WeaponState.wepStats.MaxRecoilFactor)
+	WeaponState.RecoilFactor = math.clamp(WeaponState.RecoilFactor - ws.RecoilRecoverPerSecond * dt,
+		ws.MinRecoilFactor, ws.MaxRecoilFactor)
 
-	local spreadRecover = WeaponState.wepStats.SpreadRecoverPerSecond
-	local minSpread = WeaponState.wepStats.MinSpread
-	local maxSpread = WeaponState.wepStats.MaxSpread
+	local spreadRecover = ws.SpreadRecoverPerSecond
+	local minSpread = ws.MinSpread
+	local maxSpread = ws.MaxSpread
 	WeaponState.Spread = math.clamp(math.max(WeaponState.Spread, minSpread) - (spreadRecover * dt), minSpread, maxSpread)
 
 	local bipodPart = WeaponState.gunModel().Grip:FindFirstChild("Bipod")
@@ -956,21 +979,25 @@ function WC.UpdateRender(dt)
 end
 
 function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
+	local ws = WeaponState.wepStats()
+	if not ws then
+		return
+	end
 	if WeaponState.gunModel().Grip:FindFirstChild(keyframeName) then WC.PlayRepSound(keyframeName) end
 	if keyframeName == "MagIn" then
-		if State.equippedTool() and (not State.equippedTool().Chambered.Value or WeaponState.wepStats.openBolt) and WeaponState.wepStats.autoChamber then
+		if State.equippedTool() and (not State.equippedTool().Chambered.Value or ws.openBolt) and ws.autoChamber then
 			WeaponState.reloading(true)
 			AnimationEvents.StopAnimationRequested:Fire(animName, 0.4)
 			AnimationEvents.BoltActionRequested:Fire(State.equippedTool().BoltReady.Value)
 		end
-		local bulletHandlerPart = WeaponState.wepStats.bulletHandler and WeaponState.gunModel():FindFirstChild(WeaponState.wepStats.bulletHolder)
+		local bulletHandlerPart = ws.bulletHandler and WeaponState.gunModel():FindFirstChild(ws.bulletHolder)
 		if bulletHandlerPart then
 			for _, child in bulletHandlerPart:GetChildren() do
 				if child:IsA("BasePart") and string.sub(child.Name, 1, 6) == "Bullet" then child.Transparency = 0 end
 			end
 		end
 		WC.repReload:Fire()
-		if WeaponState.wepStats.magType > 1 then newAnim.DidLoop:Once(function() AnimationEvents.StopAnimationRequested:Fire(animName) end) end
+		if ws.magType > 1 then newAnim.DidLoop:Once(function() AnimationEvents.StopAnimationRequested:Fire(animName) end) end
 	elseif keyframeName == "ShellInsert" or keyframeName == "BulletInsert" then
 		if WC.cancelReload then
 			WC.cancelReload = false
@@ -978,7 +1005,7 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 			newAnim.Stopped:Once(function()
 				if not State.equippedTool() then return end
 				AnimationEvents.StopAnimationRequested:Fire(newAnim.Name)
-				if not State.equippedTool().BoltReady.Value or WeaponState.wepStats.openBolt then
+				if not State.equippedTool().BoltReady.Value or ws.openBolt then
 					AnimationEvents.BoltActionRequested:Fire(false)
 				else
 					WeaponState.reloading(false)
@@ -988,14 +1015,14 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 			newAnim.DidLoop:Once(function()
 				if not State.equippedTool() then return end
 				AnimationEvents.StopAnimationRequested:Fire(newAnim.Name)
-				if not State.equippedTool().BoltReady.Value or WeaponState.wepStats.operationType == 3 or WeaponState.wepStats.openBolt then
+				if not State.equippedTool().BoltReady.Value or ws.operationType == 3 or ws.openBolt then
 					AnimationEvents.BoltActionRequested:Fire(false)
 				else
 					WeaponState.reloading(false)
 				end
 			end)
 		end
-		local bulletHandlerPart = WeaponState.wepStats.bulletHolder and WeaponState.gunModel():FindFirstChild(WeaponState.wepStats.bulletHolder)
+		local bulletHandlerPart = ws.bulletHolder and WeaponState.gunModel():FindFirstChild(ws.bulletHolder)
 		if bulletHandlerPart then
 			local bulletNumber = WeaponState.gunAmmo.MagAmmo.MaxValue - WeaponState.gunAmmo.MagAmmo.Value
 			local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
@@ -1004,7 +1031,7 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 		WC.repReload:Fire()
 	elseif keyframeName == "ClipInsertEnd" then
 		local ammoNeeded = WeaponState.gunAmmo.MagAmmo.MaxValue - WeaponState.gunAmmo.MagAmmo.Value
-		local clipSize = WeaponState.wepStats.clipSize or WeaponState.wepStats.magazineCapacity
+		local clipSize = ws.clipSize or ws.magazineCapacity
 		if ammoNeeded > 0 then
 			AnimationEvents.StopAnimationRequested:Fire(newAnim.Name)
 			AnimationEvents.ReloadActionRequested:Fire(ammoNeeded >= clipSize)

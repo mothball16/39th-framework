@@ -268,7 +268,7 @@ function AnimationController.SyncMoving(moving)
 end
 
 function AnimationController.SyncSprinting(sprinting)
-	local stats = WeaponState.wepStats
+	local stats = WeaponState.wepStats()
 	local sprintName = weaponAnimationName(stats, "sprint")
 	if not sprintName then
 		return
@@ -331,11 +331,11 @@ function AnimationController.SyncHoldStance(newStance, oldStance)
 		AnimationController.StopAnimation(holdAnimKey, 0.3)
 		holdAnimKey = nil
 	end
-	if not State.equippedTool() or not WeaponState.wepStats then
+	local stats = WeaponState.wepStats()
+	if not State.equippedTool() or not stats then
 		return
 	end
 
-	local stats = WeaponState.wepStats
 	local animToPlay: string? = nil
 	local propertyKey: string? = nil
 
@@ -366,16 +366,17 @@ function AnimationController.SyncHoldStance(newStance, oldStance)
 end
 
 function AnimationController.WeaponEquip()
-	if not WeaponState.wepStats then
+	local ws = WeaponState.wepStats()
+	if not ws then
 		return
 	end
 	AnimationController.StopAll()
 	holdAnimKey = nil
 	-- Tracks were built for the previous tool; reuse breaks hold/sprint after swapping weapons.
 	table.clear(loadedAnims)
-	preloadWeaponAnimations(WeaponState.wepStats)
+	preloadWeaponAnimations(ws)
 
-	local equipName = weaponAnimationName(WeaponState.wepStats, "equip")
+	local equipName = weaponAnimationName(ws, "equip")
 	local equipTrack = equipName and AnimationController.PlayAnimation(equipName, {}, "Equip", "equip")
 	if equipTrack then
 		equipTrack.Stopped:Connect(function()
@@ -387,21 +388,22 @@ function AnimationController.WeaponEquip()
 end
 
 function AnimationController.WeaponIdle()
-	if not WeaponState.wepStats then
+	local ws = WeaponState.wepStats()
+	if not ws then
 		return
 	end
-	local idleName = weaponAnimationName(WeaponState.wepStats, "idle")
+	local idleName = weaponAnimationName(ws, "idle")
 	if idleName then
 		AnimationController.PlayAnimation(idleName, {}, "Idle", "idle")
 	end
 end
 
 function AnimationController.SyncChambering(value)
-	if value == false or not WeaponState.wepStats or not State.equippedTool() then
+	local stats = WeaponState.wepStats()
+	if value == false or not stats or not State.equippedTool() then
 		return
 	end
 
-	local stats = WeaponState.wepStats
 	local useChamber = State.equippedTool().BoltReady.Value or WeaponState.fireMode() == 5
 	local animName = useChamber and weaponAnimationName(stats, "boltChamber") or weaponAnimationName(stats, "boltClose")
 	local chamberKey = if useChamber then "boltChamber" else "boltClose"
@@ -419,8 +421,12 @@ end
 
 -- UBGL (fire mode 4) uses the UBGL stat block for the reload clip name when present.
 local function playUbglReload(animSpeed: number)
-	local ubglStats = WeaponState.wepStats.getStatsForMode(4)
-	local reloadAnim = weaponAnimationName(ubglStats, "reload") or weaponAnimationName(WeaponState.wepStats, "reload")
+	local ws = WeaponState.wepStats()
+	if not ws then
+		return
+	end
+	local ubglStats = ws.getStatsForMode(4)
+	local reloadAnim = weaponAnimationName(ubglStats, "reload") or weaponAnimationName(ws, "reload")
 	if reloadAnim then
 		AnimationController.PlayAnimation(reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
 	end
@@ -430,7 +436,10 @@ end
 local function playBoltOpenReloadSequence(lastGunModelName: string?, animSpeed: number)
 	local tool = State.equippedTool()
 	local gunAmmo = tool:FindFirstChild("Ammo")
-	local stats = WeaponState.wepStats
+	local stats = WeaponState.wepStats()
+	if not stats then
+		return
+	end
 
 	local boltOpenTrack = AnimationController.PlayAnimation(
 		stats.boltOpen,
@@ -477,20 +486,21 @@ local function playBoltOpenReloadSequence(lastGunModelName: string?, animSpeed: 
 end
 
 function AnimationController.WeaponReload(lastGunModelName)
-	if not State.equippedTool() or not WeaponState.wepStats then
+	local ws = WeaponState.wepStats()
+	if not State.equippedTool() or not ws then
 		return
 	end
 	WeaponState.reloading(true)
-	local animSpeed = WeaponState.wepStats.reloadSpeedModifier
+	local animSpeed = ws.reloadSpeedModifier
 
-	if WeaponState.fireMode() == 4 and WeaponState.wepStats.hasUBGL then
+	if WeaponState.fireMode() == 4 and ws.hasUBGL then
 		playUbglReload(animSpeed)
 		return
 	end
 
 	local tool = State.equippedTool()
 	local gunAmmo = tool:FindFirstChild("Ammo")
-	local stats = WeaponState.wepStats
+	local stats = ws
 
 	local needsBoltOpen = stats.operationType == 3
 		or (stats.operationType == 2 and gunAmmo and gunAmmo.MagAmmo.Value <= 0 and not tool.Chambered.Value)
@@ -506,34 +516,38 @@ function AnimationController.WeaponReload(lastGunModelName)
 end
 
 function AnimationController.PlayBoltAction(boltReady)
-	if not WeaponState.wepStats then
+	local ws = WeaponState.wepStats()
+	if not ws then
 		return
 	end
-	local animName = boltReady and weaponAnimationName(WeaponState.wepStats, "boltChamber") or weaponAnimationName(WeaponState.wepStats, "boltClose")
+	local animName = boltReady and weaponAnimationName(ws, "boltChamber") or weaponAnimationName(ws, "boltClose")
 	local boltKey = if boltReady then "boltChamber" else "boltClose"
 	AnimationController.PlayAnimation(animName, { transSpeed = 0.05 }, "BoltAction", boltKey)
 end
 
 function AnimationController.PlayReloadAction(useClip)
-	if not WeaponState.wepStats then
+	local ws = WeaponState.wepStats()
+	if not ws then
 		return
 	end
-	local animSpeed = WeaponState.wepStats.reloadSpeedModifier
-	local animName = if useClip then weaponAnimationName(WeaponState.wepStats, "clipReload") else weaponAnimationName(WeaponState.wepStats, "reload")
+	local animSpeed = ws.reloadSpeedModifier
+	local animName = if useClip then weaponAnimationName(ws, "clipReload") else weaponAnimationName(ws, "reload")
 	if animName then
 		AnimationController.PlayAnimation(animName, { looped = useClip, speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
 	end
 end
 
 function AnimationController.PlayFireAnim()
-	local fireName = weaponAnimationName(WeaponState.wepStats, "fire")
+	local ws = WeaponState.wepStats()
+	local fireName = weaponAnimationName(ws, "fire")
 	if fireName then
 		AnimationController.PlayAnimation(fireName, {}, "Fire", "fire")
 	end
 end
 
 function AnimationController.PlaySwitchFireModeAnim()
-	local switchName = weaponAnimationName(WeaponState.wepStats, "switch")
+	local ws = WeaponState.wepStats()
+	local switchName = weaponAnimationName(ws, "switch")
 	if switchName then
 		AnimationController.PlayAnimation(switchName, { transSpeed = 0.2 }, "Switch", "switch")
 	end
