@@ -8,8 +8,8 @@ local modules = sph.framework
 local config = sph.config
 local Enums = require(modules.Core.Enums)
 local springMod = require(modules.Weapons.SpringModule)
-local State = require(script.Parent.CharacterState)
-local WeaponState = require(script.Parent.WeaponState)
+local State = require(script.Parent.Parent.State.CharacterState)
+local WeaponState = require(script.Parent.Parent.State.WeaponState)
 
 local ViewmodelController = {}
 

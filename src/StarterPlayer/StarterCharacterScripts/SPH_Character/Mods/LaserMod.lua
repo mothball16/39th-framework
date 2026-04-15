@@ -12,8 +12,8 @@ local bridgeNet = require(modules.Network.BridgeNet)
 local weaponPrefsClient = require(modules.Weapons.WeaponPrefsClient)
 
 local Intents = Enums.Intents
-local State = require(script.Parent.Parent.Controllers.CharacterState)
-local WeaponState = require(script.Parent.Parent.Controllers.WeaponState)
+local State = require(script.Parent.Parent.State.CharacterState)
+local WeaponState = require(script.Parent.Parent.State.WeaponState)
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 

@@ -20,8 +20,8 @@ local weaponStatLocator = require(modules.Weapons.WeaponStatLocator)
 
 local RecoilModule = require(modules.Weapons.Recoil.Default)
 
-local State = require(script.Parent.CharacterState)
-local WeaponState = require(script.Parent.WeaponState)
+local State = require(script.Parent.Parent.State.CharacterState)
+local WeaponState = require(script.Parent.Parent.State.WeaponState)
 local AnimationEvents = require(script.Parent.AnimationEvents)
 local Player = game.Players.LocalPlayer
 local Camera = game.Workspace.CurrentCamera

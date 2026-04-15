@@ -45,8 +45,9 @@ local Packages = replicatedStorage.Packages
 local Charm = require(Packages.Charm)
 
 local Controllers = script.Parent:WaitForChild("Controllers")
-local State = require(Controllers:WaitForChild("CharacterState"))
-local WeaponState = require(Controllers:WaitForChild("WeaponState"))
+local StateFolder = script.Parent:WaitForChild("State")
+local State = require(StateFolder:WaitForChild("CharacterState"))
+local WeaponState = require(StateFolder:WaitForChild("WeaponState"))
 local InputController = require(Controllers:WaitForChild("InputController"))
 local ViewmodelController = require(Controllers:WaitForChild("ViewmodelController"))
 local MovementController = require(Controllers:WaitForChild("MovementController"))

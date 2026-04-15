@@ -9,8 +9,8 @@ local Charm = require(Packages.Charm)
 local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
 local assets = sph.assets
 local config = sph.config
-local State = require(script.Parent.CharacterState)
-local WeaponState = require(script.Parent.WeaponState)
+local State = require(script.Parent.Parent.State.CharacterState)
+local WeaponState = require(script.Parent.Parent.State.WeaponState)
 local Enums = require(sph.framework.Core.Enums)
 local c0Ref = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
 
