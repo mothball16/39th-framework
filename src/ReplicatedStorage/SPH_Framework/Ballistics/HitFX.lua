@@ -13,8 +13,8 @@ local Hits = {"363818432"; "363818488"; "363818567"; "363818611"; "363818653";}
 local Headshots = {"4459572527"; "4459573786";"3739364168";}
 
 
-local Effects = assets:WaitForChild("Effects")
-local bulletHoleDecals = Effects:WaitForChild("BulletHoleDecals"):GetChildren()
+local Effects = assets:WaitForChild("Effects"):WaitForChild("HitFX")
+local bulletHoleDecals = assets:WaitForChild("Effects"):WaitForChild("BulletHoleDecals"):GetChildren()
 
 local Hitmarker = {}
 

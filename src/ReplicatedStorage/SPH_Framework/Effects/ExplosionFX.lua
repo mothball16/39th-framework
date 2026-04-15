@@ -15,9 +15,11 @@ explosionRayParams.RespectCanCollide = true
 local explosionSounds = {287390459, 287390954, 287391087, 287391197, 287391361, 287391499, 287391567, 8226406520}
 
 local dts = game.ReplicatedStorage:FindFirstChild("DTS_Assets") -- DD_SPH: Checks if DTS is present
+local sph = require(game.ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local effectsFolder = sph.assets.Effects.Explosions
 
 local function Explode(explosionOrigin:Vector3, blastRadius:number, explosionType:string, attackingPlayer:Player) -- DD_SPH: Check which player issued this explosion
-	local effects = script:FindFirstChild(explosionType)
+	local effects = effectsFolder:FindFirstChild(explosionType)
 	if effects then
 		local removeTime = 10
 		effects = effects:GetChildren()
