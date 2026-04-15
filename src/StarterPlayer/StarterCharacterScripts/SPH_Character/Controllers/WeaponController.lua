@@ -515,7 +515,7 @@ function WC.Equip(newChild)
 
 		if WeaponState.wepStats.ubgl.reloadAnim then
 			local animSpeed = WeaponState.wepStats.reloadSpeedModifier
-			AnimationEvents.PlayAnimationRequested:Fire(WeaponState.wepStats.ubgl.reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
+			AnimationEvents.PlayAnimationRequested:Fire(WeaponState.wepStats.ubgl.reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
 		end
 	else
 		WC.ubglAmmo = nil

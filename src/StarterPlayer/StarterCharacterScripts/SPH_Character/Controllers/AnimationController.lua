@@ -1,3 +1,8 @@
+--[[
+	Plays first-person (viewmodel) and third-person animation tracks in sync.
+	Charm state drives stance/movement; AnimationEvents carries weapon requests from WeaponController.
+]]
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
@@ -8,62 +13,168 @@ local AnimationEvents = require(script.Parent.AnimationEvents)
 local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
 local config = sph.config
 local Enums = require(sph.framework.Core.Enums)
-local AnimationController = {}
 
-AnimationController.loadedAnims = {}
-AnimationController.activeTweens = {}
-AnimationController.vmAnimator = nil
-AnimationController.characterAnimator = nil
-AnimationController.animationsFolder = nil
-
-AnimationController.crouchIdleAnim = nil
-AnimationController.crouchMoveAnim = nil
-AnimationController.proneIdleAnim = nil
-AnimationController.proneMoveAnim = nil
-AnimationController.moveAnim = nil
-
-local animationProperties = {
-	idle        =	{ priority = Enum.AnimationPriority.Idle,    looped = true },
-	sprint      =	{ priority = Enum.AnimationPriority.Action,  looped = true },
-	patrol      =	{ priority = Enum.AnimationPriority.Action,  looped = true },
-	holdUp      =	{ priority = Enum.AnimationPriority.Action,  looped = true },
-	holdDown    =	{ priority = Enum.AnimationPriority.Action,  looped = true },
-	switch      =	{ priority = Enum.AnimationPriority.Action2, looped = false },
-	reload      =	{ priority = Enum.AnimationPriority.Action2, looped = false },
-	boltChamber =	{ priority = Enum.AnimationPriority.Action2, looped = false },
-	boltClose   =	{ priority = Enum.AnimationPriority.Action2, looped = false },
-	equip       =	{ priority = Enum.AnimationPriority.Action2, looped = false },
-	fire        =	{ priority = Enum.AnimationPriority.Action2, looped = false },
+-- Default loop/priority when playing a weapon anim by config key (e.g. "reload", "idle").
+local ANIM_DEFAULTS = {
+	idle = { priority = Enum.AnimationPriority.Idle, looped = true },
+	sprint = { priority = Enum.AnimationPriority.Action, looped = true },
+	patrol = { priority = Enum.AnimationPriority.Action, looped = true },
+	holdUp = { priority = Enum.AnimationPriority.Action, looped = true },
+	holdDown = { priority = Enum.AnimationPriority.Action, looped = true },
+	switch = { priority = Enum.AnimationPriority.Action2, looped = false },
+	reload = { priority = Enum.AnimationPriority.Action2, looped = false },
+	boltChamber = { priority = Enum.AnimationPriority.Action2, looped = false },
+	boltClose = { priority = Enum.AnimationPriority.Action2, looped = false },
+	equip = { priority = Enum.AnimationPriority.Action2, looped = false },
+	fire = { priority = Enum.AnimationPriority.Action2, looped = false },
 }
 
-local function _getAnimationTracks(animName, parameters: {looped: boolean, priority: Enum.AnimationPriority}, animType)
-	if AnimationController.loadedAnims[animName] then
-		local tracks = AnimationController.loadedAnims[animName]
-		parameters = parameters or {}
-		tracks.vm.Looped = parameters.looped or false
-		tracks.vm.Priority = parameters.priority or Enum.AnimationPriority.Action
-		tracks.tp.Looped = parameters.looped or false
-		tracks.tp.Priority = parameters.priority or Enum.AnimationPriority.Action
-		return tracks
+-- ---------------------------------------------------------------------------
+-- Module state (not exported; keeps the public table to just functions)
+-- ---------------------------------------------------------------------------
+
+local loadedAnims: { [string]: { vm: AnimationTrack, tp: AnimationTrack } } = {}
+local activeTweens: { [AnimationTrack]: any } = {}
+
+local vmAnimator: Animator? = nil
+local characterAnimator: Animator? = nil
+local animationsFolder: Folder? = nil
+
+local crouchIdleAnim: AnimationTrack? = nil
+local crouchMoveAnim: AnimationTrack? = nil
+local proneIdleAnim: AnimationTrack? = nil
+local proneMoveAnim: AnimationTrack? = nil
+local moveAnim: AnimationTrack? = nil
+local holdAnim: AnimationTrack? = nil
+
+local AnimationController = {}
+
+-- ---------------------------------------------------------------------------
+-- Play options: optional `propertyKey` picks ANIM_DEFAULTS; explicit fields in `parameters` win.
+-- ---------------------------------------------------------------------------
+
+local function resolvePlayParams(propertyKey: string?, parameters: { [string]: any }?)
+	local defaults = propertyKey and ANIM_DEFAULTS[propertyKey]
+	local p = parameters or {}
+	return {
+		looped = if p.looped ~= nil then p.looped elseif defaults then defaults.looped else false,
+		priority = if p.priority ~= nil then p.priority elseif defaults then defaults.priority else Enum.AnimationPriority.Action,
+		transSpeed = p.transSpeed,
+		speed = p.speed,
+	}
+end
+
+local function clearTweenForTrack(track: AnimationTrack)
+	local entry = activeTweens[track]
+	if not entry then
+		return
+	end
+	entry.onEnd:Disconnect()
+	entry.tween:Cancel()
+	entry.conn:Disconnect()
+	entry.val:Destroy()
+	activeTweens[track] = nil
+end
+
+local function fadeTrack(track: AnimationTrack, targetWeight: number, fadeTime: number?, speed: number?)
+	if targetWeight == 0 and not track.IsPlaying then
+		return
 	end
 
-	if not animName or not AnimationController.animationsFolder:FindFirstChild(animName) then
+	clearTweenForTrack(track)
+
+	if not fadeTime or fadeTime <= 0 then
+		if targetWeight > 0 then
+			if not track.IsPlaying then
+				track:Play(0, targetWeight)
+			end
+			track:AdjustWeight(targetWeight, 0)
+			if speed then
+				track:AdjustSpeed(speed)
+			end
+		else
+			track:Stop(0)
+		end
+		return
+	end
+
+	if targetWeight > 0 and not track.IsPlaying then
+		track:Play(0, 0.001)
+	end
+	if speed then
+		track:AdjustSpeed(speed)
+	end
+
+	local val = Instance.new("NumberValue")
+	val.Value = track.WeightCurrent
+	local conn = val.Changed:Connect(function(w)
+		track:AdjustWeight(w, 0)
+	end)
+
+	local tween = TweenService:Create(val, TweenInfo.new(fadeTime, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), { Value = targetWeight })
+
+	local onEnd = tween.Completed:Once(function()
+		if activeTweens[track] == nil then
+			return
+		end
+		conn:Disconnect()
+		val:Destroy()
+		activeTweens[track] = nil
+		if targetWeight == 0 then
+			track:Stop(0)
+		end
+	end)
+
+	activeTweens[track] = {
+		tween = tween,
+		conn = conn,
+		val = val,
+		onEnd = onEnd,
+	}
+
+	tween:Play()
+end
+
+local function loadHumanoidAnim(animation: Animation, looped: boolean, priority: Enum.AnimationPriority)
+	local anim = State.Parts.Humanoid.Animator:LoadAnimation(animation)
+	anim.Looped = looped
+	anim.Priority = priority
+	return anim
+end
+
+-- Returns the animation asset name from weapon stats for a given key, or nil.
+local function weaponAnimationName(wepStats, key: string): string?
+	if not wepStats or type(wepStats.Animations) ~= "table" then
+		return nil
+	end
+	local v = wepStats.Animations[key]
+	return (type(v) == "string" and v ~= "") and v or nil
+end
+
+local function getOrCreateTracks(animName: string, playParams: { looped: boolean, priority: Enum.AnimationPriority })
+	local cached = loadedAnims[animName]
+	if cached then
+		cached.vm.Looped = playParams.looped
+		cached.vm.Priority = playParams.priority
+		cached.tp.Looped = playParams.looped
+		cached.tp.Priority = playParams.priority
+		return cached
+	end
+
+	if not animName or not animationsFolder or not animationsFolder:FindFirstChild(animName) then
 		return nil
 	end
 
-	local animAsset = AnimationController.animationsFolder[animName]
-	parameters = parameters or {}
+	local animAsset = animationsFolder[animName]
+	local vmTrack = vmAnimator:LoadAnimation(animAsset)
+	vmTrack.Looped = playParams.looped
+	vmTrack.Priority = playParams.priority
 
-	local vmTrack = AnimationController.vmAnimator:LoadAnimation(animAsset)
-	vmTrack.Looped = parameters.looped or false
-	vmTrack.Priority = parameters.priority or Enum.AnimationPriority.Action
-
-	local tpTrack = AnimationController.characterAnimator:LoadAnimation(animAsset)
-	tpTrack.Looped = parameters.looped or false
-	tpTrack.Priority = parameters.priority or Enum.AnimationPriority.Action
+	local tpTrack = characterAnimator:LoadAnimation(animAsset)
+	tpTrack.Looped = playParams.looped
+	tpTrack.Priority = playParams.priority
 
 	vmTrack.KeyframeReached:Connect(function(keyframeName)
-		-- IMPORTANT: animType is decided at play-time (preloading caches tracks).
 		local currentType = vmTrack:GetAttribute("AnimType") or "Unknown"
 		AnimationEvents.KeyframeReached:Fire(animName, keyframeName, vmTrack, currentType)
 	end)
@@ -74,241 +185,174 @@ local function _getAnimationTracks(animName, parameters: {looped: boolean, prior
 	end)
 
 	local tracks = { vm = vmTrack, tp = tpTrack }
-	AnimationController.loadedAnims[animName] = tracks
+	loadedAnims[animName] = tracks
 	return tracks
 end
 
-local function _weaponAnim(wepStats, key: string): string?
-	if not wepStats or wepStats.Animations == nil then return nil end
-	local anims = wepStats.Animations
-	local v = anims and anims[key]
-	return (type(v) == "string" and v ~= "") and v or nil
-end
-
-
-local function _preloadWeaponAnimsIntoVM(wepStats)
+local function preloadWeaponAnimations(wepStats)
 	local anims = wepStats.Animations
 	if type(anims) ~= "table" then
 		return
 	end
-
 	for key, animName in pairs(anims) do
 		if type(animName) == "string" and animName ~= "" then
-			local props = animationProperties[key]
-			local looped = (props and props.looped) or false
-			local priority = (props and props.priority) or Enum.AnimationPriority.Action
-			_getAnimationTracks(animName, { looped = looped, priority = priority }, "Preload")
+			getOrCreateTracks(animName, resolvePlayParams(key, nil))
 		end
 	end
-end
-
-
-local function _preloadAnimation(track, looped, priority)
-	local anim = State.Parts.Humanoid.Animator:LoadAnimation(track)
-	anim.Looped = looped
-	anim.Priority = priority
-	return anim
-end
-
-local function _fadeTrack(track: AnimationTrack, targetWeight, time, speed)
-	if targetWeight == 0 and not track.IsPlaying then return end
-	
-	if AnimationController.activeTweens[track] then
-		AnimationController.activeTweens[track].onEnd:Disconnect()
-		AnimationController.activeTweens[track].tween:Cancel()
-		AnimationController.activeTweens[track].conn:Disconnect()
-		AnimationController.activeTweens[track].val:Destroy()
-		AnimationController.activeTweens[track] = nil
-	end
-	
-	if not time or time <= 0 then
-		if targetWeight > 0 then
-			if not track.IsPlaying then track:Play(0, targetWeight) end
-			track:AdjustWeight(targetWeight, 0)
-			if speed then track:AdjustSpeed(speed) end
-		else
-			track:Stop(0)
-		end
-		return
-	end
-	
-	if targetWeight > 0 and not track.IsPlaying then
-		track:Play(0, 0.001)
-	end
-	if speed then track:AdjustSpeed(speed) end
-	
-	local val = Instance.new("NumberValue")
-	val.Value = track.WeightCurrent
-	local conn = val.Changed:Connect(function(w)
-		track:AdjustWeight(w, 0)
-	end)
-	
-	local tween = TweenService:Create(val, TweenInfo.new(time, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Value = targetWeight})
-	
-	local onEnd = tween.Completed:Once(function()
-		if AnimationController.activeTweens[track] == nil then return end
-		conn:Disconnect()
-		val:Destroy()
-		AnimationController.activeTweens[track] = nil
-		if targetWeight == 0 then
-			track:Stop(0)
-		end
-	end)
-
-	AnimationController.activeTweens[track] = {
-		tween = tween,
-		conn = conn,
-		val = val,
-		onEnd = onEnd
-	}
-
-	tween:Play()
 end
 
 function AnimationController.Initialize(params)
-	AnimationController.vmAnimator = params.vmAnimator
-	AnimationController.characterAnimator = params.characterAnimator
-	AnimationController.animationsFolder = params.animationsFolder
+	vmAnimator = params.vmAnimator
+	characterAnimator = params.characterAnimator
+	animationsFolder = params.animationsFolder
 
-	AnimationController.crouchIdleAnim = _preloadAnimation(params.animationsFolder.Crouch_Idle, true, Enum.AnimationPriority.Idle)
-	AnimationController.crouchMoveAnim = _preloadAnimation(params.animationsFolder.Crouch_Move, true, Enum.AnimationPriority.Movement)
-	AnimationController.proneIdleAnim = _preloadAnimation(params.animationsFolder.Prone_Idle, true, Enum.AnimationPriority.Idle)
-	AnimationController.proneMoveAnim = _preloadAnimation(params.animationsFolder.Prone_Move, true, Enum.AnimationPriority.Movement)
+	crouchIdleAnim = loadHumanoidAnim(params.animationsFolder.Crouch_Idle, true, Enum.AnimationPriority.Idle)
+	crouchMoveAnim = loadHumanoidAnim(params.animationsFolder.Crouch_Move, true, Enum.AnimationPriority.Movement)
+	proneIdleAnim = loadHumanoidAnim(params.animationsFolder.Prone_Idle, true, Enum.AnimationPriority.Idle)
+	proneMoveAnim = loadHumanoidAnim(params.animationsFolder.Prone_Move, true, Enum.AnimationPriority.Movement)
 
-	-- Reactive state subscriptions
 	Charm.subscribe(State.sprinting, AnimationController.SyncSprinting)
 	Charm.subscribe(State.stance, AnimationController.SyncStance)
 	Charm.subscribe(State.moving, AnimationController.SyncMoving)
 	Charm.subscribe(WeaponState.holdStance, AnimationController.SyncHoldStance)
 	Charm.subscribe(WeaponState.chambering, AnimationController.SyncChambering)
 
-	-- Listen for animation requests from other controllers via signals
-	AnimationEvents.WeaponEquipRequested:Connect(function() AnimationController.WeaponEquip() end)
-	AnimationEvents.WeaponIdleRequested:Connect(function() AnimationController.WeaponIdle() end)
-	AnimationEvents.FireAnimRequested:Connect(function() AnimationController.PlayFireAnim() end)
-	AnimationEvents.ReloadRequested:Connect(function(lastGunModelName) AnimationController.WeaponReload(lastGunModelName) end)
-	AnimationEvents.SwitchFireModeAnimRequested:Connect(function() AnimationController.PlaySwitchFireModeAnim() end)
-	AnimationEvents.StopAllRequested:Connect(function() AnimationController.StopAll() end)
-	AnimationEvents.PlayAnimationRequested:Connect(function(animName, params, animType) AnimationController.PlayAnimation(animName, params, animType) end)
-	AnimationEvents.StopAnimationRequested:Connect(function(animName, transTime) AnimationController.StopAnimation(animName, transTime) end)
-	AnimationEvents.BoltActionRequested:Connect(function(boltReady) AnimationController.PlayBoltAction(boltReady) end)
-	AnimationEvents.ReloadActionRequested:Connect(function(useClip) AnimationController.PlayReloadAction(useClip) end)
+	AnimationEvents.WeaponEquipRequested:Connect(AnimationController.WeaponEquip)
+	AnimationEvents.WeaponIdleRequested:Connect(AnimationController.WeaponIdle)
+	AnimationEvents.FireAnimRequested:Connect(AnimationController.PlayFireAnim)
+	AnimationEvents.ReloadRequested:Connect(AnimationController.WeaponReload)
+	AnimationEvents.SwitchFireModeAnimRequested:Connect(AnimationController.PlaySwitchFireModeAnim)
+	AnimationEvents.StopAllRequested:Connect(AnimationController.StopAll)
+	AnimationEvents.PlayAnimationRequested:Connect(AnimationController.PlayAnimation)
+	AnimationEvents.StopAnimationRequested:Connect(AnimationController.StopAnimation)
+	AnimationEvents.BoltActionRequested:Connect(AnimationController.PlayBoltAction)
+	AnimationEvents.ReloadActionRequested:Connect(AnimationController.PlayReloadAction)
 end
 
-function AnimationController.SyncStance(stance, oldStance)
-	if AnimationController.moveAnim then _fadeTrack(AnimationController.moveAnim, 0, config.stanceChangeTime) end
+function AnimationController.SyncStance(stance)
+	if moveAnim then
+		fadeTrack(moveAnim, 0, config.stanceChangeTime)
+	end
 
-	if stance == 0 then -- Walking
-		AnimationController.moveAnim = nil
-		_fadeTrack(AnimationController.crouchIdleAnim, 0, config.stanceChangeTime)
-		_fadeTrack(AnimationController.proneIdleAnim, 0, config.stanceChangeTime)
-	elseif stance == 1 then -- Crouching
-		AnimationController.moveAnim = AnimationController.crouchMoveAnim
-		if State.moving() then _fadeTrack(AnimationController.moveAnim, 1, config.stanceChangeTime) end
-		_fadeTrack(AnimationController.proneIdleAnim, 0, config.stanceChangeTime)
-		_fadeTrack(AnimationController.crouchIdleAnim, 1, config.stanceChangeTime)
-	elseif stance == 2 then -- Prone
-		AnimationController.moveAnim = AnimationController.proneMoveAnim
-		_fadeTrack(AnimationController.crouchIdleAnim, 0, config.stanceChangeTime)
-		_fadeTrack(AnimationController.proneIdleAnim, 1, config.stanceChangeTime)
-		if State.moving() then _fadeTrack(AnimationController.moveAnim, 1, config.stanceChangeTime) end
+	if stance == 0 then
+		moveAnim = nil
+		fadeTrack(crouchIdleAnim, 0, config.stanceChangeTime)
+		fadeTrack(proneIdleAnim, 0, config.stanceChangeTime)
+	elseif stance == 1 then
+		moveAnim = crouchMoveAnim
+		if State.moving() then
+			fadeTrack(moveAnim, 1, config.stanceChangeTime)
+		end
+		fadeTrack(proneIdleAnim, 0, config.stanceChangeTime)
+		fadeTrack(crouchIdleAnim, 1, config.stanceChangeTime)
+	elseif stance == 2 then
+		moveAnim = proneMoveAnim
+		fadeTrack(crouchIdleAnim, 0, config.stanceChangeTime)
+		fadeTrack(proneIdleAnim, 1, config.stanceChangeTime)
+		if State.moving() then
+			fadeTrack(moveAnim, 1, config.stanceChangeTime)
+		end
 	end
 end
 
 function AnimationController.SyncMoving(moving)
+	if not moveAnim then
+		return
+	end
 	if moving then
-		if AnimationController.moveAnim then _fadeTrack(AnimationController.moveAnim, 1, config.stanceChangeTime) end
+		fadeTrack(moveAnim, 1, config.stanceChangeTime)
 	else
-		if AnimationController.moveAnim then _fadeTrack(AnimationController.moveAnim, 0, config.stanceChangeTime) end
+		fadeTrack(moveAnim, 0, config.stanceChangeTime)
 	end
 end
 
 function AnimationController.SyncSprinting(sprinting)
+	local stats = WeaponState.wepStats
+	local sprintName = weaponAnimationName(stats, "sprint")
+	if not sprintName then
+		return
+	end
 	if sprinting then
-		local sprintAnim = _weaponAnim(WeaponState.wepStats, "sprint")
-		if sprintAnim then
-			AnimationController.PlayAnimation(sprintAnim, { looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.5 })
-		end
+		AnimationController.PlayAnimation(sprintName, { transSpeed = 0.5 }, "Sprint", "sprint")
 	else
-		local sprintAnim = _weaponAnim(WeaponState.wepStats, "sprint")
-		if sprintAnim then
-			AnimationController.StopAnimation(sprintAnim, 0.5)
-		end
+		AnimationController.StopAnimation(sprintName, 0.5)
 	end
 end
 
 function AnimationController.StopAnimation(animName: string, transTime: number)
-	local tracks = AnimationController.loadedAnims[animName]
+	local tracks = loadedAnims[animName]
 	if tracks then
-		_fadeTrack(tracks.vm, 0, transTime)
-		_fadeTrack(tracks.tp, 0, transTime)
+		fadeTrack(tracks.vm, 0, transTime)
+		fadeTrack(tracks.tp, 0, transTime)
 	end
 end
 
+function AnimationController.PlayAnimation(animName: string, parameters: table?, animType: string?, propertyKey: string?)
+	local merged = resolvePlayParams(propertyKey, parameters)
+	local tracks = getOrCreateTracks(animName, merged)
 
-
-
-function AnimationController.PlayAnimation(animName: string, parameters: table, animType: string)
-	parameters = parameters or {}
-	local tracks = _getAnimationTracks(animName, parameters, animType)
-
-	if tracks then
-		-- Tag track with current animType so cached/preloaded tracks report correctly.
-		tracks.vm:SetAttribute("AnimType", animType)
-		tracks.tp:SetAttribute("AnimType", animType)
-
-		local transSpeed = parameters.transSpeed
-		local speed = parameters.speed or 1
-
-		_fadeTrack(tracks.vm, 1, transSpeed, speed)
-		_fadeTrack(tracks.tp, 1, transSpeed, speed)
-	elseif not tracks then
+	if not tracks then
 		warn("no tracks for anim", animName)
+		return nil
 	end
 
-	return tracks and tracks.vm
+	local typeTag = animType or "Play"
+	tracks.vm:SetAttribute("AnimType", typeTag)
+	tracks.tp:SetAttribute("AnimType", typeTag)
+
+	local transSpeed = merged.transSpeed
+	local speed = merged.speed or 1
+
+	fadeTrack(tracks.vm, 1, transSpeed, speed)
+	fadeTrack(tracks.tp, 1, transSpeed, speed)
+
+	return tracks.vm
 end
 
 function AnimationController.StopAll()
-	if AnimationController.vmAnimator then
-		for _, track in ipairs(AnimationController.vmAnimator:GetPlayingAnimationTracks()) do
-			_fadeTrack(track, 0, 0)
-		end
-	end
-	if AnimationController.characterAnimator then
-		for _, track in ipairs(AnimationController.characterAnimator:GetPlayingAnimationTracks()) do
-			_fadeTrack(track, 0, 0)
+	for _, animator in { vmAnimator, characterAnimator } do
+		if animator then
+			for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+				fadeTrack(track, 0, 0)
+			end
 		end
 	end
 end
 
 function AnimationController.AdjustMoveAnimSpeed(speed: number)
-	if AnimationController.moveAnim then
-		AnimationController.moveAnim:AdjustSpeed(speed)
+	if moveAnim then
+		moveAnim:AdjustSpeed(speed)
 	end
 end
 
-AnimationController.holdAnim = nil
 function AnimationController.SyncHoldStance(newStance, oldStance)
-	if AnimationController.holdAnim then
-		AnimationController.StopAnimation(AnimationController.holdAnim.Name, 0.3)
-		AnimationController.holdAnim = nil
+	if holdAnim then
+		AnimationController.StopAnimation(holdAnim.Name, 0.3)
+		holdAnim = nil
 	end
-	if not State.equippedTool() or not WeaponState.wepStats then return end
+	if not State.equippedTool() or not WeaponState.wepStats then
+		return
+	end
 
-	local animToPlay
+	local stats = WeaponState.wepStats
+	local animToPlay: string? = nil
+	local propertyKey: string? = nil
+
 	if newStance == Enums.HoldStance.High then
-		animToPlay = _weaponAnim(WeaponState.wepStats, "holdUp")
+		animToPlay = weaponAnimationName(stats, "holdUp")
+		propertyKey = "holdUp"
 	elseif newStance == Enums.HoldStance.Patrol then
-		animToPlay = _weaponAnim(WeaponState.wepStats, "patrol")
+		animToPlay = weaponAnimationName(stats, "patrol")
+		propertyKey = "patrol"
 	elseif newStance == Enums.HoldStance.Low then
-		animToPlay = _weaponAnim(WeaponState.wepStats, "holdDown")
+		animToPlay = weaponAnimationName(stats, "holdDown")
+		propertyKey = "holdDown"
 	end
 
 	if animToPlay then
-		AnimationController.holdAnim = AnimationController.PlayAnimation(animToPlay, {looped = true, priority = Enum.AnimationPriority.Action, transSpeed = 0.3})
+		holdAnim = AnimationController.PlayAnimation(animToPlay, { transSpeed = 0.3 }, "Hold", propertyKey)
 	else
-		-- patrol override (bleh)
+		-- No anim for this stance: bounce Ready ↔ Patrol when dropping from Ready to Low.
 		if oldStance == Enums.HoldStance.Ready and newStance == Enums.HoldStance.Low then
 			WeaponState.holdStance(Enums.HoldStance.Patrol)
 		else
@@ -317,25 +361,32 @@ function AnimationController.SyncHoldStance(newStance, oldStance)
 	end
 end
 
-
 function AnimationController.WeaponEquip()
-	if not WeaponState.wepStats then return end
+	if not WeaponState.wepStats then
+		return
+	end
 	AnimationController.StopAll()
-	_preloadWeaponAnimsIntoVM(WeaponState.wepStats)
-	local equipAnimName = _weaponAnim(WeaponState.wepStats, "equip")
-	local equipAnim = equipAnimName and AnimationController.PlayAnimation(equipAnimName, { priority = Enum.AnimationPriority.Action2 }, "Equip")
-	if equipAnim then
-		equipAnim.Stopped:Connect(function() WeaponState.equipping(false) end)
+	holdAnim = nil
+	preloadWeaponAnimations(WeaponState.wepStats)
+
+	local equipName = weaponAnimationName(WeaponState.wepStats, "equip")
+	local equipTrack = equipName and AnimationController.PlayAnimation(equipName, {}, "Equip", "equip")
+	if equipTrack then
+		equipTrack.Stopped:Connect(function()
+			WeaponState.equipping(false)
+		end)
 	else
 		WeaponState.equipping(false)
 	end
 end
 
 function AnimationController.WeaponIdle()
-	if not WeaponState.wepStats then return end
-	local idleAnim = _weaponAnim(WeaponState.wepStats, "idle")
-	if idleAnim then
-		AnimationController.PlayAnimation(idleAnim, { looped = true, priority = Enum.AnimationPriority.Idle }, "Idle")
+	if not WeaponState.wepStats then
+		return
+	end
+	local idleName = weaponAnimationName(WeaponState.wepStats, "idle")
+	if idleName then
+		AnimationController.PlayAnimation(idleName, {}, "Idle", "idle")
 	end
 end
 
@@ -343,17 +394,15 @@ function AnimationController.SyncChambering(value)
 	if value == false or not WeaponState.wepStats or not State.equippedTool() then
 		return
 	end
-	local animNameToPlay = (State.equippedTool().BoltReady.Value or WeaponState.fireMode() == 5)
-		and _weaponAnim(WeaponState.wepStats, "boltChamber")
-		or _weaponAnim(WeaponState.wepStats, "boltClose")
 
-	local playingAnim = AnimationController.PlayAnimation(
-		animNameToPlay,
-		{priority = Enum.AnimationPriority.Action2, transSpeed = 0.05},
-		"Chamber")
+	local stats = WeaponState.wepStats
+	local useChamber = State.equippedTool().BoltReady.Value or WeaponState.fireMode() == 5
+	local animName = useChamber and weaponAnimationName(stats, "boltChamber") or weaponAnimationName(stats, "boltClose")
+	local chamberKey = if useChamber then "boltChamber" else "boltClose"
 
-	if playingAnim then
-		playingAnim.Stopped:Once(function()
+	local playing = AnimationController.PlayAnimation(animName, { transSpeed = 0.05 }, "Chamber", chamberKey)
+	if playing then
+		playing.Stopped:Once(function()
 			WeaponState.chambering(false)
 		end)
 	else
@@ -362,80 +411,125 @@ function AnimationController.SyncChambering(value)
 	end
 end
 
+-- UBGL (fire mode 4) uses the UBGL stat block for the reload clip name when present.
+local function playUbglReload(animSpeed: number)
+	local ubglStats = WeaponState.wepStats.getStatsForMode(4)
+	local reloadAnim = weaponAnimationName(ubglStats, "reload") or weaponAnimationName(WeaponState.wepStats, "reload")
+	if reloadAnim then
+		AnimationController.PlayAnimation(reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
+	end
+end
+
+-- Open bolt, then either clip loop or normal reload depending on ammo rules.
+local function playBoltOpenReloadSequence(lastGunModelName: string?, animSpeed: number)
+	local tool = State.equippedTool()
+	local gunAmmo = tool:FindFirstChild("Ammo")
+	local stats = WeaponState.wepStats
+
+	local boltOpenTrack = AnimationController.PlayAnimation(
+		stats.boltOpen,
+		{ speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17 },
+		"BoltOpen",
+		nil
+	)
+	if not boltOpenTrack then
+		WeaponState.reloading(false)
+		return
+	end
+
+	boltOpenTrack.Stopped:Once(function()
+		if not State.equippedTool() or not gunAmmo then
+			return
+		end
+		local cap = stats.clipSize or stats.magazineCapacity
+		local canFullClip =
+			stats.magType == 3
+			and (gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value) >= cap
+			and gunAmmo.ArcadeAmmoPool.Value >= cap
+
+		if canFullClip then
+			local clipName = weaponAnimationName(stats, "clipReload")
+			if clipName then
+				AnimationController.PlayAnimation(clipName, { looped = true, speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
+			end
+			return
+		end
+
+		if lastGunModelName and WeaponState.gunModel() and lastGunModelName ~= WeaponState.gunModel().Name then
+			return
+		end
+		local reloadName = weaponAnimationName(stats, "reload")
+		if reloadName then
+			AnimationController.PlayAnimation(
+				reloadName,
+				{ speed = animSpeed, transSpeed = 0.17, looped = stats.magType > 1 },
+				"Reload",
+				"reload"
+			)
+		end
+	end)
+end
 
 function AnimationController.WeaponReload(lastGunModelName)
-	if not State.equippedTool() or not WeaponState.wepStats then return end
+	if not State.equippedTool() or not WeaponState.wepStats then
+		return
+	end
 	WeaponState.reloading(true)
 	local animSpeed = WeaponState.wepStats.reloadSpeedModifier
 
 	if WeaponState.fireMode() == 4 and WeaponState.wepStats.hasUBGL then
-		local ubglStats = WeaponState.wepStats.getStatsForMode(4)
-		local reloadAnim = _weaponAnim(ubglStats, "reload") or _weaponAnim(WeaponState.wepStats, "reload")
-		if reloadAnim then
-			AnimationController.PlayAnimation(reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
-		end
+		playUbglReload(animSpeed)
 		return
 	end
 
-	local gunAmmo = State.equippedTool():FindFirstChild("Ammo")
-	if
-		WeaponState.wepStats.operationType == 3
-		or
-		(WeaponState.wepStats.operationType == 2 and gunAmmo and gunAmmo.MagAmmo.Value <= 0 and not State.equippedTool().Chambered.Value) then
-		local boltOpenTrack = AnimationController.PlayAnimation(WeaponState.wepStats.boltOpen, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "BoltOpen")
-		if not boltOpenTrack then WeaponState.reloading(false) return end
-		boltOpenTrack.Stopped:Once(function()
-			if not State.equippedTool() or not gunAmmo then return end
-			local cap = WeaponState.wepStats.clipSize or WeaponState.wepStats.magazineCapacity
-			if WeaponState.wepStats.magType == 3 and (gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value) >= cap and gunAmmo.ArcadeAmmoPool.Value >= cap then
-					local clipReloadAnim = _weaponAnim(WeaponState.wepStats, "clipReload")
-					if clipReloadAnim then
-						AnimationController.PlayAnimation(clipReloadAnim, {looped = true, speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
-					end
-			else
-				if lastGunModelName and WeaponState.gunModel() and lastGunModelName ~= WeaponState.gunModel().Name then return end
-					local reloadAnim = _weaponAnim(WeaponState.wepStats, "reload")
-					if reloadAnim then
-						AnimationController.PlayAnimation(reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17, looped = WeaponState.wepStats.magType > 1}, "Reload")
-					end
-			end
-		end)
+	local tool = State.equippedTool()
+	local gunAmmo = tool:FindFirstChild("Ammo")
+	local stats = WeaponState.wepStats
+
+	local needsBoltOpen = stats.operationType == 3
+		or (stats.operationType == 2 and gunAmmo and gunAmmo.MagAmmo.Value <= 0 and not tool.Chambered.Value)
+
+	if needsBoltOpen then
+		playBoltOpenReloadSequence(lastGunModelName, animSpeed)
 	else
-		local reloadAnim = _weaponAnim(WeaponState.wepStats, "reload")
-		if reloadAnim then
-			AnimationController.PlayAnimation(reloadAnim, {speed = animSpeed, priority = Enum.AnimationPriority.Action3, transSpeed = 0.17}, "Reload")
+		local reloadName = weaponAnimationName(stats, "reload")
+		if reloadName then
+			AnimationController.PlayAnimation(reloadName, { speed = animSpeed, priority = Enum.AnimationPriority.Action3, transSpeed = 0.17 }, "Reload", "reload")
 		end
 	end
 end
 
 function AnimationController.PlayBoltAction(boltReady)
-	if not WeaponState.wepStats then return end
-	local animName = boltReady
-		and _weaponAnim(WeaponState.wepStats, "boltChamber")
-		or _weaponAnim(WeaponState.wepStats, "boltClose")
-	AnimationController.PlayAnimation(animName, {priority = Enum.AnimationPriority.Action2, transSpeed = 0.05}, "BoltAction")
+	if not WeaponState.wepStats then
+		return
+	end
+	local animName = boltReady and weaponAnimationName(WeaponState.wepStats, "boltChamber") or weaponAnimationName(WeaponState.wepStats, "boltClose")
+	local boltKey = if boltReady then "boltChamber" else "boltClose"
+	AnimationController.PlayAnimation(animName, { transSpeed = 0.05 }, "BoltAction", boltKey)
 end
 
 function AnimationController.PlayReloadAction(useClip)
-	if not WeaponState.wepStats then return end
+	if not WeaponState.wepStats then
+		return
+	end
 	local animSpeed = WeaponState.wepStats.reloadSpeedModifier
-	local animName = if useClip then _weaponAnim(WeaponState.wepStats, "clipReload") else _weaponAnim(WeaponState.wepStats, "reload")
+	local animName = if useClip then weaponAnimationName(WeaponState.wepStats, "clipReload") else weaponAnimationName(WeaponState.wepStats, "reload")
 	if animName then
-		AnimationController.PlayAnimation(animName, {looped = useClip, speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17}, "Reload")
+		AnimationController.PlayAnimation(animName, { looped = useClip, speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
 	end
 end
 
 function AnimationController.PlayFireAnim()
-	local fireAnim = _weaponAnim(WeaponState.wepStats, "fire")
-	if fireAnim then
-		AnimationController.PlayAnimation(fireAnim, {priority = Enum.AnimationPriority.Action2, looped = false}, "Fire")
+	local fireName = weaponAnimationName(WeaponState.wepStats, "fire")
+	if fireName then
+		AnimationController.PlayAnimation(fireName, {}, "Fire", "fire")
 	end
 end
 
 function AnimationController.PlaySwitchFireModeAnim()
-	local switchAnim = _weaponAnim(WeaponState.wepStats, "switch")
-	if switchAnim then
-		AnimationController.PlayAnimation(switchAnim, {transSpeed = 0.2}, "Switch")
+	local switchName = weaponAnimationName(WeaponState.wepStats, "switch")
+	if switchName then
+		AnimationController.PlayAnimation(switchName, { transSpeed = 0.2 }, "Switch", "switch")
 	end
 end
 
