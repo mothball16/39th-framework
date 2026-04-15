@@ -8,23 +8,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ConfigurationTypes = require(script.Parent.ConfigurationTypes)
 
-export type MainGameSettings = ConfigurationTypes.MainGameSettings
 
-export type GameAccess = {
-	assets: Folder,
-	framework: Folder,
-	config: MainGameSettings,
-}
-
-local assets = ReplicatedStorage:WaitForChild("SPH_Assets") :: Folder
-local framework = ReplicatedStorage:WaitForChild("SPH_Framework") :: Folder
--- Cast: Roblox LSP may not resolve ConfigurationTypes.MainGameSettings when that module returns nil.
-local config = require(assets:WaitForChild("GameConfig")) :: ConfigurationTypes.MainGameSettings
-
-local access: GameAccess = table.freeze({
-	assets = assets,
-	framework = framework,
-	config = config,
+local access = table.freeze({
+	assets = ReplicatedStorage:WaitForChild("SPH_Assets"),
+	framework = ReplicatedStorage:WaitForChild("SPH_Framework"),
+	config = require(ReplicatedStorage.SPH_Assets:WaitForChild("GameConfig")) :: ConfigurationTypes.MainGameSettings,
 })
 
 return access
