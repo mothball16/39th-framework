@@ -99,10 +99,28 @@ local function applyAttachmentData(attStatTable, attachment) -- apply statistica
 	end
 
 	if newAttStatTable.damage then -- increment damage to certain body parts
+		local function scaleDamageSlot(base, mult)
+			if typeof(mult) ~= "number" then
+				return base
+			end
+			if typeof(base) == "number" then
+				return base * mult
+			end
+			if typeof(base) == "table" then
+				if typeof(base.Min) == "number" then
+					base.Min *= mult
+				end
+				if typeof(base.Max) == "number" then
+					base.Max *= mult
+				end
+			end
+			return base
+		end
+
 		if attStatTable.damage then
-			attStatTable.damage.Head *= newAttStatTable.damage.Head
-			attStatTable.damage.Torso *= newAttStatTable.damage.Torso
-			attStatTable.damage.Other *= newAttStatTable.damage.Other -- note that this will be the most common hit type
+			attStatTable.damage.Head = scaleDamageSlot(attStatTable.damage.Head, newAttStatTable.damage.Head)
+			attStatTable.damage.Torso = scaleDamageSlot(attStatTable.damage.Torso, newAttStatTable.damage.Torso)
+			attStatTable.damage.Other = scaleDamageSlot(attStatTable.damage.Other, newAttStatTable.damage.Other)
 		else
 			attStatTable.damage = newAttStatTable.damage
 		end

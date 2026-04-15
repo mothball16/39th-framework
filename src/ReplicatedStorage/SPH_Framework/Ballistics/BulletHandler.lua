@@ -339,10 +339,11 @@ caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBul
 		local hitPart = raycastResult.Instance
 		hitFX.HitEffect(raycastResult.Position,hitPart,raycastResult.Normal)
 
-		local fakeRayResult = { -- Convert the RaycastResult into a generic dictionary, events don't like RaycastResults for some reason
+		local fakeRayResult = { -- dict instead of RaycastResult for remote
 			Position = raycastResult.Position,
 			Normal = raycastResult.Normal,
-			Instance = raycastResult.Instance
+			Instance = raycastResult.Instance,
+			Origin = cast.UserData.Origin,
 		}
 
 		-- Prepare tool data for server

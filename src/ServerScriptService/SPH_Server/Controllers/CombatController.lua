@@ -4,6 +4,9 @@ local M = {}
 
 local ctx
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local DamageLogic = require(ReplicatedStorage.SPH_Framework.Combat.DamageLogic)
+
 local function checkNaughtyList(playerID)
 	if table.find(ctx.naughtyList, playerID) then
 		return true
@@ -226,11 +229,9 @@ function M.Initialize(c)
 		end
 
 		if humanoid and humanoid.Health > 0 and ((otherPlayer and teamKillCheck(player, otherPlayer)) or not otherPlayer) then
-			local damage = wepStats.damage[hitPart.Name] or wepStats.damage.Other
-
-			if hitPart.Name == "HumanoidRootPart" then
-				damage = wepStats.damage.UpperTorso or wepStats.damage.Torso
-			end
+			local ray = raycastResult :: any
+			local dist = (typeof(ray.Position) == "Vector3" and typeof(ray.Origin) == "Vector3") and (ray.Position - ray.Origin).Magnitude or nil
+			local damage = DamageLogic.getDamage(wepStats.damage, hitPart.Name, dist, wepStats.range)
 
 			if humanoid.Health > 0 and humanoid.Health - damage <= 0 then
 				if ctx.config.leaderboard and (player.Name ~= humanoid.Parent.Name) then
