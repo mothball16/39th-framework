@@ -13,6 +13,7 @@ local access = table.freeze({
 	assets = ReplicatedStorage:WaitForChild("SPH_Assets"),
 	framework = ReplicatedStorage:WaitForChild("SPH_Framework"),
 	config = require(ReplicatedStorage.SPH_Assets:WaitForChild("GameConfig")) :: ConfigurationTypes.MainGameSettings,
+	enums = require(ReplicatedStorage.SPH_Framework:WaitForChild("Core"):WaitForChild("Enums"))
 })
 
 return access
