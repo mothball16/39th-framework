@@ -88,6 +88,7 @@ export type WeaponStats = {
 	shotgunPellets: number?,
 
 	aimTime: number,
+	aimMoveMultiplier: number,
     aimFovs: {number},
 
 	suppressionLevel: number,

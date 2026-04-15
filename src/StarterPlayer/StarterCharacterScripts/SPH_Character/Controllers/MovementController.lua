@@ -11,12 +11,12 @@ local assets = sph.assets
 local config = sph.config
 local State = require(script.Parent.Parent.State.CharacterState)
 local WeaponState = require(script.Parent.Parent.State.WeaponState)
-local Enums = require(sph.framework.Core.Enums)
+local Types = require(sph.framework.Core.ConfigurationTypes)
 local c0Ref = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
 
 local MovementController = {
     -- state vars
-    targetWalkSpeed = config.walkSpeed,
+	targetWalkSpeed = nil,
     tempWalkSpeed = config.walkSpeed,
     canJump = true,
     baseCharacterHipHeight = 0,
@@ -29,7 +29,6 @@ local MovementController = {
     script = nil,
 
     -- Callbacks
-    ChangeHoldStance = nil,
     AdjustMoveAnimSpeed = nil,
     PlayCharSound = nil,
 }
@@ -47,8 +46,6 @@ function MovementController.Initialize(params)
 	MovementController.rigType = params.rigType
 	MovementController.script = params.script
 	MovementController.baseCharacterHipHeight = params.humanoid.HipHeight
-	
-	MovementController.ChangeHoldStance = params.ChangeHoldStance
 	MovementController.AdjustMoveAnimSpeed = params.AdjustMoveAnimSpeed
 	MovementController.PlayCharSound = params.PlayCharSound
 
@@ -56,6 +53,19 @@ function MovementController.Initialize(params)
 	Charm.subscribe(State.stance, MovementController.SyncStance)
 	Charm.subscribe(State.lean, MovementController.SyncLean)
 	Charm.subscribe(WeaponState.holdStance, MovementController.SyncHoldStance)
+
+	MovementController.targetWalkSpeed = Charm.computed(function()
+		if State.sprinting() then
+			return config.sprintSpeed
+		end
+		local speed = MovementController.GetStanceSpeed(State.stance())
+		local ws: Types.WeaponStats = WeaponState.wepStats()
+
+		if ws and State.aiming() then
+			speed *= ws.aimMoveMultiplier
+		end
+		return speed
+	end)
 end
 
 --#region ----------------------------[intent]----------------------------
@@ -129,19 +139,13 @@ function MovementController.GetStanceSpeed(stance)
 	end
 end
 
-function MovementController.UpdateWalkSpeed(newSpeed)
-	MovementController.targetWalkSpeed = newSpeed
-end
+
 
 function MovementController.SyncSprinting(sprinting)
 	if sprinting then
 		State.aiming(false)
 		State.stance(0)
 		State.lean(0)
-		MovementController.UpdateWalkSpeed(config.sprintSpeed)
-	else
-		local newSpeed = MovementController.GetStanceSpeed(State.stance())
-		MovementController.UpdateWalkSpeed(newSpeed)
 	end
 end
 
@@ -154,7 +158,7 @@ function MovementController.SyncLean(lean, oldLean)
 end
 
 function MovementController.SyncHoldStance(holdStance, oldHoldStance)
-	if holdStance ~= Enums.HoldStance.Ready then
+	if holdStance ~= sph.enums.HoldStance.Ready then
 		State.sprinting(false)
 		return
 	end
@@ -164,18 +168,17 @@ function MovementController.SyncStance(stance, oldStance)
 	local targetCharacterHeight = MovementController.GetTargetCharacterHeight(stance)
 
 	local humanoid = MovementController.humanoid
-	local newSpeed = MovementController.GetStanceSpeed(stance)
-	MovementController.UpdateWalkSpeed(newSpeed)
 
 	if stance == 0 then -- Walking
-		MovementController.UpdateWalkSpeed(config.walkSpeed)
 		MovementController.PlayCharSound("Uncrouch")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), {HipHeight = targetCharacterHeight}):Play()
 	elseif stance == 1 then -- Crouching
+		State.sprinting(false)
 		MovementController.PlayCharSound(oldStance == 0 and "Crouch" or "Unprone")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), {HipHeight = targetCharacterHeight}):Play()
 	elseif stance == 2 then -- Prone
 		State.lean(0)
+		State.sprinting(false)
 		MovementController.PlayCharSound("Prone")
 		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime * 1.5), {HipHeight = targetCharacterHeight}):Play()
 	end
@@ -232,7 +235,6 @@ function MovementController.UpdateRender(dt)
 		State.moving(true)
 	elseif humanoid.MoveDirection.Magnitude <= 0 and State.moving() then
 		State.moving(false)
-		--State.sprinting(false)
 	end
 
 	-- lean logic
@@ -263,7 +265,7 @@ end
 
 function MovementController.UpdateHeartbeat(dt)
 	local humanoid = MovementController.humanoid
-	MovementController.tempWalkSpeed = MovementController.targetWalkSpeed
+	MovementController.tempWalkSpeed = MovementController.targetWalkSpeed()
 
 	if MovementController.script:GetAttribute("WalkspeedOverrideToggle") then
 		MovementController.tempWalkSpeed = MovementController.script:GetAttribute("WalkspeedOverride")
