@@ -19,12 +19,15 @@ local amodules = assets.Addons
 local fx = assets.FX
 local projectiles = assets.Projectiles
 
-local sphInstall = replicatedStorage:FindFirstChild("SPH_Assets") --Spearhead compat
+local sphCore = replicatedStorage:FindFirstChild("SPH_Framework")
+local sphInstall = replicatedStorage:FindFirstChild("SPH_Assets")
 local bridgeNet
-if sphInstall then 
+if sphCore then
+	bridgeNet = require(sphCore.Network.BridgeNet)
+elseif sphInstall and sphInstall:FindFirstChild("Modules") then
 	bridgeNet = require(sphInstall.Modules.Network.BridgeNet)
-else  
-	bridgeNet = require(modules.BridgeNet) 
+else
+	bridgeNet = require(modules.BridgeNet)
 end
 
 local validAttributes = require(script.AttributeList)

@@ -13,7 +13,9 @@ local modules = Assets.Modules
 local Vars = Assets.Vars
 
 local bridgeNet = nil
-if 	  Config.useSpearhead then bridgeNet = require(replicatedStorage.SPH_Assets.Modules.Network.BridgeNet)
+if Config.useSpearhead then
+	local sph = require(replicatedStorage.SPH_Framework.Core.GameAccess)
+	bridgeNet = require(sph.framework.Network.BridgeNet)
 else
 	bridgeNet = require(modules.BridgeNet) end
 

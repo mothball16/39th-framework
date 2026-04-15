@@ -26,13 +26,19 @@ local hudMod = require(modules.HUDModule)
 local fxmod = require(modules.FXModule)
 local config = require(assets.GlobalSettings)
 
-local sphInstall = replicatedStorage:FindFirstChild("SPH_Assets") --Spearhead compat
+local sphCore = replicatedStorage:FindFirstChild("SPH_Framework")
+local sphInstall = replicatedStorage:FindFirstChild("SPH_Assets")
 local bridgeNet
-if sphInstall then 
+local partCache
+if sphCore then
+	bridgeNet = require(sphCore.Network.BridgeNet)
+	partCache = require(sphCore.Ballistics.PartCache)
+elseif sphInstall and sphInstall:FindFirstChild("Modules") then
 	bridgeNet = require(sphInstall.Modules.Network.BridgeNet)
 	partCache = require(sphInstall.Modules.Ballistics.PartCache)
-else  
-	bridgeNet = require(modules.BridgeNet) 
+else
+	bridgeNet = require(modules.BridgeNet)
+	partCache = require(modules.PartCache)
 end
 
 local workspaceFolder = game.Workspace.DTS_Workspace

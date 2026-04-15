@@ -1,5 +1,6 @@
 local weldMod = require(script.Parent.WeldMod)
-local assets = game:GetService("ReplicatedStorage").SPH_Assets
+local sph = require(script.Parent.Parent.Core.GameAccess)
+local assets = sph.assets
 local callbacks = require(assets.Mods)
 local models = assets.Arms
 

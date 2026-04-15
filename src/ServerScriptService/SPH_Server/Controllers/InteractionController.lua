@@ -1,5 +1,7 @@
 -- Proximity prompts (ammo/guns), drop gun, attachment toggles, mag grab.
 
+local sph = require(game:GetService("ReplicatedStorage").SPH_Framework.Core.GameAccess)
+
 local DropController = require(script.Parent.DropController)
 
 local M = {}
@@ -71,7 +73,7 @@ function M.Initialize(c)
 
 			if gunPool.Value > 0 or promptCfg.InfGuns.Value then
 				local newGun = prompt:FindFirstChildWhichIsA("Tool")
-					or game.ReplicatedStorage.SPH_Assets.ToolStorage:FindFirstChild(gunName)
+					or sph.assets.ToolStorage:FindFirstChild(gunName)
 				if not newGun then
 					return
 				else

@@ -1,9 +1,10 @@
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Enums = require(ReplicatedStorage:WaitForChild("SPH_Assets").Modules.Core.Enums)
+local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local Enums = require(sph.framework.Core.Enums)
 local Intents = Enums.Intents
-local config = require(ReplicatedStorage:WaitForChild("SPH_Assets").GameConfig)
+local config = sph.config
 
 local InputController = {}
 

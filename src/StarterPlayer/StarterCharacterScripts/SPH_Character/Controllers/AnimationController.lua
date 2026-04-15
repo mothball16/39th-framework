@@ -5,8 +5,9 @@ local Charm = require(Packages.Charm)
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
 local AnimationEvents = require(script.Parent.AnimationEvents)
-local config = require(ReplicatedStorage:WaitForChild("SPH_Assets").GameConfig)
-local Enums = require(ReplicatedStorage:WaitForChild("SPH_Assets").Modules.Core.Enums)
+local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local config = sph.config
+local Enums = require(sph.framework.Core.Enums)
 local AnimationController = {}
 
 AnimationController.loadedAnims = {}
@@ -78,7 +79,7 @@ local function _getAnimationTracks(animName, parameters: {looped: boolean, prior
 end
 
 local function _weaponAnim(wepStats, key: string): string?
-	if wepStats.Animations == nil then return nil end
+	if not wepStats or wepStats.Animations == nil then return nil end
 	local anims = wepStats.Animations
 	local v = anims and anims[key]
 	return (type(v) == "string" and v ~= "") and v or nil

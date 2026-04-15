@@ -1,5 +1,5 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
+local sph = require(script.Parent.Parent.Core.GameAccess)
+local assets = sph.assets
 local configs = assets:WaitForChild("Configurations")
 
 local WeaponStatLocator = {}

@@ -1,5 +1,7 @@
 local Debris = game:GetService("Debris")
-local config = require(game:GetService("ReplicatedStorage").SPH_Assets.GameConfig)
+local sph = require(script.Parent.Parent.Core.GameAccess)
+local config = sph.config
+local assets = sph.assets
 
 -- Impact sounds
 local Glass = {"1565824613"; "1565825075";}
@@ -10,9 +12,9 @@ local Concrete = {"287769261"; "287769348"; "287769415"; "287769483"; "287769538
 local Hits = {"363818432"; "363818488"; "363818567"; "363818611"; "363818653";}
 local Headshots = {"4459572527"; "4459573786";"3739364168";}
 
-local bulletHoleDecals = script.BulletHoleDecals:GetChildren()
 
-local Effects = script
+local Effects = assets:WaitForChild("Effects")
+local bulletHoleDecals = Effects:WaitForChild("BulletHoleDecals"):GetChildren()
 
 local Hitmarker = {}
 

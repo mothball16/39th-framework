@@ -290,9 +290,10 @@ function M.Initialize(c)
 		elseif (hitPart.Name == "Glass" or ctx.collectionService:HasTag(hitPart, "BreakableGlass")) and ctx.config.glassShatter then
 			local hitPosition = raycastResult.Position
 
+			--[[
 			local tempPart = hitPart:Clone()
 			tempPart.Name = "TempGlass"
-			tempPart.Parent = workspace
+			tempPart.Parent = workspace]]
 
 			local prevTransparency = hitPart.Transparency
 			local prevCanCollide = hitPart.CanCollide
@@ -313,11 +314,12 @@ function M.Initialize(c)
 				end
 			end)
 
+			--[[
 			if hitPart:IsA("Part") and hitPart.Shape == Enum.PartType.Block or hitPart:IsA("WedgePart") then
 				ctx.fractureGlass(tempPart, hitPosition, bulletCFrame.LookVector * 10)
 			else
 				tempPart:Destroy()
-			end
+			end]]
 
 			local soundAtt = Instance.new("Attachment", workspace.Terrain)
 			soundAtt.WorldPosition = hitPosition

@@ -4,8 +4,8 @@ local attachmentLoader = {}
 local RS: ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --< Assets >--
-local assets = RS.SPH_Assets
-local modules = assets.Modules
+local sph = require(RS.SPH_Framework.Core.GameAccess)
+local assets = sph.assets
 local attachments = assets.Attachments
 
 attachmentLoader.Attachments = {}

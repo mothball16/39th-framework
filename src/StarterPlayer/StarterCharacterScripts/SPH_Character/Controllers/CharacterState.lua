@@ -1,7 +1,8 @@
-local assets = game.ReplicatedStorage:WaitForChild("SPH_Assets")
+local sph = require(game.ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local assets = sph.assets
 local Packages = game.ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-local config = require(assets.GameConfig)
+local config = sph.config
 
 
 local Player = game.Players.LocalPlayer

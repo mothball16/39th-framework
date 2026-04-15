@@ -1,8 +1,9 @@
 local debris = game:GetService("Debris")
 
-local assets = game:GetService("ReplicatedStorage").SPH_Assets
+local sph = require(script.Parent.Parent.Core.GameAccess)
+local assets = sph.assets
 local WeaponStatLocator = require(script.Parent.WeaponStatLocator)
-local config = require(assets.GameConfig)
+local config = sph.config
 
 local ammoTypes = assets.Ammo
 local storageFolder = workspace:WaitForChild("SPH_Workspace"):FindFirstChild("Shells")

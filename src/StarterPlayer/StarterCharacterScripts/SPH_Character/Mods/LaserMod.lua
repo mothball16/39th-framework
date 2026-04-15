@@ -3,11 +3,13 @@ local Players = game:GetService("Players")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 
-local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
-local Enums = require(assets.Modules.Core.Enums)
-local config = require(assets.GameConfig)
-local bridgeNet = require(assets.Modules.Network.BridgeNet)
-local weaponPrefsClient = require(assets.Modules.Weapons.WeaponPrefsClient)
+local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local assets = sph.assets
+local modules = sph.framework
+local Enums = require(modules.Core.Enums)
+local config = sph.config
+local bridgeNet = require(modules.Network.BridgeNet)
+local weaponPrefsClient = require(modules.Weapons.WeaponPrefsClient)
 
 local Intents = Enums.Intents
 local State = require(script.Parent.Parent.Controllers.CharacterState)

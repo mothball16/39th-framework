@@ -5,9 +5,10 @@ local debugMode = false
 local debris = game:GetService("Debris")
 local tweenService = game:GetService("TweenService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local assets = replicatedStorage.SPH_Assets
-local modules = assets.Modules
-local config = require(assets.GameConfig)
+local sph = require(script.Parent.Parent.Core.GameAccess)
+local assets = sph.assets
+local modules = sph.framework
+local config = sph.config
 local hitFX = require(modules.Ballistics.HitFX)
 local WeaponStatLocator = require(modules.Weapons.WeaponStatLocator)
 local bridgeNet = require(modules.Network.BridgeNet)
@@ -22,7 +23,7 @@ local suppression = replicatedStorage:WaitForChild("Suppression",100)
 local pierceMod = require(modules.Ballistics.PierceMod)
 local partCache = require(modules.Ballistics.PartCache)
 
-local baseBullet = script.Bullet
+local baseBullet = assets:WaitForChild("Projectiles"):WaitForChild("BulletHandlerBase")
 local bulletProvider = partCache.new(baseBullet:Clone(),config.maxBullets or 300,cacheContainer)
 
 local fastCast = require(modules.Ballistics.FastCast)
@@ -156,7 +157,7 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 		ResetBullet(bullet)
 	end
 
-	local projectileModel = replicatedStorage.SPH_Assets.Projectiles:FindFirstChild(wepStats.projectile)
+	local projectileModel = assets.Projectiles:FindFirstChild(wepStats.projectile)
 	-- Use projectile model for explosives/grenades regardless of tracers, or for non-tracer bullets
 	if projectileModel and (wepStats.explosiveAmmo or not tracerColor) then
 		local fakeBullet = projectileModel:Clone()

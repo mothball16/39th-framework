@@ -3,11 +3,12 @@ local runService = game:GetService("RunService")
 local userInputService = game:GetService("UserInputService")
 local debris = game:GetService("Debris")
 local players = game:GetService("Players")
-local assets = replicatedStorage:WaitForChild("SPH_Assets")
-local Enums = require(assets.Modules.Core.Enums)
+local sph = require(replicatedStorage.SPH_Framework.Core.GameAccess)
+local assets = sph.assets
+local modules = sph.framework
+local Enums = require(modules.Core.Enums)
 local Intents = Enums.Intents
-local modules = assets.Modules
-local config = require(assets.GameConfig)
+local config = sph.config
 local animations = assets.Animations
 local player = players.LocalPlayer
 

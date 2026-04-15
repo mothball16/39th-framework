@@ -14,7 +14,7 @@
 4. (Optional) To make your life easier, look at Utility/CommandLineStuff and execute the SpearheadAnimBulkUploader script in the command line. Instructions are located there.
 
 ### testing (Studio)
-With Rojo synced, play in Studio (server run). `ServerScriptService/SPH_TestRunner.server.lua` discovers `*.spec` modules under `ReplicatedStorage/SPH_Tests` and runs them with TestEZ (text reporter in output). This only runs when `RunService:IsStudio()` is true.
+With Rojo synced, play in Studio (server run). `ServerScriptService/SPH_TestRunner.server.lua` discovers `*.spec` modules under `ReplicatedStorage/Tests` and runs them with TestEZ (text reporter in output). This only runs when `RunService:IsStudio()` is true.
 
 ### standards
 * Controllers are reactive. Avoid calling controllers directly if possible, aside from intent methods.

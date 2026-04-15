@@ -253,7 +253,7 @@ end
 
 function M.Initialize(c)
 	ctx = c
-	attachmentPlacer = require(ctx.assets.Modules.Weapons.AttachmentPlacer)
+	attachmentPlacer = require(ctx.modules.Weapons.AttachmentPlacer)
 
 	if ctx.replicatedStorage:FindFirstChild("DD_GunsmithHandler") then
 		ctx.replicatedStorage.DD_GunsmithHandler.ApplyAttachments.OnServerEvent:Connect(function(player, weapon: Tool, attachments)

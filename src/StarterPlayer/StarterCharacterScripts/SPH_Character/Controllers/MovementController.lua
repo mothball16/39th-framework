@@ -6,11 +6,12 @@ local CollectionService = game:GetService("CollectionService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 
-local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
-local config = require(assets.GameConfig)
+local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local assets = sph.assets
+local config = sph.config
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
-local Enums = require(assets.Modules.Core.Enums)
+local Enums = require(sph.framework.Core.Enums)
 local c0Ref = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
 
 local MovementController = {

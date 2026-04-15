@@ -10,8 +10,9 @@ local CAS = game:GetService("ContextActionService")
 local Collection = game:GetService("CollectionService")
 
 --< Assets >--
-local assets = RS:WaitForChild("SPH_Assets")
-local modules = assets.Modules
+local sph = require(RS.SPH_Framework.Core.GameAccess)
+local assets = sph.assets
+local modules = sph.framework
 local dd_settings = require(RS.DD_Settings)
 --< Mods >--
 local weldMod = require(modules.Weapons.WeldMod)

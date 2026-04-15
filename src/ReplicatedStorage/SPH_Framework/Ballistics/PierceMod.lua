@@ -5,7 +5,8 @@ local module = {}
 local collectionService = game:GetService("CollectionService")
 local debrisservice = game:GetService("Debris")
 
-local Assets = game:GetService("ReplicatedStorage"):WaitForChild("SPH_Assets")
+local sph = require(script.Parent.Parent.Core.GameAccess)
+local Assets = sph.assets
 local Sounds = Assets:WaitForChild("Sounds")
 local RicoSound = Sounds:WaitForChild("Ricochet"):GetChildren()
 
@@ -17,7 +18,7 @@ end
 
 local hitFX = require(script.Parent.HitFX)
 local GetMaterialType = require(script.Parent.MaterialTypes)
-local config = require(game:GetService("ReplicatedStorage").SPH_Assets.GameConfig)
+local config = sph.config
 
 
 local function IsInHumanoid(Inst)

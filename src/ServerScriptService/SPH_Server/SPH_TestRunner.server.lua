@@ -1,5 +1,5 @@
 --[[
-	Runs TestEZ specs under ReplicatedStorage.SPH_Tests (Studio only).
+	Runs TestEZ specs under ReplicatedStorage.SPH_Framework.Tests (Studio only).
 	Requires `wally install` so DevPackages (TestEZ) exists locally.
 ]]
 local RunService = game:GetService("RunService")
@@ -17,9 +17,14 @@ task.defer(function()
 	end
 
 	local testEZ = require(devPackages:WaitForChild("TestEZ"))
-	local testsRoot = ReplicatedStorage:WaitForChild("SPH_Tests", 10)
+	local sphCore = ReplicatedStorage:WaitForChild("SPH_Framework", 10)
+	if not sphCore then
+		warn("[SPH_TestRunner] ReplicatedStorage.SPH_Framework missing.")
+		return
+	end
+	local testsRoot = sphCore:WaitForChild("Tests", 10)
 	if not testsRoot then
-		warn("[SPH_TestRunner] ReplicatedStorage.SPH_Tests missing.")
+		warn("[SPH_TestRunner] ReplicatedStorage.SPH_Framework.Tests missing.")
 		return
 	end
 

@@ -24,20 +24,23 @@ local cameraShakeInstance = require(modules.CameraShaker.CameraShakeInstance)
 local hitFX = require(modules.HitFX)
 local config = require(assets.GlobalSettings)
 
-local sphInstall = replicatedStorage:FindFirstChild("SPH_Assets") --Spearhead compat
+local sphCore = replicatedStorage:FindFirstChild("SPH_Framework")
+local sphInstall = replicatedStorage:FindFirstChild("SPH_Assets")
 local fastCast = require(modules.FastCast)
 local bridgeNet
 local partCache
 local suppression
-if sphInstall then 
+if sphCore then
+	bridgeNet = require(sphCore.Network.BridgeNet)
+	partCache = require(sphCore.Ballistics.PartCache)
+	suppression = replicatedStorage:WaitForChild("Suppression", 100)
+elseif sphInstall and sphInstall:FindFirstChild("Modules") then
 	bridgeNet = require(sphInstall.Modules.Network.BridgeNet)
 	partCache = require(sphInstall.Modules.Ballistics.PartCache)
-	--fastCast = require(sphInstall.Modules.Ballistics.FastCast)
-	suppression = replicatedStorage:WaitForChild("Suppression",100)
-else  
-	bridgeNet = require(modules.BridgeNet) 
+	suppression = replicatedStorage:WaitForChild("Suppression", 100)
+else
+	bridgeNet = require(modules.BridgeNet)
 	partCache = require(modules.PartCache)
-	--fastCast = require(modules.FastCast)
 	suppression = nil
 end
 

@@ -35,7 +35,7 @@ Instructions
 -- Set to nil (or comment out) to upload to your personal account.
 
 local UPLOAD_TO_GROUP_ID = nil
-local DIRECTORY = game.ReplicatedStorage.SPH_Assets.Animations.R6
+local DIRECTORY = game.ReplicatedStorage:WaitForChild("SPH_Assets").Animations.R6
 local KEYWORD_REPLACE = {
     ["BoltClose"] = "Close"
 }

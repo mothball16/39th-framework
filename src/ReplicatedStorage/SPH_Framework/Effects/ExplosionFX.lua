@@ -1,7 +1,8 @@
 local debris = game:GetService("Debris")
 local players = game:GetService("Players")
 
-local config = require(game:GetService("ReplicatedStorage").SPH_Assets.GameConfig)
+local sph = require(script.Parent.Parent.Core.GameAccess)
+local config = sph.config
 
 local explosionOverlapParams = OverlapParams.new()
 explosionOverlapParams.MaxParts = 500

@@ -4,8 +4,9 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local TweenService = game:GetService("TweenService")
 
-local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
-local config = require(assets.GameConfig)
+local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local assets = sph.assets
+local config = sph.config
 local State = require(script.Parent.CharacterState)
 local WeaponState = require(script.Parent.WeaponState)
 

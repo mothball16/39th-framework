@@ -21,12 +21,14 @@ Notes:
 		This isn't as important if your game is single player.
 ]]
 
+local sph = require(script.Parent.Parent.Parent.Core.GameAccess)
+
 ---------- Settings ----------
 
 local numCracks = 6 -- Must be at least 4 (wouldn't recommend more than 6) | How many cracks we want
 local diameter = 1 -- Must be greater than 0 (wouldn't recommend less than 1) | The starting diameter of the cracks. Each crack changes direction when it reaches this diameter.
 local multiplier = 2 -- Must be greater than 1 (wouldn't recommend less than 2) | When the crack changes direction, the diameter gets multiplied by this value.
-local lifetime = require(game.ReplicatedStorage.SPH_Assets.GameConfig).glassShardDespawnTime -- How many seconds we want the glass to last before getting destroyed
+local lifetime = sph.config.glassShardDespawnTime -- How many seconds we want the glass to last before getting destroyed
 local soundId = 0 -- Set to 0 if you want no sound | The glass break sound effect
 local soundVolume = 1 -- Volume of the glass breaking sound effect
 local tweenStyle = 0 -- 0 for no animation, 1 for fading away, 2 for shrinking away, and 3 for both. | The tween effect that will be applied to the glass fragments

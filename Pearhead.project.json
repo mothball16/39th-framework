@@ -13,33 +13,18 @@
         "$ignoreUnknownInstances": false,
         "$path": "DevPackages"
       },
-      "SPH_Tests": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/ReplicatedStorage/SPH_Tests"
-      },
       "Utility": {
         "$ignoreUnknownInstances": false,
         "$path":"Utility"
       },
-      "SPH_Assets": {
+      "SPH_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/ReplicatedStorage/SPH_Assets",
-        
-        "WeaponModels": { "$path": "Assets/SPH_WeaponModels.rbxm" },
-        "Ammo": { "$path": "Assets/SPH_Ammo.rbxm" },
-        "Arms": { "$path": "Assets/SPH_Arms.rbxm" },
-        "Projectiles": { "$path": "Assets/SPH_Projectiles.rbxm" },
-        "Sounds": { "$path": "Assets/SPH_Sounds.rbxm" },
-        "Animations": { "$path": "Assets/SPH_Animations.rbxm" }
+        "$path": "src/ReplicatedStorage/SPH_Framework"
       }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "$ignoreUnknownInstances": true,
-      "SPH_TestRunner": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/ServerScriptService/SPH_TestRunner.server.lua"
-      },
       "SPH_Server": {
         "$ignoreUnknownInstances": false,
         "$path": "src/ServerScriptService/SPH_Server"

@@ -3,10 +3,11 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local State = require(script.Parent.CharacterState)
 
-local assets = ReplicatedStorage:WaitForChild("SPH_Assets")
-local config = require(assets.GameConfig)
-local modules = assets:WaitForChild("Modules")
-local bridgeNet = require(modules.Network.BridgeNet)
+local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local assets = sph.assets
+local framework = sph.framework
+local config = sph.config
+local bridgeNet = require(framework.Network.BridgeNet)
 
 local playerLean = bridgeNet.CreateBridge("PlayerLean")
 local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")
