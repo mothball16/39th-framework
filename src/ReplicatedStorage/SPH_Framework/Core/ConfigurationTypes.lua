@@ -100,7 +100,16 @@ export type WeaponStats = {
 	calcEjectionForce: () -> Vector3,
 
 	ADSEnabled: {boolean},
-	damage: {[string]: number},
+
+	range: {
+		Min: number,
+		Max: number
+	},
+	damage: {
+		Head: {Min: number, Max: number},
+		Torso: {Min: number, Max: number},
+		Other: {Min: number, Max: number}
+	},
 
 	tracers: boolean,
 	tracerTiming: number,
