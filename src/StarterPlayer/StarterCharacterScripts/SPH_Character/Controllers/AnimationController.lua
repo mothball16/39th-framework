@@ -45,7 +45,8 @@ local crouchMoveAnim: AnimationTrack? = nil
 local proneIdleAnim: AnimationTrack? = nil
 local proneMoveAnim: AnimationTrack? = nil
 local moveAnim: AnimationTrack? = nil
-local holdAnim: AnimationTrack? = nil
+-- Key used in `loadedAnims` / weapon stats for the active hold pose clip (not `AnimationTrack.Name`; that can differ).
+local holdAnimKey: string? = nil
 
 local AnimationController = {}
 
@@ -326,9 +327,9 @@ function AnimationController.AdjustMoveAnimSpeed(speed: number)
 end
 
 function AnimationController.SyncHoldStance(newStance, oldStance)
-	if holdAnim then
-		AnimationController.StopAnimation(holdAnim.Name, 0.3)
-		holdAnim = nil
+	if holdAnimKey then
+		AnimationController.StopAnimation(holdAnimKey, 0.3)
+		holdAnimKey = nil
 	end
 	if not State.equippedTool() or not WeaponState.wepStats then
 		return
@@ -350,7 +351,10 @@ function AnimationController.SyncHoldStance(newStance, oldStance)
 	end
 
 	if animToPlay then
-		holdAnim = AnimationController.PlayAnimation(animToPlay, { transSpeed = 0.3 }, "Hold", propertyKey)
+		-- Hard-stop this clip first so a reused asset name after weapon swap always restarts cleanly.
+		AnimationController.StopAnimation(animToPlay, 0)
+		local started = AnimationController.PlayAnimation(animToPlay, { transSpeed = 0.3 }, "Hold", propertyKey)
+		holdAnimKey = started and animToPlay or nil
 	else
 		-- No anim for this stance: bounce Ready ↔ Patrol when dropping from Ready to Low.
 		if oldStance == Enums.HoldStance.Ready and newStance == Enums.HoldStance.Low then
@@ -366,7 +370,9 @@ function AnimationController.WeaponEquip()
 		return
 	end
 	AnimationController.StopAll()
-	holdAnim = nil
+	holdAnimKey = nil
+	-- Tracks were built for the previous tool; reuse breaks hold/sprint after swapping weapons.
+	table.clear(loadedAnims)
 	preloadWeaponAnimations(WeaponState.wepStats)
 
 	local equipName = weaponAnimationName(WeaponState.wepStats, "equip")
