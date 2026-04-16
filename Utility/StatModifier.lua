@@ -21,7 +21,7 @@ function StatModifier.new<T>(base: T): StatModifier<T>
 		_add = {},
 		_multiply = {},
 		_override = {},
-		_dirty = false,
+		_dirty = true,
 	} :: self<T>, StatModifier))
 end
 
@@ -53,8 +53,8 @@ local function applyMod(value, add: any, multiply: any)
 	elseif valueType == "table" then
 		for k, v in pairs(value) do
 			-- TODO: refactor this, this is a mess lol
-			local addMod = typeof(add) == "number" and add or add[k]
-			local multiplyMod = typeof(multiply) == "number" and multiply or multiply[k]
+			local addMod = typeof(add) == "number" and add or (add :: {number})[k]
+			local multiplyMod = typeof(multiply) == "number" and multiply or (multiply :: {number})[k]
 			value[k] = applyMod(v, addMod, multiplyMod)
 		end
 		return value
