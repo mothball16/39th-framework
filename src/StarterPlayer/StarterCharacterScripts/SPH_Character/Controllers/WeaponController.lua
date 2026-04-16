@@ -492,9 +492,14 @@ function WC.Equip(newChild)
 	gun.Parent = WC.viewmodelRig.Weapon
 	WeaponState.gunModel(gun)
 
-	weldMod.BlankM6D(WC.viewmodelRig.AnimBase, gun.Grip)
+	WeaponState.maid:GiveTask(weldMod.BlankM6D(WC.viewmodelRig.AnimBase, gun.Grip))
 
-	if State.firstPerson() then WC.RefreshViewmodel() end
+	if State.firstPerson() then
+		task.defer(function()
+			task.wait(0.1)
+			WC.RefreshViewmodel()
+		end)
+	end
 	WC.InputController.BindGunInputs(State.firstPerson())
 
 	AnimationEvents.WeaponEquipRequested:Fire()

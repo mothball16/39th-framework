@@ -7,6 +7,8 @@ local config = sph.config
 local Enums = require(modules.Core.Enums)
 local SP = require(modules.Weapons.Spring.Default)
 local legacySpring = require(modules.Weapons.LegacySpring)
+local Maid = require(Packages.maid)
+
 local WepState = {
 	wepStats = Charm.atom(nil) 							:: Charm.Atom<any>,
 	equipping = Charm.atom(false)						:: Charm.Atom<boolean>,
@@ -30,6 +32,8 @@ local WepState = {
 	bipodEnabled = Charm.atom(false)					:: Charm.Atom<boolean>,
 	fireMode = Charm.atom(0)							:: Charm.Atom<number>,
 	holdStance = Charm.atom(0)							:: Charm.Atom<number>,
+
+	maid = Maid.new(),
 
 	CameraSpring = legacySpring.new(Vector3.new()),
 	RecoilPos = legacySpring.new(Vector3.new()),
@@ -134,6 +138,8 @@ function WepState.reset()
 	WepState.fireMode(0)
 	WepState.holdStance(Enums.HoldStance.Ready)
 	WepState.equipping(false)
+
+	WepState.maid:DoCleaning()
 end
 
 
