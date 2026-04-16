@@ -5,7 +5,7 @@ registry = "test"
 [[package]]
 name = "jzou0/39th-framework"
 version = "0.1.0"
-dependencies = [["Charm", "littensy/charm@0.11.0-rc.5"], ["maid", "nightcycle/maid@2.2.2"], ["signal", "sleitnick/signal@2.0.3"], ["TestEZ", "roblox/testez@0.4.1"]]
+dependencies = [["Charm", "littensy/charm@0.11.0-rc.5"], ["maid", "nightcycle/maid@2.2.2"], ["signal", "sleitnick/signal@2.0.3"], ["table-util", "sleitnick/table-util@1.2.1"], ["TestEZ", "roblox/testez@0.4.1"]]
 
 [[package]]
 name = "littensy/charm"
@@ -25,4 +25,9 @@ dependencies = []
 [[package]]
 name = "sleitnick/signal"
 version = "2.0.3"
+dependencies = []
+
+[[package]]
+name = "sleitnick/table-util"
+version = "1.2.1"
 dependencies = []
