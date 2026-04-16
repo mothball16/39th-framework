@@ -14,7 +14,6 @@ function M.CreateAll(bridgeNet: any)
 		moveBolt = bridgeNet.CreateBridge("MoveBolt"),
 		playerFire = bridgeNet.CreateBridge("PlayerFire"),
 		playSound = bridgeNet.CreateBridge("PlaySound"),
-		sysMessage = bridgeNet.CreateBridge("SystemMessage"),
 		fallDamage = bridgeNet.CreateBridge("FallDamage"),
 		repBolt = bridgeNet.CreateBridge("ReplicateBolt"),
 		switchFireMode = bridgeNet.CreateBridge("SwitchFireMode"),

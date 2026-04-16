@@ -181,7 +181,6 @@ export type MainGameSettings = {
 	leaderboardTKStat: string,
 	leaderboardDeathStat: string,
 
-	systemChat: boolean,
 	deathScreen: boolean,
 
 	fallDamage: boolean,

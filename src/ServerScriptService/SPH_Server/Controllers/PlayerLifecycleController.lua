@@ -39,7 +39,7 @@ function M.Initialize(c)
 			end)
 		end
 
-		ctx.bridges.sysMessage:FireAll("[SYSTEM] User '" .. newPlayer.Name .. "' joined the server.", Color3.new(0, 1, 0.615686))
+		-- ctx.bridges.sysMessage:FireAll("[SYSTEM] User '" .. newPlayer.Name .. "' joined the server.", Color3.new(0, 1, 0.615686))
 
 		local deaths
 		if ctx.config.leaderboard then
@@ -81,19 +81,19 @@ function M.Initialize(c)
 
 				local killer = newChar:FindFirstChild("Killer")
 				if not killer then
-					local newMsg = ctx.systemMessages.GetMessage("Death")
-					ctx.bridges.sysMessage:FireAll(newPlayer.Name .. " " .. newMsg, Color3.new(0.7, 0.7, 0.7))
+					-- local newMsg = ctx.systemMessages.GetMessage("Death")
+					-- ctx.bridges.sysMessage:FireAll(newPlayer.Name .. " " .. newMsg, Color3.new(0.7, 0.7, 0.7))
 				elseif killer:IsA("ObjectValue") and killer.Value:IsA("Player") then
-					local newMsg = ctx.systemMessages.GetMessage("Killed")
-					ctx.bridges.sysMessage:FireAll(newPlayer.Name .. " " .. newMsg .. " " .. killer.Value.Name, Color3.new(1, 0, 0))
+					-- local newMsg = ctx.systemMessages.GetMessage("Killed")
+					-- ctx.bridges.sysMessage:FireAll(newPlayer.Name .. " " .. newMsg .. " " .. killer.Value.Name, Color3.new(1, 0, 0))
 				elseif robloxDamageTag and robloxDamageTag.Value and robloxDamageTag.Value:IsA("Player") and ctx.config.rblxDamageTags then
 					killer = robloxDamageTag
-					local newMsg = ctx.systemMessages.GetMessage("Killed")
-					ctx.bridges.sysMessage:FireAll(killer.Value.Name .. " " .. newMsg .. " " .. newPlayer.Name, Color3.new(1, 0, 0))
+					-- local newMsg = ctx.systemMessages.GetMessage("Killed")
+					-- ctx.bridges.sysMessage:FireAll(killer.Value.Name .. " " .. newMsg .. " " .. newPlayer.Name, Color3.new(1, 0, 0))
 				elseif killer:IsA("StringValue") then
 					if killer.Value == "Falling" then
-						local newMsg = ctx.systemMessages.GetMessage("Falling")
-						ctx.bridges.sysMessage:FireAll(newPlayer.Name .. " " .. newMsg, Color3.new(1, 0, 0))
+						-- local newMsg = ctx.systemMessages.GetMessage("Falling")
+						-- ctx.bridges.sysMessage:FireAll(newPlayer.Name .. " " .. newMsg, Color3.new(1, 0, 0))
 					end
 				end
 
@@ -217,7 +217,7 @@ function M.Initialize(c)
 
 	ctx.players.PlayerRemoving:Connect(function(player)
 		print(ctx.warnPrefix .. player.Name .. " left the server")
-		ctx.bridges.sysMessage:FireAll("[SYSTEM] User '" .. player.Name .. "' left the server.", Color3.new(0, 1, 0.615686))
+		-- ctx.bridges.sysMessage:FireAll("[SYSTEM] User '" .. player.Name .. "' left the server.", Color3.new(0, 1, 0.615686))
 
 		local character = player.Character
 		if ctx.config.dropOnLeave and character then

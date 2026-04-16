@@ -29,7 +29,6 @@ local bridgeNet = require(modules.Network.BridgeNet)
 local viewMod = require(modules.Weapons.ViewMod)
 local explosionMod = require(modules.Effects.ExplosionFX)
 local ragdoll = require(modules.Effects.RagdollMod)
-local systemMessages = require(modules.Core.SystemMessages)
 local warnPrefix = "【 SPEARHEAD 】 "
 print(warnPrefix .. "Loading Server " .. config.version)
 
@@ -83,7 +82,6 @@ local ctx = {
 	viewMod = viewMod,
 	explosionMod = explosionMod,
 	ragdoll = ragdoll,
-	systemMessages = systemMessages,
 	WeaponStatLocator = WeaponStatLocator,
 	dd_settings = dd_settings,
 	atmod = atmod,
