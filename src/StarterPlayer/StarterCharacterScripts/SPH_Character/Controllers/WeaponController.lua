@@ -495,10 +495,7 @@ function WC.Equip(newChild)
 	WeaponState.maid:GiveTask(weldMod.BlankM6D(WC.viewmodelRig.AnimBase, gun.Grip))
 
 	if State.firstPerson() then
-		task.defer(function()
-			task.wait(0.1)
-			WC.RefreshViewmodel()
-		end)
+		WC.RefreshViewmodel()
 	end
 	WC.InputController.BindGunInputs(State.firstPerson())
 
