@@ -9,7 +9,6 @@ local config = sph.config
 local player = game:GetService("Players").LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 
-local canView = script.CanView
 
 local PickUpUI = player.PlayerGui:WaitForChild("SPH_UI").PickUpUI
 
@@ -17,7 +16,7 @@ local tweenTime = 0.2
 local delayTime = 0.05
 
 local function ShowPrompt(promptPart)
-	if canView.Value and char and char.Humanoid.Health > 0 then
+	if (not script:GetAttribute("HidePromptView")) and char and char.Humanoid.Health > 0 then
 		local newUI = promptPart.PromptUI
 		local input = newUI.Main.Input
 		local pressSquare = newUI.Main.Input.Key.Frame
@@ -87,7 +86,11 @@ end
 
 local function SetupPrompt(prompt)
 	local proxPrompt:ProximityPrompt = prompt:FindFirstChildWhichIsA("ProximityPrompt")
-	local config = proxPrompt.SPH_PromptConfig
+	local config = proxPrompt:FindFirstChild("SPH_PromptConfig")
+	if not config then
+		warn(`no SPH_PromptConfig found for prompt with parent {prompt.Parent.Name}`)
+		return
+	end
 	local newUI = script[config.ProxType.Value]:Clone()
 	newUI.Name = "PromptUI"
 	newUI.Parent = prompt
@@ -109,8 +112,12 @@ local function SetupPrompt(prompt)
 			end)
 		end
 	elseif config:FindFirstChild("GunPool") then
-		local gunName = proxPrompt:FindFirstChildWhichIsA("Tool").Name
-		input.GunName.Text = gunName
+		local gun = proxPrompt:FindFirstChildWhichIsA("Tool")
+		if not gun then
+			warn(`no gun found for prompt with parent {prompt.Parent.Name}`)
+			return
+		end
+		input.GunName.Text = gun.Name
 		if config.InfGuns.Value then
 			input.Remaining.Text = "INF"
 		elseif config.GunPool.MaxValue > 1 then
