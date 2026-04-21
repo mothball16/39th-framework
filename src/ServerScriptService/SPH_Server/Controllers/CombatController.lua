@@ -6,7 +6,8 @@ local ctx
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
-local DamageLogic = require(sph.framework.Combat.DamageLogic)
+local HitContextTypes = require(sph.framework.Combat.HitContextTypes)
+local VictimFinder = require(sph.framework.Combat.VictimFinder)
 
 local function checkNaughtyList(playerID)
 	if table.find(ctx.naughtyList, playerID) then
@@ -117,6 +118,29 @@ end
 
 function M.Initialize(c)
 	ctx = c
+
+	local glassBreakFolder = ctx.assets.Sounds:FindFirstChild("GlassBreak")
+	local glassBreakSounds = if glassBreakFolder then glassBreakFolder:GetChildren() else {}
+
+	VictimFinder.Initialize({
+		dts = {
+			atmod = ctx.atmod,
+			useBulletForce = ctx.config.useBulletForce,
+		},
+		human = {
+			leaderboard = ctx.config.leaderboard,
+			leaderboardTKStat = ctx.config.leaderboardTKStat,
+			leaderboardKillStat = ctx.config.leaderboardKillStat,
+		},
+		glass = {
+			glassShatter = ctx.config.glassShatter,
+			glassRespawnTime = ctx.config.glassRespawnTime,
+			glassBreakSounds = glassBreakSounds,
+		},
+		bulletImpulse = {
+			enabled = ctx.config.useBulletForce,
+		},
+	})
 
 	ctx.bridges.playerFire:Connect(playerFire)
 
@@ -242,147 +266,22 @@ function M.OnBulletHit(player: Player, tool: Tool, raycastResult: RaycastResult,
 		otherPlayer = ctx.players:GetPlayerFromCharacter(humanoid.Parent)
 	end
 
-	if ctx.atmod and wepStats.ATCanDamage then
-		local pen = math.random(wepStats.ATDefaultPen[1], wepStats.ATDefaultPen[2])
-		local dmg = math.random(wepStats.ATDefaultDamage[1], wepStats.ATDefaultDamage[2])
-		local knockback = (ctx.config.useBulletForce and Vector3.new(0, 0, -(wepStats.bulletForce or 0))) or nil
-		if hitPart and hitPart:HasTag("Dragoon_Armor") then
-			ctx.atmod.DamageVehicle(player, hitPart, pen, dmg, knockback, true)
-		elseif not hitPart:HasTag("Dragoon_Armor") and not hitPart:HasTag("PropSystem_Armor") then
-			ctx.atmod.DamageMisc(player, hitPart, hitPart.Position, nil, pen, dmg, dmg, knockback, true)
-		elseif hitPart:HasTag("PropSystem_Armor") then
-			ctx.atmod.DamageProp(player, hitPart, pen, dmg, knockback, true)
-		end
-	end
+	local allowHumanDamage = not otherPlayer or teamKillCheck(player, otherPlayer)
+	local hitContext: HitContextTypes.HitContext = {
+		player = player,
+		tool = tool,
+		equippedTool = equippedTool,
+		wepStats = wepStats,
+		raycastResult = raycastResult,
+		bulletCFrame = bulletCFrame,
+		hitPart = hitPart,
+		humanoid = humanoid,
+		otherPlayer = otherPlayer,
+		allowHumanDamage = allowHumanDamage,
+	}
 
-	if humanoid and humanoid.Health > 0 and ((otherPlayer and teamKillCheck(player, otherPlayer)) or not otherPlayer) then
-		local ray = raycastResult :: any
-		local dist = (typeof(ray.Position) == "Vector3" and typeof(ray.Origin) == "Vector3") and (ray.Position - ray.Origin).Magnitude or nil
-		local damage = DamageLogic.getDamage(wepStats.damage, hitPart.Name, dist, wepStats.range)
-
-		if humanoid.Health > 0 and humanoid.Health - damage <= 0 then
-			if ctx.config.leaderboard and (player.Name ~= humanoid.Parent.Name) then
-				local victimPlayer = game.Players:GetPlayerFromCharacter(humanoid.Parent)
-				local leaderstats = player:FindFirstChild("leaderstats")
-				if leaderstats and victimPlayer and victimPlayer.Team == player.Team then
-					local tkStat = leaderstats:FindFirstChild(ctx.config.leaderboardTKStat)
-					if tkStat and tkStat:IsA("IntValue") then
-						tkStat.Value += 1
-					end
-				elseif leaderstats and victimPlayer then
-					local killStat = leaderstats:FindFirstChild(ctx.config.leaderboardKillStat)
-					if killStat and killStat:IsA("IntValue") then
-						killStat.Value += 1
-					end
-				end
-			end
-			local killer = Instance.new("ObjectValue", humanoid.Parent)
-			killer.Name = "Killer"
-			killer.Value = player
-
-			if ctx.config.printKillLogs and player and otherPlayer then
-				print(ctx.warnPrefix .. " " .. player.Name .. " killed " .. otherPlayer.Name)
-			end
-
-			if ctx.config.listenForKillAll then
-				local lastKillTime = tonumber(player:GetAttribute("LastKillTime"))
-				if lastKillTime then
-					local lastTime = lastKillTime
-					if time() - lastTime <= 0.1 then
-						local multiKill = (tonumber(player:GetAttribute("MultiKill")) or 0) + 1
-						player:SetAttribute("MultiKill", multiKill)
-						if multiKill > ctx.config.multiKillThreshold then
-							table.insert(ctx.naughtyList, player.UserId)
-							player:Kick("Disconnected")
-							warn(ctx.warnPrefix .. player.Name .. " was kicked for killing too quickly!")
-							return
-						end
-					else
-						player:SetAttribute("MultiKill", 0)
-					end
-					local victimChar = humanoid.Parent :: Model
-					local lastKillPos = player:GetAttribute("LastKillPosition")
-					local lastKillVec = typeof(lastKillPos) == "Vector3" and (lastKillPos :: Vector3) or nil
-					if
-						ctx.config.multiKillDistanceCheck
-						and lastKillVec
-						and time() - lastTime < 3
-						and (victimChar.WorldPivot.Position - lastKillVec).Magnitude > 100
-					then
-						warn(ctx.warnPrefix .. player.Name .. " attempted to kill two players >100 studs apart!")
-
-						if ctx.config.strikes then
-							player:SetAttribute("Strikes", (tonumber(player:GetAttribute("Strikes")) or 0) + 1)
-							player:SetAttribute("LastStrikeReason", "Attempting to kill multiple players >100 studs apart")
-						end
-
-						return
-					end
-				end
-
-				player:SetAttribute("LastKillTime", time())
-				player:SetAttribute("LastKillPosition", (humanoid.Parent :: Model).WorldPivot.Position)
-			end
-		end
-
-		local creator = Instance.new("ObjectValue")
-		creator.Name = "creator"
-		creator.Value = player
-		creator.Parent = humanoid
-		ctx.debris:AddItem(creator, 0.5)
-
-		humanoid:TakeDamage(damage)
-	elseif (hitPart.Name == "Glass" or ctx.collectionService:HasTag(hitPart, "BreakableGlass")) and ctx.config.glassShatter then
-		local hitPosition = raycastResult.Position
-
-		--[[
-		local tempPart = hitPart:Clone()
-		tempPart.Name = "TempGlass"
-		tempPart.Parent = workspace]]
-
-		local prevTransparency = hitPart.Transparency
-		local prevCanCollide = hitPart.CanCollide
-		local prevCanQuery = hitPart.CanQuery
-		local prevCanTouch = hitPart.CanTouch
-
-		hitPart.Transparency = 1
-		hitPart.CanCollide = false
-		hitPart.CanQuery = false
-		hitPart.CanTouch = false
-
-		task.delay(ctx.config.glassRespawnTime, function()
-			if hitPart and hitPart.Parent then
-				hitPart.Transparency = prevTransparency
-				hitPart.CanCollide = prevCanCollide
-				hitPart.CanQuery = prevCanQuery
-				hitPart.CanTouch = prevCanTouch
-			end
-		end)
-
-		--[[
-		if hitPart:IsA("Part") and hitPart.Shape == Enum.PartType.Block or hitPart:IsA("WedgePart") then
-			ctx.fractureGlass(tempPart, hitPosition, bulletCFrame.LookVector * 10)
-		else
-			tempPart:Destroy()
-		end]]
-
-		local soundAtt = Instance.new("Attachment", workspace.Terrain)
-		soundAtt.WorldPosition = hitPosition
-		local shatterSound = ctx.assets.Sounds.GlassBreak:GetChildren()[math.random(#ctx.assets.Sounds.GlassBreak:GetChildren())]:Clone()
-		shatterSound.Parent = soundAtt
-		shatterSound:Play()
-		ctx.debris:AddItem(soundAtt, shatterSound.TimeLength)
-	elseif not hitPart.Anchored and ctx.config.useBulletForce and not humanoid then
-		local tempAtt = Instance.new("Attachment", hitPart)
-		tempAtt.WorldCFrame = CFrame.new(raycastResult.Position) * (bulletCFrame - bulletCFrame.Position)
-		local force = Instance.new("VectorForce", tempAtt)
-		force.Attachment0 = tempAtt
-		local buFo = wepStats.bulletForce
-		force.Force = Vector3.new(0, 0, -buFo)
-		ctx.debris:AddItem(tempAtt, 0.1)
-		if not otherPlayer then
-			hitPart:SetNetworkOwner(player)
-		end
+	if not VictimFinder.processDirectHit(hitContext) then
+		return
 	end
 end
 
