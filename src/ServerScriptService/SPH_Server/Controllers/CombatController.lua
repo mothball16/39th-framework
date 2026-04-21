@@ -239,17 +239,6 @@ function M.OnBulletHit(player: Player, tool: Tool, raycastResult: RaycastResult,
 		end
 
 		ctx.explosionMod(raycastResult.Position, expRadius, expEffect, player)
-
-		if ctx.config.listenForExplosionSpam then
-			local lastExplosion = player:GetAttribute("LastExplosion")
-			if lastExplosion and time() - lastExplosion <= 0.3 then
-				table.insert(ctx.naughtyList, player.UserId)
-				player:Kick("Disconnected")
-				warn(ctx.warnPrefix .. player.Name .. " was kicked for trying to create multiple explosions at once!")
-				return
-			end
-			player:SetAttribute("LastExplosion", time())
-		end
 	else
 		local position = raycastResult.Position
 		ctx.bridges.repHit:FireAllInRangeExcept(player, position, ctx.config.maxHitDistance, tool, raycastResult)
