@@ -8,8 +8,8 @@ local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
 local assets = sph.assets
 local config = sph.config
 
-local State = require(script.Parent.Parent.State.CharacterState)
-local WeaponState = require(script.Parent.Parent.State.WeaponState)
+local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
+local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
 
 local UIController = {
 	PlayerGui = nil,
@@ -28,6 +28,9 @@ local UIController = {
 	
 	ubglAmmo = nil
 }
+
+local weaponState: WeaponStateModule.WeaponState
+local State: CharacterStateModule.CharacterState
 
 function UIController.splitNumber(number)
 	local numberStr = tostring(number)
@@ -57,6 +60,8 @@ end
 function UIController.Initialize(params)
 	UIController.PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 	UIController.MainUI = UIController.PlayerGui:WaitForChild("SPH_UI")
+	weaponState = params.weaponState
+	State = params.state
 	
 	UIController.ammoUI = UIController.MainUI:WaitForChild("Ammo")
 	UIController.MainUI:WaitForChild("Version").Text = "Spearhead "..config.version
@@ -88,7 +93,7 @@ end
 
 function UIController.SyncEquippedTool(tool)
 	if tool then
-		local ws = WeaponState.wepStats()
+		local ws = weaponState.wepStats()
 		if ws and ws.hasUBGL then
 			UIController.ubglAmmo = tool:FindFirstChild("UBGLAmmo")
 		else
@@ -117,8 +122,8 @@ end
 
 function UIController.UpdateHeartbeat(dt)
 	local tool = State.equippedTool()
-	local wepStats = WeaponState.wepStats()
-	local magAmmo = WeaponState.gunAmmo and WeaponState.gunAmmo:FindFirstChild("MagAmmo")
+	local wepStats = weaponState.wepStats()
+	local magAmmo = weaponState.gunAmmo and weaponState.gunAmmo:FindFirstChild("MagAmmo")
 	
 	if not UIController.ammoUI then return end
 
@@ -126,7 +131,7 @@ function UIController.UpdateHeartbeat(dt)
 		if State.Parts.Humanoid.SeatPart ~= nil and State.Parts.Humanoid.SeatPart.ClassName == "VehicleSeat" then return end
 		UIController.ammoUI.Visible = true
 		
-		local fireModeVal = WeaponState.fireMode()
+		local fireModeVal = weaponState.fireMode()
 		
 		if fireModeVal == 4 and wepStats.hasUBGL and UIController.ubglAmmo then
 			local ubglAmmoPool = tool:FindFirstChild("UBGLAmmoPool")
@@ -155,7 +160,7 @@ function UIController.UpdateHeartbeat(dt)
 			if wepStats.infiniteAmmo then
 				UIController.ammoPoolUI.Text = UIController.ammoPoolUI.Text.."INF"
 			else
-				local ammoPoolVal = WeaponState.gunAmmo.ArcadeAmmoPool.Value
+				local ammoPoolVal = weaponState.gunAmmo.ArcadeAmmoPool.Value
 				local digits = UIController.splitNumber(ammoPoolVal)
 				UIController.ammoPoolUI.Text = UIController.ammoPoolUI.Text..[[<font transparency="0.5">]]..digits[1]..[[</font>]]..digits[2]
 				if ammoPoolVal > 0 then
@@ -179,7 +184,7 @@ function UIController.UpdateHeartbeat(dt)
 		end
 
 		UIController.fireMode.Text = UIController.fireModeNames[fireModeVal + 1]
-		UIController.aimSens.Text = string.format("%.2f", WeaponState.aimSens())
+		UIController.aimSens.Text = string.format("%.2f", weaponState.aimSens())
 	else
 		UIController.ammoUI.Visible = false
 	end

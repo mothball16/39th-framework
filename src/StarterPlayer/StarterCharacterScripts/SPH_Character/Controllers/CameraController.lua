@@ -7,8 +7,8 @@ local TweenService = game:GetService("TweenService")
 local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
 local assets = sph.assets
 local config = sph.config
-local State = require(script.Parent.Parent.State.CharacterState)
-local WeaponState = require(script.Parent.Parent.State.WeaponState)
+local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
+local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
 
 local CC = {
 	camera = nil,
@@ -22,6 +22,9 @@ local CC = {
 	aimTween = nil :: Tween
 }
 
+local weaponState: WeaponStateModule.WeaponState
+local State: CharacterStateModule.CharacterState
+
 local function LerpNumber(number, target, speed)
 	return number + (target - number) * speed
 end
@@ -30,6 +33,8 @@ function CC.Initialize(params)
 	CC.camera = params.camera
 
 	CC.ReplicationController = params.ReplicationController
+	weaponState = params.weaponState
+	State = params.state
 
 	Charm.subscribe(State.sprinting, CC.SyncSprinting)
 	Charm.subscribe(State.aiming, CC.SyncAiming)
@@ -54,7 +59,7 @@ function CC.SyncAiming(aiming)
 	if aiming then
 		-- nothin yet
 	else
-		local ws = WeaponState.wepStats()
+		local ws = weaponState.wepStats()
 		local aimOutTime = ws and ws.aimTime / 2 or 0.3
 		CC.aimTween = TweenService:Create(
 			CC.camera, TweenInfo.new(aimOutTime),{FieldOfView = config.defaultFOV})
@@ -109,7 +114,7 @@ function CC.UpdateRender(dt)
 			State.firstPerson(true)
 		elseif State.firstPerson() and State.Parts.Character.Head.LocalTransparencyModifier <= fpThreshold then
 			State.firstPerson(false)
-			WeaponState.viewmodelVisible(false)
+			weaponState.viewmodelVisible(false)
 			CC.cameraOffsetTarget = Vector3.zero
 		end
 	end
@@ -219,16 +224,16 @@ function CC.UpdateRender(dt)
 	end
 
 	CC.camera.CFrame = CC.camera.CFrame
-		* CFrame.Angles(WeaponState.CameraSpring.p.X, WeaponState.CameraSpring.p.Y, WeaponState.CameraSpring.p.Z)
-	WeaponState.CameraSpring.t = WeaponState.CameraSpring.t - WeaponState.CameraSpring.p
-	WeaponState.CameraSpring.p = Vector3.new()
+		* CFrame.Angles(weaponState.CameraSpring.p.X, weaponState.CameraSpring.p.Y, weaponState.CameraSpring.p.Z)
+	weaponState.CameraSpring.t = weaponState.CameraSpring.t - weaponState.CameraSpring.p
+	weaponState.CameraSpring.p = Vector3.new()
 end
 
 function CC.UpdateFOV(dt)
 	local camSensFactor = CC.camera.FieldOfView / config.defaultFOV
 	if State.aiming() then
-		CC.camera.FieldOfView = LerpNumber(CC.camera.FieldOfView, WeaponState.aimFOVTarget(), 0.3 * (dt * 60))
-		UserInputService.MouseDeltaSensitivity = WeaponState.aimSens() * camSensFactor
+		CC.camera.FieldOfView = LerpNumber(CC.camera.FieldOfView, weaponState.aimFOVTarget(), 0.3 * (dt * 60))
+		UserInputService.MouseDeltaSensitivity = weaponState.aimSens() * camSensFactor
 	else
 		UserInputService.MouseDeltaSensitivity = 1 * camSensFactor
 	end

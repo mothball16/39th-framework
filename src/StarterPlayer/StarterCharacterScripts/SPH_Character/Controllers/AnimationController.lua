@@ -7,8 +7,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-local State = require(script.Parent.Parent.State.CharacterState)
-local WeaponState = require(script.Parent.Parent.State.WeaponState)
+local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
+local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
 local AnimationEvents = require(script.Parent.AnimationEvents)
 local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
 local config = sph.config
@@ -49,6 +49,8 @@ local moveAnim: AnimationTrack? = nil
 local holdAnimKey: string? = nil
 
 local AnimationController = {}
+local weaponState: WeaponStateModule.WeaponState
+local State: CharacterStateModule.CharacterState
 
 -- ---------------------------------------------------------------------------
 -- Play options: optional `propertyKey` picks ANIM_DEFAULTS; explicit fields in `parameters` win.
@@ -206,6 +208,8 @@ function AnimationController.Initialize(params)
 	vmAnimator = params.vmAnimator
 	characterAnimator = params.characterAnimator
 	animationsFolder = params.animationsFolder
+	weaponState = params.weaponState
+	State = params.state
 
 	crouchIdleAnim = loadHumanoidAnim(params.animationsFolder.Crouch_Idle, true, Enum.AnimationPriority.Idle)
 	crouchMoveAnim = loadHumanoidAnim(params.animationsFolder.Crouch_Move, true, Enum.AnimationPriority.Movement)
@@ -215,8 +219,8 @@ function AnimationController.Initialize(params)
 	Charm.subscribe(State.sprinting, AnimationController.SyncSprinting)
 	Charm.subscribe(State.stance, AnimationController.SyncStance)
 	Charm.subscribe(State.moving, AnimationController.SyncMoving)
-	Charm.subscribe(WeaponState.holdStance, AnimationController.SyncHoldStance)
-	Charm.subscribe(WeaponState.chambering, AnimationController.SyncChambering)
+	Charm.subscribe(weaponState.holdStance, AnimationController.SyncHoldStance)
+	Charm.subscribe(weaponState.chambering, AnimationController.SyncChambering)
 
 	AnimationEvents.WeaponEquipRequested:Connect(AnimationController.WeaponEquip)
 	AnimationEvents.WeaponIdleRequested:Connect(AnimationController.WeaponIdle)
@@ -268,7 +272,7 @@ function AnimationController.SyncMoving(moving)
 end
 
 function AnimationController.SyncSprinting(sprinting)
-	local stats = WeaponState.wepStats()
+	local stats = weaponState.wepStats()
 	local sprintName = weaponAnimationName(stats, "sprint")
 	if not sprintName then
 		return
@@ -331,7 +335,7 @@ function AnimationController.SyncHoldStance(newStance, oldStance)
 		AnimationController.StopAnimation(holdAnimKey, 0.3)
 		holdAnimKey = nil
 	end
-	local stats = WeaponState.wepStats()
+	local stats = weaponState.wepStats()
 	if not State.equippedTool() or not stats then
 		return
 	end
@@ -358,15 +362,15 @@ function AnimationController.SyncHoldStance(newStance, oldStance)
 	else
 		-- No anim for this stance: bounce Ready ↔ Patrol when dropping from Ready to Low.
 		if oldStance == Enums.HoldStance.Ready and newStance == Enums.HoldStance.Low then
-			WeaponState.holdStance(Enums.HoldStance.Patrol)
+			weaponState.holdStance(Enums.HoldStance.Patrol)
 		else
-			WeaponState.holdStance(Enums.HoldStance.Ready)
+			weaponState.holdStance(Enums.HoldStance.Ready)
 		end
 	end
 end
 
 function AnimationController.WeaponEquip()
-	local ws = WeaponState.wepStats()
+	local ws = weaponState.wepStats()
 	if not ws then
 		return
 	end
@@ -380,15 +384,15 @@ function AnimationController.WeaponEquip()
 	local equipTrack = equipName and AnimationController.PlayAnimation(equipName, {}, "Equip", "equip")
 	if equipTrack then
 		equipTrack.Stopped:Connect(function()
-			WeaponState.equipping(false)
+			weaponState.equipping(false)
 		end)
 	else
-		WeaponState.equipping(false)
+		weaponState.equipping(false)
 	end
 end
 
 function AnimationController.WeaponIdle()
-	local ws = WeaponState.wepStats()
+	local ws = weaponState.wepStats()
 	if not ws then
 		return
 	end
@@ -399,29 +403,29 @@ function AnimationController.WeaponIdle()
 end
 
 function AnimationController.SyncChambering(value)
-	local stats = WeaponState.wepStats()
+	local stats = weaponState.wepStats()
 	if value == false or not stats or not State.equippedTool() then
 		return
 	end
 
-	local useChamber = State.equippedTool().BoltReady.Value or WeaponState.fireMode() == 5
+	local useChamber = State.equippedTool().BoltReady.Value or weaponState.fireMode() == 5
 	local animName = useChamber and weaponAnimationName(stats, "boltChamber") or weaponAnimationName(stats, "boltClose")
 	local chamberKey = if useChamber then "boltChamber" else "boltClose"
 
 	local playing = AnimationController.PlayAnimation(animName, { transSpeed = 0.05 }, "Chamber", chamberKey)
 	if playing then
 		playing.Stopped:Once(function()
-			WeaponState.chambering(false)
+			weaponState.chambering(false)
 		end)
 	else
 		warn("no chamber anim")
-		WeaponState.chambering(false)
+		weaponState.chambering(false)
 	end
 end
 
 -- UBGL (fire mode 4) uses the UBGL stat block for the reload clip name when present.
 local function playUbglReload(animSpeed: number)
-	local ws = WeaponState.wepStats()
+	local ws = weaponState.wepStats()
 	if not ws then
 		return
 	end
@@ -436,7 +440,7 @@ end
 local function playBoltOpenReloadSequence(lastGunModelName: string?, animSpeed: number)
 	local tool = State.equippedTool()
 	local gunAmmo = tool:FindFirstChild("Ammo")
-	local stats = WeaponState.wepStats()
+	local stats = weaponState.wepStats()
 	if not stats then
 		return
 	end
@@ -448,7 +452,7 @@ local function playBoltOpenReloadSequence(lastGunModelName: string?, animSpeed: 
 		nil
 	)
 	if not boltOpenTrack then
-		WeaponState.reloading(false)
+		weaponState.reloading(false)
 		return
 	end
 
@@ -470,7 +474,7 @@ local function playBoltOpenReloadSequence(lastGunModelName: string?, animSpeed: 
 			return
 		end
 
-		if lastGunModelName and WeaponState.gunModel() and lastGunModelName ~= WeaponState.gunModel().Name then
+		if lastGunModelName and weaponState.gunModel() and lastGunModelName ~= weaponState.gunModel().Name then
 			return
 		end
 		local reloadName = weaponAnimationName(stats, "reload")
@@ -486,14 +490,14 @@ local function playBoltOpenReloadSequence(lastGunModelName: string?, animSpeed: 
 end
 
 function AnimationController.WeaponReload(lastGunModelName)
-	local ws = WeaponState.wepStats()
+	local ws = weaponState.wepStats()
 	if not State.equippedTool() or not ws then
 		return
 	end
-	WeaponState.reloading(true)
+	weaponState.reloading(true)
 	local animSpeed = ws.reloadSpeedModifier
 
-	if WeaponState.fireMode() == 4 and ws.hasUBGL then
+	if weaponState.fireMode() == 4 and ws.hasUBGL then
 		playUbglReload(animSpeed)
 		return
 	end
@@ -516,7 +520,7 @@ function AnimationController.WeaponReload(lastGunModelName)
 end
 
 function AnimationController.PlayBoltAction(boltReady)
-	local ws = WeaponState.wepStats()
+	local ws = weaponState.wepStats()
 	if not ws then
 		return
 	end
@@ -526,7 +530,7 @@ function AnimationController.PlayBoltAction(boltReady)
 end
 
 function AnimationController.PlayReloadAction(useClip)
-	local ws = WeaponState.wepStats()
+	local ws = weaponState.wepStats()
 	if not ws then
 		return
 	end
@@ -538,7 +542,7 @@ function AnimationController.PlayReloadAction(useClip)
 end
 
 function AnimationController.PlayFireAnim()
-	local ws = WeaponState.wepStats()
+	local ws = weaponState.wepStats()
 	local fireName = weaponAnimationName(ws, "fire")
 	if fireName then
 		AnimationController.PlayAnimation(fireName, {}, "Fire", "fire")
@@ -546,7 +550,7 @@ function AnimationController.PlayFireAnim()
 end
 
 function AnimationController.PlaySwitchFireModeAnim()
-	local ws = WeaponState.wepStats()
+	local ws = weaponState.wepStats()
 	local switchName = weaponAnimationName(ws, "switch")
 	if switchName then
 		AnimationController.PlayAnimation(switchName, { transSpeed = 0.2 }, "Switch", "switch")

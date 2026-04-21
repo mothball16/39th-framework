@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-local State = require(script.Parent.Parent.State.CharacterState)
+local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
 
 local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
 local assets = sph.assets
@@ -16,9 +16,11 @@ local RC = {
 	headRotationEventCooldown = 0
 }
 RC.character = nil
+local State: CharacterStateModule.CharacterState
 
 function RC.Initialize(params)
 	RC.character = params.character
+	State = params.state
 
 	Charm.subscribe(State.sprinting, function(sprinting)
 		if RC.character then RC.character:SetAttribute("Sprinting", sprinting) end

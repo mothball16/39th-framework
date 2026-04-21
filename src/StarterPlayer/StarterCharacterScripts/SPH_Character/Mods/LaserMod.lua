@@ -12,8 +12,8 @@ local bridgeNet = require(modules.Network.BridgeNet)
 local weaponPrefsClient = require(modules.Weapons.WeaponPrefsClient)
 
 local Intents = Enums.Intents
-local State = require(script.Parent.Parent.State.CharacterState)
-local WeaponState = require(script.Parent.Parent.State.WeaponState)
+local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
+local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
@@ -25,6 +25,9 @@ local LaserMod = {
 	laserBeamTP = nil,
 	WeaponController = nil,
 }
+
+local weaponState: WeaponStateModule.WeaponState
+local State: CharacterStateModule.CharacterState
 
 
 local MAX_DIST = 800
@@ -64,7 +67,7 @@ end
 
 function LaserMod.GetLaserPoint()
 	if State.firstPerson() then
-		return getLaserAttachment(WeaponState.gunModel())
+		return getLaserAttachment(weaponState.gunModel())
 	end
 	return getLaserAttachment(LaserMod.GetThirdPersonGunModel())
 end
@@ -77,13 +80,13 @@ function LaserMod.UpdateAttachmentsVisibility()
 		return
 	end
 
-	local laserOn = WeaponState.laserEnabled()
+	local laserOn = weaponState.laserEnabled()
 	local isFirstPerson = State.firstPerson()
 
 	if laserOn and config.laserTrail then
 		LaserMod.laserBeamFP.Enabled = isFirstPerson
 		LaserMod.laserBeamTP.Enabled = not isFirstPerson
-		LaserMod.laserBeamFP.Attachment0 = getLaserAttachment(WeaponState.gunModel())
+		LaserMod.laserBeamFP.Attachment0 = getLaserAttachment(weaponState.gunModel())
 		LaserMod.laserBeamTP.Attachment0 = getLaserAttachment(LaserMod.GetThirdPersonGunModel())
 	else
 		LaserMod.laserBeamFP.Enabled = false
@@ -109,7 +112,7 @@ function LaserMod.OnLaserToggled(enabled)
 	LaserMod.laserDotGui.Enabled = enabled
 
 	if enabled then
-		local lazerbeem = getLaserAttachment(WeaponState.gunModel())
+		local lazerbeem = getLaserAttachment(weaponState.gunModel())
 		if lazerbeem then
 			local laserColor = lazerbeem:FindFirstChild("Color") and lazerbeem.Color.Value or Color3.fromRGB(255, 100, 100)
 			LaserMod.laserDotImage.ImageColor3 = laserColor
@@ -126,13 +129,15 @@ end
 function LaserMod.OnToggleLaserIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then
-		if getLaserAttachment(WeaponState.gunModel()) then
-			WeaponState.laserEnabled(not WeaponState.laserEnabled())
+		if getLaserAttachment(weaponState.gunModel()) then
+			weaponState.laserEnabled(not weaponState.laserEnabled())
 		end
 	end
 end
 
 function LaserMod.Initialize(params)
+	weaponState = params.weaponState
+	State = params.state
 	local controllers = params.Controllers or {}
 	local InputController = controllers.InputController
 	LaserMod.WeaponController = controllers.WeaponController
@@ -179,9 +184,9 @@ function LaserMod.Initialize(params)
 	LaserMod.laserBeamTP.Parent = LaserMod.laserDotPoint
 	LaserMod.laserBeamTP.Enabled = false
 
-	Charm.subscribe(WeaponState.laserEnabled, LaserMod.OnLaserToggled)
+	Charm.subscribe(weaponState.laserEnabled, LaserMod.OnLaserToggled)
 	Charm.subscribe(State.firstPerson, LaserMod.UpdateAttachmentsVisibility)
-	Charm.subscribe(WeaponState.gunModel, function(gunModel)
+	Charm.subscribe(weaponState.gunModel, function(gunModel)
 		if not gunModel then
 			LaserMod.laserDotGui.Enabled = false
 			LaserMod.UpdateAttachmentsVisibility()
@@ -198,7 +203,7 @@ local function numLerp(a, b, t)
 end
 
 function LaserMod.UpdateRender(dt)
-	if not WeaponState.laserEnabled() then return end
+	if not weaponState.laserEnabled() then return end
 	if not LaserMod.laserDotPoint then return end
 
 	local laserPoint = LaserMod.GetLaserPoint()
@@ -206,7 +211,7 @@ function LaserMod.UpdateRender(dt)
 
 	local laserRayParams = RaycastParams.new()
 	laserRayParams.FilterType = Enum.RaycastFilterType.Exclude
-	laserRayParams.FilterDescendantsInstances = {WeaponState.gunModel(), State.Parts.Character}
+	laserRayParams.FilterDescendantsInstances = {weaponState.gunModel(), State.Parts.Character}
 	laserRayParams.RespectCanCollide = true
 	local dist
 	local rayResult = workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * MAX_DIST, laserRayParams)

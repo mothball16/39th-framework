@@ -45,9 +45,9 @@ local Packages = replicatedStorage.Packages
 local Charm = require(Packages.Charm)
 
 local Controllers = script.Parent:WaitForChild("Controllers")
-local StateFolder = script.Parent:WaitForChild("State")
-local State = require(StateFolder:WaitForChild("CharacterState"))
-local WeaponState = require(StateFolder:WaitForChild("WeaponState"))
+local State = require(replicatedStorage.SPH_Framework.State.CharacterState)
+local weaponState = require(replicatedStorage.SPH_Framework.State.WeaponState).new()
+
 local InputController = require(Controllers:WaitForChild("InputController"))
 local ViewmodelController = require(Controllers:WaitForChild("ViewmodelController"))
 local MovementController = require(Controllers:WaitForChild("MovementController"))
@@ -156,12 +156,14 @@ AnimationController.Initialize({
 	vmAnimator = vmAnimator,
 	characterAnimator = characterAnimator,
 	animationsFolder = animations,
+	weaponState = weaponState,
+	state = State,
 })
 
 -- Makes the viewmodel visible and refreshes its appearance
 local function RefreshViewmodel()
 	if State.firstPerson() then
-		WeaponState.viewmodelVisible(true)
+		weaponState.viewmodelVisible(true)
 	end
 
 	local plrShirt = character:FindFirstChildWhichIsA("Shirt")
@@ -216,7 +218,7 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 			-- DD_SPH Gunsmith: FOV adjusts with scope
 			local aimFovMinTarget = State.wepStats.aimFovMin
 			local aimFovMaxTarget = State.wepStats.aimFovMax or config.defaultFOV
-			local ws = WeaponState.wepStats()
+			local ws = weaponState.wepStats()
 			if ws and ws.aimFovMin then aimFovMinTarget = ws.aimFovMin end
 			if ws and ws.aimFovMax then aimFovMaxTarget = ws.aimFovMax end
 			WeaponController.aimFOVTarget = math.clamp(newFOV, aimFovMinTarget, aimFovMaxTarget)
@@ -226,12 +228,12 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 		end]]
 
 		-- Sensitivity
-		WeaponState.aimSens(math.clamp(WeaponState.aimSens() + (0.01 * scrollAmount), 0.01, 1))
+		weaponState.aimSens(math.clamp(weaponState.aimSens() + (0.01 * scrollAmount), 0.01, 1))
 	else
-		if not WeaponState.canManipulate() then
+		if not weaponState.canManipulate() then
 			return
 		end
-		WeaponState.holdStance(math.clamp(WeaponState.holdStance() + (scrollAmount > 0 and -1 or 1),
+		weaponState.holdStance(math.clamp(weaponState.holdStance() + (scrollAmount > 0 and -1 or 1),
 			Enums.HoldStance.High,
 			Enums.HoldStance.Patrol))
 	end
@@ -267,6 +269,8 @@ MovementController.Initialize({
 	rootJoint = rootJoint,
 	rigType = rigType,
 	script = script,
+	weaponState = weaponState,
+	state = State,
 	ChangeHoldStance = WeaponController.ChangeHoldStance,
 	PlayAnimation = AnimationController.PlayAnimation,
 	StopAnimation = AnimationController.StopAnimation,
@@ -280,6 +284,8 @@ ViewmodelController.Initialize({
 	humanoidRootPart = humanoidRootPart,
 	weaponRig = weaponRig,
 	rayParams = rayParams,
+	weaponState = weaponState,
+	state = State,
 	ChangeHoldStance = WeaponController.ChangeHoldStance,
 	PlayAnimation = AnimationController.PlayAnimation,
 	StopAnimation = AnimationController.StopAnimation,
@@ -295,6 +301,8 @@ CameraController.Initialize({
 	neckJoint = neckJoint,
 	rigType = rigType,
 	ReplicationController = ReplicationController,
+	weaponState = weaponState,
+	state = State,
 })
 
 WeaponController.Initialize({
@@ -306,16 +314,24 @@ WeaponController.Initialize({
 	viewmodelRig = rig,
 	thirdPersonRig = weaponRig,
 	rigType = rigType,
+	weaponState = weaponState,
+	state = State,
 	InputController = InputController,
 	RefreshViewmodel = RefreshViewmodel,
 })
 
 ReplicationController.Initialize({
-	character = character
+	character = character,
+	state = State,
 })
 
-UIController.Initialize({})
+UIController.Initialize({
+	state = State,
+	weaponState = weaponState,
+})
 ModController.Initialize({
+	weaponState = weaponState,
+	state = State,
 	Controllers = {
 		InputController = InputController,
 		ViewmodelController = ViewmodelController,
@@ -336,7 +352,7 @@ humanoid.Died:Connect(function()
 		WeaponController.Unequip(State.equippedTool())
 	end
 	userInputService.MouseIconEnabled = true
-	WeaponState.viewmodelVisible(false)
+	weaponState.viewmodelVisible(false)
 	animBase.CFrame = storageCFrame
 
 	InputController.UnbindGunInputs()

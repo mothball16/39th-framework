@@ -9,8 +9,7 @@ local Charm = require(Packages.Charm)
 local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
 local assets = sph.assets
 local config = sph.config
-local State = require(script.Parent.Parent.State.CharacterState)
-local WeaponState = require(script.Parent.Parent.State.WeaponState)
+local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
 local Types = require(sph.framework.Core.ConfigurationTypes)
 local c0Ref = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
 
@@ -26,12 +25,16 @@ local MovementController = {
     humanoidRootPart = nil,
     rootJoint = nil,
     rigType = nil,
-    script = nil,
+
 
     -- Callbacks
     AdjustMoveAnimSpeed = nil,
     PlayCharSound = nil,
 }
+
+local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
+local weaponState: WeaponStateModule.WeaponState
+local State: CharacterStateModule.CharacterState
 
 
 local function LerpNumber(number, target, speed)
@@ -44,22 +47,23 @@ function MovementController.Initialize(params)
 	MovementController.humanoidRootPart = params.humanoidRootPart
 	MovementController.rootJoint = params.rootJoint
 	MovementController.rigType = params.rigType
-	MovementController.script = params.script
 	MovementController.baseCharacterHipHeight = params.humanoid.HipHeight
 	MovementController.AdjustMoveAnimSpeed = params.AdjustMoveAnimSpeed
 	MovementController.PlayCharSound = params.PlayCharSound
+	weaponState = params.weaponState
+	State = params.state
 
 	Charm.subscribe(State.sprinting, MovementController.SyncSprinting)
 	Charm.subscribe(State.stance, MovementController.SyncStance)
 	Charm.subscribe(State.lean, MovementController.SyncLean)
-	Charm.subscribe(WeaponState.holdStance, MovementController.SyncHoldStance)
+	Charm.subscribe(weaponState.holdStance, MovementController.SyncHoldStance)
 
 	MovementController.targetWalkSpeed = Charm.computed(function()
 		if State.sprinting() then
 			return config.sprintSpeed
 		end
 		local speed = MovementController.GetStanceSpeed(State.stance())
-		local ws: Types.WeaponStats = WeaponState.wepStats()
+		local ws: Types.WeaponStats = weaponState.wepStats()
 
 		if ws and State.aiming() then
 			speed *= ws.aimMoveMultiplier
@@ -267,9 +271,6 @@ function MovementController.UpdateHeartbeat(dt)
 	local humanoid = MovementController.humanoid
 	MovementController.tempWalkSpeed = MovementController.targetWalkSpeed()
 
-	if MovementController.script:GetAttribute("WalkspeedOverrideToggle") then
-		MovementController.tempWalkSpeed = MovementController.script:GetAttribute("WalkspeedOverride")
-	end
 
 	if humanoid.Health < 30 and config.lowHealthEffects then
 		MovementController.tempWalkSpeed *= humanoid.Health / 30

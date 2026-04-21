@@ -8,10 +8,12 @@ local modules = sph.framework
 local config = sph.config
 local Enums = require(modules.Core.Enums)
 local springMod = require(modules.Weapons.SpringModule)
-local State = require(script.Parent.Parent.State.CharacterState)
-local WeaponState = require(script.Parent.Parent.State.WeaponState)
+local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
+local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
 
 local ViewmodelController = {}
+local weaponState: WeaponStateModule.WeaponState
+local State: CharacterStateModule.CharacterState
 
 ViewmodelController.swaySpring = springMod.new()
 ViewmodelController.moveSpring = springMod.new()
@@ -52,6 +54,8 @@ function ViewmodelController.Initialize(params)
 	ViewmodelController.humanoidRootPart = params.humanoidRootPart
 	ViewmodelController.weaponRig = params.weaponRig
 	ViewmodelController.rayParams = params.rayParams
+	weaponState = params.weaponState
+	State = params.state
 	
 	ViewmodelController.ChangeHoldStance = params.ChangeHoldStance
 	ViewmodelController.PlayAnimation = params.PlayAnimation
@@ -79,7 +83,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	local humanoidRootPart = ViewmodelController.humanoidRootPart
 	local weaponRig = ViewmodelController.weaponRig
 	local rayParams = ViewmodelController.rayParams
-	local ws = WeaponState.wepStats()
+	local ws = weaponState.wepStats()
 	if not ws then
 		return
 	end
@@ -104,7 +108,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	State.freeLookOffset(newFlOffset)
 	animBase.CFrame *= newFlOffset:Inverse()
 
-	local aimPart = WeaponState.gunModel():FindFirstChild("AimPart" .. sightIndex) or WeaponState.gunModel().AimPart
+	local aimPart = weaponState.gunModel():FindFirstChild("AimPart" .. sightIndex) or weaponState.gunModel().AimPart
 	aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
 
 	local aimTime = ws.aimTime
@@ -120,7 +124,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	local originCFrame = State.firstPerson() and animBase.CFrame or weaponRig.AnimBase.CFrame
 	local newRay = workspace:Raycast(originCFrame.Position, originCFrame.LookVector * rayDistance, rayParams)
 	
-	local isBlocked = WeaponState.blocked()
+	local isBlocked = weaponState.blocked()
 	if newRay then
 		local distance = rayDistance - (animBase.CFrame.Position - newRay.Position).Magnitude
 		if config.pushBackViewmodel and distance > 0 then
@@ -134,14 +138,14 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 		if config.raiseGunAtWall then
 			if distance >= ws.maxPushback then
 				if not isBlocked then
-					WeaponState.holdStance(Enums.HoldStance.High)
-					WeaponState.blocked(true)
+					weaponState.holdStance(Enums.HoldStance.High)
+					weaponState.blocked(true)
 					State.aiming(false)
 				end
 			elseif isBlocked then
-				WeaponState.holdStance(Enums.HoldStance.Ready)
-				WeaponState.blocked(false)
-				if WeaponState.aimHeld() and State.firstPerson() then
+				weaponState.holdStance(Enums.HoldStance.Ready)
+				weaponState.blocked(false)
+				if weaponState.aimHeld() and State.firstPerson() then
 					State.aiming(true)
 				end
 			end
@@ -153,7 +157,7 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 				ViewmodelController.StopAnimation(holdUpAnim, 0.3)
 			end
 		end
-		WeaponState.blocked(false)
+		weaponState.blocked(false)
 		pushbackOffset = LerpNumber(pushbackOffset, 0, 0.2 * 60 * dt)
 	end
 	animBase.CFrame *= CFrame.new(0, 0, pushbackOffset)
@@ -211,29 +215,29 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 
 
 	-- recoil impact
-	local RecoilImpact = CFrame.lookAt(WeaponState.RecoilPos.p,WeaponState.RecoilDir.p,WeaponState.RecoilUp.p)
+	local RecoilImpact = CFrame.lookAt(weaponState.RecoilPos.p, weaponState.RecoilDir.p, weaponState.RecoilUp.p)
 	animBase.CFrame *= RecoilImpact
 
 
 	-- hide viewmodel (wtf)
-	if not WeaponState.viewmodelVisible() then
+	if not weaponState.viewmodelVisible() then
 		animBase.CFrame *= storageCFrame
 	end
 end
 
 function ViewmodelController.UpdateRender(dt)
 	local camera = ViewmodelController.camera
-	if State.equippedTool() and WeaponState.gunModel() and camera.CameraType == Enum.CameraType.Custom then
-		if State.firstPerson() and not WeaponState.viewmodelVisible() then
+	if State.equippedTool() and weaponState.gunModel() and camera.CameraType == Enum.CameraType.Custom then
+		if State.firstPerson() and not weaponState.viewmodelVisible() then
 			if ViewmodelController.RefreshViewmodel then ViewmodelController.RefreshViewmodel() end
 			State.sprinting(false)
 		end
 
-		local ws = WeaponState.wepStats()
+		local ws = weaponState.wepStats()
 		local currentOffset = ws and ws.viewmodelOffset or CFrame.new()
-		ViewmodelController.UpdateViewmodelPosition(dt, currentOffset, WeaponState.sightIndex())
-	elseif WeaponState.viewmodelVisible() and not WeaponState.equipping() then
-		WeaponState.viewmodelVisible(false)
+		ViewmodelController.UpdateViewmodelPosition(dt, currentOffset, weaponState.sightIndex())
+	elseif weaponState.viewmodelVisible() and not weaponState.equipping() then
+		weaponState.viewmodelVisible(false)
 	end
 end
 
@@ -255,7 +259,7 @@ function ViewmodelController.UpdateMovementSway(dt, tempWalkSpeed, vehicleSeated
 
 	if not humanoid.Sit and velocityMag > 0.1 then
 		local moveSway = Vector3.new(GetSineOffset(tempBobSpeed), GetSineOffset(tempBobSpeed / 2), GetSineOffset(tempBobSpeed / 2))
-		local ws = WeaponState.wepStats()
+		local ws = weaponState.wepStats()
 		local moveInstability = (ws and ws.MoveInstability) or 1
 		
 		ViewmodelController.moveSpring:shove(moveSway * moveInstability * velocityMag / (tempDampening * tempDampening) * dt * 60)

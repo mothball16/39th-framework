@@ -9,11 +9,45 @@ local lasers = {}
 
 local AttachmentReplicationController = {}
 
+local DEFAULT_LASER_COLOR = Color3.fromRGB(255, 100, 100)
+
+local function getLaserColor(laserLike: Instance): Color3
+	-- Support legacy "Color" child (Color3Value) but do not require it.
+	local colorValue = laserLike:FindFirstChild("Color")
+	if colorValue and colorValue:IsA("Color3Value") then
+		return colorValue.Value
+	end
+	return DEFAULT_LASER_COLOR
+end
+
+local function resolveLaserPoint(laserLike: Instance?): Attachment?
+	if not laserLike or not laserLike.Parent then return nil end
+	if laserLike:IsA("Attachment") then
+		return laserLike
+	end
+
+	local main = laserLike:FindFirstChild("Main")
+	if main then
+		local underMain = main:FindFirstChild("Laser")
+		if underMain and underMain:IsA("Attachment") then
+			return underMain
+		end
+	end
+
+	local direct = laserLike:FindFirstChild("Laser")
+	if direct and direct:IsA("Attachment") then
+		return direct
+	end
+
+	return nil
+end
+
 function AttachmentReplicationController.Initialize()
 	repToggleAttachment:Connect(AttachmentReplicationController.OnToggleAttachment)
 end
 
 function AttachmentReplicationController.OnToggleAttachment(attachment, toggle, character)
+	if not attachment then return end
 	if attachment.Name == "Flashlight" then
 		local light = attachment:FindFirstChildWhichIsA("Light")
 		if light then light.Enabled = toggle end
@@ -24,7 +58,7 @@ function AttachmentReplicationController.OnToggleAttachment(attachment, toggle, 
 
 			local laserDotUI = assets.HUD.LaserDotUI:Clone()
 			laserDotUI.Enabled = true
-			laserDotUI.Dot.ImageColor3 = attachment.Color.Value
+			laserDotUI.Dot.ImageColor3 = getLaserColor(attachment)
 			laserDotUI.Parent = laserDot
 
 			local newLaser = {
@@ -59,11 +93,14 @@ function AttachmentReplicationController.UpdateRender(dt)
 	debug.profilebegin("SPH.AttachmentReplication.UpdateRender")
 	for i = #lasers, 1, -1 do
 		local laserObject = lasers[i]
-		local laserPoint = laserObject.attachment
-		if laserPoint and laserPoint.Parent then
+		local laserPoint = resolveLaserPoint(laserObject.attachment)
+		if laserPoint then
 			local laserRayParams = RaycastParams.new()
 			laserRayParams.FilterType = Enum.RaycastFilterType.Exclude
-			laserRayParams.FilterDescendantsInstances = {laserObject.ignoreModel}
+			if laserObject.ignoreModel then
+				laserRayParams.FilterDescendantsInstances = { laserObject.ignoreModel }
+			end
+			laserRayParams.RespectCanCollide = true
 			local laserDotPoint = laserObject.laserDot
 			local rayResult = workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * 600, laserRayParams)
 			if rayResult then

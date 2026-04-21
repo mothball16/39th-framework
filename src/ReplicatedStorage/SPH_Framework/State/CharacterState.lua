@@ -4,6 +4,34 @@ local Packages = game.ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local config = sph.config
 
+export type CharacterState = {
+	Parts: {
+		IsR6: boolean,
+		Humanoid: Humanoid,
+		RootJoint: Motor6D,
+		NeckJoint: Motor6D,
+		Character: Model,
+		HRP: BasePart,
+	},
+
+	aimFOVTarget: Charm.Atom<number>,
+
+	aiming: Charm.Atom<boolean>,
+	equippedTool: Charm.Atom<Instance?>,
+	sprinting: Charm.Atom<boolean>,
+
+	firstPerson: Charm.Atom<boolean>,
+	dead: Charm.Atom<boolean>,
+	stance: Charm.Atom<number>,
+	lean: Charm.Atom<number>,
+	moving: Charm.Atom<boolean>,
+	vehicleSeated: Charm.Atom<boolean>,
+
+	freeLook: Charm.Atom<boolean>,
+	freeLookRotation: Charm.Atom<CFrame>,
+	freeLookOffset: Charm.Atom<CFrame>,
+}
+
 
 local Player = game.Players.LocalPlayer
 local character = Player.Character or Player.CharacterAdded:Wait()

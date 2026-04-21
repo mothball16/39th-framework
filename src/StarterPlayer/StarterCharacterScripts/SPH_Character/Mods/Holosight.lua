@@ -7,19 +7,24 @@ local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
 local assets = sph.assets
 local config = sph.config
 
-local State = require(script.Parent.Parent.State.CharacterState)
-local WeaponState = require(script.Parent.Parent.State.WeaponState)
+local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
+local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
 
 local Camera = workspace.CurrentCamera
 local HolosightMod = {}
 local activeSights = {}
 local gunModelConnection = nil
 
+local weaponState: WeaponStateModule.WeaponState
+local State: CharacterStateModule.CharacterState
+
 
 local invDefaultFOV = 1 / config.defaultFOV
 
 function HolosightMod.Initialize(params)
-	Charm.subscribe(WeaponState.gunModel, HolosightMod.OnGunModelChanged)
+	weaponState = params.weaponState
+	State = params.state
+	Charm.subscribe(weaponState.gunModel, HolosightMod.OnGunModelChanged)
 end
 
 function HolosightMod.OnGunModelChanged(gunModel)
