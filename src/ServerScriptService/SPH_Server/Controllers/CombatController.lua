@@ -120,7 +120,7 @@ function M.Initialize(c)
 	ctx = c
 
 	local glassBreakFolder = ctx.assets.Sounds:FindFirstChild("GlassBreak")
-	local glassBreakSounds = if glassBreakFolder then glassBreakFolder:GetChildren() else {}
+	local glassBreakSounds = glassBreakFolder and glassBreakFolder:GetChildren() or {}
 
 	VictimFinder.Initialize({
 		dts = {
@@ -190,9 +190,9 @@ function M.OnBulletHit(player: Player, tool: Tool, raycastResult: RaycastResult,
 		return
 	end
 
-	local kaboom = wepStats.explosiveAmmo
+	local isExplosiveAmmunition = wepStats.explosiveAmmo
 
-	if kaboom then
+	if isExplosiveAmmunition then
 		local expRadius = wepStats.explosionRadius
 		local expEffect = wepStats.explosionEffect
 
