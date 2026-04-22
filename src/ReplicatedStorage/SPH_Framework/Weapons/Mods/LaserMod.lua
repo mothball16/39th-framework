@@ -1,3 +1,8 @@
+-- TODO: this is in a broken state and needs to be refactored significantly
+-- ideally, we should get rid of any controller references and make this a pure module.
+-- WeaponController will just hook this up instead of the weird mod pattern we have now
+
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
@@ -17,18 +22,12 @@ local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponSt
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
-local LaserMod = {
-	laserDotGui = nil,
-	laserDotImage = nil,
-	laserDotPoint = nil,
-	laserBeamFP = nil,
-	laserBeamTP = nil,
-	WeaponController = nil,
-}
+local LaserMod = {}
+LaserMod.__index = LaserMod
 
 local weaponState: WeaponStateModule.WeaponState
 local State: CharacterStateModule.CharacterState
-
+LaserMod.playerToggleAttachment = bridgeNet.CreateBridge("PlayerToggleAttachment")
 
 local MAX_DIST = 800
 local MIN_ALPHA = 0.2
@@ -37,32 +36,15 @@ local MIN_DOT_SIZE = 4
 local MAX_DOT_SIZE = 16
 local DOT_SIZE_LERP_EXPONENT = 0.3
 
-LaserMod.playerToggleAttachment = bridgeNet.CreateBridge("PlayerToggleAttachment")
 
 local function getLaserAttachment(model)
 	if not model then return nil end
-
-	for _, child in ipairs(model:GetChildren()) do
-		if child:IsA("Model") and child:FindFirstChild("Main") then
-			local laser = child.Main:FindFirstChild("Laser")
-			if laser then
-				return laser
-			end
-		end
-	end
-
 	local grip = model:FindFirstChild("Grip")
 	if grip then
 		return grip:FindFirstChild("Laser")
 	end
 
 	return nil
-end
-
-function LaserMod.GetThirdPersonGunModel()
-	if not LaserMod.WeaponController then return nil end
-	if not LaserMod.WeaponController.GetThirdPersonGunModel then return nil end
-	return LaserMod.WeaponController.GetThirdPersonGunModel()
 end
 
 function LaserMod.GetLaserPoint()
@@ -135,7 +117,7 @@ function LaserMod.OnToggleLaserIntent(inputState, inputObject)
 	end
 end
 
-function LaserMod.Initialize(params)
+function LaserMod.new(params)
 	weaponState = params.weaponState
 	State = params.state
 	local controllers = params.Controllers or {}

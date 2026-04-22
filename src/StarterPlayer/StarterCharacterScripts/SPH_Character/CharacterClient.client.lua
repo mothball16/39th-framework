@@ -51,7 +51,6 @@ local WeaponController = require(Controllers:WaitForChild("WeaponController"))
 local CameraController = require(Controllers:WaitForChild("CameraController"))
 local ReplicationController = require(Controllers:WaitForChild("ReplicationController"))
 local UIController = require(Controllers:WaitForChild("UIController"))
-local ModController = require(Controllers:WaitForChild("ModController"))
 
 bulletHandler.Initialize(player)
 
@@ -324,20 +323,6 @@ UIController.Initialize({
 	state = characterState,
 	weaponState = weaponState,
 })
-ModController.Initialize({
-	weaponState = weaponState,
-	state = characterState,
-	Controllers = {
-		InputController = InputController,
-		ViewmodelController = ViewmodelController,
-		MovementController = MovementController,
-		AnimationController = AnimationController,
-		WeaponController = WeaponController,
-		CameraController = CameraController,
-		ReplicationController = ReplicationController,
-		UIController = UIController,
-	}
-})
 
 InputController.BindCharacterInputs()
 
@@ -376,12 +361,10 @@ runService.RenderStepped:Connect(function(dt:number)
 	end
 
 	ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, characterState.vehicleSeated())
-	ModController.UpdateRender(dt)
 end)
 
 runService.Heartbeat:Connect(function(dt:number)
 	MovementController.UpdateHeartbeat(dt)
 	WeaponController.UpdateHeartbeat(dt)
 	UIController.UpdateHeartbeat(dt)
-	ModController.UpdateHeartbeat(dt)
 end)

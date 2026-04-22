@@ -2,16 +2,17 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local WeaponStateModule = require(sph.framework.State.WeaponState)
 local config = sph.config
 local Camera = workspace.CurrentCamera
 
 local HolosightMod = {}
 HolosightMod.__index = HolosightMod
 
-function HolosightMod.new(params)
+function HolosightMod.new(weaponState: WeaponStateModule.WeaponState)
 	local self = setmetatable({
 		activeSights = {},
-		weaponState = params.weaponState,
+		weaponState = weaponState,
 	}, HolosightMod)
 
 	Charm.effect(function()
@@ -20,6 +21,8 @@ function HolosightMod.new(params)
 
 	return self
 end
+
+
 
 function HolosightMod:SyncActiveSights()
 	self.activeSights = {}
