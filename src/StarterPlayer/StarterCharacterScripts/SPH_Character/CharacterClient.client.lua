@@ -33,19 +33,14 @@ if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
 camera.CameraType = Enum.CameraType.Custom
 if camera:FindFirstChild("WeaponRig") then camera.WeaponRig:Destroy() end
 
-local weldMod = require(modules.Weapons.WeldMod)
 local bridgeNet = require(modules.Network.BridgeNet)
 local viewMod = require(modules.Weapons.ViewMod)
-local springMod = require(modules.Weapons.SpringModule)
-local hitFX = require(modules.Ballistics.HitFX)
-local shellEjection = require(modules.Weapons.ShellEjection)
 local bulletHandler = require(modules.Ballistics.BulletHandler)
 local callbacks = require(assets.Mods)
 local Packages = replicatedStorage.Packages
-local Charm = require(Packages.Charm)
 
 local Controllers = script.Parent:WaitForChild("Controllers")
-local State = require(replicatedStorage.SPH_Framework.State.CharacterState)
+local characterState = require(replicatedStorage.SPH_Framework.State.CharacterState).new(character)
 local weaponState = require(replicatedStorage.SPH_Framework.State.WeaponState).new()
 
 local InputController = require(Controllers:WaitForChild("InputController"))
@@ -98,7 +93,7 @@ end
 -- Create new viewmodel
 local rig = viewMod.RigModel(player)
 
-if State.Parts.IsR6 then -- DD_SPH: Easy coloring
+if characterState.Parts.IsR6 then -- DD_SPH: Easy coloring
 	local lArm = rig["Left Arm"]
 	local rArm = rig["Right Arm"]
 	lArm.Color = character["Left Arm"].Color
@@ -157,12 +152,12 @@ AnimationController.Initialize({
 	characterAnimator = characterAnimator,
 	animationsFolder = animations,
 	weaponState = weaponState,
-	state = State,
+	state = characterState,
 })
 
 -- Makes the viewmodel visible and refreshes its appearance
 local function RefreshViewmodel()
-	if State.firstPerson() then
+	if characterState.firstPerson() then
 		weaponState.viewmodelVisible(true)
 	end
 
@@ -208,7 +203,7 @@ local function RefreshViewmodel()
 end
 
 local function OnScrollIntent(scrollAmount, holdForZoom)
-	if State.aiming() then
+	if characterState.aiming() then
 		--[[
 		NOTE: This can be added at a future time
 
@@ -270,7 +265,7 @@ MovementController.Initialize({
 	rigType = rigType,
 	script = script,
 	weaponState = weaponState,
-	state = State,
+	state = characterState,
 	ChangeHoldStance = WeaponController.ChangeHoldStance,
 	PlayAnimation = AnimationController.PlayAnimation,
 	StopAnimation = AnimationController.StopAnimation,
@@ -285,7 +280,7 @@ ViewmodelController.Initialize({
 	weaponRig = weaponRig,
 	rayParams = rayParams,
 	weaponState = weaponState,
-	state = State,
+	state = characterState,
 	ChangeHoldStance = WeaponController.ChangeHoldStance,
 	PlayAnimation = AnimationController.PlayAnimation,
 	StopAnimation = AnimationController.StopAnimation,
@@ -302,7 +297,7 @@ CameraController.Initialize({
 	rigType = rigType,
 	ReplicationController = ReplicationController,
 	weaponState = weaponState,
-	state = State,
+	state = characterState,
 })
 
 WeaponController.Initialize({
@@ -315,23 +310,23 @@ WeaponController.Initialize({
 	thirdPersonRig = weaponRig,
 	rigType = rigType,
 	weaponState = weaponState,
-	state = State,
+	state = characterState,
 	InputController = InputController,
 	RefreshViewmodel = RefreshViewmodel,
 })
 
 ReplicationController.Initialize({
 	character = character,
-	state = State,
+	state = characterState,
 })
 
 UIController.Initialize({
-	state = State,
+	state = characterState,
 	weaponState = weaponState,
 })
 ModController.Initialize({
 	weaponState = weaponState,
-	state = State,
+	state = characterState,
 	Controllers = {
 		InputController = InputController,
 		ViewmodelController = ViewmodelController,
@@ -347,9 +342,9 @@ ModController.Initialize({
 InputController.BindCharacterInputs()
 
 humanoid.Died:Connect(function()
-	State.dead(true)
-	if State.equippedTool() then
-		WeaponController.Unequip(State.equippedTool())
+	characterState.dead(true)
+	if characterState.equippedTool() then
+		WeaponController.Unequip(characterState.equippedTool())
 	end
 	userInputService.MouseIconEnabled = true
 	weaponState.viewmodelVisible(false)
@@ -371,7 +366,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		return
 	end
 
-	if not State.dead() and character:FindFirstChild("Head") then
+	if not characterState.dead() and character:FindFirstChild("Head") then
 		MovementController.UpdateRender(dt)
 		CameraController.UpdateRender(dt)
 		ViewmodelController.UpdateRender(dt)
@@ -380,7 +375,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		ReplicationController.UpdateRender(dt)
 	end
 
-	ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, State.vehicleSeated())
+	ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, characterState.vehicleSeated())
 	ModController.UpdateRender(dt)
 end)
 

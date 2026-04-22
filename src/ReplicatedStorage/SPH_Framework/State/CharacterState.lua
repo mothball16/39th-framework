@@ -1,10 +1,12 @@
 local sph = require(game.ReplicatedStorage.SPH_Framework.Core.GameAccess)
-local assets = sph.assets
 local Packages = game.ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local config = sph.config
 
-export type CharacterState = {
+local CharState = {}
+CharState.__index = CharState
+
+type self = {
 	Parts: {
 		IsR6: boolean,
 		Humanoid: Humanoid,
@@ -32,47 +34,56 @@ export type CharacterState = {
 	freeLookOffset: Charm.Atom<CFrame>,
 }
 
+export type CharacterState = typeof(setmetatable({}, CharState))
 
-local Player = game.Players.LocalPlayer
-local character = Player.Character or Player.CharacterAdded:Wait()
-local HRP = character:WaitForChild("HumanoidRootPart")
-local Humanoid: Humanoid = character:WaitForChild("Humanoid")
-local IsR6 = Humanoid.RigType == Enum.HumanoidRigType.R6
-local RootJoint, NeckJoint
-if IsR6 then
-	RootJoint = HRP:WaitForChild("RootJoint")
-	NeckJoint = character.Torso.Neck
-else
-	RootJoint = character.LowerTorso.Root
-	NeckJoint = character.Head.Neck
+local function resolveParts(character: Model)
+	local hrp = character:WaitForChild("HumanoidRootPart") :: BasePart
+	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
+	local isR6 = humanoid.RigType == Enum.HumanoidRigType.R6
+
+	local rootJoint: Motor6D
+	local neckJoint: Motor6D
+	if isR6 then
+		rootJoint = hrp:WaitForChild("RootJoint") :: Motor6D
+		neckJoint = (character:WaitForChild("Torso") :: BasePart):WaitForChild("Neck") :: Motor6D
+	else
+		rootJoint = (character:WaitForChild("LowerTorso") :: BasePart):WaitForChild("Root") :: Motor6D
+		neckJoint = (character:WaitForChild("Head") :: BasePart):WaitForChild("Neck") :: Motor6D
+	end
+
+	return {
+		IsR6 = isR6,
+		Humanoid = humanoid,
+		RootJoint = rootJoint,
+		NeckJoint = neckJoint,
+		Character = character,
+		HRP = hrp,
+	}
 end
 
-local CharacterState = {
-	Parts = {
-		IsR6 = IsR6,
-		Humanoid = Humanoid,
-		RootJoint = RootJoint,
-		NeckJoint = NeckJoint,
-		Character = character,
-		HRP = HRP,
-	},
+function CharState.new(character: Model): CharacterState
+	local self = setmetatable({
+		Parts = resolveParts(character),
 
-	aimFOVTarget = 	Charm.atom(config.defaultFOV) 		:: Charm.Atom<number>,
+		aimFOVTarget = Charm.atom(config.defaultFOV),
 
-	aiming = Charm.atom(false) 							:: Charm.Atom<boolean>,
-	equippedTool = Charm.atom(nil) 						:: Charm.Atom<Instance>,
-	sprinting = Charm.atom(false)						:: Charm.Atom<boolean>,
+		aiming = Charm.atom(false),
+		equippedTool = Charm.atom(nil),
+		sprinting = Charm.atom(false),
 
-	firstPerson = Charm.atom(false)						:: Charm.Atom<boolean>,
-	dead = Charm.atom(false)							:: Charm.Atom<boolean>,
-	stance = Charm.atom(0) 								:: Charm.Atom<number>,
-	lean = Charm.atom(0) 								:: Charm.Atom<number>,
-	moving = Charm.atom(false)							:: Charm.Atom<boolean>,
-	vehicleSeated = Charm.atom(false)					:: Charm.Atom<boolean>,
+		firstPerson = Charm.atom(false),
+		dead = Charm.atom(false),
+		stance = Charm.atom(0),
+		lean = Charm.atom(0),
+		moving = Charm.atom(false),
+		vehicleSeated = Charm.atom(false),
 
-	freeLook = Charm.atom(false)						:: Charm.Atom<boolean>,
-	freeLookRotation = Charm.atom(CFrame.new())			:: Charm.Atom<CFrame>,
-	freeLookOffset = Charm.atom(CFrame.new())			:: Charm.Atom<CFrame>,
-}
+		freeLook = Charm.atom(false),
+		freeLookRotation = Charm.atom(CFrame.new()),
+		freeLookOffset = Charm.atom(CFrame.new()),
+	} :: self, CharState)
 
-return CharacterState
+	return self
+end
+
+return CharState
