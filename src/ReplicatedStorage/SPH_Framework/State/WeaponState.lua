@@ -8,7 +8,11 @@ local SP = require(modules.Weapons.Spring.Default)
 local legacySpring = require(modules.Weapons.LegacySpring)
 local Maid = require(Packages.maid)
 
-export type WeaponState = {
+
+
+local WepState = {}
+WepState.__index = WepState
+type self = {
 	-- atoms (callable)
 	wepStats: Charm.Atom<any>,
 	equipping: Charm.Atom<boolean>,
@@ -17,7 +21,6 @@ export type WeaponState = {
 	gunAmmo: any,
 	localAmmo: Charm.Atom<number>,
 	localUbglAmmo: Charm.Atom<number>,
-	predictedChambered: Charm.Atom<boolean>,
 
 	aimSens: Charm.Atom<number>,
 	sightIndex: Charm.Atom<number>,
@@ -34,13 +37,13 @@ export type WeaponState = {
 	holdStance: Charm.Atom<number>,
 
 	-- computed (callable)
-	ubglActive: any,
-	hasAmmoForMode: any,
-	canManipulate: any,
-	canTrackAimInput: any,
-	aimFOVTarget: any,
-	adsMeshEnabledForActiveSight: any,
-	hasAdsMeshLayers: any,
+	ubglActive: Charm.Getter<boolean>,
+	hasAmmoForMode: Charm.Getter<boolean>,
+	canManipulate: Charm.Getter<boolean>,
+	canTrackAimInput: Charm.Getter<boolean>,
+	aimFOVTarget: Charm.Getter<number>,
+	adsMeshEnabledForActiveSight: Charm.Getter<boolean>,
+	hasAdsMeshLayers: Charm.Getter<boolean>,
 
 	-- non-atoms
 	maid: any,
@@ -51,39 +54,33 @@ export type WeaponState = {
 	RecoilCF: CFrame,
 	RecoilFactor: number,
 	Spread: number,
-
-	-- methods
-	ADSMeshLayerEnabled: (self: WeaponState, sightIndex: number) -> boolean,
-	Reset: (self: WeaponState) -> (),
 }
 
-local WepState = {}
-WepState.__index = WepState
+export type WeaponState = typeof(setmetatable({}, WepState))
 
 function WepState.new()
 	local self = setmetatable({
-		wepStats = Charm.atom(nil) :: Charm.Atom<any>,
-		equipping = Charm.atom(false) :: Charm.Atom<boolean>,
+		wepStats = Charm.atom(nil),
+		equipping = Charm.atom(false),
 
-		gunModel = Charm.atom(nil) :: Charm.Atom<Instance>,
+		gunModel = Charm.atom(nil),
 		gunAmmo = nil,
-		localAmmo = Charm.atom(0) :: Charm.Atom<number>,
-		localUbglAmmo = Charm.atom(0) :: Charm.Atom<number>,
-		predictedChambered = Charm.atom(true) :: Charm.Atom<boolean>,
+		localAmmo = Charm.atom(0),
+		localUbglAmmo = Charm.atom(0),
 
-		aimSens = Charm.atom(config.defaultAimSensitivity) :: Charm.Atom<number>,
-		sightIndex = Charm.atom(1) :: Charm.Atom<number>,
-		viewmodelVisible = Charm.atom(false) :: Charm.Atom<boolean>,
-		reloading = Charm.atom(false) :: Charm.Atom<boolean>,
-		chambering = Charm.atom(false) :: Charm.Atom<boolean>,
-		aimHeld = Charm.atom(false) :: Charm.Atom<boolean>,
-		blocked = Charm.atom(false) :: Charm.Atom<boolean>,
+		aimSens = Charm.atom(config.defaultAimSensitivity),
+		sightIndex = Charm.atom(1),
+		viewmodelVisible = Charm.atom(false),
+		reloading = Charm.atom(false),
+		chambering = Charm.atom(false),
+		aimHeld = Charm.atom(false),
+		blocked = Charm.atom(false),
 
-		laserEnabled = Charm.atom(false) :: Charm.Atom<boolean>,
-		flashlightEnabled = Charm.atom(false) :: Charm.Atom<boolean>,
-		bipodEnabled = Charm.atom(false) :: Charm.Atom<boolean>,
-		fireMode = Charm.atom(0) :: Charm.Atom<number>,
-		holdStance = Charm.atom(0) :: Charm.Atom<number>,
+		laserEnabled = Charm.atom(false),
+		flashlightEnabled = Charm.atom(false),
+		bipodEnabled = Charm.atom(false),
+		fireMode = Charm.atom(0),
+		holdStance = Charm.atom(0),
 
 		-- non-atoms
 		maid = Maid.new(),
@@ -94,7 +91,7 @@ function WepState.new()
 		RecoilCF = CFrame.new(),
 		RecoilFactor = 0,
 		Spread = 0,
-	}, WepState)
+	} :: self, WepState)
 
 	self.ubglActive = Charm.computed(function()
 		local ws = self.wepStats()
@@ -108,10 +105,8 @@ function WepState.new()
 		end
 		if self.ubglActive() then
 			return self.localUbglAmmo() > 0
-		elseif ws.openBolt then
-			return self.localAmmo() > 0
 		else
-			return self.predictedChambered()
+			return self.localAmmo() > 0
 		end
 	end)
 
@@ -174,7 +169,6 @@ function WepState:Reset()
 
 	self.localAmmo(0)
 	self.localUbglAmmo(0)
-	self.predictedChambered(true)
 	self.aimSens(config.defaultAimSensitivity)
 	self.sightIndex(1)
 	self.viewmodelVisible(false)
