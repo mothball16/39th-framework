@@ -16,7 +16,7 @@ local weldMod = require(modules.Weapons.WeldMod)
 local bridgeNet = require(modules.Network.BridgeNet)
 local weaponPrefsClient = require(modules.Weapons.WeaponPrefsClient)
 local weaponStatLocator = require(modules.Weapons.WeaponStatLocator)
-
+local holosightMod = require(modules.Weapons.Mods.Holosight)
 
 local RecoilModule = require(modules.Weapons.Recoil.Default)
 
@@ -52,6 +52,7 @@ local WC = {
 	thirdPersonRig = nil,
 	rigType = nil,
 
+	holosightMod = nil,
 	InputController = nil,
 	
 	RefreshViewmodel = nil,
@@ -112,11 +113,11 @@ function WC.Initialize(params)
 	State = params.state
 	
 	WC.bipodRayIgnore = {params.character}
-	
 	WC.InputController = params.InputController
-	
 	WC.RefreshViewmodel = params.RefreshViewmodel
-	
+
+	WC.holosightMod = holosightMod.new(weaponState)
+
 	WC.character.ChildAdded:Connect(function(child)
 		WC.Equip(child)
 	end)
@@ -983,6 +984,7 @@ function WC.UpdateRender(dt)
 		end
 	end
 
+	WC.holosightMod:UpdateRender(dt)
 end
 
 function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
