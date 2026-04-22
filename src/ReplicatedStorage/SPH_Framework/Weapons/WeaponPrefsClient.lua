@@ -1,5 +1,6 @@
 -- Per-tool session prefs (client memory) + apply from store on equip.
 -- isApplying suppresses duplicate remote fires from Charm subscribers during bulk apply.
+-- TODO: this some ai slop and needs to be cleaned up
 
 local WeaponPrefsClient = {
 	_byWeaponName = {},
