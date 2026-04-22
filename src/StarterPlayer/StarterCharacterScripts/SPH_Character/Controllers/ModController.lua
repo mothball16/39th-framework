@@ -8,10 +8,7 @@ function ModController.Initialize(params)
 	for _, modModule in ipairs(modsFolder:GetChildren()) do
 		if modModule:IsA("ModuleScript") then
 			local mod = require(modModule)
-			table.insert(mods, mod)
-			if mod.Initialize then
-				mod.Initialize(params)
-			end
+			table.insert(mods, mod.new(params))
 		end
 	end
 end
@@ -19,7 +16,7 @@ end
 function ModController.UpdateRender(dt)
 	for _, mod in ipairs(mods) do
 		if mod.UpdateRender then
-			mod.UpdateRender(dt)
+			mod:UpdateRender(dt)
 		end
 	end
 end
@@ -27,7 +24,7 @@ end
 function ModController.UpdateHeartbeat(dt)
 	for _, mod in ipairs(mods) do
 		if mod.UpdateHeartbeat then
-			mod.UpdateHeartbeat(dt)
+			mod:UpdateHeartbeat(dt)
 		end
 	end
 end

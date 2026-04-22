@@ -1,47 +1,42 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-
 local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
-local assets = sph.assets
 local config = sph.config
-
-local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
-local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
-
 local Camera = workspace.CurrentCamera
+
 local HolosightMod = {}
-local activeSights = {}
-local gunModelConnection = nil
+HolosightMod.__index = HolosightMod
 
-local weaponState: WeaponStateModule.WeaponState
+function HolosightMod.new(params)
+	local self = setmetatable({
+		activeSights = {},
+		weaponState = params.weaponState,
+	}, HolosightMod)
 
-local invDefaultFOV = 1 / config.defaultFOV
+	Charm.effect(function()
+		return self:SyncActiveSights()
+	end)
 
-function HolosightMod.Initialize(params)
-	weaponState = params.weaponState
-
-	Charm.effect(HolosightMod.SyncActiveSights)
+	return self
 end
 
-
-function HolosightMod.SyncActiveSights()
-	activeSights = {}
-	local gunModel = weaponState.gunModel()
+function HolosightMod:SyncActiveSights()
+	self.activeSights = {}
+	local gunModel = self.weaponState.gunModel()
 	if not gunModel then
 		return
 	end
 
 	for _, part in ipairs(gunModel:GetDescendants()) do
 		if part.Name == "SightReticle" and part:IsA("BasePart") then
-			table.insert(activeSights, { part = part, ui = nil })
+			table.insert(self.activeSights, { part = part, ui = nil })
 		end
 	end
 
 	local conn = gunModel.DescendantAdded:Connect(function(descendant)
 		if descendant.Name == "SightReticle" and descendant:IsA("BasePart") then
-			table.insert(activeSights, { part = descendant, ui = nil })
+			table.insert(self.activeSights, { part = descendant, ui = nil })
 		end
 	end)
 
@@ -52,15 +47,15 @@ function HolosightMod.SyncActiveSights()
 	end
 end
 
-function HolosightMod.UpdateRender(dt)
-	if #activeSights == 0 then
+function HolosightMod:UpdateRender(dt)
+	if #self.activeSights == 0 then
 		return
 	end
 
 	local camPos = Camera.CFrame.Position
-	local fovScale = Camera.FieldOfView * invDefaultFOV
+	local fovScale = Camera.FieldOfView / config.defaultFOV
 
-	for _, sightData in ipairs(activeSights) do
+	for _, sightData in ipairs(self.activeSights) do
 		local sight: BasePart = sightData.part
 		local sightUI: GuiObject? = sightData.ui
 
@@ -85,5 +80,6 @@ function HolosightMod.UpdateRender(dt)
 		end
 	end
 end
+
 
 return HolosightMod
