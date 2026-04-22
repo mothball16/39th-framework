@@ -1,6 +1,6 @@
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local runService = game:GetService("RunService")
-local sph = require(replicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(replicatedStorage.SPH_Framework.GameAccess)
 local assets = sph.assets
 local config = sph.config
 local bridgeNet = require(sph.framework.Network.BridgeNet)

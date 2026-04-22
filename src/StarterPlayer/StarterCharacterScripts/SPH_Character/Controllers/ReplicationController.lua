@@ -3,7 +3,7 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
 
-local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
 local assets = sph.assets
 local framework = sph.framework
 local config = sph.config

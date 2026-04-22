@@ -1,11 +1,3 @@
---[[
-	Handlers are organized into groups. Within each group, handlers run in order until one
-	applies a valid hit (EvaluateHit returns applies+valid); that handler runs DealDamage and
-	the rest of the group is skipped. The next group then runs the same way.
-
-	Call Initialize once with dependencies (pass config from the server; handlers do not use GameAccess).
-]]
-
 local HitContextTypes = require(script.Parent.HitContextTypes)
 
 local HitHandlers = script.Parent:WaitForChild("HitHandlers")

@@ -10,7 +10,7 @@ local Charm = require(Packages.Charm)
 local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
 local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
 local AnimationEvents = require(script.Parent.AnimationEvents)
-local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
 local config = sph.config
 local Enums = require(sph.framework.Core.Enums)
 

@@ -17,7 +17,7 @@ physicsService:CollisionGroupSetCollidable("Guns", "Guns", false)
 physicsService:CollisionGroupSetCollidable("Guns", "Players", false)
 physicsService:CollisionGroupSetCollidable("Casings", "Guns", false)
 
-local sph = require(replicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(replicatedStorage.SPH_Framework.GameAccess)
 local assets = sph.assets
 local modules = sph.framework
 local config = sph.config

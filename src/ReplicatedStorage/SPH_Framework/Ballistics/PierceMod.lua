@@ -5,7 +5,7 @@ local module = {}
 local collectionService = game:GetService("CollectionService")
 local debrisservice = game:GetService("Debris")
 
-local sph = require(script.Parent.Parent.Core.GameAccess)
+local sph = require(script.Parent.Parent.GameAccess)
 local Assets = sph.assets
 local Sounds = Assets:WaitForChild("Sounds")
 local RicoSound = Sounds:WaitForChild("Ricochet"):GetChildren()

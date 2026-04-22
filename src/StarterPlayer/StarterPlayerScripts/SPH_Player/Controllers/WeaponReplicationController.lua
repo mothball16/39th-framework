@@ -2,7 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
 
-local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
 local assets = sph.assets
 local framework = sph.framework
 local config = sph.config

@@ -1,6 +1,6 @@
 -- Proximity prompts (ammo/guns), drop gun, attachment toggles, mag grab.
 
-local sph = require(game:GetService("ReplicatedStorage").SPH_Framework.Core.GameAccess)
+local sph = require(game:GetService("ReplicatedStorage").SPH_Framework.GameAccess)
 
 local DropController = require(script.Parent.DropController)
 

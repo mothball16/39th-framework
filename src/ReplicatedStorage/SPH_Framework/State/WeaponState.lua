@@ -1,4 +1,4 @@
-local sph = require(game.ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(game.ReplicatedStorage.SPH_Framework.GameAccess)
 local modules = sph.framework
 local Packages = game.ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)

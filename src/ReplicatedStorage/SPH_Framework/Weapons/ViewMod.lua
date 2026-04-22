@@ -1,5 +1,5 @@
 local weldMod = require(script.Parent.WeldMod)
-local sph = require(script.Parent.Parent.Core.GameAccess)
+local sph = require(script.Parent.Parent.GameAccess)
 local assets = sph.assets
 local callbacks = require(assets.Mods)
 local models = assets.Arms

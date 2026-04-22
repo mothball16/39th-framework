@@ -1,7 +1,7 @@
 local debris = game:GetService("Debris")
 local players = game:GetService("Players")
 
-local sph = require(script.Parent.Parent.Core.GameAccess)
+local sph = require(script.Parent.Parent.GameAccess)
 local config = sph.config
 
 local explosionOverlapParams = OverlapParams.new()
@@ -15,7 +15,7 @@ explosionRayParams.RespectCanCollide = true
 local explosionSounds = {287390459, 287390954, 287391087, 287391197, 287391361, 287391499, 287391567, 8226406520}
 
 local dts = game.ReplicatedStorage:FindFirstChild("DTS_Assets") -- DD_SPH: Checks if DTS is present
-local sph = require(game.ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(game.ReplicatedStorage.SPH_Framework.GameAccess)
 local effectsFolder = sph.assets.Effects.Explosions
 
 local function Explode(explosionOrigin:Vector3, blastRadius:number, explosionType:string, attackingPlayer:Player) -- DD_SPH: Check which player issued this explosion

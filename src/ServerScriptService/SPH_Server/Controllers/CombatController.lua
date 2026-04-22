@@ -5,7 +5,7 @@ local M = {}
 local ctx
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
 local HitContextTypes = require(sph.framework.Combat.HitContextTypes)
 local VictimFinder = require(sph.framework.Combat.VictimFinder)
 

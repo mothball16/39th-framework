@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ConfigurationTypes = require(script.Parent.ConfigurationTypes)
 local AssetPath = ReplicatedStorage:WaitForChild("SPH_Assets")
+local ConfigurationTypes = require(ReplicatedStorage.SPH_Framework.Core.ConfigurationTypes)
 
 local access = table.freeze({
 	assets = AssetPath,

@@ -1,5 +1,5 @@
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local sph = require(replicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(replicatedStorage.SPH_Framework.GameAccess)
 local config = sph.config
 local dead = false
 

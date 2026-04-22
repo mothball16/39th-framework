@@ -8,7 +8,7 @@ local Players = game:GetService("Players")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 
-local sph = require(ReplicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
 local assets = sph.assets
 local modules = sph.framework
 local Enums = require(modules.Core.Enums)

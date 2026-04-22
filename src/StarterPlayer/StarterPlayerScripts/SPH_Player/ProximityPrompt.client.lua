@@ -3,7 +3,7 @@ local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local proxPromptService = game:GetService("ProximityPromptService")
 
-local sph = require(game:GetService("ReplicatedStorage").SPH_Framework.Core.GameAccess)
+local sph = require(game:GetService("ReplicatedStorage").SPH_Framework.GameAccess)
 local config = sph.config
 
 local player = game:GetService("Players").LocalPlayer

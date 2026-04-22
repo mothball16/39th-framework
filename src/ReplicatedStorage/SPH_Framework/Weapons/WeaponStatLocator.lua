@@ -1,4 +1,4 @@
-local sph = require(script.Parent.Parent.Core.GameAccess)
+local sph = require(script.Parent.Parent.GameAccess)
 local assets = sph.assets
 local configs = assets:WaitForChild("Configurations")
 

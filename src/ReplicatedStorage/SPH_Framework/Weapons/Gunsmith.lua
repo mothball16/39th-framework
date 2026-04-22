@@ -1,7 +1,7 @@
 local gunsmith = {}
 
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local sph = require(replicatedStorage.SPH_Framework.Core.GameAccess)
+local sph = require(replicatedStorage.SPH_Framework.GameAccess)
 local assets = sph.assets
 local weldMod = require(script.Parent.WeldMod)
 

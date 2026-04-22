@@ -1,5 +1,5 @@
 -- This script makes body parts and equipment visible in first person
-local sph = require(game:GetService("ReplicatedStorage").SPH_Framework.Core.GameAccess)
+local sph = require(game:GetService("ReplicatedStorage").SPH_Framework.GameAccess)
 local config = sph.config
 local dead = false
 local vehicleSeated

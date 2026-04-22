@@ -1,5 +1,5 @@
 local Debris = game:GetService("Debris")
-local sph = require(script.Parent.Parent.Core.GameAccess)
+local sph = require(script.Parent.Parent.GameAccess)
 local config = sph.config
 local assets = sph.assets
 
