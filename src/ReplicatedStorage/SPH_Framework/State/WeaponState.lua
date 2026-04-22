@@ -16,7 +16,8 @@ type self = {
 	-- atoms (callable)
 	wepStats: Charm.Atom<any>,
 	equipping: Charm.Atom<boolean>,
-
+	equipped: Charm.Atom<boolean>,
+	
 	gunModel: Charm.Atom<Instance?>,
 	gunAmmo: any,
 	localAmmo: Charm.Atom<number>,
@@ -62,6 +63,7 @@ function WepState.new()
 	local self = setmetatable({
 		wepStats = Charm.atom(nil),
 		equipping = Charm.atom(false),
+		equipped = Charm.atom(false),
 
 		gunModel = Charm.atom(nil),
 		gunAmmo = nil,
@@ -166,6 +168,7 @@ function WepState:Reset()
 	self.wepStats(nil)
 	self.gunModel(nil)
 	self.gunAmmo = nil
+	self.equipped(false)
 
 	self.localAmmo(0)
 	self.localUbglAmmo(0)

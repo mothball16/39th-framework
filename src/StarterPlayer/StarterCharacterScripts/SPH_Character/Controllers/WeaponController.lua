@@ -53,7 +53,6 @@ local WC = {
 	rigType = nil,
 
 	holosightMod = nil,
-	InputController = nil,
 	
 	RefreshViewmodel = nil,
 }
@@ -113,7 +112,6 @@ function WC.Initialize(params)
 	State = params.state
 	
 	WC.bipodRayIgnore = {params.character}
-	WC.InputController = params.InputController
 	WC.RefreshViewmodel = params.RefreshViewmodel
 
 	WC.holosightMod = holosightMod.new(weaponState)
@@ -232,13 +230,6 @@ function WC.SyncAiming(aiming)
 end
 
 function WC.SyncFirstPerson(isFirstPerson)
-	if isFirstPerson then
-		if State.equippedTool() then
-			WC.InputController.BindAiming()
-		end
-	else
-		WC.InputController.UnbindAiming()
-	end
 	WC.UpdateAttachmentsVisibility()
 end
 
@@ -400,6 +391,7 @@ end
 
 
 function WC.Unequip(tool)
+	weaponState.equipped(false)
 	weaponState.equipping(false)
 	WC.viewmodelRig.AnimBase.CFrame = storageCFrame
 	WC.lastGunModel = weaponState.gunModel()
@@ -425,8 +417,6 @@ function WC.Unequip(tool)
 	end
 
 	WC.sights = {}
-
-	WC.InputController.UnbindGunInputs()
 end
 
 function WC.Equip(newChild)
@@ -503,7 +493,6 @@ function WC.Equip(newChild)
 	if State.firstPerson() then
 		WC.RefreshViewmodel()
 	end
-	WC.InputController.BindGunInputs(State.firstPerson())
 
 	AnimationEvents.WeaponEquipRequested:Fire()
 	AnimationEvents.WeaponIdleRequested:Fire()
@@ -549,6 +538,7 @@ function WC.Equip(newChild)
 	weaponState.holdStance(Enums.HoldStance.Ready)
 
 	WC._applyPersistedWeaponPrefs(newChild.Name)
+	weaponState.equipped(true)
 
 	task.delay(1, function() WC.lastGunModel = newChild end)
 end

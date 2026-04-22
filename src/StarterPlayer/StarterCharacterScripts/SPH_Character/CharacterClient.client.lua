@@ -38,6 +38,7 @@ local viewMod = require(modules.Weapons.ViewMod)
 local bulletHandler = require(modules.Ballistics.BulletHandler)
 local callbacks = require(assets.Mods)
 local Packages = replicatedStorage.Packages
+local Charm = require(Packages.Charm)
 
 local Controllers = script.Parent:WaitForChild("Controllers")
 local characterState = require(replicatedStorage.SPH_Framework.State.CharacterState).new(character)
@@ -310,7 +311,6 @@ WeaponController.Initialize({
 	rigType = rigType,
 	weaponState = weaponState,
 	state = characterState,
-	InputController = InputController,
 	RefreshViewmodel = RefreshViewmodel,
 })
 
@@ -325,6 +325,7 @@ UIController.Initialize({
 })
 
 InputController.BindCharacterInputs()
+InputController.BindGunInputs()
 
 humanoid.Died:Connect(function()
 	characterState.dead(true)
@@ -367,4 +368,12 @@ runService.Heartbeat:Connect(function(dt:number)
 	MovementController.UpdateHeartbeat(dt)
 	WeaponController.UpdateHeartbeat(dt)
 	UIController.UpdateHeartbeat(dt)
+end)
+
+Charm.effect(function()
+	if weaponState.equipped() then
+		InputController.BindGunInputs()
+	else
+		InputController.UnbindGunInputs()
+	end
 end)
