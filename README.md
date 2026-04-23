@@ -13,10 +13,11 @@
 3. Serve to Roblox Studio with 'rojo serve' or with the Rojo plugin. You will most likely need to re-upload/re-bind animations due to how Roblox's permissions are.
 4. (Optional) To make your life easier, look at Utility/CommandLineStuff and execute the SpearheadAnimBulkUploader script in the command line. Instructions are located there.
 
-### testing (Studio)
-With Rojo synced, play in Studio (server run). `ServerScriptService/SPH_TestRunner.server.lua` discovers `*.spec` modules under `ReplicatedStorage/Tests` and runs them with TestEZ (text reporter in output). This only runs when `RunService:IsStudio()` is true.
 
 ### standards
+* (...)_Framework are for scripts only. (...)_Assets are handled outside of Rojo, and are resolved through (...)_Access.
+* Framework settings should exist outside of (...)_Framework.
+
 * Controllers are reactive. Avoid calling controllers directly if possible, aside from intent methods.
 * Input controller wires input actions to controller intent methods.
 * Any method wired to an input should be named On(action_name)Intent. (todo: maybe this isn't the best naming for lookup purposes)
