@@ -1,5 +1,5 @@
 {
-  "name": "All-in-one",
+  "name": "all-in-one",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
