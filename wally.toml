@@ -6,9 +6,11 @@ realm = "shared"
 
 [dependencies]
 Charm = "littensy/charm@0.11.0-rc.5"
+charm-sync = "littensy/charm-sync@0.3.0"
 signal = "sleitnick/signal@2.0.3"
 maid = "nightcycle/maid@2.2.2"
 table-util = "sleitnick/table-util@1.2.1"
+Net = "sleitnick/net@0.2.0"
 
 [dev-dependencies]
 TestEZ = "roblox/testez@0.4.1"

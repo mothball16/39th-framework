@@ -3,14 +3,29 @@
 registry = "test"
 
 [[package]]
+name = "ffrostflame/bytenet"
+version = "0.4.6"
+dependencies = []
+
+[[package]]
 name = "jzou0/39th-framework"
 version = "0.1.0"
-dependencies = [["Charm", "littensy/charm@0.11.0-rc.5"], ["maid", "nightcycle/maid@2.2.2"], ["signal", "sleitnick/signal@2.0.3"], ["table-util", "sleitnick/table-util@1.2.1"], ["TestEZ", "roblox/testez@0.4.1"]]
+dependencies = [["Charm", "littensy/charm@0.11.0-rc.5"], ["Net", "sleitnick/net@0.2.0"], ["bytenet", "ffrostflame/bytenet@0.4.6"], ["charm-sync", "littensy/charm-sync@0.3.0"], ["maid", "nightcycle/maid@2.2.2"], ["signal", "sleitnick/signal@2.0.3"], ["table-util", "sleitnick/table-util@1.2.1"], ["TestEZ", "roblox/testez@0.4.1"]]
+
+[[package]]
+name = "littensy/charm"
+version = "0.10.0"
+dependencies = []
 
 [[package]]
 name = "littensy/charm"
 version = "0.11.0-rc.5"
 dependencies = []
+
+[[package]]
+name = "littensy/charm-sync"
+version = "0.3.0"
+dependencies = [["charm", "littensy/charm@0.10.0"]]
 
 [[package]]
 name = "nightcycle/maid"
@@ -20,6 +35,11 @@ dependencies = []
 [[package]]
 name = "roblox/testez"
 version = "0.4.1"
+dependencies = []
+
+[[package]]
+name = "sleitnick/net"
+version = "0.2.0"
 dependencies = []
 
 [[package]]
