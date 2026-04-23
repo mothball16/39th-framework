@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local Types = require(Access.Framework:WaitForChild("Types"))
+local Types = require(Access.Core:WaitForChild("Types"))
 local AssetPath
 local ToolProvider: Types.IClassItem = {
     Identifier = "Tool",

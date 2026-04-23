@@ -24,6 +24,21 @@ export type ISettings = {
 
 export type IFaction = {
     Identifier: string,
+    ItemProviders: {
+        ItemType: string,
+        Classes: {
+            [string]: {Class: IClass, Limit: number}
+        }
+    }
+}
+
+export type IClass = {
+    Identifier: string,
+    Items: {
+        -- key should align with the identifier of a module implementing IClassItem
+        -- this will be resolved within ClassEquipper
+        [string]: {any}
+    }
 }
 
 return {}

@@ -2,7 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local CharmSync = require(Access.Packages.CharmSync)
 local Maid = require(Access.Packages.maid)
-local Types = require(Access.Framework:WaitForChild("Types"))
+local Types = require(Access.Core:WaitForChild("Types"))
 
 local ServerState = {}
 ServerState.__index = ServerState
