@@ -1,7 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-
-local Types = require(script.Parent.Parent.Types)
+local Types = require(Access.Framework:WaitForChild("Types"))
 
 local Tool: Types.IClassItem = {
     Identifier = "Tool",

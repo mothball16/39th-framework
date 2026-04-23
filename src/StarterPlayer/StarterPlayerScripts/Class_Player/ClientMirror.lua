@@ -1,9 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Maid = require(Packages.maid)
-local CharmSync = require(Packages["charm-sync"])
-local Framework = ReplicatedStorage:WaitForChild("Class_Framework")
-local Types = require(Framework:WaitForChild("Types"))
+local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
+local Maid = require(Access.Packages.maid)
+local CharmSync = require(Access.Packages["charm-sync"])
+local Types = require(Access.Framework:WaitForChild("Types"))
 
 
 local ClientMirror = {}
