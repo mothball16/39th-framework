@@ -1,14 +1,14 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local Types = require(Access.Core:WaitForChild("Types"))
-local AssetPath
-local ToolProvider: Types.IClassItem = {
+local Types = require(Access.Framework.Core:WaitForChild("Types"))
+
+local ToolProvider: Types.IClassItemProvider = {
     Identifier = "Tool",
     AssignType = Access.Enums.AssignType.PerCharacter,
 }
 
 function ToolProvider.GetItem(itemName: string)
-    local assetPath = AssetPath or Access.Config.ItemTypePaths[ToolProvider.Identifier]
+    local assetPath = Access.Config.ItemTypePaths[ToolProvider.Identifier]
     assert(assetPath, `asset path not found for ItemType {script.Name} - a folder of name {ToolProvider.Identifier} must be linked within the config`)
 
     return assetPath:FindFirstChild(itemName)
@@ -25,6 +25,9 @@ function ToolProvider.Assign(player: Player, itemName: string, amount: number)
 end
 
 function ToolProvider.Unassign(player: Player, itemName: string, amount: number)
+    -- holding off on this for now - it seems safer to just respawn the character
+
+    --[[
     -- unequip tool so item deletion logic isnt wonky
     local character = player.Character
     if character then
@@ -43,7 +46,7 @@ function ToolProvider.Unassign(player: Player, itemName: string, amount: number)
         else
             break
         end
-    end
+    end]]
 end
 
 return ToolProvider

@@ -4,10 +4,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 
+local Types = {}
+
 export type Atoms = typeof(Atoms)
 export type Events = typeof(Events)
 
-export type IClassItem = {
+export type IClassItemProvider = {
     -- identifier for item type within configurations
     Identifier: string,
     -- runs when the class containing the item is assigned to a player
@@ -34,11 +36,7 @@ export type IFaction = {
 
 export type IClass = {
     Identifier: string,
-    Items: {
-        -- key should align with the identifier of a module implementing IClassItem
-        -- this will be resolved within ClassEquipper
-        [string]: {any}
-    }
+    Items: {any}
 }
 
-return {}
+return Types
