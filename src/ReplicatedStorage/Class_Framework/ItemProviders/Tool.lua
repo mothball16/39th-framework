@@ -2,23 +2,15 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local Types = require(Access.Framework.Core:WaitForChild("Types"))
 local Enums = require(Access.Framework.Core:WaitForChild("Enums"))
-local ToolProvider: Types.IClassItemProvider = {
+local ToolProvider: Types.ClassItemProvider = {
     ID = "Tool",
     AssignType = Enums.AssignType.PerCharacter,
 }
 local PROVIDER_ATTRIBUTE = "ClassProvider"
 local ITEM_NAME_ATTRIBUTE = "ClassItemName"
 
-local function resolveItemName(itemArgs: any): string?
-	return itemArgs.itemName or itemArgs.ItemName or itemArgs.ID or itemArgs.Name
-end
-
-local function resolveItemAmount(itemArgs: any): number
-	local amount = itemArgs.amount or itemArgs.Amount
-	if typeof(amount) == "number" and amount > 0 then
-		return math.floor(amount)
-	end
-	return 1
+local function _resolveItemAmount(itemArgs: any): number
+	return itemArgs.amount or 1
 end
 
 function ToolProvider.GetItem(itemName: string)
@@ -29,7 +21,7 @@ function ToolProvider.GetItem(itemName: string)
 end
 
 function ToolProvider.Assign(player: Player, itemArgs: any)
-    local itemName = resolveItemName(itemArgs)
+    local itemName = itemArgs.itemName
     if not itemName then
         warn("tool item name not found in item args")
         return
@@ -40,7 +32,7 @@ function ToolProvider.Assign(player: Player, itemArgs: any)
         warn(`item {itemName} not found for ItemType {script.Name}`)
         return
     end
-    local amount = resolveItemAmount(itemArgs)
+    local amount = _resolveItemAmount(itemArgs)
     local backpack = player:FindFirstChildOfClass("Backpack") or player:WaitForChild("Backpack")
     for _ = 1, amount do
         local itemInstance = item:Clone()
@@ -51,13 +43,13 @@ function ToolProvider.Assign(player: Player, itemArgs: any)
 end
 
 function ToolProvider.Unassign(player: Player, itemArgs: any)
-    local itemName = resolveItemName(itemArgs)
+    local itemName = itemArgs.itemName
     if not itemName then
         warn("tool item name not found in item args")
         return
     end
 
-    local remaining = resolveItemAmount(itemArgs)
+    local remaining = _resolveItemAmount(itemArgs)
 
     local function tryRemoveFrom(container: Instance?)
         if not container or remaining <= 0 then

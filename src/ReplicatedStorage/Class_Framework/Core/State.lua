@@ -7,8 +7,8 @@ local State = {}
 State.__index = State
 
 type self = {
-	FactionConfigs: Charm.Atom<{ [string]: Types.IFactionConfig }>,
-	MembershipByUserId: Charm.Atom<{ [string]: Types.IPlayerClassAssignment }>,
+	FactionConfigs: Charm.Atom<{ [string]: Types.FactionConfig }>,
+	Players: Charm.Atom<{ [string]: Types.PlayerClassAssignment }>,
 	ClassCountsByFaction: Charm.Atom<{ [string]: { [string]: number } }>,
 	Players: any,
 }
@@ -25,7 +25,7 @@ function State.new(): State
 	)
 
 	self.Players = Charm.computed(function()
-		local assignments = self.MembershipByUserId()
+		local assignments = self.Players()
 		local players = {}
 		for userId, assignment in pairs(assignments) do
 			players[userId] = {
@@ -38,7 +38,7 @@ function State.new(): State
 	return self
 end
 
-function State:CreateFaction(config: Types.IFactionConfig)
+function State:CreateFaction(config: Types.FactionConfig)
 	self.FactionConfigs(function(previous)
 		local nextState = table.clone(previous)
 		nextState[config.ID] = config
@@ -81,19 +81,14 @@ function State:RemoveFaction(factionId: string)
 		return nextState
 	end)
 
-	self.MembershipByUserId(function(previous)
-		local hasChanges = false
-		local nextState = table.clone(previous)
-		for memberKey, assignment in pairs(previous) do
+	self.MembershipByUserId(function(state)
+		state = table.clone(state)
+		for memberKey, assignment in pairs(state) do
 			if assignment.FactionId == factionId then
-				nextState[memberKey] = nil
-				hasChanges = true
+				state[memberKey] = nil
 			end
 		end
-		if hasChanges then
-			return nextState
-		end
-		return previous
+		return state
 	end)
 end
 
@@ -159,12 +154,12 @@ function State:SetFactionMemberClass(factionId: string, userId: number, classId:
 	self:SetPlayerClass(userId, factionId, classId)
 end
 
-function State:AddFactionMember(faction: Types.IFactionConfig | Types.IFaction, userId: number, classId: string)
+function State:AddFactionMember(faction: Types.FactionConfig | Types.Faction, userId: number, classId: string)
 	local resolvedFactionId = if faction.Config then faction.Config.ID else faction.ID
 	self:SetPlayerClass(userId, resolvedFactionId, classId)
 end
 
-function State:RemoveFactionMember(faction: Types.IFactionConfig | Types.IFaction, userId: number)
+function State:RemoveFactionMember(faction: Types.FactionConfig | Types.Faction, userId: number)
 	local resolvedFactionId = if faction.Config then faction.Config.ID else faction.ID
 	local memberKey = tostring(userId)
 	local assignment = self.MembershipByUserId()[memberKey]

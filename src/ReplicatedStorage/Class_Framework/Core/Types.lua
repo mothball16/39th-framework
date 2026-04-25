@@ -4,7 +4,7 @@ local Types = {}
 
 export type Events = typeof(Events)
 
-export type IClassItemProvider = {
+export type ClassItemProvider = {
     -- identifier for item type within configurations
     ID: string,
     AssignType: string?,
@@ -14,25 +14,25 @@ export type IClassItemProvider = {
     Unassign: (player: Player, itemArgs: any) -> ()
 }
 
-export type ISettings = {
+export type Settings = {
     ItemTypePaths: {
         [string]: Folder,
     },
 }
 
-export type IFactionConfig = {
+export type FactionConfig = {
     ID: string,
     Classes: {
         [string]: {ClassID: string, Limit: number, Default: boolean}
     },
 }
 
-export type IPlayerClassAssignment = {
+export type PlayerClassAssignment = {
     FactionId: string,
     ClassId: string,
 }
 
-export type IFactionState = {
+export type FactionState = {
     Members: {
         [string]: {
             Class: string
@@ -40,12 +40,12 @@ export type IFactionState = {
     }
 }
 
-export type IFaction = {
-    Config: IFactionConfig,
-    State: IFactionState,
+export type Faction = {
+    Config: FactionConfig,
+    State: FactionState,
 }
 
-export type IClass = {
+export type Class = {
     ID: string,
     Items: {any}
 }

@@ -10,7 +10,7 @@ ClassEquipper.__index = ClassEquipper
 logic class for setting up and providing items of all loaded itemtypes to players/characters
 ]]
 
-function ClassEquipper.new(itemProviders: {[string]: Types.IClassItemProvider}, classes: {[string]: Types.IClass})
+function ClassEquipper.new(itemProviders: {[string]: Types.ClassItemProvider}, classes: {[string]: Types.Class})
     local self = setmetatable({
         maid = Maid.new(),
         itemProviders = itemProviders,
@@ -20,7 +20,7 @@ function ClassEquipper.new(itemProviders: {[string]: Types.IClassItemProvider}, 
     return self
 end
 
-function ClassEquipper:GetProvider(itemArgs: any): Types.IClassItemProvider
+function ClassEquipper:GetProvider(itemArgs: any): Types.ClassItemProvider
     local itemType = itemArgs.itemType or itemArgs.ItemType or itemArgs.Type
     if not itemType then
         warn(`item type not found for item args {itemArgs}`)

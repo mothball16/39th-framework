@@ -11,7 +11,7 @@ local Enums = require(Access.Framework.Core:WaitForChild("Enums"))
 local function getItemProviders(path)
     local itemProviders = {}
     for _, itemProviderModule in ipairs(path:GetChildren()) do
-        local itemProvider = require(itemProviderModule) :: Types.IClassItemProvider
+        local itemProvider = require(itemProviderModule) :: Types.ClassItemProvider
         itemProviders[itemProvider.ID] = itemProvider
     end
     return itemProviders
@@ -21,7 +21,7 @@ local function getFactionConfigs(path)
     local factions = {}
     for _, factionModule in ipairs(path:GetChildren()) do
         warn("Loading faction config: " .. factionModule.Name)
-        local faction = require(factionModule) :: Types.IFactionConfig
+        local faction = require(factionModule) :: Types.FactionConfig
         factions[faction.ID] = faction
     end
     return factions
@@ -30,13 +30,13 @@ end
 local function getClassConfigs(path)
     local classes = {}
     for _, classModule in ipairs(path:GetChildren()) do
-        local class = require(classModule) :: Types.IClass
+        local class = require(classModule) :: Types.Class
         classes[class.ID] = class
     end
     return classes
 end
 
-local function getFactionForPlayer(player: Player, factionConfigs: {[string]: Types.IFactionConfig}): Types.IFactionConfig?
+local function getFactionForPlayer(player: Player, factionConfigs: {[string]: Types.FactionConfig}): Types.FactionConfig?
 	local team = player.Team
 	if not team then
 		return nil
@@ -48,7 +48,7 @@ local function getFactionForPlayer(player: Player, factionConfigs: {[string]: Ty
 	return nil
 end
 
-local function getDefaultClassId(factionConfig: Types.IFactionConfig): string?
+local function getDefaultClassId(factionConfig: Types.FactionConfig): string?
 	local fallbackClassId = nil
 	for _, classConfig in pairs(factionConfig.Classes) do
 		fallbackClassId = fallbackClassId or classConfig.ClassID
@@ -63,7 +63,7 @@ end
 local state = State.new()
 ServerSyncer.new({
 	FactionConfigs = state.FactionConfigs,
-	MembershipByUserId = state.MembershipByUserId,
+	MembershipByUserId = state.Players,
 	ClassCountsByFaction = state.ClassCountsByFaction,
 }, Events)
 
@@ -73,7 +73,7 @@ local factionConfigs = getFactionConfigs(Access.Assets.FactionConfigs)
 local classEquipper = ClassEquipper.new(itemProviders, classConfigs)
 local currentClassByUserId: {[number]: string} = {}
 
-local function getFactionClassConfigByClassId(factionConfig: Types.IFactionConfig, classId: string): {ClassID: string, Limit: number, Default: boolean}?
+local function getFactionClassConfigByClassId(factionConfig: Types.FactionConfig, classId: string): {ClassID: string, Limit: number, Default: boolean}?
 	for _, factionClassConfig in pairs(factionConfig.Classes) do
 		if factionClassConfig.ClassID == classId then
 			return factionClassConfig
@@ -86,7 +86,7 @@ local function getClassOccupancyCount(factionId: string, classId: string): numbe
 	return state:GetClassOccupancyCount(factionId, classId)
 end
 
-local function resolvePlayerFactionAndClass(player: Player): (Types.IFactionConfig?, string?)
+local function resolvePlayerFactionAndClass(player: Player): (Types.FactionConfig?, string?)
 	local factionConfig = getFactionForPlayer(player, factionConfigs)
 	if not factionConfig then
 		warn("no faction configs available")
@@ -101,7 +101,7 @@ local function resolvePlayerFactionAndClass(player: Player): (Types.IFactionConf
 	return factionConfig, classId
 end
 
-local function syncPlayerFactionState(player: Player, factionConfig: Types.IFactionConfig?, classId: string?)
+local function syncPlayerFactionState(player: Player, factionConfig: Types.FactionConfig?, classId: string?)
 	if factionConfig and classId then
 		state:SetPlayerClass(player.UserId, factionConfig.ID, classId)
 		return

@@ -14,7 +14,7 @@ local maid = Maid.new()
 local state = State.new()
 local mirror = ClientMirror.new({
 	FactionConfigs = state.FactionConfigs,
-	MembershipByUserId = state.MembershipByUserId,
+	MembershipByUserId = state.Players,
 	ClassCountsByFaction = state.ClassCountsByFaction,
 }, Events)
 local mirrorUI = ClientMirrorUI.new(mirror.atoms, Events)

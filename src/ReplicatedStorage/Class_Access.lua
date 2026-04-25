@@ -23,7 +23,7 @@ local access = table.freeze({
 	Assets = AssetPath,
 	Framework = Framework,
 	Packages = Packages,
-	Config = require(AssetPath:WaitForChild("GameConfig")) :: Types.ISettings,
+	Config = require(AssetPath:WaitForChild("GameConfig")) :: Types.Settings,
 })
 
 return access
