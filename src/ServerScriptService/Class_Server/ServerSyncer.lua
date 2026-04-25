@@ -1,14 +1,15 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local CharmSync = require(Access.Packages.CharmSync)
+local CharmSync = require(Access.Packages["charm-sync"])
+local Charm = require(Access.Packages.Charm)
 local Maid = require(Access.Packages.maid)
-local Types = require(Access.Core:WaitForChild("Types"))
+local Types = require(Access.Framework.Core:WaitForChild("Types"))
 
-local ServerState = {}
-ServerState.__index = ServerState
+local ServerSyncer = {}
+ServerSyncer.__index = ServerSyncer
 
-function ServerState.new(atoms: Types.Atoms, events: Types.Events)
-	local self = setmetatable({}, ServerState)
+function ServerSyncer.new(atoms, events: Types.Events)
+	local self = setmetatable({}, ServerSyncer)
 	self.maid = Maid.new()
 	self.atoms = atoms
 	self.syncer = CharmSync.server({
@@ -18,19 +19,19 @@ function ServerState.new(atoms: Types.Atoms, events: Types.Events)
 		autoSerialize = true,
 	})
 	self.maid:GiveTask(self.syncer:connect(function(player, ...)
+		print(...)
 		events.SyncState:FireClient(player, ...)
 	end))
 
-	self.maid:GiveTask(events.RequestState:Connect(function(player)
+	self.maid:GiveTask(events.RequestState.OnServerEvent:Connect(function(player)
 		self.syncer:hydrate(player)
 	end))
 
-	self.maid:GiveTask(self.syncer)
 	return self
 end
 
-function ServerState:Destroy()
+function ServerSyncer:Destroy()
 	self.maid:DoCleaning()
 end
 
-return ServerState
+return ServerSyncer

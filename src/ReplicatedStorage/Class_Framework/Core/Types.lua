@@ -1,4 +1,3 @@
-local Atoms = require(script.Parent.Atoms)
 local Events = require(script.Parent.Events)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
@@ -6,16 +5,16 @@ local Charm = require(Packages.Charm)
 
 local Types = {}
 
-export type Atoms = typeof(Atoms)
 export type Events = typeof(Events)
 
 export type IClassItemProvider = {
     -- identifier for item type within configurations
-    Identifier: string,
+    ID: string,
+    AssignType: string?,
     -- runs when the class containing the item is assigned to a player
-    Assign: (player: Player) -> (),
+    Assign: (player: Player, itemArgs: any) -> (),
     -- runs when the class containing the item is unassigned from a player
-    Unassign: (player: Player) -> ()
+    Unassign: (player: Player, itemArgs: any) -> ()
 }
 
 export type ISettings = {
@@ -24,18 +23,28 @@ export type ISettings = {
     },
 }
 
-export type IFaction = {
-    Identifier: string,
-    ItemProviders: {
-        ItemType: string,
-        Classes: {
-            [string]: {Class: IClass, Limit: number}
+export type IFactionConfig = {
+    ID: string,
+    Classes: {
+        [string]: {ClassID: string, Limit: number, Default: boolean}
+    },
+}
+
+export type IFactionState = {
+    Members: {
+        [string]: {
+            Class: string
         }
     }
 }
 
+export type IFaction = {
+    Config: IFactionConfig,
+    State: IFactionState,
+}
+
 export type IClass = {
-    Identifier: string,
+    ID: string,
     Items: {any}
 }
 

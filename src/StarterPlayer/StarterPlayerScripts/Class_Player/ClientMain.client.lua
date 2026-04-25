@@ -2,14 +2,18 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local Maid = require(Access.Packages.maid)
-local Atoms = require(Access.Framework.Core:WaitForChild("Atoms"))
 local Events = require(Access.Framework.Core:WaitForChild("Events"))
+local State = require(Access.Framework.Core:WaitForChild("State"))
+
 local ClientMirror = require(script.Parent.ClientMirror)
 local ClientMirrorUI = require(script.Parent.ClientMirrorUI)
 local ClientUIConfig = require(script.Parent.ClientUIConfig)
 
 local maid = Maid.new()
-local mirror = ClientMirror.new(Atoms, Events)
+local state = State.new()
+local mirror = ClientMirror.new({
+	Factions = state.Factions,
+}, Events)
 local mirrorUI = ClientMirrorUI.new(mirror.atoms)
 
 maid:GiveTask(mirror)

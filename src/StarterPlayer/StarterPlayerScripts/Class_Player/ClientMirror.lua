@@ -3,13 +3,11 @@ local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local Maid = require(Access.Packages.maid)
 local CharmSync = require(Access.Packages["charm-sync"])
 local Types = require(Access.Framework.Core:WaitForChild("Types"))
-
-
 local ClientMirror = {}
 ClientMirror.__index = ClientMirror
 
 
-function ClientMirror.new(atoms: Types.Atoms, events: Types.Events)
+function ClientMirror.new(atoms, events: Types.Events)
 	local self = setmetatable({}, ClientMirror)
 	self.maid = Maid.new()
     self.atoms = atoms
@@ -21,6 +19,12 @@ function ClientMirror.new(atoms: Types.Atoms, events: Types.Events)
 		self.syncer:sync(...)
 	end))
 
+	coroutine.resume(coroutine.create(function()
+		while true do
+			print(self.atoms.Factions())
+			task.wait(1)
+		end
+	end))
 	events.RequestState:FireServer()
     return self
 end

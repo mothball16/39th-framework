@@ -97,13 +97,13 @@ local function serializeState(state: any): string
 	return table.concat(lines, "\n")
 end
 
-function ClientMirrorUI.new(atoms: Types.Atoms)
+function ClientMirrorUI.new(atoms)
 	local self = setmetatable({}, ClientMirrorUI)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 	self.visible = source(false)
 	self.unmount = mount(function()
-		local mirroredState = useAtom(atoms.State)
+		local mirroredState = useAtom(atoms.Factions)
 
 		return create("ScreenGui")({
 			Name = "ClassMirrorUI",
