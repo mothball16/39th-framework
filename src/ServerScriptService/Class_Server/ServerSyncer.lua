@@ -19,7 +19,6 @@ function ServerSyncer.new(atoms, events: Types.Events)
 		autoSerialize = true,
 	})
 	self.maid:GiveTask(self.syncer:connect(function(player, ...)
-		print(...)
 		events.SyncState:FireClient(player, ...)
 	end))
 

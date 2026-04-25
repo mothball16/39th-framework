@@ -38,6 +38,9 @@ end
 
 local function getFactionForPlayer(player: Player, factionConfigs: {[string]: Types.IFactionConfig}): Types.IFactionConfig?
 	local team = player.Team
+	if not team then
+		return nil
+	end
 	local autoFactionAttribute = team:GetAttribute(Enums.Faction.AutoFactionAttribute)
     if autoFactionAttribute then
         return factionConfigs[autoFactionAttribute]
@@ -59,13 +62,29 @@ end
 -- init
 local state = State.new()
 ServerSyncer.new({
-	Factions = state.Factions,
+	FactionConfigs = state.FactionConfigs,
+	MembershipByUserId = state.MembershipByUserId,
+	ClassCountsByFaction = state.ClassCountsByFaction,
 }, Events)
 
 local itemProviders = getItemProviders(Access.Framework.ItemProviders)
 local classConfigs = getClassConfigs(Access.Assets.ClassConfigs)
 local factionConfigs = getFactionConfigs(Access.Assets.FactionConfigs)
 local classEquipper = ClassEquipper.new(itemProviders, classConfigs)
+local currentClassByUserId: {[number]: string} = {}
+
+local function getFactionClassConfigByClassId(factionConfig: Types.IFactionConfig, classId: string): {ClassID: string, Limit: number, Default: boolean}?
+	for _, factionClassConfig in pairs(factionConfig.Classes) do
+		if factionClassConfig.ClassID == classId then
+			return factionClassConfig
+		end
+	end
+	return nil
+end
+
+local function getClassOccupancyCount(factionId: string, classId: string): number
+	return state:GetClassOccupancyCount(factionId, classId)
+end
 
 local function resolvePlayerFactionAndClass(player: Player): (Types.IFactionConfig?, string?)
 	local factionConfig = getFactionForPlayer(player, factionConfigs)
@@ -83,39 +102,93 @@ local function resolvePlayerFactionAndClass(player: Player): (Types.IFactionConf
 end
 
 local function syncPlayerFactionState(player: Player, factionConfig: Types.IFactionConfig?, classId: string?)
-	state:RemoveFactionMemberFromAll(player.UserId)
 	if factionConfig and classId then
-		state:SetFactionMemberClass(factionConfig.ID, player.UserId, classId)
-	end
-end
-
-local function assignDefaultClass(player: Player)
-	local factionConfig, classId = resolvePlayerFactionAndClass(player)
-	syncPlayerFactionState(player, factionConfig, classId)
-	if not classId then
+		state:SetPlayerClass(player.UserId, factionConfig.ID, classId)
 		return
 	end
-	classEquipper:AssignClassItems(player, classId)
+	state:SetPlayerClass(player.UserId, nil, nil)
 end
+
+local function assignDefaultClass(player: Player, forceAssign: boolean?)
+	local factionConfig, classId = resolvePlayerFactionAndClass(player)
+	syncPlayerFactionState(player, factionConfig, classId)
+
+	local previousClassId = currentClassByUserId[player.UserId]
+	if previousClassId and previousClassId ~= classId then
+		classEquipper:UnassignClassItems(player, previousClassId)
+	end
+
+	if not classId then
+		currentClassByUserId[player.UserId] = nil
+		return
+	end
+
+	if not forceAssign and previousClassId == classId then
+		return
+	end
+
+	classEquipper:AssignClassItems(player, classId)
+	currentClassByUserId[player.UserId] = classId
+end
+
+Events.RequestClass.OnServerEvent:Connect(function(player: Player, requestedClassId: any)
+	if typeof(requestedClassId) ~= "string" then
+		warn(`invalid class request type from {player.Name}`)
+		return
+	end
+
+	local factionConfig = getFactionForPlayer(player, factionConfigs)
+	if not factionConfig then
+		warn(`faction not found for player {player.Name}`)
+		return
+	end
+
+	local classConfig = getFactionClassConfigByClassId(factionConfig, requestedClassId)
+	if not classConfig then
+		warn(`class {requestedClassId} is not available for faction {factionConfig.ID}`)
+		return
+	end
+
+	if not classConfigs[requestedClassId] then
+		warn(`class config not found for class {requestedClassId}`)
+		return
+	end
+
+	local previousClassId = currentClassByUserId[player.UserId]
+	if previousClassId == requestedClassId then
+		state:SetPlayerClass(player.UserId, factionConfig.ID, requestedClassId)
+		return
+	end
+
+	local occupancy = getClassOccupancyCount(factionConfig.ID, requestedClassId)
+	if classConfig.Limit > 0 and occupancy >= classConfig.Limit then
+		warn(`class {requestedClassId} is full for faction {factionConfig.ID}`)
+		return
+	end
+
+	if previousClassId then
+		classEquipper:UnassignClassItems(player, previousClassId)
+	end
+	classEquipper:AssignClassItems(player, requestedClassId)
+	currentClassByUserId[player.UserId] = requestedClassId
+	state:SetPlayerClass(player.UserId, factionConfig.ID, requestedClassId)
+end)
 
 for _, factionConfig in pairs(factionConfigs) do
     state:CreateFaction(factionConfig)
 end
 
 local function hookPlayer(player: Player)
-	local function refreshStateOnly()
-		local factionConfig, classId = resolvePlayerFactionAndClass(player)
-		syncPlayerFactionState(player, factionConfig, classId)
-	end
-
 	player.CharacterAdded:Connect(function()
-		assignDefaultClass(player)
+		assignDefaultClass(player, true)
 	end)
-	player:GetPropertyChangedSignal("Team"):Connect(refreshStateOnly)
+	player:GetPropertyChangedSignal("Team"):Connect(function()
+		assignDefaultClass(player, false)
+	end)
 
-	refreshStateOnly()
+	assignDefaultClass(player, false)
 	if player.Character then
-		task.defer(assignDefaultClass, player)
+		task.defer(assignDefaultClass, player, true)
 	end
 end
 
@@ -124,5 +197,6 @@ for _, player in ipairs(Players:GetPlayers()) do
 end
 Players.PlayerAdded:Connect(hookPlayer)
 Players.PlayerRemoving:Connect(function(player)
-	state:RemoveFactionMemberFromAll(player.UserId)
+	state:SetPlayerClass(player.UserId, nil, nil)
+	currentClassByUserId[player.UserId] = nil
 end)

@@ -19,12 +19,6 @@ function ClientMirror.new(atoms, events: Types.Events)
 		self.syncer:sync(...)
 	end))
 
-	coroutine.resume(coroutine.create(function()
-		while true do
-			print(self.atoms.Factions())
-			task.wait(1)
-		end
-	end))
 	events.RequestState:FireServer()
     return self
 end

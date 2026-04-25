@@ -1,7 +1,4 @@
 local Events = require(script.Parent.Events)
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Charm = require(Packages.Charm)
 
 local Types = {}
 
@@ -28,6 +25,11 @@ export type IFactionConfig = {
     Classes: {
         [string]: {ClassID: string, Limit: number, Default: boolean}
     },
+}
+
+export type IPlayerClassAssignment = {
+    FactionId: string,
+    ClassId: string,
 }
 
 export type IFactionState = {

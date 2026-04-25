@@ -6,6 +6,20 @@ local ToolProvider: Types.IClassItemProvider = {
     ID = "Tool",
     AssignType = Enums.AssignType.PerCharacter,
 }
+local PROVIDER_ATTRIBUTE = "ClassProvider"
+local ITEM_NAME_ATTRIBUTE = "ClassItemName"
+
+local function resolveItemName(itemArgs: any): string?
+	return itemArgs.itemName or itemArgs.ItemName or itemArgs.ID or itemArgs.Name
+end
+
+local function resolveItemAmount(itemArgs: any): number
+	local amount = itemArgs.amount or itemArgs.Amount
+	if typeof(amount) == "number" and amount > 0 then
+		return math.floor(amount)
+	end
+	return 1
+end
 
 function ToolProvider.GetItem(itemName: string)
     local assetPath = Access.Config.ItemTypePaths[ToolProvider.ID]
@@ -15,7 +29,7 @@ function ToolProvider.GetItem(itemName: string)
 end
 
 function ToolProvider.Assign(player: Player, itemArgs: any)
-    local itemName = itemArgs.itemName or itemArgs.ItemName or itemArgs.ID or itemArgs.Name
+    local itemName = resolveItemName(itemArgs)
     if not itemName then
         warn("tool item name not found in item args")
         return
@@ -26,34 +40,55 @@ function ToolProvider.Assign(player: Player, itemArgs: any)
         warn(`item {itemName} not found for ItemType {script.Name}`)
         return
     end
+    local amount = resolveItemAmount(itemArgs)
     local backpack = player:FindFirstChildOfClass("Backpack") or player:WaitForChild("Backpack")
-    local itemInstance = item:Clone()
-    itemInstance.Parent = backpack
+    for _ = 1, amount do
+        local itemInstance = item:Clone()
+        itemInstance:SetAttribute(PROVIDER_ATTRIBUTE, ToolProvider.ID)
+        itemInstance:SetAttribute(ITEM_NAME_ATTRIBUTE, itemName)
+        itemInstance.Parent = backpack
+    end
 end
 
 function ToolProvider.Unassign(player: Player, itemArgs: any)
-    -- holding off on this for now - it seems safer to just respawn the character
+    local itemName = resolveItemName(itemArgs)
+    if not itemName then
+        warn("tool item name not found in item args")
+        return
+    end
 
-    --[[
-    -- unequip tool so item deletion logic isnt wonky
-    local character = player.Character
-    if character then
-        local tool = character:FindFirstChildWhichIsA("Tool")
-        if tool then
-            tool.Parent = player.Backpack
+    local remaining = resolveItemAmount(itemArgs)
+
+    local function tryRemoveFrom(container: Instance?)
+        if not container or remaining <= 0 then
+            return
+        end
+
+        for _, child in ipairs(container:GetChildren()) do
+            if remaining <= 0 then
+                break
+            end
+            if not child:IsA("Tool") or child.Name ~= itemName then
+                continue
+            end
+
+            local provider = child:GetAttribute(PROVIDER_ATTRIBUTE)
+            local taggedItemName = child:GetAttribute(ITEM_NAME_ATTRIBUTE)
+            if provider ~= nil and provider ~= ToolProvider.ID then
+                continue
+            end
+            if taggedItemName ~= nil and taggedItemName ~= itemName then
+                continue
+            end
+
+            child:Destroy()
+            remaining -= 1
         end
     end
 
-    -- remove appropriate amount of items from backpack
-    while amount > 0 do
-        local itemInstance = player.Backpack:FindFirstChild(itemName)
-        if itemInstance then
-            itemInstance:Destroy()
-            amount -= 1
-        else
-            break
-        end
-    end]]
+    -- remove equipped tools first, then backpack copies
+    tryRemoveFrom(player.Character)
+    tryRemoveFrom(player:FindFirstChildOfClass("Backpack"))
 end
 
 return ToolProvider

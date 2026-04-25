@@ -1,7 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local Types = require(Access.Framework.Core:WaitForChild("Types"))
 local Vide = require(Access.Packages.Vide)
 local VideCharm = require(Access.Packages["vide-charm"])
 local ClientUIConfig = require(script.Parent.ClientUIConfig)
@@ -11,99 +10,105 @@ local mount = Vide.mount
 local source = Vide.source
 local useAtom = VideCharm.useAtom
 
-local TITLE_HEIGHT = 26
+local TITLE_HEIGHT = 24
 local PADDING = 8
 
 local ClientMirrorUI = {}
 ClientMirrorUI.__index = ClientMirrorUI
 
-local function keySort(a, b)
-	return tostring(a) < tostring(b)
+type ClassEntry = {
+	classId: string,
+	count: number,
+	limit: number,
+	isCurrent: boolean,
+	isFull: boolean,
+}
+
+type ViewModel = {
+	factionId: string,
+	currentClassId: string,
+	classes: {ClassEntry},
+}
+
+local function buildViewModel(
+	factionConfigs: {[string]: any},
+	membershipByUserId: {[string]: any},
+	classCountsByFaction: {[string]: {[string]: number}},
+	userId: number
+): ViewModel?
+	local assignment = membershipByUserId[tostring(userId)]
+	if not assignment then
+		return nil
+	end
+	local factionId = assignment.FactionId
+	local currentClassId = assignment.ClassId
+
+	local factionConfig = factionConfigs[factionId]
+	if not factionConfig then
+		return nil
+	end
+
+	local classCounts = classCountsByFaction[factionId] or {}
+	local classes = {}
+	for _, classConfig in pairs(factionConfig.Classes) do
+		local classId = classConfig.ClassID
+		local limit = classConfig.Limit
+		local count = classCounts[classId] or 0
+		table.insert(classes, {
+			classId = classId,
+			count = count,
+			limit = limit,
+			isCurrent = currentClassId == classId,
+			isFull = limit > 0 and count >= limit,
+		})
+	end
+	table.sort(classes, function(a, b)
+		return a.classId < b.classId
+	end)
+
+	return {
+		factionId = factionId,
+		currentClassId = currentClassId or "None",
+		classes = classes,
+	}
 end
 
-local function serializeValue(value: any, depth: number, maxDepth: number): string
-	local valueType = typeof(value)
-
-	if valueType == "string" then
-		return value
-	elseif valueType == "number" or valueType == "boolean" then
-		return tostring(value)
-	elseif valueType == "nil" then
-		return "nil"
-	elseif valueType == "Instance" then
-		local instanceValue = value :: Instance
-		return `{instanceValue.ClassName}({instanceValue:GetFullName()})`
-	elseif valueType ~= "table" then
-		return tostring(value)
+local function formatClassList(viewModel: ViewModel, selectedIndex: number): string
+	if #viewModel.classes == 0 then
+		return "No classes available."
 	end
 
-	if depth >= maxDepth then
-		return "{...}"
-	end
-
-	local tableValue = value :: {[any]: any}
-	local keys = {}
-	for key in tableValue do
-		table.insert(keys, key)
-	end
-	table.sort(keys, keySort)
-
-	if #keys == 0 then
-		return "{}"
-	end
-
-	local parts = {}
-	local limit = math.min(#keys, 8)
-	for index = 1, limit do
-		local key = keys[index]
-		parts[index] = `{tostring(key)}={serializeValue(tableValue[key], depth + 1, maxDepth)}`
-	end
-
-	if #keys > limit then
-		table.insert(parts, "...")
-	end
-
-	return `{` .. table.concat(parts, ", ") .. `}`
-end
-
-local function serializeState(state: any): string
-	if typeof(state) ~= "table" then
-		return serializeValue(state, 0, ClientUIConfig.MaxDepth)
-	end
-
-	local stateTable = state :: {[any]: any}
-	local keys = {}
-	for key in stateTable do
-		table.insert(keys, key)
-	end
-	table.sort(keys, keySort)
-
-	if #keys == 0 then
-		return "(empty)"
-	end
-
-	local lines = {}
-	local limit = math.min(#keys, ClientUIConfig.MaxRows)
-
-	for index = 1, limit do
-		local key = keys[index]
-		lines[index] = `{tostring(key)}: {serializeValue(stateTable[key], 0, ClientUIConfig.MaxDepth)}`
-	end
-
-	if #keys > limit then
-		table.insert(lines, `... ({#keys - limit} more keys)`)
+	local lines = table.create(#viewModel.classes)
+	for index, classEntry in ipairs(viewModel.classes) do
+		local selectedPrefix = if index == selectedIndex then ">" else " "
+		local tags = {}
+		if classEntry.isCurrent then
+			table.insert(tags, "current")
+		end
+		if classEntry.isFull then
+			table.insert(tags, "full")
+		end
+		local tagSuffix = if #tags > 0 then ` [{table.concat(tags, ", ")}]` else ""
+		lines[index] = `{selectedPrefix} [{index}] {classEntry.classId} ({classEntry.count}/{classEntry.limit}){tagSuffix}`
 	end
 
 	return table.concat(lines, "\n")
 end
 
-function ClientMirrorUI.new(atoms)
+function ClientMirrorUI.new(atoms, events)
 	local self = setmetatable({}, ClientMirrorUI)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+	local localUserId = Players.LocalPlayer.UserId
 
+	self.events = events
 	self.visible = source(false)
+	self.selectedIndex = source(1)
+	self.statusText = source("Select a class and press Enter to request.")
+	self.lastViewModel = nil
 	self.unmount = mount(function()
-		local mirroredState = useAtom(atoms.Factions)
+		local factionConfigs = useAtom(atoms.FactionConfigs)
+		local membershipByUserId = useAtom(atoms.MembershipByUserId)
+		local classCountsByFaction = useAtom(atoms.ClassCountsByFaction)
 
 		return create("ScreenGui")({
 			Name = "ClassMirrorUI",
@@ -131,13 +136,70 @@ function ClientMirrorUI.new(atoms)
 					TextSize = 16,
 					TextColor3 = Color3.fromRGB(255, 255, 255),
 					TextXAlignment = Enum.TextXAlignment.Left,
-					Text = `{ClientUIConfig.Title} [{ClientUIConfig.ToggleKeyCode.Name}]`,
+					Text = `Class Selection [{ClientUIConfig.ToggleKeyCode.Name}]`,
 				}),
 				create("TextLabel")({
-					Name = "StateText",
+					Name = "FactionText",
 					BackgroundTransparency = 1,
-					Position = UDim2.new(0, PADDING, 0, PADDING + TITLE_HEIGHT + 4),
-					Size = UDim2.new(1, -PADDING * 2, 1, -(PADDING * 2 + TITLE_HEIGHT + 4)),
+					Position = UDim2.new(0, PADDING, 0, PADDING + TITLE_HEIGHT + 2),
+					Size = UDim2.new(1, -PADDING * 2, 0, 20),
+					Font = Enum.Font.Gotham,
+					TextSize = 14,
+					TextColor3 = Color3.fromRGB(226, 232, 240),
+					TextXAlignment = Enum.TextXAlignment.Left,
+					Text = function()
+						local viewModel = buildViewModel(
+							factionConfigs(),
+							membershipByUserId(),
+							classCountsByFaction(),
+							localUserId
+						)
+						self.lastViewModel = viewModel
+						if not viewModel then
+							return "Faction: Unassigned"
+						end
+						return `Faction: {viewModel.factionId}`
+					end,
+				}),
+				create("TextLabel")({
+					Name = "CurrentClassText",
+					BackgroundTransparency = 1,
+					Position = UDim2.new(0, PADDING, 0, PADDING + TITLE_HEIGHT + 22),
+					Size = UDim2.new(1, -PADDING * 2, 0, 20),
+					Font = Enum.Font.Gotham,
+					TextSize = 14,
+					TextColor3 = Color3.fromRGB(226, 232, 240),
+					TextXAlignment = Enum.TextXAlignment.Left,
+					Text = function()
+						local viewModel = buildViewModel(
+							factionConfigs(),
+							membershipByUserId(),
+							classCountsByFaction(),
+							localUserId
+						)
+						self.lastViewModel = viewModel
+						if not viewModel then
+							return "Current Class: None"
+						end
+						return `Current Class: {viewModel.currentClassId}`
+					end,
+				}),
+				create("TextLabel")({
+					Name = "HelpText",
+					BackgroundTransparency = 1,
+					Position = UDim2.new(0, PADDING, 0, PADDING + TITLE_HEIGHT + 42),
+					Size = UDim2.new(1, -PADDING * 2, 0, 18),
+					Font = Enum.Font.Gotham,
+					TextSize = 12,
+					TextColor3 = Color3.fromRGB(148, 163, 184),
+					TextXAlignment = Enum.TextXAlignment.Left,
+					Text = "Up/Down: Select  Enter: Request Class",
+				}),
+				create("TextLabel")({
+					Name = "ClassList",
+					BackgroundTransparency = 1,
+					Position = UDim2.new(0, PADDING, 0, PADDING + TITLE_HEIGHT + 64),
+					Size = UDim2.new(1, -PADDING * 2, 1, -(PADDING * 2 + TITLE_HEIGHT + 92)),
 					Font = Enum.Font.Code,
 					TextSize = 14,
 					TextColor3 = Color3.fromRGB(226, 232, 240),
@@ -145,7 +207,32 @@ function ClientMirrorUI.new(atoms)
 					TextXAlignment = Enum.TextXAlignment.Left,
 					TextYAlignment = Enum.TextYAlignment.Top,
 					Text = function()
-						return serializeState(mirroredState())
+						local viewModel = buildViewModel(
+							factionConfigs(),
+							membershipByUserId(),
+							classCountsByFaction(),
+							localUserId
+						)
+						self.lastViewModel = viewModel
+						if not viewModel then
+							return "No faction assignment yet."
+						end
+						self:_clampSelection(#viewModel.classes)
+						return formatClassList(viewModel, self.selectedIndex())
+					end,
+				}),
+				create("TextLabel")({
+					Name = "StatusText",
+					BackgroundTransparency = 1,
+					Position = UDim2.new(0, PADDING, 1, -(PADDING + 18)),
+					Size = UDim2.new(1, -PADDING * 2, 0, 18),
+					Font = Enum.Font.Gotham,
+					TextSize = 12,
+					TextColor3 = Color3.fromRGB(148, 163, 184),
+					TextXAlignment = Enum.TextXAlignment.Left,
+					TextYAlignment = Enum.TextYAlignment.Center,
+					Text = function()
+						return self.statusText()
 					end,
 				}),
 			}),
@@ -155,12 +242,63 @@ function ClientMirrorUI.new(atoms)
 	return self
 end
 
+function ClientMirrorUI:_clampSelection(classCount: number)
+	if classCount <= 0 then
+		self.selectedIndex(1)
+		return
+	end
+
+	local index = self.selectedIndex()
+	if index < 1 then
+		self.selectedIndex(1)
+	elseif index > classCount then
+		self.selectedIndex(classCount)
+	end
+end
+
 function ClientMirrorUI:Toggle()
 	self.visible(not self.visible())
 end
 
 function ClientMirrorUI:SetVisible(isVisible: boolean)
 	self.visible(isVisible)
+end
+
+function ClientMirrorUI:IsVisible(): boolean
+	return self.visible()
+end
+
+function ClientMirrorUI:MoveSelection(offset: number)
+	local viewModel = self.lastViewModel
+	if not viewModel or #viewModel.classes == 0 then
+		return
+	end
+
+	local nextIndex = self.selectedIndex() + offset
+	if nextIndex < 1 then
+		nextIndex = #viewModel.classes
+	elseif nextIndex > #viewModel.classes then
+		nextIndex = 1
+	end
+	self.selectedIndex(nextIndex)
+end
+
+function ClientMirrorUI:RequestSelectedClass()
+	local viewModel = self.lastViewModel
+	if not viewModel or #viewModel.classes == 0 then
+		self.statusText("Cannot request class yet.")
+		return
+	end
+	self:_clampSelection(#viewModel.classes)
+
+	local selectedClass = viewModel.classes[self.selectedIndex()]
+	if not selectedClass then
+		self.statusText("No class selected.")
+		return
+	end
+
+	self.events.RequestClass:FireServer(selectedClass.classId)
+	self.statusText(`Requested class: {selectedClass.classId}`)
 end
 
 function ClientMirrorUI:Destroy()
