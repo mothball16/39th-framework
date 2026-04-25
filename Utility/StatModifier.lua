@@ -123,7 +123,6 @@ function StatModifier.Apply<T>(self: StatModifier<T>)
 
 		self._applied[k] = applyMod(startValue, add, multiply)
 	end
-	print(self._applied)
 	self._dirty = false
 end
 
