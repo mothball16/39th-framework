@@ -10,16 +10,11 @@ dependencies = []
 [[package]]
 name = "jzou0/39th-framework"
 version = "0.1.0"
-dependencies = [["Charm", "littensy/charm@0.11.0-rc.5"], ["Net", "sleitnick/net@0.2.0"], ["Vide", "centau/vide@0.3.1"], ["charm-sync", "littensy/charm-sync@0.3.0"], ["maid", "nightcycle/maid@2.2.2"], ["signal", "sleitnick/signal@2.0.3"], ["table-util", "sleitnick/table-util@1.2.1"], ["vide-charm", "littensy/vide-charm@0.3.0"], ["TestEZ", "roblox/testez@0.4.1"]]
+dependencies = [["Charm", "littensy/charm@0.10.0"], ["Net", "sleitnick/net@0.2.0"], ["Vide", "centau/vide@0.3.1"], ["charm-sync", "littensy/charm-sync@0.3.0"], ["maid", "nightcycle/maid@2.2.2"], ["signal", "sleitnick/signal@2.0.3"], ["table-util", "sleitnick/table-util@1.2.1"], ["vide-charm", "littensy/vide-charm@0.3.0"], ["TestEZ", "roblox/testez@0.4.1"]]
 
 [[package]]
 name = "littensy/charm"
 version = "0.10.0"
-dependencies = []
-
-[[package]]
-name = "littensy/charm"
-version = "0.11.0-rc.5"
 dependencies = []
 
 [[package]]
