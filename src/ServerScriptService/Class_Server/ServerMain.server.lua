@@ -6,7 +6,7 @@ local Events = require(Access.Framework.Core:WaitForChild("Events"))
 local Types = require(Access.Framework.Core:WaitForChild("Types"))
 local ClassEquipper = require(Access.Framework:WaitForChild("ClassEquipper"))
 local ServerSyncer = require(script.Parent.ServerSyncer)
-
+local Enums = require(Access.Framework.Core:WaitForChild("Enums"))
 -------------------------------------------------------------------------
 local function getItemProviders(path)
     local itemProviders = {}
@@ -38,16 +38,10 @@ end
 
 local function getFactionForPlayer(player: Player, factionConfigs: {[string]: Types.IFactionConfig}): Types.IFactionConfig?
 	local team = player.Team
-	if team then
-		local teamFaction = factionConfigs[team.Name]
-		if teamFaction then
-			return teamFaction
-		end
-	end
-
-	for _, factionConfig in pairs(factionConfigs) do
-		return factionConfig
-	end
+	local autoFactionAttribute = team:GetAttribute(Enums.Faction.AutoFactionAttribute)
+    if autoFactionAttribute then
+        return factionConfigs[autoFactionAttribute]
+    end
 	return nil
 end
 
@@ -73,19 +67,34 @@ local classConfigs = getClassConfigs(Access.Assets.ClassConfigs)
 local factionConfigs = getFactionConfigs(Access.Assets.FactionConfigs)
 local classEquipper = ClassEquipper.new(itemProviders, classConfigs)
 
-local function assignDefaultClass(player: Player)
+local function resolvePlayerFactionAndClass(player: Player): (Types.IFactionConfig?, string?)
 	local factionConfig = getFactionForPlayer(player, factionConfigs)
 	if not factionConfig then
 		warn("no faction configs available")
-		return
+		return nil, nil
 	end
 
 	local classId = getDefaultClassId(factionConfig)
 	if not classId then
 		warn(`no class configured for faction {factionConfig.ID}`)
+		return factionConfig, nil
+	end
+	return factionConfig, classId
+end
+
+local function syncPlayerFactionState(player: Player, factionConfig: Types.IFactionConfig?, classId: string?)
+	state:RemoveFactionMemberFromAll(player.UserId)
+	if factionConfig and classId then
+		state:SetFactionMemberClass(factionConfig.ID, player.UserId, classId)
+	end
+end
+
+local function assignDefaultClass(player: Player)
+	local factionConfig, classId = resolvePlayerFactionAndClass(player)
+	syncPlayerFactionState(player, factionConfig, classId)
+	if not classId then
 		return
 	end
-
 	classEquipper:AssignClassItems(player, classId)
 end
 
@@ -94,10 +103,17 @@ for _, factionConfig in pairs(factionConfigs) do
 end
 
 local function hookPlayer(player: Player)
+	local function refreshStateOnly()
+		local factionConfig, classId = resolvePlayerFactionAndClass(player)
+		syncPlayerFactionState(player, factionConfig, classId)
+	end
+
 	player.CharacterAdded:Connect(function()
 		assignDefaultClass(player)
 	end)
+	player:GetPropertyChangedSignal("Team"):Connect(refreshStateOnly)
 
+	refreshStateOnly()
 	if player.Character then
 		task.defer(assignDefaultClass, player)
 	end
@@ -107,3 +123,6 @@ for _, player in ipairs(Players:GetPlayers()) do
 	hookPlayer(player)
 end
 Players.PlayerAdded:Connect(hookPlayer)
+Players.PlayerRemoving:Connect(function(player)
+	state:RemoveFactionMemberFromAll(player.UserId)
+end)

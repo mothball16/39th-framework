@@ -5,4 +5,7 @@ return {
         -- assign method will hook up to the player
         PerPlayer = "PerPlayer",
     },
+    Faction = {
+        AutoFactionAttribute = "AutoFaction",
+    },
 }

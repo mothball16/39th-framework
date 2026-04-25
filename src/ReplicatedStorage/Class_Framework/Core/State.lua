@@ -34,7 +34,6 @@ function State:CreateFaction(config: Types.IFactionConfig)
 		nextState[config.ID] = faction
 		return nextState
 	end)
-    print(self.Factions())
 	return faction
 end
 
@@ -46,24 +45,87 @@ function State:RemoveFaction(faction: Types.IFaction)
 	end)
 end
 
-function State:AddFactionMember(faction: Types.IFaction, userId: number)
-    --[[
-	faction.State(function(prevState)
-		local newState = table.clone(prevState)
-		newState[tostring(userId)] = {
-			Class = "DEFAULT_PLACEHOLDER",
+function State:SetFactionMemberClass(factionId: string, userId: number, classId: string)
+	local memberKey = tostring(userId)
+	self.Factions(function(previous)
+		local faction = previous[factionId]
+		if not faction then
+			warn(`faction {factionId} not found while setting member state`)
+			return previous
+		end
+
+		local nextState = table.clone(previous)
+		local nextMembers = table.clone(faction.State.Members)
+		nextMembers[memberKey] = {
+			Class = classId,
 		}
-		return newState
-	end)]]
+
+		nextState[factionId] = {
+			Config = faction.Config,
+			State = {
+				Members = nextMembers,
+			},
+		}
+
+		return nextState
+	end)
+end
+
+function State:AddFactionMember(faction: Types.IFaction, userId: number, classId: string)
+	self:SetFactionMemberClass(faction.Config.ID, userId, classId)
 end
 
 function State:RemoveFactionMember(faction: Types.IFaction, userId: number)
-    --[[
-	faction.State.Members(function(prevMemberState)
-		local nextMemberState = table.clone(prevMemberState)
-		nextMemberState[tostring(userId)] = nil
-		return nextMemberState
-	end)]]
+	local memberKey = tostring(userId)
+	self.Factions(function(previous)
+		local factionId = faction.Config.ID
+		local currentFaction = previous[factionId]
+		if not currentFaction then
+			return previous
+		end
+
+		if currentFaction.State.Members[memberKey] == nil then
+			return previous
+		end
+
+		local nextState = table.clone(previous)
+		local nextMembers = table.clone(currentFaction.State.Members)
+		nextMembers[memberKey] = nil
+		nextState[factionId] = {
+			Config = currentFaction.Config,
+			State = {
+				Members = nextMembers,
+			},
+		}
+		return nextState
+	end)
+end
+
+function State:RemoveFactionMemberFromAll(userId: number)
+	local memberKey = tostring(userId)
+	self.Factions(function(previous)
+		local hasChanges = false
+		local nextState = table.clone(previous)
+
+		for factionId, faction in pairs(previous) do
+			if faction.State.Members[memberKey] ~= nil then
+				hasChanges = true
+				local nextMembers = table.clone(faction.State.Members)
+				nextMembers[memberKey] = nil
+				nextState[factionId] = {
+					Config = faction.Config,
+					State = {
+						Members = nextMembers,
+					},
+				}
+			end
+		end
+
+		if hasChanges then
+			return nextState
+		end
+		return previous
+	end)
 end
 
 return State
