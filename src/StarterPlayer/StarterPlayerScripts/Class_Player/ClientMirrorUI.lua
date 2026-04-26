@@ -32,11 +32,10 @@ type ViewModel = {
 
 local function buildViewModel(
 	factionConfigs: {[string]: any},
-	membershipByUserId: {[string]: any},
-	classCountsByFaction: {[string]: {[string]: number}},
+	playerAssignments: {[string]: any},
 	userId: number
 ): ViewModel?
-	local assignment = membershipByUserId[tostring(userId)]
+	local assignment = playerAssignments[tostring(userId)]
 	if not assignment then
 		return nil
 	end
@@ -48,7 +47,12 @@ local function buildViewModel(
 		return nil
 	end
 
-	local classCounts = classCountsByFaction[factionId] or {}
+	local classCounts: {[string]: number} = {}
+	for _, entry in pairs(playerAssignments) do
+		if entry.FactionId == factionId then
+			classCounts[entry.ClassId] = (classCounts[entry.ClassId] or 0) + 1
+		end
+	end
 	local classes = {}
 	for _, classConfig in pairs(factionConfig.Classes) do
 		local classId = classConfig.ClassID
@@ -107,8 +111,7 @@ function ClientMirrorUI.new(atoms, events)
 	self.lastViewModel = nil
 	self.unmount = mount(function()
 		local factionConfigs = useAtom(atoms.FactionConfigs)
-		local membershipByUserId = useAtom(atoms.MembershipByUserId)
-		local classCountsByFaction = useAtom(atoms.ClassCountsByFaction)
+		local playerAssignments = useAtom(atoms.PlayerAssignments)
 
 		return create("ScreenGui")({
 			Name = "ClassMirrorUI",
@@ -150,8 +153,7 @@ function ClientMirrorUI.new(atoms, events)
 					Text = function()
 						local viewModel = buildViewModel(
 							factionConfigs(),
-							membershipByUserId(),
-							classCountsByFaction(),
+							playerAssignments(),
 							localUserId
 						)
 						self.lastViewModel = viewModel
@@ -173,8 +175,7 @@ function ClientMirrorUI.new(atoms, events)
 					Text = function()
 						local viewModel = buildViewModel(
 							factionConfigs(),
-							membershipByUserId(),
-							classCountsByFaction(),
+							playerAssignments(),
 							localUserId
 						)
 						self.lastViewModel = viewModel
@@ -209,8 +210,7 @@ function ClientMirrorUI.new(atoms, events)
 					Text = function()
 						local viewModel = buildViewModel(
 							factionConfigs(),
-							membershipByUserId(),
-							classCountsByFaction(),
+							playerAssignments(),
 							localUserId
 						)
 						self.lastViewModel = viewModel

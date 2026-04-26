@@ -63,8 +63,7 @@ end
 local state = State.new()
 ServerSyncer.new({
 	FactionConfigs = state.FactionConfigs,
-	MembershipByUserId = state.Players,
-	ClassCountsByFaction = state.ClassCountsByFaction,
+	PlayerAssignments = state.PlayerAssignments,
 }, Events)
 
 local itemProviders = getItemProviders(Access.Framework.ItemProviders)

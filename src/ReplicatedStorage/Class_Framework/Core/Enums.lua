@@ -8,4 +8,9 @@ return {
     Faction = {
         AutoFactionAttribute = "AutoFaction",
     },
+
+    KeyAttributes = {
+        ItemProvider = "ItemProviderID",
+        ItemName = "ItemName"
+    }
 }

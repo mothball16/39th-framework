@@ -6,8 +6,6 @@ local ToolProvider: Types.ClassItemProvider = {
     ID = "Tool",
     AssignType = Enums.AssignType.PerCharacter,
 }
-local PROVIDER_ATTRIBUTE = "ClassProvider"
-local ITEM_NAME_ATTRIBUTE = "ClassItemName"
 
 local function _resolveItemAmount(itemArgs: any): number
 	return itemArgs.amount or 1
@@ -36,8 +34,8 @@ function ToolProvider.Assign(player: Player, itemArgs: any)
     local backpack = player:FindFirstChildOfClass("Backpack") or player:WaitForChild("Backpack")
     for _ = 1, amount do
         local itemInstance = item:Clone()
-        itemInstance:SetAttribute(PROVIDER_ATTRIBUTE, ToolProvider.ID)
-        itemInstance:SetAttribute(ITEM_NAME_ATTRIBUTE, itemName)
+        itemInstance:SetAttribute(Enums.KeyAttributes.ItemProvider, ToolProvider.ID)
+        itemInstance:SetAttribute(Enums.KeyAttributes.ItemName, itemName)
         itemInstance.Parent = backpack
     end
 end
@@ -64,12 +62,9 @@ function ToolProvider.Unassign(player: Player, itemArgs: any)
                 continue
             end
 
-            local provider = child:GetAttribute(PROVIDER_ATTRIBUTE)
-            local taggedItemName = child:GetAttribute(ITEM_NAME_ATTRIBUTE)
-            if provider ~= nil and provider ~= ToolProvider.ID then
-                continue
-            end
-            if taggedItemName ~= nil and taggedItemName ~= itemName then
+            local provider = child:GetAttribute(Enums.KeyAttributes.ItemProvider)
+            local taggedItemName = child:GetAttribute(Enums.KeyAttributes.ItemName)
+            if provider ~= ToolProvider.ID or taggedItemName ~= itemName then
                 continue
             end
 
