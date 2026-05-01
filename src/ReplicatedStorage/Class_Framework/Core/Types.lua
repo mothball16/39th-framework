@@ -23,12 +23,13 @@ export type Settings = {
 export type FactionConfig = {
     ID: string,
     Classes: {
-        [string]: {ClassID: string, Limit: number, Default: boolean}
+        [string]: {ClassIDs: {string}, Limit: number, Default: boolean}
     },
 }
 
 export type PlayerClassAssignment = {
     FactionId: string,
+    ClassKey: string,
     ClassId: string,
 }
 

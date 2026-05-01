@@ -29,21 +29,21 @@ function State.new(): State
 
 		for factionId, factionConfig in pairs(factionConfigs) do
 			local counts = {}
-			for _, classConfig in pairs(factionConfig.Classes) do
-				counts[classConfig.ClassID] = 0
+			for classKey, _ in pairs(factionConfig.Classes) do
+				counts[classKey] = 0
 			end
 			countsByFaction[factionId] = counts
 		end
 
 		for _, assignment in pairs(assignments) do
 			local factionId = assignment.FactionId
-			local classId = assignment.ClassId
+			local classKey = assignment.ClassKey
 			local factionCounts = countsByFaction[factionId]
 			if factionCounts == nil then
 				factionCounts = {}
 				countsByFaction[factionId] = factionCounts
 			end
-			factionCounts[classId] = (factionCounts[classId] or 0) + 1
+			factionCounts[classKey] = (factionCounts[classKey] or 0) + 1
 		end
 
 		return countsByFaction
@@ -83,12 +83,13 @@ function State:RemoveFaction(factionId: string)
 	end)
 end
 
-function State:SetPlayerClass(userId: number, factionId: string?, classId: string?)
+function State:SetPlayerClass(userId: number, factionId: string?, classKey: string?, classId: string?)
 	local memberKey = tostring(userId)
 	local previousAssignment = self.PlayerAssignments()[memberKey]
 
 	if previousAssignment
 		and previousAssignment.FactionId == factionId
+		and previousAssignment.ClassKey == classKey
 		and previousAssignment.ClassId == classId
 	then
 		return
@@ -96,9 +97,10 @@ function State:SetPlayerClass(userId: number, factionId: string?, classId: strin
 
 	self.PlayerAssignments(function(previous)
 		local nextState = table.clone(previous)
-		if factionId and classId then
+		if factionId and classKey and classId then
 			nextState[memberKey] = {
 				FactionId = factionId,
+				ClassKey = classKey,
 				ClassId = classId,
 			}
 		else
@@ -108,22 +110,22 @@ function State:SetPlayerClass(userId: number, factionId: string?, classId: strin
 	end)
 end
 
-function State:GetClassOccupancyCount(factionId: string, classId: string): number
+function State:GetClassOccupancyCount(factionId: string, classKey: string): number
 	local classCountsByFaction = self.FactionClassCounts()
 	local factionCounts = classCountsByFaction[factionId]
 	if not factionCounts then
 		return 0
 	end
-	return factionCounts[classId] or 0
+	return factionCounts[classKey] or 0
 end
 
-function State:SetFactionMemberClass(factionId: string, userId: number, classId: string)
-	self:SetPlayerClass(userId, factionId, classId)
+function State:SetFactionMemberClass(factionId: string, userId: number, classKey: string, classId: string)
+	self:SetPlayerClass(userId, factionId, classKey, classId)
 end
 
-function State:AddFactionMember(faction: Types.FactionConfig | Types.Faction, userId: number, classId: string)
+function State:AddFactionMember(faction: Types.FactionConfig | Types.Faction, userId: number, classKey: string, classId: string)
 	local resolvedFactionId = if faction.Config then faction.Config.ID else faction.ID
-	self:SetPlayerClass(userId, resolvedFactionId, classId)
+	self:SetPlayerClass(userId, resolvedFactionId, classKey, classId)
 end
 
 function State:RemoveFactionMember(faction: Types.FactionConfig | Types.Faction, userId: number)
@@ -131,12 +133,12 @@ function State:RemoveFactionMember(faction: Types.FactionConfig | Types.Faction,
 	local memberKey = tostring(userId)
 	local assignment = self.PlayerAssignments()[memberKey]
 	if assignment and assignment.FactionId == resolvedFactionId then
-		self:SetPlayerClass(userId, nil, nil)
+		self:SetPlayerClass(userId, nil, nil, nil)
 	end
 end
 
 function State:RemoveFactionMemberFromAll(userId: number)
-	self:SetPlayerClass(userId, nil, nil)
+	self:SetPlayerClass(userId, nil, nil, nil)
 end
 
 return State
