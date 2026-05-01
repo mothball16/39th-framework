@@ -16,3 +16,4 @@ Net = "sleitnick/net@0.2.0"
 
 [dev-dependencies]
 TestEZ = "roblox/testez@0.4.1"
+ui-labs = "pepeeltoro41/ui-labs@2.4.2"
