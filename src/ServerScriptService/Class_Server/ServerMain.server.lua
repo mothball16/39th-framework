@@ -71,8 +71,11 @@ end
 -- init
 local state = State.new()
 ServerSyncer.new({
-	FactionConfigs = state.FactionConfigs,
-	PlayerAssignments = state.PlayerAssignments,
+	factionConfigs = state.factionConfigs,
+	playerFactionIds = state.playerFactionIds,
+	playerClassKeys = state.playerClassKeys,
+	playerClassIds = state.playerClassIds,
+	classCountsByFaction = state.classCountsByFaction,
 }, Events)
 
 local itemProviders = getItemProviders(Access.Framework.ItemProviders)

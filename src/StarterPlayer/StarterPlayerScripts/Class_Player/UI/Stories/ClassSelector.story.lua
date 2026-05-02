@@ -8,8 +8,11 @@ local ClassSelectorUI = require(Roots.ClassSelectorUI)
 return function(target: Instance)
     return Vide.mount(function()
         return ClassSelectorUI({
-            FactionConfigs = {},
-            PlayerAssignments = {},
+            factionConfigs = {},
+            playerFactionIds = {},
+            playerClassKeys = {},
+            playerClassIds = {},
+            classCountsByFaction = {},
         })
     end, target)
 end

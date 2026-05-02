@@ -11,8 +11,11 @@ local UIComponents = script.Parent.Parent.Components
 local ClassCard = require(UIComponents.ClassCard)
 
 return function(props: {
-	FactionConfigs: {[string]: any},
-	PlayerAssignments: {[string]: any},
+	factionConfigs: {[string]: any},
+	playerFactionIds: {[string]: string},
+	playerClassKeys: {[string]: string},
+	playerClassIds: {[string]: string},
+	classCountsByFaction: {[string]: {[string]: number}},
 })
 	return ClassCard({
 		bgImage = "rbxassetid://1234567890",

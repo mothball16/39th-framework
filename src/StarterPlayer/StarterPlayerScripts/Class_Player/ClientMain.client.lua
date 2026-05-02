@@ -11,10 +11,13 @@ local ClassSelectorUI = require(script.Parent.ClassSelectorUI)
 local maid = Maid.new()
 local state = State.new()
 local mirror = ClientMirror.new({
-	FactionConfigs = state.FactionConfigs,
-	PlayerAssignments = state.PlayerAssignments,
+	factionConfigs = state.factionConfigs,
+	playerFactionIds = state.playerFactionIds,
+	playerClassKeys = state.playerClassKeys,
+	playerClassIds = state.playerClassIds,
+	classCountsByFaction = state.classCountsByFaction,
 }, Events)
-local selectorUI = ClassSelectorUI.new(state.FactionConfigs, state.PlayerAssignments)
+local selectorUI = ClassSelectorUI.new(state.factionConfigs, state.playerFactionIds, state.playerClassKeys, state.playerClassIds, state.classCountsByFaction)
 maid:GiveTask(selectorUI)
 maid:GiveTask(mirror)
 

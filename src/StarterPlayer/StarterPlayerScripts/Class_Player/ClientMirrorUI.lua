@@ -50,29 +50,27 @@ end
 
 local function buildViewModel(
 	factionConfigs: {[string]: any},
-	playerAssignments: {[string]: any},
+	playerFactionIds: {[string]: string},
+	playerClassKeys: {[string]: string},
+	playerClassIds: {[string]: string},
+	classCountsByFaction: {[string]: {[string]: number}},
 	userId: number,
 	selectedVariantByClassKey: {[string]: number}
 ): ViewModel?
-	local assignment = playerAssignments[tostring(userId)]
-	if not assignment then
+	local playerKey = tostring(userId)
+	local factionId = playerFactionIds[playerKey]
+	local currentClassKey = playerClassKeys[playerKey]
+	local currentClassId = playerClassIds[playerKey]
+	if not factionId or not currentClassKey or not currentClassId then
 		return nil
 	end
 
-	local factionId = assignment.FactionId
-	local currentClassKey = assignment.ClassKey
-	local currentClassId = assignment.ClassId
 	local factionConfig = factionConfigs[factionId]
 	if not factionConfig then
 		return nil
 	end
 
-	local classCounts: {[string]: number} = {}
-	for _, entry in pairs(playerAssignments) do
-		if entry.FactionId == factionId then
-			classCounts[entry.ClassKey] = (classCounts[entry.ClassKey] or 0) + 1
-		end
-	end
+	local classCounts = classCountsByFaction[factionId] or {}
 
 	local classes = {}
 	for classKey, classConfig in pairs(factionConfig.Classes) do
@@ -183,10 +181,19 @@ function ClientMirrorUI:_onAtomChanged()
 end
 
 function ClientMirrorUI:_bindAtomSubscriptions()
-	self:_addCleanup(Charm.subscribe(self.atoms.FactionConfigs, function()
+	self:_addCleanup(Charm.subscribe(self.atoms.factionConfigs, function()
 		self:_onAtomChanged()
 	end))
-	self:_addCleanup(Charm.subscribe(self.atoms.PlayerAssignments, function()
+	self:_addCleanup(Charm.subscribe(self.atoms.playerFactionIds, function()
+		self:_onAtomChanged()
+	end))
+	self:_addCleanup(Charm.subscribe(self.atoms.playerClassKeys, function()
+		self:_onAtomChanged()
+	end))
+	self:_addCleanup(Charm.subscribe(self.atoms.playerClassIds, function()
+		self:_onAtomChanged()
+	end))
+	self:_addCleanup(Charm.subscribe(self.atoms.classCountsByFaction, function()
 		self:_onAtomChanged()
 	end))
 end
@@ -341,9 +348,20 @@ function ClientMirrorUI:_refreshSelectionDetails(viewModel: ViewModel)
 end
 
 function ClientMirrorUI:_refresh(forceRender: boolean)
-	local factionConfigs = self.atoms.FactionConfigs()
-	local playerAssignments = self.atoms.PlayerAssignments()
-	local viewModel = buildViewModel(factionConfigs, playerAssignments, self.localUserId, self.selectedVariantByClassKey)
+	local factionConfigs = self.atoms.factionConfigs()
+	local playerFactionIds = self.atoms.playerFactionIds()
+	local playerClassKeys = self.atoms.playerClassKeys()
+	local playerClassIds = self.atoms.playerClassIds()
+	local classCountsByFaction = self.atoms.classCountsByFaction()
+	local viewModel = buildViewModel(
+		factionConfigs,
+		playerFactionIds,
+		playerClassKeys,
+		playerClassIds,
+		classCountsByFaction,
+		self.localUserId,
+		self.selectedVariantByClassKey
+	)
 	self.lastViewModel = viewModel
 	self.statusLabel.Text = self.statusText
 
