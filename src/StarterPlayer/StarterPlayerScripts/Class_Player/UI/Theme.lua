@@ -7,7 +7,7 @@ end
 
 -- https://coolors.co/0b1732-3556ac-fdfffc-c1292e-f1d302
 return {
-    Background = Color3.fromHex("0B1732"),
+    Background = Color3.fromHex("0B0B0B"),
     BackgroundAlt = Color3.fromHex("122654"),
     AccentColor = Color3.fromHex("3556AC"),
     AccentColorAlt = Color3.fromHex("7388A6"),
