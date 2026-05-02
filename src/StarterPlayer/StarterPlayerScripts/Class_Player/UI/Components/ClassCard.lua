@@ -5,9 +5,10 @@ local Theme = require(Root.Theme)
 local Vide = require(Packages.Vide)
 local create = Vide.create
 local derive = Vide.derive
+local source = Vide.source
 
-local SLAB = Color3.fromRGB(14, 14, 14)
-local STRUCTURE = Color3.fromRGB(255, 255, 255)
+local Stroke = require(script.Parent.Stroke)
+
 
 local DIVIDER_PX = 3
 local ASPECT_RATIO = 4
@@ -21,7 +22,6 @@ local function ClassCard(props: {
 	variants: () -> {string},
 	selectedVariantIndex: () -> number,
 
-	isCurrent: () -> boolean,
 	Activated: () -> (),
 	PreviousVariant: () -> (),
 	NextVariant: () -> (),
@@ -29,13 +29,14 @@ local function ClassCard(props: {
 	local isFull = derive(function()
 		return props.limit() > 0 and props.count() >= props.limit()
 	end)
+	local hoveringOverDetails = source(false)
+
 
 	local root = create "CanvasGroup" {
 		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundColor3 = SLAB,
-		BackgroundTransparency = 0,
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ClipsDescendants = true,
+
 
 		create "UIAspectRatioConstraint" {
 			AspectRatio = ASPECT_RATIO,
@@ -43,7 +44,7 @@ local function ClassCard(props: {
 		},
 
 		create "Frame" {
-			ZIndex = 4,
+			ZIndex = 40,
 			Name = "Accents",
 			BackgroundTransparency = 1,
 			Size = UDim2.new(1, 0, 1, 0),
@@ -53,7 +54,7 @@ local function ClassCard(props: {
 				AnchorPoint = Vector2.new(1, 0),
 				Position = UDim2.new(1, -DIVIDER_PX, 0, 0),
 				Size = UDim2.new(0, DIVIDER_PX, 1, 0),
-				BackgroundColor3 = STRUCTURE,
+				BackgroundColor3 = Theme.TextColor,
 				BorderSizePixel = 0,
 			},
 
@@ -62,7 +63,7 @@ local function ClassCard(props: {
 				AnchorPoint = Vector2.new(1, 0),
 				Position = UDim2.new(1, -DIVIDER_PX * 3, 0, 0),
 				Size = UDim2.new(0, DIVIDER_PX, 1, 0),
-				BackgroundColor3 = STRUCTURE,
+				BackgroundColor3 = Theme.TextColor,
 				BorderSizePixel = 0,
 			},
 
@@ -70,7 +71,9 @@ local function ClassCard(props: {
 				Name = "Indicator",
 				Size = UDim2.new(0, 6, 1, 0),
 				Position = UDim2.new(0, 0, 0, 0),
-				BackgroundColor3 = if isFull() then Theme.ColorError else Theme.AccentColor,
+				BackgroundColor3 = function()
+					return if isFull() then Theme.ColorError else Theme.AccentColor
+				end,
 				BorderSizePixel = 0,
 			},
 		},
@@ -79,7 +82,7 @@ local function ClassCard(props: {
 			Name = "Content",
 			Position = UDim2.new(0, 0, 0, 0),
 			Size = UDim2.new(1, 0, 1, 0),
-			BackgroundColor3 = SLAB,
+			BackgroundColor3 = Theme.Background,
 			BorderSizePixel = 0,
 
 			create "UIPadding" {
@@ -95,7 +98,7 @@ local function ClassCard(props: {
 				Size = UDim2.new(1, 0, 0.4, 0),
 				BackgroundTransparency = 1,
 				Text = string.upper(props.title),
-				TextColor3 = STRUCTURE,
+				TextColor3 = Theme.TextColor,
 				TextScaled = true,
 				TextWrapped = true,
 				TextXAlignment = Enum.TextXAlignment.Left,
@@ -108,7 +111,7 @@ local function ClassCard(props: {
 				Size = UDim2.new(1, 0, 0.3, 0),
 				BackgroundTransparency = 1,
 				Text = `{props.count()}/{props.limit()}`,
-				TextColor3 = STRUCTURE,
+				TextColor3 = Theme.TextColor,
 				TextScaled = true,
 				TextWrapped = true,
 				TextXAlignment = Enum.TextXAlignment.Left,
@@ -122,8 +125,11 @@ local function ClassCard(props: {
 				Size = UDim2.fromScale(0.25, 0.35),
 				BackgroundColor3 = Theme.AccentColor,
 				BorderSizePixel = 0,
-				TextColor3 = STRUCTURE,
+				TextColor3 = Theme.TextColor,
 				TextScaled = true,
+
+				AutoButtonColor = true,
+				Activated = props.Activated,
 
 				create "TextLabel" {
 					Name = "SelectText",
@@ -132,24 +138,32 @@ local function ClassCard(props: {
 					Size = UDim2.new(0.8, 0, 0.8, 0),
 					BackgroundTransparency = 1,
 					Text = "SELECT",
-					TextColor3 = STRUCTURE,
+					TextColor3 = Theme.TextColor,
 					TextScaled = true,
-					FontFace = Theme.fontH3,
+					FontFace = Theme.fontH2,
 				}
 			},
 
 			create "Frame" {
-				Name = "Select",
+				Name = "Details",
 				AnchorPoint = Vector2.new(1, 0.5),
-				Position = UDim2.new(1, 0, 0.35 + 0.25/2, 0),
+				Position = UDim2.new(1, 0, 0.4 + 0.3/2, 0),
 				Size = UDim2.fromScale(0.2, 0.2),
 				BackgroundTransparency = 1,
 				BorderSizePixel = 0,
 
-				create "UIStroke" {
+				Stroke({
 					Color = Theme.AccentColor,
 					Thickness = 2,
-				},
+					LineJoinMode = Enum.LineJoinMode.Miter,
+				}),
+
+				MouseEnter = function()
+					hoveringOverDetails(true)
+				end,
+				MouseLeave = function()
+					hoveringOverDetails(false)
+				end,
 
 				create "TextLabel" {
 					Name = "SelectText",
@@ -158,68 +172,95 @@ local function ClassCard(props: {
 					Size = UDim2.new(0.8, 0, 0.8, 0),
 					BackgroundTransparency = 1,
 					Text = "DETAILS",
-					TextColor3 = STRUCTURE,
+					TextColor3 = Theme.TextColor,
 					TextScaled = true,
 					FontFace = Theme.fontH3,
 				}
 			},
+
+			create "Frame" {
+				ZIndex = 3,
+				Name = "VariantSelector",
+				AnchorPoint = Vector2.new(0, 1),
+				Position = UDim2.new(0, 0, 1, 0),
+				Size = UDim2.new(1, 0, 0.25, 0),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+
+				create "TextLabel" {
+					Name = "ClassVariants",
+					Position = UDim2.new(0.5, 0, 0.5, 0),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Size = UDim2.new(0.8, 0, 0.88, 0),
+					BackgroundTransparency = 1,
+					RichText = true,
+					Text = `<i>placeholder1 | polder2 | <b>placeholder3</b> | placeholder4</i>`,
+					TextColor3 = Theme.TextColor,
+					TextScaled = true,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					FontFace = Theme.fontNormal,
+				},
+
+				create "TextButton" {
+					Name = "PreviousVariant",
+					AnchorPoint = Vector2.new(0, 0.5),
+					Position = UDim2.new(0, 0, 0.5, 0),
+					Size = UDim2.fromScale(0.05, 0.75),
+					BackgroundColor3 = Theme.BackgroundAlt,
+					BackgroundTransparency = 0,
+					BorderSizePixel = 0,
+					Text = "<",
+					TextColor3 = Theme.TextColor,
+					TextScaled = true,
+					AutoButtonColor = false,
+					FontFace = Theme.fontH2,
+					Activated = props.PreviousVariant,
+				},
+
+				create "TextButton" {
+					Name = "NextVariant",
+					AnchorPoint = Vector2.new(1, 0.5),
+					Position = UDim2.new(1, 0, 0.5, 0),
+					Size = UDim2.fromScale(0.05, 0.75),
+					BackgroundColor3 = Theme.BackgroundAlt,
+					BackgroundTransparency = 0,
+					BorderSizePixel = 0,
+					Text = ">",
+					TextColor3 = Theme.TextColor,
+					TextScaled = true,
+					AutoButtonColor = false,
+					FontFace = Theme.fontH2,
+					Activated = props.NextVariant,
+				},
+			},
 		},
 
-		create "Frame" {
-			ZIndex = 3,
-			Name = "VariantSelector",
-			Position = UDim2.new(0, DIVIDER_PX * 3, 1, 0),
-			AnchorPoint = Vector2.new(0, 1),
-			Size = UDim2.new(1, - DIVIDER_PX * 8, 0.25, 0),
-			BackgroundTransparency = 1,
+		create "CanvasGroup" {
+			ZIndex = 5,
+			GroupTransparency = function()
+				return if hoveringOverDetails() then 0 else 1
+			end,
+			Name = "Details",
+			Position = UDim2.new(0, 0, 0, 0),
+			Size = UDim2.new(1, 0, 1, 0),
 			BorderSizePixel = 0,
+			BackgroundColor3 = Theme.Background,
+			BackgroundTransparency = 0.35,
 
 			create "TextLabel" {
-				Name = "ClassVariants",
+				Name = "DetailsText",
 				Position = UDim2.new(0.5, 0, 0.5, 0),
 				AnchorPoint = Vector2.new(0.5, 0.5),
-				Size = UDim2.new(0.8, 0, 0.88, 0),
+				Size = UDim2.new(0.8, 0, 0.8, 0),
 				BackgroundTransparency = 1,
-				RichText = true,
-				Text = `<i>placeholder1 | polder2 | <b>placeholder3</b> | placeholder4</i>`,
-				TextColor3 = STRUCTURE,
+				Text = "details not finished yet son",
+				TextColor3 = Theme.TextColor,
 				TextScaled = true,
+				TextWrapped = true,
 				TextXAlignment = Enum.TextXAlignment.Center,
 				FontFace = Theme.fontNormal,
 			},
-
-			create "TextButton" {
-				Name = "PreviousVariant",
-				AnchorPoint = Vector2.new(0, 0.5),
-				Position = UDim2.new(0, 0, 0.5, 0),
-				Size = UDim2.fromScale(0.05, 0.75),
-				BackgroundColor3 = Theme.BackgroundAlt,
-				BackgroundTransparency = 0,
-				BorderSizePixel = 0,
-				Text = "<",
-				TextColor3 = STRUCTURE,
-				TextScaled = true,
-				AutoButtonColor = false,
-				FontFace = Theme.fontH2,
-				Activated = props.Activated,
-			},
-
-			create "TextButton" {
-				Name = "NextVariant",
-				AnchorPoint = Vector2.new(1, 0.5),
-				Position = UDim2.new(1, 0, 0.5, 0),
-				Size = UDim2.fromScale(0.05, 0.75),
-				BackgroundColor3 = Theme.BackgroundAlt,
-				BackgroundTransparency = 0,
-				BorderSizePixel = 0,
-				Text = ">",
-				TextColor3 = STRUCTURE,
-				TextScaled = true,
-				AutoButtonColor = false,
-				FontFace = Theme.fontH2,
-				Activated = props.Activated,
-			},
-		},
+		}
 	}
 	return root
 end
