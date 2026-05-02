@@ -2,7 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Vide = require(Packages.Vide)
 local create = Vide.create
-
+local source = Vide.source
 
 local VideCharm = require(Packages["vide-charm"])
 local Maid = require(Packages.maid)
@@ -19,6 +19,8 @@ return function(props: {
 		overlayFrameTransparency = 0.5,
 		overlayFrameColor = Color3.fromRGB(0, 0, 0),
 		title = "Class 1",
+		count = source(0),
+		limit = source(0),
 		Activated = function()
 			print("Class 1 activated")
 		end,
