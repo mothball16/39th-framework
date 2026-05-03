@@ -38,7 +38,7 @@ return function(props: {
 		local localCurrentClassId = props.playerClassIds()[playerKey]
 		local localClassCounts = props.classCountsByFaction()[localFactionId] or {}
 
-		-- build class entires
+		-- build class entries
 		local classes = {}
 		for classKey, classConfig in pairs(localFactionConfig.Classes) do
 			local variants = classConfig.ClassIDs or {}
@@ -217,7 +217,7 @@ return function(props: {
 				HorizontalAlignment = Enum.HorizontalAlignment.Left,
 				VerticalAlignment = Enum.VerticalAlignment.Top,
 				SortOrder = Enum.SortOrder.LayoutOrder,
-				Padding = UDim.new(0, 0),
+				Padding = UDim.new(0, 8),
 			},
 			function()
 				return cardRows()
