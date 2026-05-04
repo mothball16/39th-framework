@@ -61,6 +61,21 @@ local function ClassCard(props: {
 			DominantAxis = Enum.DominantAxis.Width,
 		},
 
+		-- border for selected class
+		function()
+			if not isSelected() then
+				return nil
+			end
+			local SelectedStroke = Stroke({
+				Color = if isSelected() then Theme.AccentColorAlt else Theme.TextColor,
+				Thickness = 2,
+				LineJoinMode = Enum.LineJoinMode.Miter,
+				Transparency = 0.5,
+				ZIndex = 100,
+			})
+			return SelectedStroke
+		end,
+
 		create "Frame" {
 			ZIndex = 40,
 			Name = "Accents",
