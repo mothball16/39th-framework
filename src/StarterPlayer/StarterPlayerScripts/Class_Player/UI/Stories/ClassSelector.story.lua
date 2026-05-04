@@ -17,17 +17,39 @@ return function(target: Instance)
 			ID = factionId,
 			Classes = {
 				Rifleman = {
-					ClassIDs = {"RiflemanA", "RiflemanB"},
+					ClassIDs = {
+						["RiflemanA"] = {
+							Name = "Rifleman",
+							Description = "Rifleman",
+						},
+						["RiflemanB"] = {
+							Name = "Rifleman Alt",
+							Description = "Rifleman dos",
+						}
+					},
 					Limit = 10,
 					Default = true,
 				},
 				Engineer = {
-					ClassIDs = {"EngineerA"},
+					ClassIDs = {["EngineerA"] = {
+						Name = "Engineer",
+						Description = "The only",
+						}
+					},
 					Limit = 2,
 					Default = false,
 				},
 				Marksman = {
-					ClassIDs = {"MarksmanA", "MarksmanB", "MarksmanC"},
+					ClassIDs = {
+						["MarksmanA"] = {
+							Name = "Marksman",
+							Description = "The best",
+						},
+						["MarksmanB"] = {
+							Name = "Marksman Alt",
+							Description = "The best dos",
+						},
+					},
 					Limit = 1,
 					Default = false,
 				},
