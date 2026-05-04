@@ -154,6 +154,20 @@ local function weaponAnimationName(wepStats, key: string): string?
 	return (type(v) == "string" and v ~= "") and v or nil
 end
 
+local function resolveAnimationAsset(path: Instance, animName: string)
+	local split = string.find(animName, "/")
+	if split then
+		local folderName = animName:sub(1, split - 1)
+		local remainingAnimName = animName:sub(split + 1)
+		local folder = path:FindFirstChild(folderName)
+		if not folder then
+			error(`animation folder {folderName} not found: {animName}`)
+		end
+		return resolveAnimationAsset(folder, remainingAnimName)
+	end
+	return path:FindFirstChild(animName)
+end
+
 local function getOrCreateTracks(animName: string, playParams: { looped: boolean, priority: Enum.AnimationPriority })
 	local cached = loadedAnims[animName]
 	if cached then
@@ -164,11 +178,11 @@ local function getOrCreateTracks(animName: string, playParams: { looped: boolean
 		return cached
 	end
 
-	if not animName or not animationsFolder or not animationsFolder:FindFirstChild(animName) then
+	local animAsset = resolveAnimationAsset(animationsFolder, animName)
+	if not animName or not animAsset then
 		return nil
 	end
 
-	local animAsset = animationsFolder[animName]
 	local vmTrack = vmAnimator:LoadAnimation(animAsset)
 	vmTrack.Looped = playParams.looped
 	vmTrack.Priority = playParams.priority
