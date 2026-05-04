@@ -20,10 +20,20 @@ export type Settings = {
     },
 }
 
+export type ClassVariant = {
+    Id: string,
+    Name: string?,
+    Description: string?,
+}
+
 export type FactionConfig = {
     ID: string,
     Classes: {
-        [string]: {ClassIDs: {string}, Limit: number, Default: boolean}
+        [string]: {
+            ClassIDs: {ClassVariant},
+            Limit: number,
+            Default: boolean,
+        }
     },
 }
 

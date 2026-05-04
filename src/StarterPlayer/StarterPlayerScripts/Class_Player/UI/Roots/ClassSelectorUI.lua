@@ -45,7 +45,10 @@ return function(props: {
 		-- build class entries
 		local classes = {}
 		for classKey, classConfig in pairs(localFactionConfig.Classes) do
-			local variants = classConfig.ClassIDs or {}
+			local variants = {}
+			for _, variant in ipairs(classConfig.ClassIDs or {}) do
+				table.insert(variants, variant.Id)
+			end
 			local selectedIndex = selectedVariantByClassKey()[classKey]
 			if not selectedIndex then
 				selectedIndex = 1
@@ -70,6 +73,7 @@ return function(props: {
 			local limit = classConfig.Limit or 0
 			table.insert(classes, {
 				classKey = classKey,
+				variants = variants,
 				classId = selectedClassId or "None",
 				selectedVariantIndex = selectedIndex,
 				count = count,
@@ -93,7 +97,11 @@ return function(props: {
 	end)
 
 	local function cycleVariant(classKey: string, offset: number)
-		for _, classEntry in ipairs(viewModel().classes) do
+		local resolvedViewModel = viewModel()
+		if not resolvedViewModel then
+			return
+		end
+		for _, classEntry in ipairs(resolvedViewModel.classes) do
 			if classEntry.classKey == classKey then
 				local variantCount = #classEntry.variants
 				if variantCount <= 1 then
@@ -129,10 +137,18 @@ return function(props: {
 				isCurrentId = function() return item().isCurrentId end,
 
 				SelectClass = function()
-					if not item() or (item().isFull and not item().isCurrent) then
+					local resolvedItem = item()
+					if not resolvedItem then
 						return
 					end
-					props.requestClass(item().classKey, item().classId)
+					local isCurrentSelection = resolvedItem.isCurrentKey and resolvedItem.isCurrentId
+					if resolvedItem.isFull and not isCurrentSelection then
+						return
+					end
+					if not props.requestClass then
+						return
+					end
+					props.requestClass(resolvedItem.classKey, resolvedItem.classId)
 				end,
 			})
 	end)

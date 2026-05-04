@@ -9,7 +9,7 @@ local ServerSyncer = require(script.Parent.ServerSyncer)
 local Enums = require(Access.Framework.Core:WaitForChild("Enums"))
 -------------------------------------------------------------------------
 type FactionClassConfig = {
-	ClassIDs: {string},
+	ClassIDs: {Types.ClassVariant},
 	Limit: number,
 	Default: boolean,
 }
@@ -57,7 +57,8 @@ end
 local function getDefaultClassSelection(factionConfig: Types.FactionConfig): (string?, string?)
 	for classKey, classConfig: FactionClassConfig in pairs(factionConfig.Classes) do
 		if classConfig.Default then
-			local classId = classConfig.ClassIDs[1]
+			local firstVariant = classConfig.ClassIDs[1]
+			local classId = if firstVariant then firstVariant.Id else nil
 			if not classId then
 				warn(`default class role {classKey} has no variants for faction {factionConfig.ID}`)
 				return nil, nil
@@ -90,8 +91,8 @@ local function getFactionClassConfigByClassKey(factionConfig: Types.FactionConfi
 end
 
 local function roleIncludesClassId(classConfig: FactionClassConfig, classId: string): boolean
-	for _, configuredClassId in ipairs(classConfig.ClassIDs) do
-		if configuredClassId == classId then
+	for _, variant in ipairs(classConfig.ClassIDs) do
+		if variant.Id == classId then
 			return true
 		end
 	end

@@ -74,7 +74,10 @@ local function buildViewModel(
 
 	local classes = {}
 	for classKey, classConfig in pairs(factionConfig.Classes) do
-		local variants = classConfig.ClassIDs
+		local variants = {}
+		for _, variant in ipairs(classConfig.ClassIDs or {}) do
+			table.insert(variants, variant.Id)
+		end
 		local selectedVariantIndex = selectedVariantByClassKey[classKey]
 
 		if not selectedVariantIndex and classKey == currentClassKey then

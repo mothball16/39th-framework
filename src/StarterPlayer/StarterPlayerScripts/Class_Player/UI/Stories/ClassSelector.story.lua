@@ -18,11 +18,13 @@ return function(target: Instance)
 			Classes = {
 				Rifleman = {
 					ClassIDs = {
-						["RiflemanA"] = {
+						{
+							Id = "RiflemanA",
 							Name = "Rifleman",
 							Description = "Rifleman",
 						},
-						["RiflemanB"] = {
+						{
+							Id = "RiflemanB",
 							Name = "Rifleman Alt",
 							Description = "Rifleman dos",
 						}
@@ -31,9 +33,11 @@ return function(target: Instance)
 					Default = true,
 				},
 				Engineer = {
-					ClassIDs = {["EngineerA"] = {
-						Name = "Engineer",
-						Description = "The only",
+					ClassIDs = {
+						{
+							Id = "EngineerA",
+							Name = "Engineer",
+							Description = "The only",
 						}
 					},
 					Limit = 2,
@@ -41,11 +45,13 @@ return function(target: Instance)
 				},
 				Marksman = {
 					ClassIDs = {
-						["MarksmanA"] = {
+						{
+							Id = "MarksmanA",
 							Name = "Marksman",
 							Description = "The best",
 						},
-						["MarksmanB"] = {
+						{
+							Id = "MarksmanB",
 							Name = "Marksman Alt",
 							Description = "The best dos",
 						},
