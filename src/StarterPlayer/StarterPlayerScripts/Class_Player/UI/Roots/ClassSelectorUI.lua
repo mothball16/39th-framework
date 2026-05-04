@@ -193,44 +193,38 @@ return function(props: {
 				PaddingTop = UDim.new(PADDING_SCALE, 0),
 				PaddingBottom = UDim.new(PADDING_SCALE, 0),
 			},
-			create "UIListLayout" {
-				FillDirection = Enum.FillDirection.Vertical,
-				HorizontalAlignment = Enum.HorizontalAlignment.Left,
-				VerticalAlignment = Enum.VerticalAlignment.Top,
-				Padding = UDim.new(0, 8),
-			},
 	
-			create "TextLabel" {
-				LayoutOrder = 1,
-				Size = UDim2.new(1, 0, 0, 24),
-				BackgroundTransparency = 1,
-				Font = Enum.Font.RobotoCondensed,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextColor3 = Color3.new(1, 1, 1),
-				Text = function()
-					local localViewModel = viewModel()
-					if not localViewModel then
-						return "CLASS SELECTOR - Waiting for faction"
-					end
-					return `CLASS SELECTOR - {localViewModel.factionId}`
-				end,
-			},
+			-- create "TextLabel" {
+			-- 	LayoutOrder = 1,
+			-- 	Size = UDim2.new(1, 0, 0, 24),
+			-- 	BackgroundTransparency = 1,
+			-- 	Font = Enum.Font.RobotoCondensed,
+			-- 	TextXAlignment = Enum.TextXAlignment.Left,
+			-- 	TextColor3 = Color3.new(1, 1, 1),
+			-- 	Text = function()
+			-- 		local localViewModel = viewModel()
+			-- 		if not localViewModel then
+			-- 			return "CLASS SELECTOR - Waiting for faction"
+			-- 		end
+			-- 		return `CLASS SELECTOR - {localViewModel.factionId}`
+			-- 	end,
+			-- },
 	
-			create "TextLabel" {
-				LayoutOrder = 2,
-				Size = UDim2.new(1, 0, 0, 18),
-				BackgroundTransparency = 1,
-				Font = Enum.Font.RobotoMono,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextColor3 = Color3.new(1, 1, 1),
-				Text = function()
-					local localViewModel = viewModel()
-					if not localViewModel then
-						return "Current: None"
-					end
-					return `Current: {localViewModel.currentClassKey} / {localViewModel.currentClassId}`
-				end,
-			},
+			-- create "TextLabel" {
+			-- 	LayoutOrder = 2,
+			-- 	Size = UDim2.new(1, 0, 0, 18),
+			-- 	BackgroundTransparency = 1,
+			-- 	Font = Enum.Font.RobotoMono,
+			-- 	TextXAlignment = Enum.TextXAlignment.Left,
+			-- 	TextColor3 = Color3.new(1, 1, 1),
+			-- 	Text = function()
+			-- 		local localViewModel = viewModel()
+			-- 		if not localViewModel then
+			-- 			return "Current: None"
+			-- 		end
+			-- 		return `Current: {localViewModel.currentClassKey} / {localViewModel.currentClassId}`
+			-- 	end,
+			-- },
 	
 			create "ScrollingFrame" {
 				LayoutOrder = 4,
