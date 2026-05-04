@@ -7,8 +7,12 @@ local source = Vide.source
 local derive = Vide.derive
 local indexes = Vide.indexes
 
-local UIComponents = script.Parent.Parent.Components
-local ClassCard = require(UIComponents.ClassCard)
+local UI = script.Parent.Parent
+local Theme = require(UI.Theme)
+local ClassCard = require(UI.Components.ClassCard)
+
+local ASPECT_RATIO = 1.5
+local PADDING_SCALE = 0.02
 
 return function(props: {
 	factionConfigs: () -> any,
@@ -138,109 +142,140 @@ return function(props: {
 	return create "Frame" {
 		Name = "ClassSelectorUI",
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(0.55, 0, 0.8, 0),
-		BackgroundColor3 = Color3.fromRGB(12, 12, 12),
-		BackgroundTransparency = 1,
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromScale(0.55, 1),
+		BackgroundColor3 = Theme.Background,
+		BackgroundTransparency = 0.5,
 		BorderSizePixel = 0,
+		BorderColor3 = Theme.AccentColor,
 
-		create "UICorner" {
-			CornerRadius = UDim.new(0, 8),
-		},
-		create "UIPadding" {
-			PaddingLeft = UDim.new(0, 14),
-			PaddingRight = UDim.new(0, 14),
-			PaddingTop = UDim.new(0, 14),
-			PaddingBottom = UDim.new(0, 14),
-		},
-		create "UIListLayout" {
-			FillDirection = Enum.FillDirection.Vertical,
-			HorizontalAlignment = Enum.HorizontalAlignment.Left,
-			VerticalAlignment = Enum.VerticalAlignment.Top,
-			Padding = UDim.new(0, 8),
+		create "Frame" {
+			Name = "Header",
+			Size = UDim2.fromScale(1, 0.1),
+			BackgroundColor3 = Theme.AccentColor,
+
+			create "UIPadding" {
+				PaddingLeft = UDim.new(PADDING_SCALE, 0),
+				PaddingRight = UDim.new(PADDING_SCALE, 0),
+				PaddingTop = UDim.new(0.1, 0),
+				PaddingBottom = UDim.new(0.1, 0),
+			},
+
+			create "TextLabel" {
+				Name = "HeaderText",
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromScale(0.5, 0.5),
+				Size = UDim2.fromScale(1, 1),
+				BackgroundTransparency = 1,
+				Text = "CLASSES",
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextColor3 = Theme.TextColor,
+				TextScaled = true,
+				FontFace = Theme.fontH1,
+			},
 		},
 
-		create "TextLabel" {
-			LayoutOrder = 1,
-			Size = UDim2.new(1, 0, 0, 24),
+		create "UIAspectRatioConstraint" {
+			AspectRatio = ASPECT_RATIO,
+			DominantAxis = Enum.DominantAxis.Width,
+		},
+
+		create "Frame" {
+			Name = "Content",
+			Position = UDim2.fromScale(0, 0.1),
+			Size = UDim2.fromScale(1, 0.9),
 			BackgroundTransparency = 1,
-			Font = Enum.Font.RobotoCondensed,
-			TextXAlignment = Enum.TextXAlignment.Left,
-			TextColor3 = Color3.new(1, 1, 1),
-			Text = function()
-				local localViewModel = viewModel()
-				if not localViewModel then
-					return "CLASS SELECTOR - Waiting for faction"
-				end
-				return `CLASS SELECTOR - {localViewModel.factionId}`
-			end,
-		},
 
-		create "TextLabel" {
-			LayoutOrder = 2,
-			Size = UDim2.new(1, 0, 0, 18),
-			BackgroundTransparency = 1,
-			Font = Enum.Font.RobotoMono,
-			TextXAlignment = Enum.TextXAlignment.Left,
-			TextColor3 = Color3.new(1, 1, 1),
-			Text = function()
-				local localViewModel = viewModel()
-				if not localViewModel then
-					return "Current: None"
-				end
-				return `Current: {localViewModel.currentClassKey} / {localViewModel.currentClassId}`
-			end,
-		},
 
-		create "TextLabel" {
-			LayoutOrder = 3,
-			Size = UDim2.new(1, 0, 0, 18),
-			BackgroundTransparency = 1,
-			Font = Enum.Font.RobotoMono,
-			TextXAlignment = Enum.TextXAlignment.Left,
-			TextColor3 = Color3.new(1, 1, 1),
-			Text = "Select a role, cycle variant, then press SELECT.",
-		},
-
-		create "ScrollingFrame" {
-			LayoutOrder = 4,
-			Size = UDim2.new(1, 0, 1, -76),
-			BackgroundTransparency = 1,
-			BorderSizePixel = 0,
-			CanvasSize = UDim2.new(0, 0, 0, 0),
-			AutomaticCanvasSize = Enum.AutomaticSize.Y,
-			ScrollBarThickness = 6,
-			VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
-
+			create "UIPadding" {
+				PaddingLeft = UDim.new(PADDING_SCALE, 0),
+				PaddingRight = UDim.new(PADDING_SCALE, 0),
+				PaddingTop = UDim.new(PADDING_SCALE, 0),
+				PaddingBottom = UDim.new(PADDING_SCALE, 0),
+			},
 			create "UIListLayout" {
 				FillDirection = Enum.FillDirection.Vertical,
 				HorizontalAlignment = Enum.HorizontalAlignment.Left,
 				VerticalAlignment = Enum.VerticalAlignment.Top,
-				SortOrder = Enum.SortOrder.LayoutOrder,
 				Padding = UDim.new(0, 8),
 			},
-			function()
-				return cardRows()
-			end,
-		},
+	
+			create "TextLabel" {
+				LayoutOrder = 1,
+				Size = UDim2.new(1, 0, 0, 24),
+				BackgroundTransparency = 1,
+				Font = Enum.Font.RobotoCondensed,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextColor3 = Color3.new(1, 1, 1),
+				Text = function()
+					local localViewModel = viewModel()
+					if not localViewModel then
+						return "CLASS SELECTOR - Waiting for faction"
+					end
+					return `CLASS SELECTOR - {localViewModel.factionId}`
+				end,
+			},
+	
+			create "TextLabel" {
+				LayoutOrder = 2,
+				Size = UDim2.new(1, 0, 0, 18),
+				BackgroundTransparency = 1,
+				Font = Enum.Font.RobotoMono,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextColor3 = Color3.new(1, 1, 1),
+				Text = function()
+					local localViewModel = viewModel()
+					if not localViewModel then
+						return "Current: None"
+					end
+					return `Current: {localViewModel.currentClassKey} / {localViewModel.currentClassId}`
+				end,
+			},
+	
+			create "ScrollingFrame" {
+				LayoutOrder = 4,
+				Size = UDim2.fromScale(0.5, 0.8),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				CanvasSize = UDim2.new(0, 0, 0, 0),
+				AutomaticCanvasSize = Enum.AutomaticSize.Y,
+				ScrollBarThickness = 6,
+				VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
+	
+				create "UIListLayout" {
+					FillDirection = Enum.FillDirection.Vertical,
+					HorizontalAlignment = Enum.HorizontalAlignment.Left,
+					VerticalAlignment = Enum.VerticalAlignment.Top,
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					Padding = UDim.new(0, 0),
+				},
+				function()
+					return cardRows()
+				end,
+			},
+	
+			create "TextLabel" {
+				LayoutOrder = 5,
+				Size = UDim2.new(1, 0, 0, 18),
+				BackgroundTransparency = 1,
+				Font = Enum.Font.RobotoMono,
+				TextColor3 = Color3.fromRGB(180, 180, 180),
+				TextXAlignment = Enum.TextXAlignment.Left,
+				Text = function()
+					local localViewModel = viewModel()
+					if not localViewModel then
+						return "No class options available yet."
+					end
+					if #localViewModel.classes == 0 then
+						return "Faction has no classes configured."
+					end
+					return ""
+				end,
+			},
 
-		create "TextLabel" {
-			LayoutOrder = 5,
-			Size = UDim2.new(1, 0, 0, 18),
-			BackgroundTransparency = 1,
-			Font = Enum.Font.RobotoMono,
-			TextColor3 = Color3.fromRGB(180, 180, 180),
-			TextXAlignment = Enum.TextXAlignment.Left,
-			Text = function()
-				local localViewModel = viewModel()
-				if not localViewModel then
-					return "No class options available yet."
-				end
-				if #localViewModel.classes == 0 then
-					return "Faction has no classes configured."
-				end
-				return ""
-			end,
+
 		},
+		
+		
 	}
 end
