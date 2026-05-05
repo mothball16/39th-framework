@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Utility = ReplicatedStorage:WaitForChild("Utility")
 local Players = game:GetService("Players")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local State = require(Access.Framework.Core:WaitForChild("State"))
@@ -7,6 +8,8 @@ local Types = require(Access.Framework.Core:WaitForChild("Types"))
 local ClassEquipper = require(Access.Framework:WaitForChild("ClassEquipper"))
 local ServerSyncer = require(script.Parent.ServerSyncer)
 local Enums = require(Access.Framework.Core:WaitForChild("Enums"))
+
+require(Utility.TestRunner)(Access.Framework:WaitForChild("Tests"))
 -------------------------------------------------------------------------
 type FactionClassConfig = {
 	ClassIDs: {Types.ClassVariant},
