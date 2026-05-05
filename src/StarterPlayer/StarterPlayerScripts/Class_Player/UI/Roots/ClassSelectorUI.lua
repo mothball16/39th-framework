@@ -10,6 +10,7 @@ local indexes = Vide.indexes
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
 local ClassCard = require(UI.Components.ClassCard)
+local MenuActionButton = require(UI.Components.MenuActionButton)
 
 local ASPECT_RATIO = 1.5
 local PADDING_SCALE = 0.02
@@ -162,15 +163,17 @@ return function(props: {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 
-		create "TextButton" {
+		MenuActionButton({
 			Position = UDim2.fromScale(0, 0.5),
-			Size = UDim2.fromScale(0.05, 0.02),
-			Text = "open class (WIP)",
-			Visible = function() return not isOpen() end,
-			Activated = function()
+			Text = "CLASSES",
+			OnActivated = function()
 				isOpen(true)
 			end,
-		},
+			WindowActive = function()
+				return isOpen()
+			end,
+		}),
+
 		create "Frame" {
 			Visible = function() return isOpen() end,
 				Name = "ClassSelectorUI",
