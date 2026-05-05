@@ -336,20 +336,29 @@ return function(props: {
 						end,
 					},
 
-					create "TextLabel" {
+					create "Frame" {
 						Name = "ClassDescription",
 						Position = UDim2.fromScale(0, 0.7),
-						Size = UDim2.fromScale(1, 0.2),
-						BackgroundTransparency = 1,
-						TextColor3 = Theme.TextColor,
-						TextScaled = true,
-						FontFace = Theme.fontNormal,
-						RichText = true,
-						TextXAlignment = Enum.TextXAlignment.Left,
-						TextYAlignment = Enum.TextYAlignment.Top,
-						Text = function()
-							return if localCurrentClassConfig() then (localCurrentClassConfig().Description or "Shukudai o\nWasurete rōka ni\nMogami-gawa\n(no description)") else "<no class selected...>"
-						end,
+						Size = UDim2.fromScale(1, 0.25),
+						BackgroundTransparency = 0.9,
+						BackgroundColor3 = Theme.AccentColor,
+						create "TextLabel" {
+							Name = "DescriptionText",
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							Position = UDim2.fromScale(0.5, 0.5),
+							Size = UDim2.fromScale(0.8, 0.8),
+							BackgroundTransparency = 1,
+							TextColor3 = Theme.TextColor,
+							TextTransparency = 0.5,
+							TextScaled = true,
+							FontFace = Theme.fontNormal,
+							RichText = true,
+							TextXAlignment = Enum.TextXAlignment.Left,
+							TextYAlignment = Enum.TextYAlignment.Top,
+							Text = function()
+								return if localCurrentClassConfig() then (localCurrentClassConfig().Description or "Shukudai o\nWasurete rōka ni\nMogami-gawa\n(no description)") else "<no class selected...>"
+							end,
+						}
 					}
 				},
 
