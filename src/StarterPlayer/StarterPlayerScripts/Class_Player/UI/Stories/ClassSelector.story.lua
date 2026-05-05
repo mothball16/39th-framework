@@ -15,6 +15,7 @@ return function(target: Instance)
 	local factionConfigs = source({
 		[factionId] = {
 			ID = factionId,
+			Name = "United States Marine Corps",
 			Classes = {
 				Rifleman = {
 					ClassIDs = {
@@ -65,6 +66,7 @@ return function(target: Instance)
 
 	return Vide.mount(function()
 		return ClassSelectorUI({
+			startOpen = true,
 			factionConfigs = factionConfigs,
 			playerFactionIds = source({
 				[playerKey] = factionId,

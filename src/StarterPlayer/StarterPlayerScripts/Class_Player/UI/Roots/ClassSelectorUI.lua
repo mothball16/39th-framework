@@ -21,14 +21,14 @@ return function(props: {
 	playerClassKeys: () -> any,
 	playerClassIds: () -> any,
 	classCountsByFaction: () -> any,
-
+	startOpen: boolean,
 	requestClass: ((classKey: string, classId: string) -> ())?,
 })
 	local localPlayer = Players.LocalPlayer
 	local playerKey = if localPlayer then tostring(localPlayer.UserId) else "0"
 
 	local selectedVariantByClassKey = source({})
-	local isOpen = source(false)
+	local isOpen = source(props.startOpen)
 
 	local localFactionId = derive(function()
 		return props.playerFactionIds()[playerKey]
@@ -183,7 +183,10 @@ return function(props: {
 				return isOpen()
 			end,
 		}),
-
+		create "TextButton" {
+			Name = "ModalToggler",
+			Modal = function() return isOpen() end,
+		},
 		create "Frame" {
 			Visible = function() return isOpen() end,
 				Name = "ClassSelectorUI",
