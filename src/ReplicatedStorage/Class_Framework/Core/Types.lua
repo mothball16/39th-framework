@@ -28,6 +28,7 @@ export type ClassVariant = {
 
 export type FactionConfig = {
     ID: string,
+    Name: string,
     Classes: {
         [string]: {
             ClassIDs: {ClassVariant},
