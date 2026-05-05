@@ -356,12 +356,11 @@ runService.RenderStepped:Connect(function(dt:number)
 		MovementController.UpdateRender(dt)
 		CameraController.UpdateRender(dt)
 		ViewmodelController.UpdateRender(dt)
+		ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, characterState.vehicleSeated())
 		WeaponController.UpdateRender(dt)
-		CameraController.UpdateFOV(dt)
 		ReplicationController.UpdateRender(dt)
 	end
 
-	ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, characterState.vehicleSeated())
 end)
 
 runService.Heartbeat:Connect(function(dt:number)

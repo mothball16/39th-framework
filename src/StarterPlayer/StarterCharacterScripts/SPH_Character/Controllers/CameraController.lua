@@ -227,6 +227,8 @@ function CC.UpdateRender(dt)
 		* CFrame.Angles(weaponState.CameraSpring.p.X, weaponState.CameraSpring.p.Y, weaponState.CameraSpring.p.Z)
 	weaponState.CameraSpring.t = weaponState.CameraSpring.t - weaponState.CameraSpring.p
 	weaponState.CameraSpring.p = Vector3.new()
+
+	CC.UpdateFOV(dt)
 end
 
 function CC.UpdateFOV(dt)

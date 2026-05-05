@@ -239,6 +239,7 @@ function ViewmodelController.UpdateRender(dt)
 	elseif weaponState.viewmodelVisible() and not weaponState.equipping() then
 		weaponState.viewmodelVisible(false)
 	end
+
 end
 
 function ViewmodelController.UpdateMovementSway(dt, tempWalkSpeed, vehicleSeated)
