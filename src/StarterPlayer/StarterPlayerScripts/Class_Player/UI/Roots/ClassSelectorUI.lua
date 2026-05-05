@@ -30,24 +30,29 @@ return function(props: {
 	local selectedVariantByClassKey = source({})
 	local isOpen = source(false)
 
+	local localFactionId = derive(function()
+		return props.playerFactionIds()[playerKey]
+	end)
+	local localFactionConfig = derive(function()
+		return props.factionConfigs()[localFactionId()]
+	end)
+	local localClassCounts = derive(function()
+		return props.classCountsByFaction()[localFactionId()] or {}
+	end)
+	local localCurrentClassKey = derive(function()
+		return props.playerClassKeys()[playerKey]
+	end)
+	local localCurrentClassId = derive(function()
+		return props.playerClassIds()[playerKey]
+	end)
+
 	local viewModel = derive(function()
-		local localFactionId = props.playerFactionIds()[playerKey]
-		if not localFactionId then
+		if not localFactionId() or not localFactionConfig() then
 			return nil
 		end
-
-		local localFactionConfig = props.factionConfigs()[localFactionId]
-		if not localFactionConfig then
-			return nil
-		end
-
-		local localCurrentClassKey = props.playerClassKeys()[playerKey]
-		local localCurrentClassId = props.playerClassIds()[playerKey]
-		local localClassCounts = props.classCountsByFaction()[localFactionId] or {}
-
 		-- build class entries
 		local classes = {}
-		for classKey, classConfig in pairs(localFactionConfig.Classes) do
+		for classKey, classConfig in pairs(localFactionConfig().Classes) do
 			local variants = {}
 			for _, variant in ipairs(classConfig.ClassIDs or {}) do
 				table.insert(variants, variant.Id)
@@ -55,9 +60,9 @@ return function(props: {
 			local selectedIndex = selectedVariantByClassKey()[classKey]
 			if not selectedIndex then
 				selectedIndex = 1
-				if classKey == localCurrentClassKey then
+				if classKey == localCurrentClassKey() then
 					for variantIndex, variantClassId in ipairs(variants) do
-						if variantClassId == localCurrentClassId then
+						if variantClassId == localCurrentClassId() then
 							selectedIndex = variantIndex
 							break
 						end
@@ -72,7 +77,7 @@ return function(props: {
 			end
 
 			local selectedClassId = variants[selectedIndex]
-			local count = localClassCounts[classKey] or 0
+			local count = localClassCounts()[classKey] or 0
 			local limit = classConfig.Limit or 0
 			table.insert(classes, {
 				classKey = classKey,
@@ -82,8 +87,8 @@ return function(props: {
 				count = count,
 				limit = limit,
 				isFull = limit > 0 and count >= limit,
-				isCurrentKey = localCurrentClassKey == classKey,
-				isCurrentId = localCurrentClassId == selectedClassId,
+				isCurrentKey = localCurrentClassKey() == classKey,
+				isCurrentId = localCurrentClassId() == selectedClassId,
 			})
 		end
 
@@ -93,8 +98,8 @@ return function(props: {
 
 		return {
 			factionId = localFactionId,
-			currentClassKey = localCurrentClassKey or "<none>",
-			currentClassId = localCurrentClassId or "<none>",
+			currentClassKey = localCurrentClassKey() or "<none>",
+			currentClassId = localCurrentClassId() or "<none>",
 			classes = classes,
 		}
 	end)
@@ -123,8 +128,13 @@ return function(props: {
 		end
 	end
 
+	-- stable version of classes in the case of no faction/vm
 	local classEntries = derive(function()
-		return if viewModel() then viewModel().classes else {}
+		local vm = viewModel()
+		if not vm then
+			return {}
+		end
+		return vm.classes
 	end)
 
 	-- NOTE TO SELF - item is an individual data entry in classEntries, which comes from viewModel
@@ -159,7 +169,7 @@ return function(props: {
 	---------------------- [template] ----------------------
 
 	return create "Frame" {
-		Name = "ClassSelectorUI",
+		Name = "Main",
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 
@@ -184,6 +194,11 @@ return function(props: {
 				BackgroundTransparency = 0.5,
 				BorderSizePixel = 0,
 				BorderColor3 = Theme.AccentColor,
+
+				create "UIAspectRatioConstraint" {
+					AspectRatio = ASPECT_RATIO,
+					DominantAxis = Enum.DominantAxis.Width,
+				},
 
 				create "Frame" {
 					Name = "Header",
@@ -227,60 +242,36 @@ return function(props: {
 					}
 				},
 
-				create "UIAspectRatioConstraint" {
-					AspectRatio = ASPECT_RATIO,
-					DominantAxis = Enum.DominantAxis.Width,
-				},
-
 				create "Frame" {
-					Name = "Content",
+					Name = "ContentLeft",
 					Position = UDim2.fromScale(0, 0.1),
-					Size = UDim2.fromScale(1, 0.9),
+					Size = UDim2.fromScale(0.5, 0.9),
 					BackgroundTransparency = 1,
 
-
 					create "UIPadding" {
-						PaddingLeft = UDim.new(PADDING_SCALE, 0),
-						PaddingRight = UDim.new(PADDING_SCALE, 0),
+						PaddingLeft = UDim.new(PADDING_SCALE*2, 0),
+						PaddingRight = UDim.new(PADDING_SCALE*2, 0),
 						PaddingTop = UDim.new(PADDING_SCALE, 0),
 						PaddingBottom = UDim.new(PADDING_SCALE, 0),
 					},
-			
-					-- create "TextLabel" {
-					-- 	LayoutOrder = 1,
-					-- 	Size = UDim2.new(1, 0, 0, 24),
-					-- 	BackgroundTransparency = 1,
-					-- 	Font = Enum.Font.RobotoCondensed,
-					-- 	TextXAlignment = Enum.TextXAlignment.Left,
-					-- 	TextColor3 = Color3.new(1, 1, 1),
-					-- 	Text = function()
-					-- 		local localViewModel = viewModel()
-					-- 		if not localViewModel then
-					-- 			return "CLASS SELECTOR - Waiting for faction"
-					-- 		end
-					-- 		return `CLASS SELECTOR - {localViewModel.factionId}`
-					-- 	end,
-					-- },
-			
-					-- create "TextLabel" {
-					-- 	LayoutOrder = 2,
-					-- 	Size = UDim2.new(1, 0, 0, 18),
-					-- 	BackgroundTransparency = 1,
-					-- 	Font = Enum.Font.RobotoMono,
-					-- 	TextXAlignment = Enum.TextXAlignment.Left,
-					-- 	TextColor3 = Color3.new(1, 1, 1),
-					-- 	Text = function()
-					-- 		local localViewModel = viewModel()
-					-- 		if not localViewModel then
-					-- 			return "Current: None"
-					-- 		end
-					-- 		return `Current: {localViewModel.currentClassKey} / {localViewModel.currentClassId}`
-					-- 	end,
-					-- },
-			
+
+					create "TextLabel" {
+						Name = "FactionName",
+						Position = UDim2.fromScale(0, 0),
+						Size = UDim2.fromScale(1, 0.1),
+						BackgroundTransparency = 1,
+						Text = function()
+							return `{localFactionConfig() and localFactionConfig().Name or "None"}`
+						end,
+						TextColor3 = Theme.TextColor,
+						TextScaled = true,
+						FontFace = Theme.fontH2,
+					},
+
 					create "ScrollingFrame" {
 						LayoutOrder = 4,
-						Size = UDim2.fromScale(0.5, 0.8),
+						Position = UDim2.fromScale(0, 0.1),
+						Size = UDim2.fromScale(1, 0.8),
 						BackgroundTransparency = 1,
 						BorderSizePixel = 0,
 						CanvasSize = UDim2.new(0, 0, 0, 0),
