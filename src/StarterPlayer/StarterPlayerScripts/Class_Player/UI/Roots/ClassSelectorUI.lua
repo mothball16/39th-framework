@@ -45,6 +45,9 @@ return function(props: {
 	local localCurrentClassId = derive(function()
 		return props.playerClassIds()[playerKey]
 	end)
+	local localCurrentClassConfig = derive(function()
+		return localFactionConfig() and localFactionConfig().Classes[localCurrentClassKey()]
+	end)
 
 	local viewModel = derive(function()
 		if not localFactionId() or not localFactionConfig() then
@@ -246,17 +249,28 @@ return function(props: {
 				},
 
 				create "Frame" {
-					Name = "ContentLeft",
+					Name = "Content",
 					Position = UDim2.fromScale(0, 0.1),
-					Size = UDim2.fromScale(0.5, 0.9),
+					Size = UDim2.fromScale(1, 0.9),
 					BackgroundTransparency = 1,
 
 					create "UIPadding" {
-						PaddingLeft = UDim.new(PADDING_SCALE*2, 0),
-						PaddingRight = UDim.new(PADDING_SCALE*2, 0),
+						PaddingLeft = UDim.new(PADDING_SCALE, 0),
+						PaddingRight = UDim.new(PADDING_SCALE, 0),
 						PaddingTop = UDim.new(PADDING_SCALE, 0),
 						PaddingBottom = UDim.new(PADDING_SCALE, 0),
 					},
+
+					create "Frame" {
+						Name = "Divider",
+						AnchorPoint = Vector2.new(0.5, 0),
+						Position = UDim2.fromScale(0.5, 0.15),
+						Size = UDim2.new(0, 1, 0.8, 0),
+						BackgroundColor3 = Theme.TextColor,
+						BackgroundTransparency = 0.8,
+						BorderSizePixel = 0,
+					},
+
 
 					create "TextLabel" {
 						Name = "FactionName",
@@ -264,57 +278,93 @@ return function(props: {
 						Size = UDim2.fromScale(1, 0.1),
 						BackgroundTransparency = 1,
 						Text = function()
-							return `{localFactionConfig() and localFactionConfig().Name or "None"}`
+							return `{localFactionConfig() and localFactionConfig().Name or "<no faction>"}`
 						end,
 						TextColor3 = Theme.TextColor,
 						TextScaled = true,
 						FontFace = Theme.fontH2,
 					},
 
-					create "ScrollingFrame" {
-						LayoutOrder = 4,
+					create "Frame" {
+						Name = "ContentLeft",
 						Position = UDim2.fromScale(0, 0.1),
-						Size = UDim2.fromScale(1, 0.8),
+						Size = UDim2.fromScale(0.475, 0.9),
 						BackgroundTransparency = 1,
-						BorderSizePixel = 0,
-						CanvasSize = UDim2.new(0, 0, 0, 0),
-						AutomaticCanvasSize = Enum.AutomaticSize.Y,
-						ScrollBarThickness = 6,
-						VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
-			
-						create "UIListLayout" {
-							FillDirection = Enum.FillDirection.Vertical,
-							HorizontalAlignment = Enum.HorizontalAlignment.Left,
-							VerticalAlignment = Enum.VerticalAlignment.Top,
-							SortOrder = Enum.SortOrder.LayoutOrder,
-							Padding = UDim.new(0, 0),
+	
+						create "ScrollingFrame" {
+							Name = "ClassList",
+							LayoutOrder = 4,
+							Position = UDim2.fromScale(0, 0.05),
+							Size = UDim2.fromScale(1, 0.6),
+							BackgroundTransparency = 1,
+							BorderSizePixel = 0,
+							CanvasSize = UDim2.new(0, 0, 0, 0),
+							AutomaticCanvasSize = Enum.AutomaticSize.Y,
+							ScrollBarThickness = 6,
+							VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
+				
+							create "UIListLayout" {
+								FillDirection = Enum.FillDirection.Vertical,
+								HorizontalAlignment = Enum.HorizontalAlignment.Left,
+								VerticalAlignment = Enum.VerticalAlignment.Top,
+								SortOrder = Enum.SortOrder.LayoutOrder,
+								Padding = UDim.new(0, 0),
+							},
+							function()
+								return cardRows()
+							end,
 						},
-						function()
-							return cardRows()
-						end,
+				
+						create "TextLabel" {
+							Name = "NoClassesText",
+							LayoutOrder = 5,
+							Size = UDim2.fromScale(1, 0.1),
+							BackgroundTransparency = 1,
+							TextColor3 = Color3.fromRGB(180, 180, 180),
+							TextXAlignment = Enum.TextXAlignment.Left,
+							TextScaled = true,
+							FontFace = Theme.fontNormal,
+							Text = function()
+								local localViewModel = viewModel()
+								if not localViewModel then
+									return "No class options available yet."
+								end
+								if #localViewModel.classes == 0 then
+									return "Faction has no classes configured."
+								end
+								return ""
+							end,
+						},
+
+						create "TextLabel" {
+							Name = "ClassDescription",
+							Position = UDim2.fromScale(0, 0.7),
+							Size = UDim2.fromScale(1, 0.2),
+							BackgroundTransparency = 1,
+							TextColor3 = Theme.TextColor,
+							TextScaled = true,
+							FontFace = Theme.fontNormal,
+							RichText = true,
+							TextXAlignment = Enum.TextXAlignment.Left,
+							TextYAlignment = Enum.TextYAlignment.Top,
+							Text = function()
+								return if localCurrentClassConfig() then (localCurrentClassConfig().Description or "Shukudai o\nWasurete rōka ni\nMogami-gawa\n(no description)") else "<no class selected...>"
+							end,
+						}
 					},
-			
-					create "TextLabel" {
-						LayoutOrder = 5,
-						Size = UDim2.new(1, 0, 0, 18),
+
+					create "Frame" {
+						Name = "ContentRight",
+						AnchorPoint = Vector2.new(1, 0),
+						Position = UDim2.fromScale(1, 0.1),
+						Size = UDim2.fromScale(0.475, 0.9),
 						BackgroundTransparency = 1,
-						Font = Enum.Font.RobotoMono,
-						TextColor3 = Color3.fromRGB(180, 180, 180),
-						TextXAlignment = Enum.TextXAlignment.Left,
-						Text = function()
-							local localViewModel = viewModel()
-							if not localViewModel then
-								return "No class options available yet."
-							end
-							if #localViewModel.classes == 0 then
-								return "Faction has no classes configured."
-							end
-							return ""
-						end,
 					},
-
-
 				},
+
+				
+
+				
 				
 				
 			}
