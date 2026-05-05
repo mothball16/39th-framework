@@ -1,7 +1,7 @@
--- Main server script: collision + workspace setup, shared context, controller wiring.
-
+-- TODO: this is an ai slop mess - needs to be significantly refactored before we do any work on the server
 local players = game:GetService("Players")
 local replicatedStorage = game:GetService("ReplicatedStorage")
+local Utility = replicatedStorage:WaitForChild("Utility")
 local debris = game:GetService("Debris")
 local proxPromptService = game:GetService("ProximityPromptService")
 local collectionService = game:GetService("CollectionService")
@@ -22,6 +22,9 @@ local assets = sph.assets
 local modules = sph.framework
 local config = sph.config
 local mainui = assets.HUD.SPH_UI
+
+require(Utility.TestRunner)(replicatedStorage:WaitForChild("SPH_Framework"):WaitForChild("Tests"))
+
 
 local WeaponStatLocator = require(modules.Weapons.WeaponStatLocator)
 local weldMod = require(modules.Weapons.WeldMod)
