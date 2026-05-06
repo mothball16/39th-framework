@@ -28,38 +28,38 @@ return function(props: {
 	local localPlayer = Players.LocalPlayer
 	local playerKey = if localPlayer then tostring(localPlayer.UserId) else "0"
 
-	local selectedVariantByClassKey = source({})
+	local variantByClassKey = source({})
 	local isOpen = source(props.startOpen)
 
-	local localFactionId = derive(function()
+	local myFactionId = derive(function()
 		return props.playerFactionIds()[playerKey]
 	end)
-	local localFactionConfig = derive(function()
-		return props.factionConfigs()[localFactionId()]
+	local myFactionConfig = derive(function()
+		return props.factionConfigs()[myFactionId()]
 	end)
-	local localClassCounts = derive(function()
-		return props.classCountsByFaction()[localFactionId()] or {}
+	local myClassCounts = derive(function()
+		return props.classCountsByFaction()[myFactionId()] or {}
 	end)
-	local localCurrentClassKey = derive(function()
+	local myClassKey = derive(function()
 		return props.playerClassKeys()[playerKey]
 	end)
-	local localCurrentClassId = derive(function()
+	local myClassId = derive(function()
 		return props.playerClassIds()[playerKey]
 	end)
-	local localCurrentVariantConfig = derive(function()
-		if not localFactionConfig() or not localCurrentClassKey() or not localCurrentClassId() then
+	local myVariantConfig = derive(function()
+		if not myFactionConfig() or not myClassKey() or not myClassId() then
 			return nil
 		end
-		local class = localFactionConfig().Classes[localCurrentClassKey()]
+		local class = myFactionConfig().Classes[myClassKey()]
 		if not class or not class.ClassIDs or #class.ClassIDs == 0 then
 			return nil
 		end
 
-		local variantIndex = selectedVariantByClassKey()[localCurrentClassKey()]
+		local variantIndex = variantByClassKey()[myClassKey()]
 		if not variantIndex then
 			variantIndex = 1
 			for i, variant in ipairs(class.ClassIDs) do
-				if variant.Id == localCurrentClassId() then
+				if variant.Id == myClassId() then
 					variantIndex = i
 					break
 				end
@@ -71,22 +71,22 @@ return function(props: {
 	end)
 
 	local viewModel = derive(function()
-		if not localFactionId() or not localFactionConfig() then
+		if not myFactionId() or not myFactionConfig() then
 			return nil
 		end
 		-- build class entries
 		local classes = {}
-		for classKey, classConfig in pairs(localFactionConfig().Classes) do
+		for classKey, classConfig in pairs(myFactionConfig().Classes) do
 			local variants = {}
 			for _, variant in ipairs(classConfig.ClassIDs or {}) do
 				table.insert(variants, variant.Id)
 			end
-			local selectedIndex = selectedVariantByClassKey()[classKey]
+			local selectedIndex = variantByClassKey()[classKey]
 			if not selectedIndex then
 				selectedIndex = 1
-				if classKey == localCurrentClassKey() then
+				if classKey == myClassKey() then
 					for variantIndex, variantClassId in ipairs(variants) do
-						if variantClassId == localCurrentClassId() then
+						if variantClassId == myClassId() then
 							selectedIndex = variantIndex
 							break
 						end
@@ -101,7 +101,7 @@ return function(props: {
 			end
 
 			local selectedClassId = variants[selectedIndex]
-			local count = localClassCounts()[classKey] or 0
+			local count = myClassCounts()[classKey] or 0
 			local limit = classConfig.Limit or 0
 			table.insert(classes, {
 				classKey = classKey,
@@ -111,16 +111,16 @@ return function(props: {
 				count = count,
 				limit = limit,
 				isFull = limit > 0 and count >= limit,
-				isCurrentKey = localCurrentClassKey() == classKey,
-				isCurrentId = localCurrentClassId() == selectedClassId,
+				isCurrentKey = myClassKey() == classKey,
+				isCurrentId = myClassId() == selectedClassId,
 			})
 		end
 
 
 		return {
-			factionId = localFactionId,
-			currentClassKey = localCurrentClassKey() or "<none>",
-			currentClassId = localCurrentClassId() or "<none>",
+			factionId = myFactionId,
+			currentClassKey = myClassKey() or "<none>",
+			currentClassId = myClassId() or "<none>",
 			classes = classes,
 		}
 	end)
@@ -141,9 +141,9 @@ return function(props: {
 				local nextIndex = ((currentIndex - 1 + offset) % variantCount) + 1
 				
 				-- updates the state in a way that triggers an update
-				local nextState = table.clone(selectedVariantByClassKey())
+				local nextState = table.clone(variantByClassKey())
 				nextState[classKey] = nextIndex
-				selectedVariantByClassKey(nextState)
+				variantByClassKey(nextState)
 				return
 			end
 		end
@@ -155,7 +155,7 @@ return function(props: {
 			return nil
 		end
 
-		local currentClassKey = localCurrentClassKey()
+		local currentClassKey = myClassKey()
 		if not currentClassKey then
 			return nil
 		end
@@ -316,7 +316,7 @@ return function(props: {
 					Size = UDim2.fromScale(1, 0.1),
 					BackgroundTransparency = 1,
 					Text = function()
-						return `{localFactionConfig() and localFactionConfig().Name or "<no faction>"}`
+						return `{myFactionConfig() and myFactionConfig().Name or "<no faction>"}`
 					end,
 					TextColor3 = Theme.TextColor,
 					TextScaled = true,
@@ -394,7 +394,7 @@ return function(props: {
 							TextXAlignment = Enum.TextXAlignment.Left,
 							TextYAlignment = Enum.TextYAlignment.Top,
 							Text = function()
-								return if localCurrentVariantConfig() then (localCurrentVariantConfig().Description or "Lorem ipsum on the beat yo!\n\n\n(no description)") else "<no class selected...>"
+								return if myVariantConfig() then (myVariantConfig().Description or "Lorem ipsum on the beat yo!\n\n\n(no description)") else "<no class selected...>"
 							end,
 						}
 					}
@@ -429,7 +429,7 @@ return function(props: {
 							titleHeight = 0.5,
 							size = UDim2.fromScale(1, 0.25),
 							ValueText = function()
-								local variantConfig = localCurrentVariantConfig()
+								local variantConfig = myVariantConfig()
 								if not variantConfig then
 									return "<no variant selected...>"
 								end
@@ -437,10 +437,10 @@ return function(props: {
 								return variantConfig.Name or "<no variant name...>"
 							end,
 							LeftActivated = function()
-								cycleVariant(localCurrentClassKey(), -1)
+								cycleVariant(myClassKey(), -1)
 							end,
 							RightActivated = function()
-								cycleVariant(localCurrentClassKey(), 1)
+								cycleVariant(myClassKey(), 1)
 							end,
 						})
 					},
