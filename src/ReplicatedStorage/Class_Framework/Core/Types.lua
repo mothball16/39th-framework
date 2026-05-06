@@ -1,8 +1,5 @@
-local Events = require(script.Parent.Events)
-
 local Types = {}
 
-export type Events = typeof(Events)
 
 export type ClassItemProvider = {
     -- identifier for item type within configurations

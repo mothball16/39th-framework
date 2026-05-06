@@ -1,14 +1,12 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local CharmSync = require(Access.Packages["charm-sync"])
-local Charm = require(Access.Packages.Charm)
 local Maid = require(Access.Packages.maid)
-local Types = require(Access.Framework.Core:WaitForChild("Types"))
 
 local ServerSyncer = {}
 ServerSyncer.__index = ServerSyncer
 
-function ServerSyncer.new(atoms, events: Types.Events)
+function ServerSyncer.new(atoms, events)
 	local self = setmetatable({}, ServerSyncer)
 	self.maid = Maid.new()
 	self.atoms = atoms
