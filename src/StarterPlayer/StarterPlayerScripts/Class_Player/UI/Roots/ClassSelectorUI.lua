@@ -149,26 +149,6 @@ return function(props: {
 		end
 	end
 
-	local selectedClassEntry = derive(function()
-		local resolvedViewModel = viewModel()
-		if not resolvedViewModel then
-			return nil
-		end
-
-		local currentClassKey = myClassKey()
-		if not currentClassKey then
-			return nil
-		end
-
-		for _, classEntry in ipairs(resolvedViewModel.classes) do
-			if classEntry.classKey == currentClassKey then
-				return classEntry
-			end
-		end
-
-		return nil
-	end)
-
 	-- stable version of classes in the case of no faction/vm
 	local classEntries = derive(function()
 		local vm = viewModel()
