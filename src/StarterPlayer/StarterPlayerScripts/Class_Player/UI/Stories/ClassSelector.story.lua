@@ -22,12 +22,12 @@ return function(target: Instance)
 						{
 							Id = "RiflemanA",
 							Name = "Rifleman",
-							Description = "Rifleman",
+							Description = "Rifleman uno\n\n\n",
 						},
 						{
 							Id = "RiflemanB",
 							Name = "Rifleman Alt",
-							Description = "Rifleman dos",
+							Description = "Rifleman dos\n\n\n",
 						}
 					},
 					Limit = 10,
@@ -38,7 +38,7 @@ return function(target: Instance)
 						{
 							Id = "EngineerA",
 							Name = "Engineer",
-							Description = "The only",
+							Description = "The only\n\n\n",
 						}
 					},
 					Limit = 2,
@@ -49,12 +49,12 @@ return function(target: Instance)
 						{
 							Id = "MarksmanA",
 							Name = "Marksman",
-							Description = "The best",
+							Description = "The best\n\n\n",
 						},
 						{
 							Id = "MarksmanB",
 							Name = "Marksman Alt",
-							Description = "The best dos",
+							Description = "The best dos\n\n\n",
 						},
 					},
 					Limit = 1,
