@@ -11,6 +11,7 @@ local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
 local ClassCard = require(UI.Components.ClassCard)
 local MenuActionButton = require(UI.Components.MenuActionButton)
+local VariantSelector = require(UI.Components.VariantSelector)
 
 local ASPECT_RATIO = 1.5
 local PADDING_SCALE = 0.02
@@ -45,8 +46,28 @@ return function(props: {
 	local localCurrentClassId = derive(function()
 		return props.playerClassIds()[playerKey]
 	end)
-	local localCurrentClassConfig = derive(function()
-		return localFactionConfig() and localFactionConfig().Classes[localCurrentClassKey()]
+	local localCurrentVariantConfig = derive(function()
+		if not localFactionConfig() or not localCurrentClassKey() or not localCurrentClassId() then
+			return nil
+		end
+		local class = localFactionConfig().Classes[localCurrentClassKey()]
+		if not class or not class.ClassIDs or #class.ClassIDs == 0 then
+			return nil
+		end
+
+		local variantIndex = selectedVariantByClassKey()[localCurrentClassKey()]
+		if not variantIndex then
+			variantIndex = 1
+			for i, variant in ipairs(class.ClassIDs) do
+				if variant.Id == localCurrentClassId() then
+					variantIndex = i
+					break
+				end
+			end
+		end
+
+		variantIndex = math.clamp(variantIndex, 1, #class.ClassIDs)
+		return class.ClassIDs[variantIndex]
 	end)
 
 	local viewModel = derive(function()
@@ -95,9 +116,6 @@ return function(props: {
 			})
 		end
 
-		table.sort(classes, function(a, b)
-			return a.classKey < b.classKey
-		end)
 
 		return {
 			factionId = localFactionId,
@@ -123,13 +141,33 @@ return function(props: {
 				local nextIndex = ((currentIndex - 1 + offset) % variantCount) + 1
 				
 				-- updates the state in a way that triggers an update
-				local nextState = selectedVariantByClassKey()
+				local nextState = table.clone(selectedVariantByClassKey())
 				nextState[classKey] = nextIndex
 				selectedVariantByClassKey(nextState)
 				return
 			end
 		end
 	end
+
+	local selectedClassEntry = derive(function()
+		local resolvedViewModel = viewModel()
+		if not resolvedViewModel then
+			return nil
+		end
+
+		local currentClassKey = localCurrentClassKey()
+		if not currentClassKey then
+			return nil
+		end
+
+		for _, classEntry in ipairs(resolvedViewModel.classes) do
+			if classEntry.classKey == currentClassKey then
+				return classEntry
+			end
+		end
+
+		return nil
+	end)
 
 	-- stable version of classes in the case of no faction/vm
 	local classEntries = derive(function()
@@ -356,7 +394,7 @@ return function(props: {
 							TextXAlignment = Enum.TextXAlignment.Left,
 							TextYAlignment = Enum.TextYAlignment.Top,
 							Text = function()
-								return if localCurrentClassConfig() then (localCurrentClassConfig().Description or "Shukudai o\nWasurete rōka ni\nMogami-gawa\n(no description)") else "<no class selected...>"
+								return if localCurrentVariantConfig() then (localCurrentVariantConfig().Description or "Lorem ipsum on the beat yo!\n\n\n(no description)") else "<no class selected...>"
 							end,
 						}
 					}
@@ -368,6 +406,47 @@ return function(props: {
 					Position = UDim2.fromScale(1, 0.1),
 					Size = UDim2.fromScale(0.475, 0.9),
 					BackgroundTransparency = 1,
+
+
+					create "Frame" {
+						Name = "ClassOptions",
+						LayoutOrder = 4,
+						Position = UDim2.fromScale(0, 0.05),
+						Size = UDim2.fromScale(1, 0.6),
+						BackgroundTransparency = 1,
+						BorderSizePixel = 0,
+
+						create "UIListLayout" {
+							FillDirection = Enum.FillDirection.Vertical,
+							HorizontalAlignment = Enum.HorizontalAlignment.Left,
+							VerticalAlignment = Enum.VerticalAlignment.Top,
+							SortOrder = Enum.SortOrder.LayoutOrder,
+							Padding = UDim.new(0, 0),
+						},
+
+						VariantSelector({
+							title = "VARIANT",
+							titleHeight = 0.5,
+							size = UDim2.fromScale(1, 0.25),
+							ValueText = function()
+								local variantConfig = localCurrentVariantConfig()
+								if not variantConfig then
+									return "<no variant selected...>"
+								end
+								print(variantConfig)
+								return variantConfig.Name or "<no variant name...>"
+							end,
+							LeftActivated = function()
+								cycleVariant(localCurrentClassKey(), -1)
+							end,
+							RightActivated = function()
+								cycleVariant(localCurrentClassKey(), 1)
+							end,
+						})
+					},
+					
+
+
 				},
 			},
 			
