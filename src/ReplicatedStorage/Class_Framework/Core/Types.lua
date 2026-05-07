@@ -27,12 +27,14 @@ export type FactionConfig = {
     ID: string,
     Name: string,
     Classes: {
-        [string]: {
-            ClassIDs: {ClassVariant},
-            Limit: number,
-            Default: boolean,
-        }
+        [string]: ClassConfig,
     },
+}
+
+export type ClassConfig = {
+    ClassIDs: {ClassVariant},
+    Limit: number,
+    Default: boolean,
 }
 
 export type PlayerClassAssignment = {
