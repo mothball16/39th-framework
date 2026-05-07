@@ -17,8 +17,7 @@ return function(props: {
         LayoutOrder = 1,
         Size = props.size,
 
-        BackgroundTransparency = 0.9,
-        BackgroundColor3 = Theme.AccentColor,
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
 
         create "TextLabel" {
