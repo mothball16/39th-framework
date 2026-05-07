@@ -24,15 +24,11 @@ local function ClassCard(props: {
 	limit: () -> number,
 	
 	isSelected: () -> boolean,
-
 	SelectClass: () -> (),
 })
 	local isFull = derive(function()
 		return props.limit() > 0 and props.count() >= props.limit()
 	end)
-
-
-
 
 	local actionAccent = derive(function()
 		return if isFull() then Theme.ColorError else Theme.AccentColor
@@ -47,7 +43,7 @@ local function ClassCard(props: {
 
 	---------------------- [template] ----------------------
 
-	return create "CanvasGroup" {
+	return create "Frame" {
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
@@ -63,10 +59,10 @@ local function ClassCard(props: {
 				return nil
 			end
 			local SelectedStroke = Stroke({
-				Color = if props.isSelected() then Theme.AccentColorAlt else Theme.TextColor,
+				Color = Theme.AccentColorAlt,
 				Thickness = 2,
 				LineJoinMode = Enum.LineJoinMode.Miter,
-				Transparency = 0.5,
+				Transparency = 0,
 				ZIndex = 100,
 			})
 			return SelectedStroke
@@ -85,7 +81,7 @@ local function ClassCard(props: {
 				Position = UDim2.new(0.5, 0, 0, 0),
 				Size = UDim2.new(1, 0, 0, 1),
 				BackgroundColor3 = Theme.TextColor,
-				BackgroundTransparency = 0,
+				BackgroundTransparency = function() return if not props.isSelected() then 0 else 1 end,
 				BorderSizePixel = 0,
 			},
 
