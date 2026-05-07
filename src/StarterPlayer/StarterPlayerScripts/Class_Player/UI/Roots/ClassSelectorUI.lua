@@ -37,12 +37,15 @@ return function(props: {
 	local myFactionId: () -> string = derive(function()
 		return props.playerFactionIds()[playerKey]
 	end)
+
 	local myClassCounts: () -> { [string]: number } = derive(function()
 		return props.classCountsByFaction()[myFactionId()] or {}
 	end)
+
 	local myClassKey: () -> string = derive(function()
 		return props.playerClassKeys()[playerKey]
 	end)
+
 	local myClassId: () -> string = derive(function()
 		return props.playerClassIds()[playerKey]
 	end)
@@ -384,15 +387,17 @@ return function(props: {
 						},
 
 						VariantSelector {
-							title = "VARIANT",
+							title = "Variant",
 							titleHeight = 0.5,
 							size = UDim2.fromScale(1, 0.25),
 							ValueText = function()
-								local variantConfig = myVariantConfig()
-								if not variantConfig then
+								if not myClassConfig() or not myVariantConfig() then
 									return "<no variant selected...>"
 								end
-								return `{variantConfig.Name} ()` or "<no variant name...>"
+								local classIDs = myClassConfig().ClassIDs
+								local variantIndex = getSelectedVariantIndex(myClassKey(), classIDs)
+								
+								return `{myVariantConfig().Name} ({variantIndex}/{#classIDs})` or "<no variant name...>"
 							end,
 							LeftActivated = function()
 								cycleVariant(myClassKey(), -1)
@@ -402,14 +407,14 @@ return function(props: {
 							end,
 						},
 
-						VariantSelector {
-							title = "UNIFORM",
-							titleHeight = 0.5,
-							size = UDim2.fromScale(1, 0.25),
-							ValueText = function()
-								return `temp` or "<no uniform name...>"
-							end,
-						},
+						-- VariantSelector {
+						-- 	title = "Uniform",
+						-- 	titleHeight = 0.5,
+						-- 	size = UDim2.fromScale(1, 0.25),
+						-- 	ValueText = function()
+						-- 		return `temp` or "<no uniform name...>"
+						-- 	end,
+						-- },
 					},
 
 					create "ImageLabel" {
