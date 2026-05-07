@@ -47,12 +47,17 @@ return function(props: {
                 Position = UDim2.fromScale(0, 0.5),
                 Size = UDim2.fromScale(0.15, 0.8),
                 BackgroundColor3 = Theme.Background,
-                BackgroundTransparency = 0.3,
+                BackgroundTransparency = 0.8,
                 Text = "<",
                 TextColor3 = Theme.TextColor,
                 TextScaled = true,
                 FontFace = Theme.fontNormal,
                 Activated = props.LeftActivated,
+
+                create "UIAspectRatioConstraint" {
+                    AspectRatio = 1,
+                    DominantAxis = Enum.DominantAxis.Width,
+                },
             },
     
             create "TextLabel" {
@@ -73,12 +78,17 @@ return function(props: {
                 Position = UDim2.fromScale(1, 0.5),
                 Size = UDim2.fromScale(0.15, 0.8),
                 BackgroundColor3 = Theme.Background,
-                BackgroundTransparency = 0.3,
+                BackgroundTransparency = 0.8,
                 Text = ">",
                 TextColor3 = Theme.TextColor,
                 TextScaled = true,
                 FontFace = Theme.fontH2,
                 Activated = props.RightActivated,
+
+                create "UIAspectRatioConstraint" {
+                    AspectRatio = 1,
+                    DominantAxis = Enum.DominantAxis.Width,
+                },
             },
         }
 
