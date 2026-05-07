@@ -37,9 +37,6 @@ return function(props: {
 	local myFactionId: () -> string = derive(function()
 		return props.playerFactionIds()[playerKey]
 	end)
-	local myFactionConfig: () -> Types.FactionConfig = derive(function()
-		return props.factionConfigs()[myFactionId()]
-	end)
 	local myClassCounts: () -> { [string]: number } = derive(function()
 		return props.classCountsByFaction()[myFactionId()] or {}
 	end)
@@ -49,19 +46,27 @@ return function(props: {
 	local myClassId: () -> string = derive(function()
 		return props.playerClassIds()[playerKey]
 	end)
-	local myVariantConfig: () -> Types.ClassVariant = derive(function()
-		if not myFactionConfig() or not myClassKey() or not myClassId() then
+
+	local myFactionConfig: () -> Types.FactionConfig = derive(function()
+		return props.factionConfigs()[myFactionId()]
+	end)
+
+	local myClassConfig: () -> Types.ClassConfig = derive(function()
+		if not myFactionConfig() or not myClassKey() then
 			return nil
 		end
-		local class = myFactionConfig().Classes[myClassKey()]
-		if not class or not class.ClassIDs or #class.ClassIDs == 0 then
+		return myFactionConfig().Classes[myClassKey()]
+	end)
+
+	local myVariantConfig: () -> Types.ClassVariant = derive(function()
+		if not myClassConfig() or not myClassId() then
 			return nil
 		end
 
 		local variantIndex = variantByClassKey()[myClassKey()]
 		if not variantIndex then
 			variantIndex = 1
-			for i, variant in ipairs(class.ClassIDs) do
+			for i, variant in ipairs(myClassConfig().ClassIDs) do
 				if variant.Id == myClassId() then
 					variantIndex = i
 					break
@@ -69,8 +74,8 @@ return function(props: {
 			end
 		end
 
-		variantIndex = math.clamp(variantIndex, 1, #class.ClassIDs)
-		return class.ClassIDs[variantIndex]
+		variantIndex = math.clamp(variantIndex, 1, #myClassConfig().ClassIDs)
+		return myClassConfig().ClassIDs[variantIndex]
 	end)
 
 	local function getSelectedVariantIndex(classKey: string, classIDs: { Types.ClassVariant }): number
@@ -140,13 +145,10 @@ return function(props: {
 			limit = function()
 				return item().Limit
 			end,
-			isCurrentKey = function()
+			isSelected = function()
 				return myClassKey() == item().Key
 			end,
-			isCurrentId = function()
-				return myClassId() == item().ClassIDs[variantIndex()].Id
-			end,
-
+			
 			SelectClass = function()
 				if not props.requestClass then
 					return
@@ -173,6 +175,7 @@ return function(props: {
 				return isOpen()
 			end,
 		}),
+
 		create "TextButton" {
 			Name = "ModalToggler",
 			Modal = function()
@@ -226,10 +229,10 @@ return function(props: {
 					Name = "CloseButton",
 					AnchorPoint = Vector2.new(1, 0.5),
 					Position = UDim2.fromScale(1, 0.5),
-					Size = UDim2.fromScale(0.1, 0.8),
+					Size = UDim2.fromScale(0.3, 0.8),
 					BackgroundTransparency = 1,
-					Text = "CLOSE",
-					TextXAlignment = Enum.TextXAlignment.Left,
+					Text = "SAVE & CLOSE",
+					TextXAlignment = Enum.TextXAlignment.Right,
 					TextColor3 = Theme.TextColor,
 					TextScaled = true,
 					FontFace = Theme.fontH2,
@@ -318,6 +321,7 @@ return function(props: {
 							if not myFactionConfig() then
 								return "No class options available yet."
 							end
+							-- cool trick to check if the dictis empty
 							if not next(myFactionConfig().Classes) then
 								return "Faction has no classes configured."
 							end
@@ -379,7 +383,7 @@ return function(props: {
 							Padding = UDim.new(0, 0),
 						},
 
-						VariantSelector({
+						VariantSelector {
 							title = "VARIANT",
 							titleHeight = 0.5,
 							size = UDim2.fromScale(1, 0.25),
@@ -388,7 +392,7 @@ return function(props: {
 								if not variantConfig then
 									return "<no variant selected...>"
 								end
-								return variantConfig.Name or "<no variant name...>"
+								return `{variantConfig.Name} ()` or "<no variant name...>"
 							end,
 							LeftActivated = function()
 								cycleVariant(myClassKey(), -1)
@@ -396,7 +400,16 @@ return function(props: {
 							RightActivated = function()
 								cycleVariant(myClassKey(), 1)
 							end,
-						}),
+						},
+
+						VariantSelector {
+							title = "UNIFORM",
+							titleHeight = 0.5,
+							size = UDim2.fromScale(1, 0.25),
+							ValueText = function()
+								return `temp` or "<no uniform name...>"
+							end,
+						},
 					},
 				},
 			},
