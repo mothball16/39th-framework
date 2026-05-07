@@ -1,4 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
+local Types = require(Access.Framework.Core:WaitForChild("Types"))
+
 local Players = game:GetService("Players")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Vide = require(Packages.Vide)
@@ -18,7 +21,7 @@ local PADDING_SCALE = 0.02
 
 return function(props: {
 	factionConfigs: () -> any,
-	playerFactionIds: () ->any,
+	playerFactionIds: () -> any,
 	playerClassKeys: () -> any,
 	playerClassIds: () -> any,
 	classCountsByFaction: () -> any,
@@ -31,22 +34,22 @@ return function(props: {
 	local variantByClassKey = source({})
 	local isOpen = source(props.startOpen)
 
-	local myFactionId = derive(function()
+	local myFactionId: () -> string = derive(function()
 		return props.playerFactionIds()[playerKey]
 	end)
-	local myFactionConfig = derive(function()
+	local myFactionConfig: () -> Types.FactionConfig = derive(function()
 		return props.factionConfigs()[myFactionId()]
 	end)
-	local myClassCounts = derive(function()
+	local myClassCounts: () -> { [string]: number } = derive(function()
 		return props.classCountsByFaction()[myFactionId()] or {}
 	end)
-	local myClassKey = derive(function()
+	local myClassKey: () -> string = derive(function()
 		return props.playerClassKeys()[playerKey]
 	end)
-	local myClassId = derive(function()
+	local myClassId: () -> string = derive(function()
 		return props.playerClassIds()[playerKey]
 	end)
-	local myVariantConfig = derive(function()
+	local myVariantConfig: () -> Types.ClassVariant = derive(function()
 		if not myFactionConfig() or not myClassKey() or not myClassId() then
 			return nil
 		end
@@ -70,121 +73,87 @@ return function(props: {
 		return class.ClassIDs[variantIndex]
 	end)
 
-	local viewModel = derive(function()
-		if not myFactionId() or not myFactionConfig() then
-			return nil
-		end
-		-- build class entries
-		local classes = {}
-		for classKey, classConfig in pairs(myFactionConfig().Classes) do
-			local variants = {}
-			for _, variant in ipairs(classConfig.ClassIDs or {}) do
-				table.insert(variants, variant.Id)
-			end
-			local selectedIndex = variantByClassKey()[classKey]
-			if not selectedIndex then
-				selectedIndex = 1
-				if classKey == myClassKey() then
-					for variantIndex, variantClassId in ipairs(variants) do
-						if variantClassId == myClassId() then
-							selectedIndex = variantIndex
-							break
-						end
+	local function getSelectedVariantIndex(classKey: string, classIDs: { Types.ClassVariant }): number
+		local id = variantByClassKey()[classKey]
+		if not id then
+			id = 1
+			if classKey == myClassKey() then
+				local currentId = myClassId()
+				for i, variant in ipairs(classIDs) do
+					if variant.Id == currentId then
+						id = i
+						break
 					end
 				end
 			end
-
-			if #variants == 0 then
-				selectedIndex = 0
-			else
-				selectedIndex = math.clamp(selectedIndex, 1, #variants)
-			end
-
-			local selectedClassId = variants[selectedIndex]
-			local count = myClassCounts()[classKey] or 0
-			local limit = classConfig.Limit or 0
-			table.insert(classes, {
-				classKey = classKey,
-				variants = variants,
-				classId = selectedClassId or "None",
-				selectedVariantIndex = selectedIndex,
-				count = count,
-				limit = limit,
-				isFull = limit > 0 and count >= limit,
-				isCurrentKey = myClassKey() == classKey,
-				isCurrentId = myClassId() == selectedClassId,
-			})
 		end
-
-
-		return {
-			factionId = myFactionId,
-			currentClassKey = myClassKey() or "<none>",
-			currentClassId = myClassId() or "<none>",
-			classes = classes,
-		}
-	end)
-
-	local function cycleVariant(classKey: string, offset: number)
-		local resolvedViewModel = viewModel()
-		if not resolvedViewModel then
-			return
-		end
-		for _, classEntry in ipairs(resolvedViewModel.classes) do
-			if classEntry.classKey == classKey then
-				local variantCount = #classEntry.variants
-				if variantCount <= 1 then
-					return
-				end
-
-				local currentIndex = classEntry.selectedVariantIndex
-				local nextIndex = ((currentIndex - 1 + offset) % variantCount) + 1
-				
-				-- updates the state in a way that triggers an update
-				local nextState = table.clone(variantByClassKey())
-				nextState[classKey] = nextIndex
-				variantByClassKey(nextState)
-				return
-			end
-		end
+		return math.clamp(id, 1, #classIDs)
 	end
 
-	-- stable version of classes in the case of no faction/vm
-	local classEntries = derive(function()
-		local vm = viewModel()
-		if not vm then
-			return {}
+	local function cycleVariant(classKey: string, offset: number)
+		local classIDs = myFactionConfig().Classes[classKey].ClassIDs
+		local variantCount = #classIDs
+		if variantCount <= 1 then
+			return
 		end
-		return vm.classes
+
+		local currentIndex = getSelectedVariantIndex(classKey, classIDs)
+		local nextIndex = ((currentIndex - 1 + offset) % variantCount) + 1
+
+		local nextState = table.clone(variantByClassKey())
+		nextState[classKey] = nextIndex
+		variantByClassKey(nextState)
+	end
+
+	-- map faction config classes to a table for indexes to iterate over
+	-- this runs only when myFactionConfig() changes so its not that expensive
+	local classEntries = derive(function()
+		local classes = {}
+		if not myFactionConfig() then
+			return classes
+		end
+
+		for key, config in pairs(myFactionConfig().Classes) do
+			local entry = table.clone(config)
+			entry.Key = key
+			table.insert(classes, entry)
+		end
+		return classes
 	end)
 
-	-- NOTE TO SELF - item is an individual data entry in classEntries, which comes from viewModel
-	-- the info is used to rebuild solely the card for that entry
-	-- instead of rebuilding the entire card list
-	local cardRows = indexes(classEntries, function(item, i)
-		return ClassCard({
-				title = function() return item().classKey end,
-				classId = function() return item().classId end,
-				count = function() return item().count end,
-				limit = function() return item().limit end,
-				isCurrentKey = function() return item().isCurrentKey end,
-				isCurrentId = function() return item().isCurrentId end,
+	local cardRows = indexes(classEntries, function(item, I)
+		-- not sure if this needs to be derived - look into how vide indexes works
+		local variantIndex = derive(function()
+			return getSelectedVariantIndex(item().Key, item().ClassIDs)
+		end)
 
-				SelectClass = function()
-					local resolvedItem = item()
-					if not resolvedItem then
-						return
-					end
-					local isCurrentSelection = resolvedItem.isCurrentKey and resolvedItem.isCurrentId
-					if resolvedItem.isFull and not isCurrentSelection then
-						return
-					end
-					if not props.requestClass then
-						return
-					end
-					props.requestClass(resolvedItem.classKey, resolvedItem.classId)
-				end,
-			})
+		return ClassCard({
+			title = function()
+				return item().Key or "<no key?>"
+			end,
+			classId = function()
+				return item().ClassIDs[variantIndex()].Id
+			end,
+			count = function()
+				return myClassCounts()[item().Key] or 0
+			end,
+			limit = function()
+				return item().Limit
+			end,
+			isCurrentKey = function()
+				return myClassKey() == item().Key
+			end,
+			isCurrentId = function()
+				return myClassId() == item().ClassIDs[variantIndex()].Id
+			end,
+
+			SelectClass = function()
+				if not props.requestClass then
+					return
+				end
+				props.requestClass(item().Key, item().ClassIDs[variantIndex()].Id)
+			end,
+		})
 	end)
 
 	---------------------- [template] ----------------------
@@ -206,10 +175,14 @@ return function(props: {
 		}),
 		create "TextButton" {
 			Name = "ModalToggler",
-			Modal = function() return isOpen() end,
+			Modal = function()
+				return isOpen()
+			end,
 		},
 		create "Frame" {
-			Visible = function() return isOpen() end,
+			Visible = function()
+				return isOpen()
+			end,
 			Name = "ClassSelectorUI",
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromScale(0.5, 0.5),
@@ -263,7 +236,7 @@ return function(props: {
 					Activated = function()
 						isOpen(false)
 					end,
-				}
+				},
 			},
 
 			create "Frame" {
@@ -288,7 +261,6 @@ return function(props: {
 					BackgroundTransparency = 0.8,
 					BorderSizePixel = 0,
 				},
-
 
 				create "TextLabel" {
 					Name = "FactionName",
@@ -320,7 +292,7 @@ return function(props: {
 						AutomaticCanvasSize = Enum.AutomaticSize.Y,
 						ScrollBarThickness = 6,
 						VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
-			
+
 						create "UIListLayout" {
 							FillDirection = Enum.FillDirection.Vertical,
 							HorizontalAlignment = Enum.HorizontalAlignment.Left,
@@ -332,7 +304,7 @@ return function(props: {
 							return cardRows()
 						end,
 					},
-			
+
 					create "TextLabel" {
 						Name = "NoClassesText",
 						LayoutOrder = 5,
@@ -343,11 +315,10 @@ return function(props: {
 						TextScaled = true,
 						FontFace = Theme.fontNormal,
 						Text = function()
-							local localViewModel = viewModel()
-							if not localViewModel then
+							if not myFactionConfig() then
 								return "No class options available yet."
 							end
-							if #localViewModel.classes == 0 then
+							if not next(myFactionConfig().Classes) then
 								return "Faction has no classes configured."
 							end
 							return ""
@@ -374,10 +345,15 @@ return function(props: {
 							TextXAlignment = Enum.TextXAlignment.Left,
 							TextYAlignment = Enum.TextYAlignment.Top,
 							Text = function()
-								return if myVariantConfig() then (myVariantConfig().Description or "Lorem ipsum on the beat yo!\n\n\n(no description)") else "<no class selected...>"
+								return if myVariantConfig()
+									then (
+										myVariantConfig().Description
+										or "Lorem ipsum on the beat yo!\n\n\n(no description)"
+									)
+									else "<no class selected...>"
 							end,
-						}
-					}
+						},
+					},
 				},
 
 				create "Frame" {
@@ -386,7 +362,6 @@ return function(props: {
 					Position = UDim2.fromScale(1, 0.1),
 					Size = UDim2.fromScale(0.475, 0.9),
 					BackgroundTransparency = 1,
-
 
 					create "Frame" {
 						Name = "ClassOptions",
@@ -413,7 +388,6 @@ return function(props: {
 								if not variantConfig then
 									return "<no variant selected...>"
 								end
-								print(variantConfig)
 								return variantConfig.Name or "<no variant name...>"
 							end,
 							LeftActivated = function()
@@ -422,15 +396,10 @@ return function(props: {
 							RightActivated = function()
 								cycleVariant(myClassKey(), 1)
 							end,
-						})
+						}),
 					},
-					
-
-
 				},
 			},
-			
 		}
 	}
-	
 end
