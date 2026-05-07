@@ -6,6 +6,7 @@ local create = Vide.create
 
 return function(props: {
     Position: UDim2,
+    AnchorPoint: Vector2,
 	Text: string,
 	OnActivated: () -> (),
     WindowActive: () -> boolean,
@@ -14,7 +15,9 @@ return function(props: {
         Visible = function() return not props.WindowActive() end,
 
         Position = props.Position,
-        Size = UDim2.fromScale(0.05, 1),
+        AnchorPoint = props.AnchorPoint,
+        Size = UDim2.fromScale(0.03, 1),
+
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         AutoButtonColor = true,
@@ -26,9 +29,10 @@ return function(props: {
         },
 
         create "UIStroke" {
+            ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
             Thickness = 2,
-            Color = Theme.AccentColor,
-            Transparency = 0,
+            Color = Theme.TextColor,
+            Transparency = 0.5,
         },
 
 		create "TextLabel" {
@@ -37,6 +41,7 @@ return function(props: {
 			BackgroundTransparency = 1,
 			AnchorPoint = Vector2.new(0.5, 0.5),
             Text = props.Text,
+			TextTransparency = 0.5,
 			FontFace = Theme.fontH2,
 			TextColor3 = Theme.TextColor,
 			TextScaled = true,

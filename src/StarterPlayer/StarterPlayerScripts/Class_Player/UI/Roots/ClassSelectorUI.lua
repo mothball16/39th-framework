@@ -169,8 +169,9 @@ return function(props: {
 		BackgroundTransparency = 1,
 
 		MenuActionButton({
-			Position = UDim2.fromScale(0, 0.5),
-			Text = "CLASSES",
+			AnchorPoint = Vector2.new(0, 1),
+			Position = UDim2.new(0, 5, 1, -5),
+			Text = "class",
 			OnActivated = function()
 				isOpen(true)
 			end,
