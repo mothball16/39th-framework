@@ -23,8 +23,7 @@ local function ClassCard(props: {
 	count: () -> number,
 	limit: () -> number,
 	
-	isCurrentKey: () -> boolean,
-	isCurrentId: () -> boolean,
+	isSelected: () -> boolean,
 
 	SelectClass: () -> (),
 })
@@ -32,9 +31,6 @@ local function ClassCard(props: {
 		return props.limit() > 0 and props.count() >= props.limit()
 	end)
 
-	local isSelected = derive(function()
-		return props.isCurrentId() and props.isCurrentKey()
-	end)
 
 
 
@@ -43,7 +39,7 @@ local function ClassCard(props: {
 	end)
 
 	local buttonColor = derive(function()
-		if isSelected() then
+		if props.isSelected() then
 			return Theme.AccentColorDark
 		end
 		return actionAccent()
@@ -63,11 +59,11 @@ local function ClassCard(props: {
 
 		-- border for selected class
 		function()
-			if not isSelected() then
+			if not props.isSelected() then
 				return nil
 			end
 			local SelectedStroke = Stroke({
-				Color = if isSelected() then Theme.AccentColorAlt else Theme.TextColor,
+				Color = if props.isSelected() then Theme.AccentColorAlt else Theme.TextColor,
 				Thickness = 2,
 				LineJoinMode = Enum.LineJoinMode.Miter,
 				Transparency = 0.5,
@@ -152,7 +148,7 @@ local function ClassCard(props: {
 				BorderSizePixel = 0,
 				AutoButtonColor = true,
 				Active = function()
-					return not isFull() or isSelected()
+					return not isFull() or props.isSelected()
 				end,
 				Activated = props.SelectClass,
 
@@ -164,8 +160,8 @@ local function ClassCard(props: {
 					Size = UDim2.fromScale(0.85, 0.85),
 					BackgroundTransparency = 1,
 					Text = function()
-						if isSelected() then
-							return "EQUIPPED"
+						if props.isSelected() then
+							return "SELECTED"
 						end
 						return if isFull() then "FULL" else "SELECT"
 					end,
