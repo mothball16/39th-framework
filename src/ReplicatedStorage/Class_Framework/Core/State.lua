@@ -62,4 +62,9 @@ function State.new(): State
 	return self
 end
 
+function State:Destroy()
+	-- i think atoms automatically cleanup?
+end
+
+
 return State

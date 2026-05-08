@@ -5,28 +5,28 @@ local Types = require(Access.Framework.Core.Types)
 local State = require(Access.Framework.Core.State)
 local Enums = require(Access.Framework.Core.Enums)
 local StateActions = require(script.Parent.StateActions)
-local ClassSelectionService = {}
-ClassSelectionService.__index = ClassSelectionService
+local ClassSelectionHandler = {}
+ClassSelectionHandler.__index = ClassSelectionHandler
 
 type self = {
     state: State.State,
     classConfigs: { [string]: Types.ClassConfig },
 }
-export type ClassSelectionService = typeof(setmetatable({} :: self, ClassSelectionService))
+export type ClassSelectionHandler = typeof(setmetatable({} :: self, ClassSelectionHandler))
 
-function ClassSelectionService.new(
+function ClassSelectionHandler.new(
     state: State.State,
-    classConfigs: { [string]: Types.ClassConfig }): ClassSelectionService
+    classConfigs: { [string]: Types.ClassConfig }): ClassSelectionHandler
 
     local self = setmetatable({
         state = state,
         classConfigs = classConfigs,
-    } :: self, ClassSelectionService)
+    } :: self, ClassSelectionHandler)
 
     return self
 end
 
-function ClassSelectionService.HandleFactionRequest(self: ClassSelectionService, player: Player, request: {
+function ClassSelectionHandler.HandleFactionRequest(self: ClassSelectionHandler, player: Player, request: {
     factionId: string,
 })
     local factionConfig = self.state.factionConfigs()[request.factionId]
@@ -37,7 +37,7 @@ function ClassSelectionService.HandleFactionRequest(self: ClassSelectionService,
     StateActions.SetPlayerFaction(self.state, player.UserId, factionConfig.ID)
 end
 
-function ClassSelectionService.HandleClassRequest(self: ClassSelectionService, player: Player, request: {
+function ClassSelectionHandler.HandleClassRequest(self: ClassSelectionHandler, player: Player, request: {
     classKey: string,
     classId: string,
 })
@@ -70,7 +70,7 @@ function ClassSelectionService.HandleClassRequest(self: ClassSelectionService, p
     StateActions.SetPlayerClass(self.state, player.UserId, request.classKey, request.classId)
 end
 
-function ClassSelectionService.HandleTeamChange(self: ClassSelectionService, player: Player, team: Team)
+function ClassSelectionHandler.HandleTeamChange(self: ClassSelectionHandler, player: Player, team: Team)
     -- check if the player's new team should automatically assign a faction
     local autoFactionAttribute = team:GetAttribute(Enums.Faction.AutoFactionAttribute)
     if not autoFactionAttribute then
@@ -86,4 +86,4 @@ function ClassSelectionService.HandleTeamChange(self: ClassSelectionService, pla
     StateActions.SetPlayerFaction(self.state, player.UserId, factionConfig.ID)
 end
 
-return ClassSelectionService
+return ClassSelectionHandler
