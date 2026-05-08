@@ -6,63 +6,13 @@ local source = Vide.source
 
 local Roots = script.Parent.Parent.Roots
 local ClassSelectorUI = require(Roots.ClassSelectorUI)
-
+local Mocks = require(ReplicatedStorage.Class_Framework.Core.Mocks)
 return function(target: Instance)
 	local localPlayer = Players.LocalPlayer
 	local playerKey = if localPlayer then tostring(localPlayer.UserId) else "0"
 
 	local factionId = "MarineCorps"
-	local factionConfigs = source({
-		[factionId] = {
-			ID = factionId,
-			Name = "United States Marine Corps",
-			Classes = {
-				Rifleman = {
-					ClassIDs = {
-						{
-							Id = "RiflemanA",
-							Name = "Rifleman",
-							Description = "Rifleman uno\n\n\n",
-						},
-						{
-							Id = "RiflemanB",
-							Name = "Rifleman Alt",
-							Description = "Rifleman dos\n\n\n",
-						}
-					},
-					Limit = 10,
-					Default = true,
-				},
-				Engineer = {
-					ClassIDs = {
-						{
-							Id = "EngineerA",
-							Name = "Engineer",
-							Description = "The only\n\n\n",
-						}
-					},
-					Limit = 2,
-					Default = false,
-				},
-				Marksman = {
-					ClassIDs = {
-						{
-							Id = "MarksmanA",
-							Name = "Marksman",
-							Description = "The best\n\n\n",
-						},
-						{
-							Id = "MarksmanB",
-							Name = "Marksman Alt",
-							Description = "The best dos\n\n\n",
-						},
-					},
-					Limit = 1,
-					Default = false,
-				},
-			},
-		},
-	})
+	local factionConfigs = source(Mocks.FactionConfig(factionId))
 
 	return Vide.mount(function()
 		return ClassSelectorUI({
