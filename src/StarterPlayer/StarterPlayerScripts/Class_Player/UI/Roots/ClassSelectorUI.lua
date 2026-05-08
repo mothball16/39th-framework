@@ -5,10 +5,7 @@ local Types = require(Access.Framework.Core:WaitForChild("Types"))
 local Players = game:GetService("Players")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Vide = require(Packages.Vide)
-local create = Vide.create
-local source = Vide.source
-local derive = Vide.derive
-local indexes = Vide.indexes
+local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
@@ -27,12 +24,14 @@ return function(props: {
 	classCountsByFaction: () -> any,
 	startOpen: boolean,
 	requestClass: ((classKey: string, classId: string) -> ())?,
+	requestClassActive: ((active: boolean) -> ())?,
 })
 	local localPlayer = Players.LocalPlayer
 	local playerKey = if localPlayer then tostring(localPlayer.UserId) else "0"
 
-	local variantByClassKey = source({})
+	local variantIndexByClassKey = source({})
 	local isOpen = source(props.startOpen)
+
 
 	local myFactionId: () -> string = derive(function()
 		return props.playerFactionIds()[playerKey]
@@ -66,7 +65,7 @@ return function(props: {
 			return nil
 		end
 
-		local variantIndex = variantByClassKey()[myClassKey()]
+		local variantIndex = variantIndexByClassKey()[myClassKey()]
 		if not variantIndex then
 			variantIndex = 1
 			for i, variant in ipairs(myClassConfig().ClassIDs) do
@@ -82,7 +81,7 @@ return function(props: {
 	end)
 
 	local function getSelectedVariantIndex(classKey: string, classIDs: { Types.ClassVariant }): number
-		local id = variantByClassKey()[classKey]
+		local id = variantIndexByClassKey()[classKey]
 		if not id then
 			id = 1
 			if classKey == myClassKey() then
@@ -108,9 +107,10 @@ return function(props: {
 		local currentIndex = getSelectedVariantIndex(classKey, classIDs)
 		local nextIndex = ((currentIndex - 1 + offset) % variantCount) + 1
 
-		local nextState = table.clone(variantByClassKey())
+		-- update the local state (gotta do it like this cause of how updating works with vide)
+		local nextState = table.clone(variantIndexByClassKey())
 		nextState[classKey] = nextIndex
-		variantByClassKey(nextState)
+		variantIndexByClassKey(nextState)
 	end
 
 	-- map faction config classes to a table for indexes to iterate over
@@ -161,6 +161,16 @@ return function(props: {
 		})
 	end)
 
+	local onOpenToggled = effect(function()
+		if isOpen() then
+			-- stub
+			
+		else
+			if props.applyClass then
+				props.applyClass()
+			end
+		end
+	end)
 	---------------------- [template] ----------------------
 
 	return create "Frame" {

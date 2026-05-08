@@ -29,6 +29,7 @@ export type FactionConfig = {
     Classes: {
         [string]: ClassConfig,
     },
+    DefaultClassKey: string?,
 }
 
 export type ClassConfig = {
