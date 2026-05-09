@@ -3,9 +3,11 @@ utility module for performing state transformations
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local Types = require(Access.Framework.Core.Types)
 local State = require(Access.Framework.Core.State)
+local Charm = require(Packages.Charm)
 
 local StateActions = {}
 
@@ -63,29 +65,15 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string)
 		nextPlayerClassIds[playerKey] = nil
 	end
 
-	state.playerFactionIds(nextPlayerFactionIds)
-	state.playerClassKeys(nextPlayerClassKeys)
-	state.playerClassIds(nextPlayerClassIds)
+	Charm.batch(function()
+		state.playerFactionIds(nextPlayerFactionIds)
+		state.playerClassKeys(nextPlayerClassKeys)
+		state.playerClassIds(nextPlayerClassIds)
+	end)
 end
 
 function StateActions.SetPlayerFaction(state: State.State, userId: string, factionId: string)
 	_updateMapValue(state.playerFactionIds, userId, factionId)
-	local factionConfig = state.factionConfigs()[factionId]
-	if not factionConfig then
-		return
-	end
-
-	local defaultClassKey = factionConfig.DefaultClassKey
-	if not defaultClassKey then
-		warn(`faction {factionId} has no default class`)
-		defaultClassKey = next(factionConfig.Classes)
-	end
-
-	local classConfig = factionConfig.Classes[defaultClassKey]
-	local classId = classConfig.ClassIDs[1].Id
-
-	_updateMapValue(state.playerClassKeys, userId, defaultClassKey)
-	_updateMapValue(state.playerClassIds, userId, classId)
 end
 
 function StateActions.SetPlayerClass(state: State.State, userId: string, classKey: string?, classId: string?)
@@ -96,8 +84,10 @@ function StateActions.SetPlayerClass(state: State.State, userId: string, classKe
 		classId = nil
 	end
 
-	_updateMapValue(state.playerClassKeys, userId, classKey)
-	_updateMapValue(state.playerClassIds, userId, classId)
+	Charm.batch(function()
+		_updateMapValue(state.playerClassKeys, userId, classKey)
+		_updateMapValue(state.playerClassIds, userId, classId)
+	end)
 end
 
 function StateActions.RemovePlayerFaction(state: State.State, userId: string)
