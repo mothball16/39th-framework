@@ -8,11 +8,13 @@ local Types = require(Access.Framework.Core:WaitForChild("Types"))
 
 local ClassEquipper = require(script.Parent.ClassEquipper)
 local ClassSelectionHandler = require(script.Parent.ClassSelectionHandler)
+local ClassStateListener = require(script.Parent.ClassStateListener)
 local ServerSyncer = require(script.Parent.ServerSyncer)
 local StateActions = require(script.Parent.StateActions)
 
 local ClassServerRuntime = {}
 ClassServerRuntime.__index = ClassServerRuntime
+
 
 function ClassServerRuntime.new(args: {
 	itemProviders: {[string]: Types.ClassItemProvider},
@@ -27,6 +29,7 @@ function ClassServerRuntime.new(args: {
 		factionConfigs = args.factionConfigs,
 		classEquipper = ClassEquipper.new(args.itemProviders, args.classConfigs),
 		classSelectionHandler = ClassSelectionHandler.new(state, args.classConfigs),
+		classStateListener = ClassStateListener.new(state),
 		serverSyncer = args.shouldSync and ServerSyncer.new({
 			factionConfigs = state.factionConfigs,
 			playerFactionIds = state.playerFactionIds,
@@ -40,8 +43,7 @@ function ClassServerRuntime.new(args: {
 		StateActions.CreateFaction(self.state, factionConfig)
 	end
 
-
-	
+	self.classStateListener:Start()
 	return self
 end
 
