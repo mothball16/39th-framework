@@ -7,5 +7,5 @@ return function(path)
     local DevPackages = ReplicatedStorage:WaitForChild("DevPackages")
     local TestEZ = require(DevPackages:WaitForChild("TestEZ"))
 
-    TestEZ.TestBootstrap:run({ path }, TestEZ.Reporters.TextReporter)
+    TestEZ.TestBootstrap:run({ path }, TestEZ.Reporters.TextReporterQuiet)
 end
