@@ -44,6 +44,8 @@ function ClassServerRuntime.new(args: {
 	end
 
 	self.classStateListener:Start()
+
+	
 	return self
 end
 

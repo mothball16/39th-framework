@@ -99,5 +99,26 @@ function StateActions.RemovePlayerClass(state: State.State, userId: string)
 	return StateActions.SetPlayerClass(state, userId, nil, nil)
 end
 
+function StateActions.SetPlayerToDefaultClass(state: State.State, userId: string, factionId: string)
+	print(`player {userId} has faction {factionId}`)
+	local factionConfig = state.factionConfigs()[factionId]
+	if not factionConfig then
+		return
+	end
+
+	local defaultClassKey = factionConfig.DefaultClassKey
+	if not defaultClassKey then
+		warn(`faction {factionId} has no default class`)
+		defaultClassKey = next(factionConfig.Classes)
+	end
+
+	local classConfig = factionConfig.Classes[defaultClassKey]
+	local classId = classConfig.ClassIDs[1].Id
+
+	Charm.batch(function()
+		_updateMapValue(state.playerClassKeys, userId, defaultClassKey)
+		_updateMapValue(state.playerClassIds, userId, classId)
+	end)
+end
 
 return StateActions
