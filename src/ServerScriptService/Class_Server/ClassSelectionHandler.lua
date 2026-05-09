@@ -43,13 +43,13 @@ function ClassSelectionHandler.HandleClassRequest(self: ClassSelectionHandler, p
 })
     local factionId = self.state.playerFactionIds()[player.UserId]
     local factionConfig = self.state.factionConfigs()[factionId]
-    local classConfig = factionConfig.Classes[request.classKey]
 
     if not factionConfig then
         warn(`player {player.UserId} requested class {request.classKey} but is not in a faction`)
         return
     end
 
+    local classConfig = factionConfig.Classes[request.classKey]
     if not classConfig then
         warn(`player {player.UserId} requested class {request.classKey} but it is not a valid class`)
         player:Kick("invalid action 1")
@@ -65,6 +65,7 @@ function ClassSelectionHandler.HandleClassRequest(self: ClassSelectionHandler, p
     local classCount = self.state.classCountsByFaction()[factionConfig.ID][request.classKey]
     if classCount >= classConfig.Limit then
         warn(`player {player.UserId} requested class {request.classKey} but it is full for faction {factionConfig.ID}`)
+        return
     end
 
     StateActions.SetPlayerClass(self.state, player.UserId, request.classKey, request.classId)
