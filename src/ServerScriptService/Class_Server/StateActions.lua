@@ -70,6 +70,22 @@ end
 
 function StateActions.SetPlayerFaction(state: State.State, userId: string, factionId: string)
 	_updateMapValue(state.playerFactionIds, userId, factionId)
+	local factionConfig = state.factionConfigs()[factionId]
+	if not factionConfig then
+		return
+	end
+
+	local defaultClassKey = factionConfig.DefaultClassKey
+	if not defaultClassKey then
+		warn(`faction {factionId} has no default class`)
+		defaultClassKey = next(factionConfig.Classes)
+	end
+
+	local classConfig = factionConfig.Classes[defaultClassKey]
+	local classId = classConfig.ClassIDs[1].Id
+
+	_updateMapValue(state.playerClassKeys, userId, defaultClassKey)
+	_updateMapValue(state.playerClassIds, userId, classId)
 end
 
 function StateActions.SetPlayerClass(state: State.State, userId: string, classKey: string?, classId: string?)
@@ -86,16 +102,12 @@ end
 
 function StateActions.RemovePlayerFaction(state: State.State, userId: string)
 	_updateMapValue(state.playerFactionIds, userId, nil)
+	StateActions.RemovePlayerClass(state, userId)
 end
 
 function StateActions.RemovePlayerClass(state: State.State, userId: string)
 	return StateActions.SetPlayerClass(state, userId, nil, nil)
 end
 
-function StateActions.CleanupPlayer(state: State.State, userId: string)
-	StateActions.RemovePlayerFaction(state, userId)
-	StateActions.RemovePlayerClass(state, userId)
-end
--- remove player
 
 return StateActions
