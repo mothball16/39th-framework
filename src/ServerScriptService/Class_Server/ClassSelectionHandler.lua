@@ -72,6 +72,10 @@ function ClassSelectionHandler.HandleClassRequest(self: ClassSelectionHandler, p
 end
 
 function ClassSelectionHandler.HandleTeamChange(self: ClassSelectionHandler, player: Player, team: Team)
+    if not team then
+        return
+    end
+    
     -- check if the player's new team should automatically assign a faction
     local autoFactionAttribute = team:GetAttribute(Enums.Faction.AutoFactionAttribute)
     if not autoFactionAttribute then
