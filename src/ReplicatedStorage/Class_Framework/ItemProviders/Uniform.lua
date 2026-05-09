@@ -100,7 +100,7 @@ function UniformProvider.Unassign(player: Player, itemArgs: any)
 
         if clothing and clothing:GetAttribute(ORIG_CLOTHING_ATTR) then
             clothing[clothingAssetProperty] = clothing:GetAttribute(ORIG_CLOTHING_ATTR)
-        else
+        elseif clothing then
             clothing:Destroy()
         end
     end
