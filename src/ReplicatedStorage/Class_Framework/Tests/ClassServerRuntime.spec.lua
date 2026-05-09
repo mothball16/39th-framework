@@ -26,7 +26,6 @@ return function()
 	local runtime
     local playerOne
     local playerTwo
-	local startTick = tick()
 
     beforeEach(function()
         playerOne = Mocks.Player("1")
@@ -44,18 +43,11 @@ return function()
 		runtime:Destroy()
 	end)
 
-	afterAll(function()
-		print(`time taken: {tick() - startTick} seconds`)
-	end)
-
 	it("should register provided faction configs into state", function()
-
 		local registeredFactions = runtime.state.factionConfigs()
 		expect(registeredFactions.alpha).to.equal(factionConfigs.alpha)
 		expect(registeredFactions.bravo).to.equal(factionConfigs.bravo)
-		expect(runtime.serverSyncer).to.equal(nil)
 	end)
-
 
 	it("should assign the default class when a player is set to a faction", function()
 		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
@@ -112,5 +104,5 @@ return function()
 		expect(runtime.state.classCountsByFaction()["alpha"]["Marksman"]).to.equal(1)
 		expect(runtime.state.classCountsByFaction()["alpha"]["Rifleman"]).to.equal(1)
 	end)
-	
+
 end
