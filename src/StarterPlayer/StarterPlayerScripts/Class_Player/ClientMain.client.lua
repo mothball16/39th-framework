@@ -10,7 +10,7 @@ local Events = require(Access.Framework.Core:WaitForChild("Events"))
 local State = require(Access.Framework.Core:WaitForChild("State"))
 
 local ClientMirror = require(script.Parent.ClientMirror)
-local ClassSelectorUI = require(script.Parent.UI.Roots.ClassSelectorUI)
+local SelectorUI = require(script.Parent.UI.Roots.SelectorUI)
 
 local maid = Maid.new()
 local state = State.new()
@@ -24,10 +24,10 @@ local mirror = ClientMirror.new({
 local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 local unmountSelector = Vide.mount(function()
 	return create "ScreenGui" {
-		Name = "ClassSelectorUI",
+		Name = "SelectorUI",
 		ResetOnSpawn = false,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-		ClassSelectorUI({
+		SelectorUI({
 			factionConfigs = useAtom(state.factionConfigs),
 			playerFactionIds = useAtom(state.playerFactionIds),
 			playerClassKeys = useAtom(state.playerClassKeys),

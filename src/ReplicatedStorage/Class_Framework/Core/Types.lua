@@ -15,6 +15,7 @@ export type Settings = {
     ItemTypePaths: {
         [string]: Folder,
     },
+    DebugMode: boolean,
 }
 
 export type ClassVariant = {

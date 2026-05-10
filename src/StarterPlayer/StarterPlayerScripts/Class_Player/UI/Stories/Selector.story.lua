@@ -5,7 +5,7 @@ local Vide = require(Packages.Vide)
 local source = Vide.source
 
 local Roots = script.Parent.Parent.Roots
-local ClassSelectorUI = require(Roots.ClassSelectorUI)
+local SelectorUI = require(Roots.SelectorUI)
 local Mocks = require(ReplicatedStorage.Class_Framework.Core.Mocks)
 return function(target: Instance)
 	local localPlayer = Players.LocalPlayer
@@ -15,7 +15,7 @@ return function(target: Instance)
 	local factionConfigs = source(Mocks.FactionConfig(factionId))
 
 	return Vide.mount(function()
-		return ClassSelectorUI({
+		return SelectorUI({
 			startOpen = true,
 			factionConfigs = factionConfigs,
 			playerFactionIds = source({

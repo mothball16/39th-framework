@@ -9,7 +9,7 @@ local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.d
 
 local UI = script.Parent.Parent
 local Theme = require(UI.Theme)
-local ClassCard = require(UI.Components.ClassCard)
+local Card = require(UI.Components.Card)
 local MenuActionButton = require(UI.Components.MenuActionButton)
 local VariantSelector = require(UI.Components.VariantSelector)
 
@@ -135,7 +135,7 @@ return function(props: {
 			return getSelectedVariantIndex(item().Key, item().ClassIDs)
 		end)
 
-		return ClassCard({
+		return Card({
 			title = function()
 				return item().Key or "<no key?>"
 			end,
@@ -200,7 +200,7 @@ return function(props: {
 			Visible = function()
 				return isOpen()
 			end,
-			Name = "ClassSelectorUI",
+			Name = "SelectorUI",
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromScale(0.5, 0.5),
 			Size = UDim2.fromScale(0.4, 1),

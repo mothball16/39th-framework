@@ -6,14 +6,13 @@ local Types = require(script.Parent.Types)
 local State = {}
 State.__index = State
 
-type ClassCountByFaction = { [string]: { [string]: number } }
-
 type self = {
 	factionConfigs: Charm.Atom<{ [string]: Types.FactionConfig }>,
 	playerFactionIds: Charm.Atom<{ [string]: string }>,
 	playerClassKeys: Charm.Atom<{ [string]: string }>,
 	playerClassIds: Charm.Atom<{ [string]: string }>,
-	classCountsByFaction: any,
+
+	classCountsByFaction: () -> { [string]: { [string]: number } },
 }
 export type State = typeof(setmetatable({} :: self, State))
 

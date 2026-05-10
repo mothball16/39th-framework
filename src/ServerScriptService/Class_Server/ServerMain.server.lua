@@ -2,9 +2,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = ReplicatedStorage:WaitForChild("Utility")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local Types = require(Access.Framework.Core.Types)
-local ClassServerRuntime = require(script.Parent.ClassServerRuntime)
+local ServerRuntime = require(script.Parent.ServerRuntime)
 
-require(Utility.TestRunner)(Access.Framework:WaitForChild("Tests"))
+if Access.Config.DebugMode then
+	require(Utility.TestRunner)(Access.Framework:WaitForChild("Tests"))
+end
 
 --#region [ helpers ]
 local function getItemProviders(path)
@@ -36,10 +38,10 @@ local function getClassConfigs(path)
 end
 --#endregion [ helpers ]
 
-local runtime = ClassServerRuntime.new({
-        itemProviders = getItemProviders(Access.Framework.ItemProviders),
-        classConfigs = getClassConfigs(Access.Assets.ClassConfigs),
-        factionConfigs = getFactionConfigs(Access.Assets.FactionConfigs),
-        shouldSync = true,
-    })
+local runtime = ServerRuntime.new({
+	itemProviders = getItemProviders(Access.Framework.ItemProviders),
+	classConfigs = getClassConfigs(Access.Assets.ClassConfigs),
+	factionConfigs = getFactionConfigs(Access.Assets.FactionConfigs),
+	shouldSync = true,
+})
 runtime:Start()

@@ -17,7 +17,7 @@ local CLASS_TITLE_HEIGHT = 0.52
 local CLASS_COUNT_HEIGHT = 0.4
 local SELECT_HEIGHT = 0.4
 
-local function ClassCard(props: {
+local function Card(props: {
 	title: () -> string,
 	classId: () -> string,
 	count: () -> number,
@@ -170,4 +170,4 @@ local function ClassCard(props: {
 	}
 end
 
-return ClassCard
+return Card

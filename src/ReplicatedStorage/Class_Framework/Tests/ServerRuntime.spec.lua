@@ -6,7 +6,7 @@ local Mocks = require(Access.Framework.Core.Mocks)
 
 return function()
 	local ServerRoot = game.ServerScriptService.Class_Server
-	local ClassServerRuntime = require(ServerRoot.ClassServerRuntime)
+	local ServerRuntime = require(ServerRoot.ServerRuntime)
 	local StateActions = require(ServerRoot.StateActions)
 	local itemProviders = {
 		Test = Mocks.ItemProvider("Test"),
@@ -31,7 +31,7 @@ return function()
         playerOne = Mocks.Player("1")
         playerTwo = Mocks.Player("2")
 
-        runtime = ClassServerRuntime.new({
+        runtime = ServerRuntime.new({
             itemProviders = itemProviders,
             classConfigs = classConfigs,
             factionConfigs = factionConfigs,
@@ -58,7 +58,7 @@ return function()
 	it("should update state accordingly when a class is assigned to a player", function()
 		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
 		
-		runtime.classSelectionHandler:HandleClassRequest(playerOne, {
+		runtime.selectionHandler:HandleClassRequest(playerOne, {
 			classKey = "Rifleman",
 			classId = "RiflemanA",
 		})
@@ -78,7 +78,7 @@ return function()
 	end)
 
 	it("should remove the assignment when a class is assigned to a player that is not in a faction", function()
-		runtime.classSelectionHandler:HandleClassRequest(playerOne, {
+		runtime.selectionHandler:HandleClassRequest(playerOne, {
 			classKey = "Rifleman",
 			classId = "RiflemanA",
 		})
@@ -91,11 +91,11 @@ return function()
 	it("should not assign the class when a player is assigned to a full class slot", function()
 		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
 		StateActions.SetPlayerFaction(runtime.state, playerTwo.UserId, "alpha")
-		runtime.classSelectionHandler:HandleClassRequest(playerOne, {
+		runtime.selectionHandler:HandleClassRequest(playerOne, {
 			classKey = "Marksman",
 			classId = "MarksmanA",
 		})
-		runtime.classSelectionHandler:HandleClassRequest(playerTwo, {
+		runtime.selectionHandler:HandleClassRequest(playerTwo, {
 			classKey = "Marksman",
 			classId = "MarksmanA",
 		})
