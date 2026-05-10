@@ -7,7 +7,7 @@ local Mocks = require(Access.Framework.Core.Mocks)
 return function()
 	local ServerRoot = game.ServerScriptService.Class_Server
 	local ServerRuntime = require(ServerRoot.ServerRuntime)
-	local StateActions = require(ServerRoot.StateActions)
+	local StateActions = require(Access.Framework.StateActions)
 	local itemProviders = {
 		Test = Mocks.ItemProvider("Test"),
 	}
@@ -104,5 +104,6 @@ return function()
 		expect(runtime.state.classCountByFaction()["alpha"]["Marksman"]).to.equal(1)
 		expect(runtime.state.classCountByFaction()["alpha"]["Rifleman"]).to.equal(1)
 	end)
+	
 
 end

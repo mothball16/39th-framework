@@ -4,7 +4,7 @@ local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local Types = require(Access.Framework.Core.Types)
 local State = require(Access.Framework.Core.State)
 local Enums = require(Access.Framework.Core.Enums)
-local StateActions = require(script.Parent.StateActions)
+local StateActions = require(Access.Framework.StateActions)
 
 local SelectionHandler = {}
 SelectionHandler.__index = SelectionHandler

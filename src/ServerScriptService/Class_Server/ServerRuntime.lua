@@ -1,16 +1,16 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
-local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local State = require(Access.Framework.Core:WaitForChild("State"))
-local Events = require(Access.Framework.Core:WaitForChild("Events"))
-local Types = require(Access.Framework.Core:WaitForChild("Types"))
+local Access = require(ReplicatedStorage.Class_Access)
+local State = require(Access.Framework.Core.State)
+local Events = require(Access.Framework.Core.Events)
+local Types = require(Access.Framework.Core.Types)
+local StateActions = require(Access.Framework.StateActions)
 
 local ItemEquipper = require(script.Parent.ItemEquipper)
 local SelectionHandler = require(script.Parent.SelectionHandler)
 local StateObserver = require(script.Parent.StateObserver)
 local ServerSyncer = require(script.Parent.ServerSyncer)
-local StateActions = require(script.Parent.StateActions)
 
 local ServerRuntime = {}
 ServerRuntime.__index = ServerRuntime

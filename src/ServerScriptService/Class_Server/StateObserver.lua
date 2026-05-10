@@ -4,11 +4,11 @@ should be the only point where Charm.observe is attached in a way that may cause
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
+local Packages = ReplicatedStorage.Packages
 local Charm = require(Packages.Charm)
-local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
+local Access = require(ReplicatedStorage.Class_Access)
 local State = require(Access.Framework.Core.State)
-local StateActions = require(script.Parent.StateActions)
+local StateActions = require(Access.Framework.StateActions)
 
 local StateObserver = {}
 StateObserver.__index = StateObserver
@@ -28,6 +28,7 @@ end
 function StateObserver.Start(self: StateObserver)
 	-- player assigns themself to a (new) faction, set to default class
 	Charm.observe(self.state.playerByFactionId, function(factionId, userId)
+		
 		StateActions.SetPlayerToDefaultClass(self.state, userId, factionId)
 	end)
 
