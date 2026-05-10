@@ -12,7 +12,7 @@ return function(target: Instance)
 	local playerKey = "0"
 
 	local factionId = "MarineCorps"
-	local factionConfigs = {
+	local configByFactionId = {
 		[factionId] = Mocks.FactionConfig(factionId),
 	}
 
@@ -23,7 +23,7 @@ return function(target: Instance)
 			startOpen = true,
 			playerKey = playerKey,
 			state = {
-				factionConfigs = source(factionConfigs),
+				configByFactionId = source(configByFactionId),
 				playerByFactionId = source({
 					[playerKey] = factionId,
 				}),

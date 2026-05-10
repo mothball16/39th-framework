@@ -41,7 +41,7 @@ end
 local runtime = ServerRuntime.new({
 	itemProviders = getItemProviders(Access.Framework.ItemProviders),
 	classConfigs = getClassConfigs(Access.Assets.ClassConfigs),
-	factionConfigs = getFactionConfigs(Access.Assets.FactionConfigs),
+	configByFactionId = getFactionConfigs(Access.Assets.FactionConfigs),
 	shouldSync = true,
 })
 runtime:Start()

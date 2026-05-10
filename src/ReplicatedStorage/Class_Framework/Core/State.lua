@@ -10,7 +10,7 @@ local State = {}
 State.__index = State
 
 type self = {
-	factionConfigs: Charm.Atom<{ [string]: Types.FactionConfig }>,
+	configByFactionId: Charm.Atom<{ [string]: Types.FactionConfig }>,
 	playerByFactionId: Charm.Atom<{ [string]: string }>,
 	playerByClassKey: Charm.Atom<{ [string]: string }>,
 	playerByClassId: Charm.Atom<{ [string]: string }>,
@@ -22,7 +22,7 @@ export type State = typeof(setmetatable({} :: self, State))
 function State.new(): State
 	local self = setmetatable(
 		{
-			factionConfigs = Charm.atom({}),
+			configByFactionId = Charm.atom({}),
 			playerByFactionId = Charm.atom({}),
 			playerByClassKey = Charm.atom({}),
 			playerByClassId = Charm.atom({}),
@@ -31,12 +31,12 @@ function State.new(): State
 	)
 
 	self.classCountByFaction = Charm.computed(function()
-		local factionConfigs = self.factionConfigs()
+		local configByFactionId = self.configByFactionId()
 		local playerByFactionId = self.playerByFactionId()
 		local playerByClassKey = self.playerByClassKey()
 		local countsByFaction = {}
 
-		for factionId, factionConfig in pairs(factionConfigs) do
+		for factionId, factionConfig in pairs(configByFactionId) do
 			local counts = {}
 			for classKey, _ in pairs(factionConfig.Classes) do
 				counts[classKey] = 0
@@ -66,7 +66,7 @@ end
 
 function State:AsVideSources()
 	return {
-		factionConfigs = useAtom(self.factionConfigs),
+		configByFactionId = useAtom(self.configByFactionId),
 		playerByFactionId = useAtom(self.playerByFactionId),
 		playerByClassKey = useAtom(self.playerByClassKey),
 		playerByClassId = useAtom(self.playerByClassId),

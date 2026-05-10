@@ -30,7 +30,7 @@ return function(props: {
 	end)
 
 	local myFactionConfig: () -> Types.FactionConfig = derive(function()
-		return props.state.factionConfigs()[myFactionId()]
+		return props.state.configByFactionId()[myFactionId()]
 	end)
 
 	local myClassKey: () -> string = derive(function()

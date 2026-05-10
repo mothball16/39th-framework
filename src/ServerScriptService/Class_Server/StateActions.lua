@@ -20,7 +20,7 @@ local function _updateMapValue(atom, key, value)
 end
 
 function StateActions.CreateFaction(state: State.State, config: Types.FactionConfig)
-	state.factionConfigs(function(previous)
+	state.configByFactionId(function(previous)
 		local nextState = table.clone(previous)
 		nextState[config.ID] = config
 
@@ -37,7 +37,7 @@ function StateActions.CreateFaction(state: State.State, config: Types.FactionCon
 end
 
 function StateActions.RemoveFaction(state: State.State, idToRemove: string)
-	state.factionConfigs(function(previous)
+	state.configByFactionId(function(previous)
 		local nextState = table.clone(previous)
 		nextState[idToRemove] = nil
 		return nextState
@@ -101,7 +101,7 @@ end
 
 function StateActions.SetPlayerToDefaultClass(state: State.State, userId: string, factionId: string)
 	print(`player {userId} has faction {factionId}`)
-	local factionConfig = state.factionConfigs()[factionId]
+	local factionConfig = state.configByFactionId()[factionId]
 	if not factionConfig then
 		return
 	end

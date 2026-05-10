@@ -18,7 +18,7 @@ return function()
 		MarksmanA = Mocks.ClassConfig("MarksmanA"),
 		MarksmanB = Mocks.ClassConfig("MarksmanB"),
 	}
-	local factionConfigs = {
+	local configByFactionId = {
 		alpha = Mocks.FactionConfig("alpha"),
 		bravo = Mocks.FactionConfig("bravo"),
 	}
@@ -34,7 +34,7 @@ return function()
         runtime = ServerRuntime.new({
             itemProviders = itemProviders,
             classConfigs = classConfigs,
-            factionConfigs = factionConfigs,
+            configByFactionId = configByFactionId,
             shouldSync = false,
         })
     end)
@@ -44,9 +44,9 @@ return function()
 	end)
 
 	it("should register provided faction configs into state", function()
-		local registeredFactions = runtime.state.factionConfigs()
-		expect(registeredFactions.alpha).to.equal(factionConfigs.alpha)
-		expect(registeredFactions.bravo).to.equal(factionConfigs.bravo)
+		local registeredFactions = runtime.state.configByFactionId()
+		expect(registeredFactions.alpha).to.equal(configByFactionId.alpha)
+		expect(registeredFactions.bravo).to.equal(configByFactionId.bravo)
 	end)
 
 	it("should assign the default class when a player is set to a faction", function()

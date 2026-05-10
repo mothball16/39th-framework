@@ -18,19 +18,19 @@ ServerRuntime.__index = ServerRuntime
 function ServerRuntime.new(args: {
 	itemProviders: { [string]: Types.ClassItemProvider },
 	classConfigs: { [string]: Types.ClassConfig },
-	factionConfigs: { [string]: Types.FactionConfig },
+	configByFactionId: { [string]: Types.FactionConfig },
 	shouldSync: boolean,
 })
 	local state = State.new()
 
 	local self = setmetatable({
 		state = state,
-		factionConfigs = args.factionConfigs,
+		configByFactionId = args.configByFactionId,
 		itemEquipper = ItemEquipper.new(args.itemProviders, args.classConfigs),
 		selectionHandler = SelectionHandler.new(state, args.classConfigs),
 		stateObserver = StateObserver.new(state),
 		serverSyncer = args.shouldSync and ServerSyncer.new({
-			factionConfigs = state.factionConfigs,
+			configByFactionId = state.configByFactionId,
 			playerByFactionId = state.playerByFactionId,
 			playerByClassKey = state.playerByClassKey,
 			playerByClassId = state.playerByClassId,
@@ -38,7 +38,7 @@ function ServerRuntime.new(args: {
 		}, Events) or nil,
 	}, ServerRuntime)
 
-	for _, factionConfig in pairs(self.factionConfigs) do
+	for _, factionConfig in pairs(self.configByFactionId) do
 		StateActions.CreateFaction(self.state, factionConfig)
 	end
 

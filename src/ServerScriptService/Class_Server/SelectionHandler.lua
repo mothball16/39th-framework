@@ -30,7 +30,7 @@ end
 function SelectionHandler.HandleFactionRequest(self: SelectionHandler, player: Player, request: {
 	factionId: string,
 })
-	local factionConfig = self.state.factionConfigs()[request.factionId]
+	local factionConfig = self.state.configByFactionId()[request.factionId]
 	if not factionConfig then
 		return
 	end
@@ -43,7 +43,7 @@ function SelectionHandler.HandleClassRequest(self: SelectionHandler, player: Pla
 	classId: string,
 })
 	local factionId = self.state.playerByFactionId()[player.UserId]
-	local factionConfig = self.state.factionConfigs()[factionId]
+	local factionConfig = self.state.configByFactionId()[factionId]
 
 	if not factionConfig then
 		warn(`player {player.UserId} requested class {request.classKey} but is not in a faction`)
@@ -84,7 +84,7 @@ function SelectionHandler.HandleTeamChange(self: SelectionHandler, player: Playe
 	end
 
 	-- make sure the faction actually exists first
-	local factionConfig = self.state.factionConfigs()[autoFactionAttribute]
+	local factionConfig = self.state.configByFactionId()[autoFactionAttribute]
 	if not factionConfig then
 		return
 	end
