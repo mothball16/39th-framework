@@ -8,11 +8,11 @@ State.__index = State
 
 type self = {
 	factionConfigs: Charm.Atom<{ [string]: Types.FactionConfig }>,
-	playerFactionIds: Charm.Atom<{ [string]: string }>,
-	playerClassKeys: Charm.Atom<{ [string]: string }>,
-	playerClassIds: Charm.Atom<{ [string]: string }>,
+	playerByFactionId: Charm.Atom<{ [string]: string }>,
+	playerByClassKey: Charm.Atom<{ [string]: string }>,
+	playerByClassId: Charm.Atom<{ [string]: string }>,
 
-	classCountsByFaction: () -> { [string]: { [string]: number } },
+	classCountByFaction: () -> { [string]: { [string]: number } },
 }
 export type State = typeof(setmetatable({} :: self, State))
 
@@ -20,17 +20,17 @@ function State.new(): State
 	local self = setmetatable(
 		{
 			factionConfigs = Charm.atom({}),
-			playerFactionIds = Charm.atom({}),
-			playerClassKeys = Charm.atom({}),
-			playerClassIds = Charm.atom({}),
+			playerByFactionId = Charm.atom({}),
+			playerByClassKey = Charm.atom({}),
+			playerByClassId = Charm.atom({}),
 		} :: self,
 		State
 	)
 
-	self.classCountsByFaction = Charm.computed(function()
+	self.classCountByFaction = Charm.computed(function()
 		local factionConfigs = self.factionConfigs()
-		local playerFactionIds = self.playerFactionIds()
-		local playerClassKeys = self.playerClassKeys()
+		local playerByFactionId = self.playerByFactionId()
+		local playerByClassKey = self.playerByClassKey()
 		local countsByFaction = {}
 
 		for factionId, factionConfig in pairs(factionConfigs) do
@@ -41,8 +41,8 @@ function State.new(): State
 			countsByFaction[factionId] = counts
 		end
 
-		for playerKey, factionId in pairs(playerFactionIds) do
-			local classKey = playerClassKeys[playerKey]
+		for playerKey, factionId in pairs(playerByFactionId) do
+			local classKey = playerByClassKey[playerKey]
 			if not classKey then
 				continue
 			end

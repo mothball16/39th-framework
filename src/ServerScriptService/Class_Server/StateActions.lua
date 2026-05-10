@@ -45,7 +45,7 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string)
 
 	-- make a pass to get players within the removed factions
 	local affectedPlayers = {}
-	for playerKey, factionId in pairs(state.playerFactionIds()) do
+	for playerKey, factionId in pairs(state.playerByFactionId()) do
 		if factionId == idToRemove then
 			table.insert(affectedPlayers, playerKey)
 		end
@@ -56,24 +56,24 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string)
 	end
 
 	-- is dirty, update reactively
-	local nextPlayerFactionIds = table.clone(state.playerFactionIds())
-	local nextPlayerClassKeys = table.clone(state.playerClassKeys())
-	local nextPlayerClassIds = table.clone(state.playerClassIds())
+	local nextplayerByFactionId = table.clone(state.playerByFactionId())
+	local nextplayerByClassKey = table.clone(state.playerByClassKey())
+	local nextplayerByClassId = table.clone(state.playerByClassId())
 	for _, playerKey in ipairs(affectedPlayers) do
-		nextPlayerFactionIds[playerKey] = nil
-		nextPlayerClassKeys[playerKey] = nil
-		nextPlayerClassIds[playerKey] = nil
+		nextplayerByFactionId[playerKey] = nil
+		nextplayerByClassKey[playerKey] = nil
+		nextplayerByClassId[playerKey] = nil
 	end
 
 	Charm.batch(function()
-		state.playerFactionIds(nextPlayerFactionIds)
-		state.playerClassKeys(nextPlayerClassKeys)
-		state.playerClassIds(nextPlayerClassIds)
+		state.playerByFactionId(nextplayerByFactionId)
+		state.playerByClassKey(nextplayerByClassKey)
+		state.playerByClassId(nextplayerByClassId)
 	end)
 end
 
 function StateActions.SetPlayerFaction(state: State.State, userId: string, factionId: string)
-	_updateMapValue(state.playerFactionIds, userId, factionId)
+	_updateMapValue(state.playerByFactionId, userId, factionId)
 end
 
 function StateActions.SetPlayerClass(state: State.State, userId: string, classKey: string?, classId: string?)
@@ -85,13 +85,13 @@ function StateActions.SetPlayerClass(state: State.State, userId: string, classKe
 	end
 
 	Charm.batch(function()
-		_updateMapValue(state.playerClassKeys, userId, classKey)
-		_updateMapValue(state.playerClassIds, userId, classId)
+		_updateMapValue(state.playerByClassKey, userId, classKey)
+		_updateMapValue(state.playerByClassId, userId, classId)
 	end)
 end
 
 function StateActions.RemovePlayerFaction(state: State.State, userId: string)
-	_updateMapValue(state.playerFactionIds, userId, nil)
+	_updateMapValue(state.playerByFactionId, userId, nil)
 	StateActions.RemovePlayerClass(state, userId)
 end
 
@@ -116,8 +116,8 @@ function StateActions.SetPlayerToDefaultClass(state: State.State, userId: string
 	local classId = classConfig.ClassIDs[1].Id
 
 	Charm.batch(function()
-		_updateMapValue(state.playerClassKeys, userId, defaultClassKey)
-		_updateMapValue(state.playerClassIds, userId, classId)
+		_updateMapValue(state.playerByClassKey, userId, defaultClassKey)
+		_updateMapValue(state.playerByClassId, userId, classId)
 	end)
 end
 

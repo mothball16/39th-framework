@@ -51,8 +51,8 @@ return function()
 
 	it("should assign the default class when a player is set to a faction", function()
 		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
-		expect(runtime.state.playerClassKeys()[playerOne.UserId]).to.equal("Rifleman")
-		expect(runtime.state.playerClassIds()[playerOne.UserId]).to.equal("RiflemanA")
+		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Rifleman")
+		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
 	end)
 
 	it("should update state accordingly when a class is assigned to a player", function()
@@ -63,18 +63,18 @@ return function()
 			classId = "RiflemanA",
 		})
 
-		expect(runtime.state.playerFactionIds()[playerOne.UserId]).to.equal("alpha")
-		expect(runtime.state.playerClassKeys()[playerOne.UserId]).to.equal("Rifleman")
-		expect(runtime.state.playerClassIds()[playerOne.UserId]).to.equal("RiflemanA")
+		expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal("alpha")
+		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Rifleman")
+		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
 	end)
 
 	it("should remove all assignments when a player is unassigned from a faction", function()
 		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
 		StateActions.RemovePlayerFaction(runtime.state, playerOne.UserId)
 
-		expect(runtime.state.playerFactionIds()[playerOne.UserId]).to.equal(nil)
-		expect(runtime.state.playerClassKeys()[playerOne.UserId]).to.equal(nil)
-		expect(runtime.state.playerClassIds()[playerOne.UserId]).to.equal(nil)
+		expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
+		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal(nil)
+		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal(nil)
 	end)
 
 	it("should remove the assignment when a class is assigned to a player that is not in a faction", function()
@@ -83,9 +83,9 @@ return function()
 			classId = "RiflemanA",
 		})
 
-		expect(runtime.state.playerFactionIds()[playerOne.UserId]).to.equal(nil)
-		expect(runtime.state.playerClassKeys()[playerOne.UserId]).to.equal(nil)
-		expect(runtime.state.playerClassIds()[playerOne.UserId]).to.equal(nil)
+		expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
+		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal(nil)
+		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal(nil)
 	end)
 
 	it("should not assign the class when a player is assigned to a full class slot", function()
@@ -99,10 +99,10 @@ return function()
 			classKey = "Marksman",
 			classId = "MarksmanA",
 		})
-		expect(runtime.state.playerClassKeys()[playerOne.UserId]).to.equal("Marksman")
-		expect(runtime.state.playerClassKeys()[playerTwo.UserId]).to.equal("Rifleman")
-		expect(runtime.state.classCountsByFaction()["alpha"]["Marksman"]).to.equal(1)
-		expect(runtime.state.classCountsByFaction()["alpha"]["Rifleman"]).to.equal(1)
+		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Marksman")
+		expect(runtime.state.playerByClassKey()[playerTwo.UserId]).to.equal("Rifleman")
+		expect(runtime.state.classCountByFaction()["alpha"]["Marksman"]).to.equal(1)
+		expect(runtime.state.classCountByFaction()["alpha"]["Rifleman"]).to.equal(1)
 	end)
 
 end

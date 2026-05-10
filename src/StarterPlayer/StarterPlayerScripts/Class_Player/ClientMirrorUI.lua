@@ -50,17 +50,17 @@ end
 
 local function buildViewModel(
 	factionConfigs: {[string]: any},
-	playerFactionIds: {[string]: string},
-	playerClassKeys: {[string]: string},
-	playerClassIds: {[string]: string},
-	classCountsByFaction: {[string]: {[string]: number}},
+	playerByFactionId: {[string]: string},
+	playerByClassKey: {[string]: string},
+	playerByClassId: {[string]: string},
+	classCountByFaction: {[string]: {[string]: number}},
 	userId: number,
 	selectedVariantByClassKey: {[string]: number}
 ): ViewModel?
 	local playerKey = tostring(userId)
-	local factionId = playerFactionIds[playerKey]
-	local currentClassKey = playerClassKeys[playerKey]
-	local currentClassId = playerClassIds[playerKey]
+	local factionId = playerByFactionId[playerKey]
+	local currentClassKey = playerByClassKey[playerKey]
+	local currentClassId = playerByClassId[playerKey]
 	if not factionId or not currentClassKey or not currentClassId then
 		return nil
 	end
@@ -70,7 +70,7 @@ local function buildViewModel(
 		return nil
 	end
 
-	local classCounts = classCountsByFaction[factionId] or {}
+	local classCounts = classCountByFaction[factionId] or {}
 
 	local classes = {}
 	for classKey, classConfig in pairs(factionConfig.Classes) do
@@ -187,16 +187,16 @@ function ClientMirrorUI:_bindAtomSubscriptions()
 	self:_addCleanup(Charm.subscribe(self.atoms.factionConfigs, function()
 		self:_onAtomChanged()
 	end))
-	self:_addCleanup(Charm.subscribe(self.atoms.playerFactionIds, function()
+	self:_addCleanup(Charm.subscribe(self.atoms.playerByFactionId, function()
 		self:_onAtomChanged()
 	end))
-	self:_addCleanup(Charm.subscribe(self.atoms.playerClassKeys, function()
+	self:_addCleanup(Charm.subscribe(self.atoms.playerByClassKey, function()
 		self:_onAtomChanged()
 	end))
-	self:_addCleanup(Charm.subscribe(self.atoms.playerClassIds, function()
+	self:_addCleanup(Charm.subscribe(self.atoms.playerByClassId, function()
 		self:_onAtomChanged()
 	end))
-	self:_addCleanup(Charm.subscribe(self.atoms.classCountsByFaction, function()
+	self:_addCleanup(Charm.subscribe(self.atoms.classCountByFaction, function()
 		self:_onAtomChanged()
 	end))
 end
@@ -352,16 +352,16 @@ end
 
 function ClientMirrorUI:_refresh(forceRender: boolean)
 	local factionConfigs = self.atoms.factionConfigs()
-	local playerFactionIds = self.atoms.playerFactionIds()
-	local playerClassKeys = self.atoms.playerClassKeys()
-	local playerClassIds = self.atoms.playerClassIds()
-	local classCountsByFaction = self.atoms.classCountsByFaction()
+	local playerByFactionId = self.atoms.playerByFactionId()
+	local playerByClassKey = self.atoms.playerByClassKey()
+	local playerByClassId = self.atoms.playerByClassId()
+	local classCountByFaction = self.atoms.classCountByFaction()
 	local viewModel = buildViewModel(
 		factionConfigs,
-		playerFactionIds,
-		playerClassKeys,
-		playerClassIds,
-		classCountsByFaction,
+		playerByFactionId,
+		playerByClassKey,
+		playerByClassId,
+		classCountByFaction,
 		self.localUserId,
 		self.selectedVariantByClassKey
 	)

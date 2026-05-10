@@ -42,7 +42,7 @@ function SelectionHandler.HandleClassRequest(self: SelectionHandler, player: Pla
 	classKey: string,
 	classId: string,
 })
-	local factionId = self.state.playerFactionIds()[player.UserId]
+	local factionId = self.state.playerByFactionId()[player.UserId]
 	local factionConfig = self.state.factionConfigs()[factionId]
 
 	if not factionConfig then
@@ -63,7 +63,7 @@ function SelectionHandler.HandleClassRequest(self: SelectionHandler, player: Pla
 		return
 	end
 
-	local classCount = self.state.classCountsByFaction()[factionConfig.ID][request.classKey]
+	local classCount = self.state.classCountByFaction()[factionConfig.ID][request.classKey]
 	if classCount >= classConfig.Limit then
 		warn(`player {player.UserId} requested class {request.classKey} but it is full for faction {factionConfig.ID}`)
 		return

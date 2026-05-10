@@ -27,11 +27,11 @@ end
 
 function StateObserver.Start(self: StateObserver)
 	-- player assigns themself to a (new) faction, set to default class
-	Charm.observe(self.state.playerFactionIds, function(factionId, userId)
+	Charm.observe(self.state.playerByFactionId, function(factionId, userId)
 		StateActions.SetPlayerToDefaultClass(self.state, userId, factionId)
 	end)
 
-	Charm.observe(self.state.playerClassIds, function(classId, userId)
+	Charm.observe(self.state.playerByClassId, function(classId, userId)
 		print(`player {userId} has class {classId}`)
 	end)
 end

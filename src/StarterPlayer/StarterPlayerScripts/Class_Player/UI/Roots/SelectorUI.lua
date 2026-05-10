@@ -18,10 +18,10 @@ local PADDING_SCALE = 0.02
 
 return function(props: {
 	factionConfigs: () -> any,
-	playerFactionIds: () -> any,
-	playerClassKeys: () -> any,
-	playerClassIds: () -> any,
-	classCountsByFaction: () -> any,
+	playerByFactionId: () -> any,
+	playerByClassKey: () -> any,
+	playerByClassId: () -> any,
+	classCountByFaction: () -> any,
 	startOpen: boolean,
 	requestClass: ((classKey: string, classId: string) -> ())?,
 	requestClassActive: ((active: boolean) -> ())?,
@@ -34,19 +34,19 @@ return function(props: {
 
 
 	local myFactionId: () -> string = derive(function()
-		return props.playerFactionIds()[playerKey]
+		return props.playerByFactionId()[playerKey]
 	end)
 
 	local myClassCounts: () -> { [string]: number } = derive(function()
-		return props.classCountsByFaction()[myFactionId()] or {}
+		return props.classCountByFaction()[myFactionId()] or {}
 	end)
 
 	local myClassKey: () -> string = derive(function()
-		return props.playerClassKeys()[playerKey]
+		return props.playerByClassKey()[playerKey]
 	end)
 
 	local myClassId: () -> string = derive(function()
-		return props.playerClassIds()[playerKey]
+		return props.playerByClassId()[playerKey]
 	end)
 
 	local myFactionConfig: () -> Types.FactionConfig = derive(function()

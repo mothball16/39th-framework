@@ -18,16 +18,16 @@ return function(target: Instance)
 		return SelectorUI({
 			startOpen = true,
 			factionConfigs = factionConfigs,
-			playerFactionIds = source({
+			playerByFactionId = source({
 				[playerKey] = factionId,
 			}),
-			playerClassKeys = source({
+			playerByClassKey = source({
 				[playerKey] = "Rifleman",
 			}),
-			playerClassIds = source({
+			playerByClassId = source({
 				[playerKey] = "RiflemanA",
 			}),
-			classCountsByFaction = source({
+			classCountByFaction = source({
 				[factionId] = {
 					Rifleman = 4,
 					Engineer = 1,

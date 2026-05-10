@@ -31,10 +31,10 @@ function ServerRuntime.new(args: {
 		stateObserver = StateObserver.new(state),
 		serverSyncer = args.shouldSync and ServerSyncer.new({
 			factionConfigs = state.factionConfigs,
-			playerFactionIds = state.playerFactionIds,
-			playerClassKeys = state.playerClassKeys,
-			playerClassIds = state.playerClassIds,
-			classCountsByFaction = state.classCountsByFaction,
+			playerByFactionId = state.playerByFactionId,
+			playerByClassKey = state.playerByClassKey,
+			playerByClassId = state.playerByClassId,
+			classCountByFaction = state.classCountByFaction,
 		}, Events) or nil,
 	}, ServerRuntime)
 

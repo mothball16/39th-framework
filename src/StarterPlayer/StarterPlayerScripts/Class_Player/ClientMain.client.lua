@@ -16,10 +16,10 @@ local maid = Maid.new()
 local state = State.new()
 local mirror = ClientMirror.new({
 	factionConfigs = state.factionConfigs,
-	playerFactionIds = state.playerFactionIds,
-	playerClassKeys = state.playerClassKeys,
-	playerClassIds = state.playerClassIds,
-	classCountsByFaction = state.classCountsByFaction,
+	playerByFactionId = state.playerByFactionId,
+	playerByClassKey = state.playerByClassKey,
+	playerByClassId = state.playerByClassId,
+	classCountByFaction = state.classCountByFaction,
 }, Events)
 local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 local unmountSelector = Vide.mount(function()
@@ -29,10 +29,10 @@ local unmountSelector = Vide.mount(function()
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 		SelectorUI({
 			factionConfigs = useAtom(state.factionConfigs),
-			playerFactionIds = useAtom(state.playerFactionIds),
-			playerClassKeys = useAtom(state.playerClassKeys),
-			playerClassIds = useAtom(state.playerClassIds),
-			classCountsByFaction = useAtom(state.classCountsByFaction),
+			playerByFactionId = useAtom(state.playerByFactionId),
+			playerByClassKey = useAtom(state.playerByClassKey),
+			playerByClassId = useAtom(state.playerByClassId),
+			classCountByFaction = useAtom(state.classCountByFaction),
 			requestClass = function(classKey: string, classId: string)
 				Events.RequestClass:FireServer({
 					classKey = classKey,
