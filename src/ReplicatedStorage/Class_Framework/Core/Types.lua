@@ -12,9 +12,11 @@ export type ClassItemProvider = {
 }
 
 export type Settings = {
+    ApplyClassMode: string,
     ItemTypePaths: {
         [string]: Folder,
     },
+
     DebugMode: boolean,
 }
 
