@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local Types = require(Access.Framework.Core:WaitForChild("Types"))
 local State = require(Access.Framework.Core:WaitForChild("State"))
+local Enums = require(Access.Framework.Core:WaitForChild("Enums"))
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Vide = require(Packages.Vide)
 local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect
@@ -20,7 +21,7 @@ return function(props: {
 	playerKey: string,
 	startOpen: boolean,
 	requestClass: ((classKey: string, classId: string) -> ())?,
-	requestClassActive: ((active: boolean) -> ())?,
+	requestClassApply: (() -> ())?,
 })
 	local variantIndexByClassKey = source({})
 	local isOpen = source(props.startOpen)
@@ -158,8 +159,8 @@ return function(props: {
 			-- stub
 			
 		else
-			if props.applyClass then
-				props.applyClass()
+			if Access.Config.ApplyClassMode == Enums.ApplyClassMode.AfterInteraction and props.requestClassApply then
+				props.requestClassApply()
 			end
 		end
 	end)

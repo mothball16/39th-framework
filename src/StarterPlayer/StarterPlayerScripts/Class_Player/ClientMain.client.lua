@@ -31,6 +31,9 @@ local unmountSelector = Vide.mount(function()
 					classId = classId,
 				})
 			end,
+			requestClassApply = function()
+				Events.RequestClassApply:FireServer()
+			end,
 		}),
 	}
 end, playerGui)

@@ -44,6 +44,9 @@ return function(target: Instance)
 			requestClass = function(classKey, classId)
 				print("Story request:", classKey, classId)
 			end,
+			requestClassApply = function()
+				print("Story request: applicable")
+			end,
 		})
 	end, target)
 end

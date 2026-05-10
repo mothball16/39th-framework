@@ -8,7 +8,7 @@ local Events = {
    SyncState = Net:RemoteEvent("SyncState"),
    RequestClass = Net:RemoteEvent("RequestClass"),
    RequestFaction = Net:RemoteEvent("RequestFaction"),
-   RequestApplyClass = Net:RemoteEvent("RequestApplyClass"),
+   RequestClassApply = Net:RemoteEvent("RequestClassApply"),
 }
 export type Events = typeof(Events)
 

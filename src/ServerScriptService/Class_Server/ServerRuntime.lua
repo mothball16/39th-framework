@@ -1,8 +1,13 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Packages = ReplicatedStorage:WaitForChild("Packages")
+local Maid = require(Packages.maid)
+local Charm = require(Packages.Charm)
 
 local Access = require(ReplicatedStorage.Class_Access)
 local State = require(Access.Framework.Core.State)
+local Enums = require(Access.Framework.Core.Enums)
 local Events = require(Access.Framework.Core.Events)
 local Types = require(Access.Framework.Core.Types)
 local StateActions = require(Access.Framework.StateActions)
@@ -14,6 +19,15 @@ local ServerSyncer = require(script.Parent.ServerSyncer)
 
 local ServerRuntime = {}
 ServerRuntime.__index = ServerRuntime
+
+type self = {
+	state: State.State,
+	configByFactionId: { [string]: Types.FactionConfig },
+	itemEquipper: ItemEquipper.ItemEquipper,
+	selectionHandler: SelectionHandler.SelectionHandler,
+	maid: Maid.Maid,
+}
+export type ServerRuntime = typeof(setmetatable({} :: self, ServerRuntime))
 
 function ServerRuntime.new(args: {
 	itemProviders: { [string]: Types.ClassItemProvider },
@@ -29,17 +43,21 @@ function ServerRuntime.new(args: {
 		itemEquipper = ItemEquipper.new(args.itemProviders, args.classConfigs),
 		selectionHandler = SelectionHandler.new(state, args.classConfigs),
 		stateObserver = StateObserver.new(state),
-		serverSyncer = args.shouldSync and ServerSyncer.new({
+		maid = Maid.new(),
+	} :: self, ServerRuntime)
+
+	for _, factionConfig in pairs(self.configByFactionId) do
+		StateActions.CreateFaction(self.state, factionConfig)
+	end
+
+	if args.shouldSync then
+		self.maid:GiveTask(ServerSyncer.new({
 			configByFactionId = state.configByFactionId,
 			playerByFactionId = state.playerByFactionId,
 			playerByClassKey = state.playerByClassKey,
 			playerByClassId = state.playerByClassId,
 			classCountByFaction = state.classCountByFaction,
-		}, Events) or nil,
-	}, ServerRuntime)
-
-	for _, factionConfig in pairs(self.configByFactionId) do
-		StateActions.CreateFaction(self.state, factionConfig)
+		}, Events))
 	end
 
 	self.stateObserver:Start()
@@ -49,12 +67,22 @@ end
 
 -- wires up everything. don't call for tests
 
-function ServerRuntime:Start()
+function ServerRuntime.Start(self: ServerRuntime)
 	Players.PlayerAdded:Connect(function(player)
 		self.selectionHandler:HandleTeamChange(player, player.Team)
 
 		player:GetPropertyChangedSignal("Team"):Connect(function()
 			self.selectionHandler:HandleTeamChange(player, player.Team)
+		end)
+
+		player.CharacterAdded:Connect(function(character)
+			local classId = self.state.playerByClassId()[player.UserId]
+
+			if not classId then
+				return
+			end
+
+			self.itemEquipper:AssignClassItems(player, classId)
 		end)
 	end)
 
@@ -69,12 +97,15 @@ function ServerRuntime:Start()
 	Events.RequestClass.OnServerEvent:Connect(function(player: Player, request: { classKey: string, classId: string })
 		self.selectionHandler:HandleClassRequest(player, request)
 	end)
+
+	Events.RequestClassApply.OnServerEvent:Connect(function(player: Player)
+		self.selectionHandler:HandleClassApplyRequest(player, self.itemEquipper)
+	end)
 end
 
-function ServerRuntime:Destroy()
-	if self.serverSyncer then
-		self.serverSyncer:Destroy()
-	end
+
+function ServerRuntime.Destroy(self: ServerRuntime)
+	self.maid:DoCleaning()
 end
 
 return ServerRuntime
