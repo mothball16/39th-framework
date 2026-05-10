@@ -1,8 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local Types = require(Access.Framework.Core:WaitForChild("Types"))
-
-local Players = game:GetService("Players")
+local State = require(Access.Framework.Core:WaitForChild("State"))
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Vide = require(Packages.Vide)
 local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect
@@ -17,40 +16,33 @@ local ASPECT_RATIO = 1.5
 local PADDING_SCALE = 0.02
 
 return function(props: {
-	factionConfigs: () -> any,
-	playerByFactionId: () -> any,
-	playerByClassKey: () -> any,
-	playerByClassId: () -> any,
-	classCountByFaction: () -> any,
+	state: State.State,
+	playerKey: string,
 	startOpen: boolean,
 	requestClass: ((classKey: string, classId: string) -> ())?,
 	requestClassActive: ((active: boolean) -> ())?,
 })
-	local localPlayer = Players.LocalPlayer
-	local playerKey = if localPlayer then tostring(localPlayer.UserId) else "0"
-
 	local variantIndexByClassKey = source({})
 	local isOpen = source(props.startOpen)
 
-
 	local myFactionId: () -> string = derive(function()
-		return props.playerByFactionId()[playerKey]
-	end)
-
-	local myClassCounts: () -> { [string]: number } = derive(function()
-		return props.classCountByFaction()[myFactionId()] or {}
-	end)
-
-	local myClassKey: () -> string = derive(function()
-		return props.playerByClassKey()[playerKey]
-	end)
-
-	local myClassId: () -> string = derive(function()
-		return props.playerByClassId()[playerKey]
+		return props.state.playerByFactionId()[props.playerKey]
 	end)
 
 	local myFactionConfig: () -> Types.FactionConfig = derive(function()
-		return props.factionConfigs()[myFactionId()]
+		return props.state.factionConfigs()[myFactionId()]
+	end)
+
+	local myClassKey: () -> string = derive(function()
+		return props.state.playerByClassKey()[props.playerKey]
+	end)
+
+	local myClassId: () -> string = derive(function()
+		return props.state.playerByClassId()[props.playerKey]
+	end)
+
+	local myClassCounts: () -> { [string]: number } = derive(function()
+		return props.state.classCountByFaction()[myFactionId()] or {}
 	end)
 
 	local myClassConfig: () -> Types.ClassConfig = derive(function()

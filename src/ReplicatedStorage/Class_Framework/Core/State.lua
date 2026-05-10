@@ -1,6 +1,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
+local VideCharm = require(Packages["vide-charm"])
+local useAtom = VideCharm.useAtom
+
 local Types = require(script.Parent.Types)
 
 local State = {}
@@ -59,6 +62,16 @@ function State.new(): State
 	end)
 
 	return self
+end
+
+function State:AsVideSources()
+	return {
+		factionConfigs = useAtom(self.factionConfigs),
+		playerByFactionId = useAtom(self.playerByFactionId),
+		playerByClassKey = useAtom(self.playerByClassKey),
+		playerByClassId = useAtom(self.playerByClassId),
+		classCountByFaction = useAtom(self.classCountByFaction),
+	}
 end
 
 function State:Destroy()

@@ -2,17 +2,18 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local Maid = require(Access.Packages.maid)
 local CharmSync = require(Access.Packages["charm-sync"])
-local Types = require(Access.Framework.Core:WaitForChild("Types"))
+local Types = require(Access.Framework.Core.Types)
+local State = require(Access.Framework.Core.State)
+local Events = require(Access.Framework.Core.Events)
 local ClientMirror = {}
 ClientMirror.__index = ClientMirror
 
 
-function ClientMirror.new(atoms, events: Types.Events)
+function ClientMirror.new(state: State.State, events: Events.Events)
 	local self = setmetatable({}, ClientMirror)
 	self.maid = Maid.new()
-    self.atoms = atoms
 	self.syncer = CharmSync.client({
-		atoms = self.atoms,
+		atoms = state,
 		ignoreUnhydrated = true,
 	})
 	self.maid:GiveTask(events.SyncState.OnClientEvent:Connect(function(...)
