@@ -74,6 +74,7 @@ end
 
 function StateActions.SetPlayerFaction(state: State.State, userId: string, factionId: string)
 	_updateMapValue(state.playerByFactionId, userId, factionId)
+	StateActions.SetPlayerToDefaultClass(state, userId, factionId)
 end
 
 function StateActions.SetPlayerClass(state: State.State, userId: string, classKey: string?, classId: string?)
@@ -83,7 +84,6 @@ function StateActions.SetPlayerClass(state: State.State, userId: string, classKe
 		classKey = nil
 		classId = nil
 	end
-
 	Charm.batch(function()
 		_updateMapValue(state.playerByClassKey, userId, classKey)
 		_updateMapValue(state.playerByClassId, userId, classId)

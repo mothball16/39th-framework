@@ -49,6 +49,8 @@ function ItemEquipper.AssignClassItems(self: ItemEquipper, player: Player, class
 		return
 	end
 
+	self:UnassignClassItems(player, classId)
+
 	for _, itemArgs in ipairs(classConfig.Items) do
 		local itemProvider = self:GetProvider(itemArgs)
 		if itemProvider then

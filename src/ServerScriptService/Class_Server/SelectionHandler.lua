@@ -41,7 +41,13 @@ end
 function SelectionHandler.HandleClassRequest(self: SelectionHandler, player: Player, request: {
 	classKey: string,
 	classId: string,
+	itemEquipper: any
 })
+	local prevClassId = self.state.playerByClassId()[player.UserId]
+	if prevClassId then
+		request.itemEquipper:UnassignClassItems(player, prevClassId)
+	end
+
 	local factionId = self.state.playerByFactionId()[player.UserId]
 	local factionConfig = self.state.configByFactionId()[factionId]
 
@@ -70,6 +76,10 @@ function SelectionHandler.HandleClassRequest(self: SelectionHandler, player: Pla
 	end
 
 	StateActions.SetPlayerClass(self.state, player.UserId, request.classKey, request.classId)
+	
+	if Access.Config.ApplyClassMode == Enums.ApplyClassMode.Immediate then
+		request.itemEquipper:AssignClassItems(player, request.classId)
+	end
 end
 
 function SelectionHandler.HandleTeamChange(self: SelectionHandler, player: Player, team: Team)
@@ -101,8 +111,6 @@ function SelectionHandler.HandleClassApplyRequest(self: SelectionHandler, player
 	end	
 
 	if player.Character then
-		-- clean up any previous items
-		itemEquipper:UnassignClassItems(player, classId)
 		itemEquipper:AssignClassItems(player, classId)
 	end
 end

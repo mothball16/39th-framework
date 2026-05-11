@@ -3,7 +3,6 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Maid = require(Packages.maid)
-local Charm = require(Packages.Charm)
 
 local Access = require(ReplicatedStorage.Class_Access)
 local State = require(Access.Framework.Core.State)
@@ -14,7 +13,6 @@ local StateActions = require(Access.Framework.StateActions)
 
 local ItemEquipper = require(script.Parent.ItemEquipper)
 local SelectionHandler = require(script.Parent.SelectionHandler)
-local StateObserver = require(script.Parent.StateObserver)
 local ServerSyncer = require(script.Parent.ServerSyncer)
 
 local ServerRuntime = {}
@@ -42,7 +40,6 @@ function ServerRuntime.new(args: {
 		configByFactionId = args.configByFactionId,
 		itemEquipper = ItemEquipper.new(args.itemProviders, args.classConfigs),
 		selectionHandler = SelectionHandler.new(state, args.classConfigs),
-		stateObserver = StateObserver.new(state),
 		maid = Maid.new(),
 	} :: self, ServerRuntime)
 
@@ -59,8 +56,6 @@ function ServerRuntime.new(args: {
 			classCountByFaction = state.classCountByFaction,
 		}, Events))
 	end
-
-	self.stateObserver:Start()
 
 	return self
 end
@@ -95,6 +90,7 @@ function ServerRuntime.Start(self: ServerRuntime)
 	end)
 
 	Events.RequestClass.OnServerEvent:Connect(function(player: Player, request: { classKey: string, classId: string })
+		request["itemEquipper"] = self.itemEquipper
 		self.selectionHandler:HandleClassRequest(player, request)
 	end)
 
