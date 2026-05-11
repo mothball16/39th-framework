@@ -6,12 +6,11 @@ local Maid = require(Access.Packages.maid)
 local ServerSyncer = {}
 ServerSyncer.__index = ServerSyncer
 
-function ServerSyncer.new(atoms, events)
+function ServerSyncer.new(state, events)
 	local self = setmetatable({}, ServerSyncer)
 	self.maid = Maid.new()
-	self.atoms = atoms
 	self.syncer = CharmSync.server({
-		atoms = self.atoms,
+		atoms = state,
 		interval = 0,
 		preserveHistory = false,
 		autoSerialize = true,
