@@ -9,7 +9,7 @@ return function()
 	local ServerRuntime = require(ServerRoot.ServerRuntime)
 	local StateActions = require(Access.Framework.StateActions)
 	local itemProviders = {
-		Test = Mocks.ItemProvider("Test"),
+		Test = require(Access.Framework.ItemProviders.Test),
 	}
 	local classConfigs = {
 		RiflemanA = Mocks.ClassConfig("RiflemanA"),
@@ -67,6 +67,7 @@ return function()
 		runtime.selectionHandler:HandleClassRequest(playerOne, {
 			classKey = "Rifleman",
 			classId = "RiflemanA",
+			itemEquipper = runtime.itemEquipper,
 		})
 
 		expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal("alpha")
@@ -87,6 +88,7 @@ return function()
 		runtime.selectionHandler:HandleClassRequest(playerOne, {
 			classKey = "Rifleman",
 			classId = "RiflemanA",
+			itemEquipper = runtime.itemEquipper,
 		})
 
 		expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
@@ -100,10 +102,12 @@ return function()
 		runtime.selectionHandler:HandleClassRequest(playerOne, {
 			classKey = "Marksman",
 			classId = "MarksmanA",
+			itemEquipper = runtime.itemEquipper,
 		})
 		runtime.selectionHandler:HandleClassRequest(playerTwo, {
 			classKey = "Marksman",
 			classId = "MarksmanA",
+			itemEquipper = runtime.itemEquipper,
 		})
 		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Marksman")
 		expect(runtime.state.playerByClassKey()[playerTwo.UserId]).to.equal("Rifleman")

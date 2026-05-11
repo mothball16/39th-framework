@@ -10,16 +10,6 @@ function Mocks.Player(playerId: string)
     }
 end
 
-function Mocks.ItemProvider(itemProviderId: string)
-    return {
-        ID = itemProviderId,
-        AssignType = "Test",
-        Assign = function(player: Player, itemArgs: any)
-            print(`{player.UserId} assigned {itemProviderId} to {itemArgs}`)
-        end,
-    }
-end
-
 function Mocks.ClassConfig(classId: string)
     return {
         ID = classId,
