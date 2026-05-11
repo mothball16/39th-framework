@@ -28,8 +28,8 @@ return function()
     local playerTwo
 
     beforeEach(function()
-        playerOne = Mocks.Player("1")
-        playerTwo = Mocks.Player("2")
+        playerOne = Mocks.Player(1)
+        playerTwo = Mocks.Player(2)
 
         runtime = ServerRuntime.new({
             itemProviders = itemProviders,
@@ -51,6 +51,12 @@ return function()
 
 	it("should assign the default class when a player is set to a faction", function()
 		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
+		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Rifleman")
+		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
+
+		StateActions.SetPlayerClass(runtime.state, playerOne.UserId, "Rifleman", "RiflemanB")
+
+		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "bravo")
 		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Rifleman")
 		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
 	end)
