@@ -77,6 +77,14 @@ function ClientRuntime.Start(self: ClientRuntime)
 	self.maid:GiveTask(self.mirror)
 end
 
+function ClientRuntime.WireControllers(self: ClientRuntime, root: Instance)
+	for _, controllerModule in root:GetChildren() do
+		local controller: Types.InteractionController = require(controllerModule)
+		controller.Initialize(self.selectorOpen)
+		self.maid:GiveTask(controller.Destroy)
+	end
+end
+
 function ClientRuntime.Destroy(self: ClientRuntime)
 	self.maid:DoCleaning()
 end

@@ -20,6 +20,7 @@ return function(props: {
 	state: State.State,
 	playerKey: string,
 	isOpen: Vide.Source<boolean>,
+	setSelectorOpen: ((open: boolean) -> ()) -> (),
 	requestClass: ((classKey: string, classId: string) -> ())?,
 	requestClassApply: ((enable: boolean) -> ())?,
 })
@@ -177,7 +178,7 @@ return function(props: {
 			Position = UDim2.new(0, 5, 1, -5),
 			Text = "class",
 			OnActivated = function()
-				props.isOpen(true)
+				props.setSelectorOpen(true)
 			end,
 			WindowActive = function()
 				return props.isOpen()
@@ -251,7 +252,7 @@ return function(props: {
 					TextScaled = true,
 					FontFace = Theme.fontH2,
 					Activated = function()
-						props.isOpen(false)
+						props.setSelectorOpen(false)
 					end,
 				},
 			},

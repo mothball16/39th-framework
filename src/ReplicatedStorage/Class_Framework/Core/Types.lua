@@ -1,3 +1,5 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Vide = require(ReplicatedStorage.Packages.Vide)
 local Types = {}
 
 
@@ -52,7 +54,10 @@ export type Class = {
     Items: {any}
 }
 
-
-
+export type InteractionController = {
+    isOpen: Vide.Source<boolean>,
+    Initialize: (isOpen: Vide.Source<boolean>) -> (),
+    Destroy: () -> (),
+}
 
 return Types
