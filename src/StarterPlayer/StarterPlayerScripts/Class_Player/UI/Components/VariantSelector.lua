@@ -47,11 +47,11 @@ return function(props: {
                 Position = UDim2.fromScale(0, 0.5),
                 Size = UDim2.fromScale(0.15, 0.8),
                 BackgroundColor3 = Theme.Background,
-                BackgroundTransparency = 0.8,
+                BackgroundTransparency = 1,
                 Text = "<",
                 TextColor3 = Theme.TextColor,
                 TextScaled = true,
-                FontFace = Theme.fontNormal,
+                FontFace = Theme.fontH2,
                 Activated = props.LeftActivated,
 
                 create "UIAspectRatioConstraint" {
@@ -78,7 +78,7 @@ return function(props: {
                 Position = UDim2.fromScale(1, 0.5),
                 Size = UDim2.fromScale(0.15, 0.8),
                 BackgroundColor3 = Theme.Background,
-                BackgroundTransparency = 0.8,
+                BackgroundTransparency = 1,
                 Text = ">",
                 TextColor3 = Theme.TextColor,
                 TextScaled = true,
