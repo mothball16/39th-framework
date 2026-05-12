@@ -102,16 +102,23 @@ function SelectionHandler.HandleTeamChange(self: SelectionHandler, player: Playe
 	StateActions.SetPlayerFaction(self.state, player.UserId, factionConfig.ID)
 end
 
-function SelectionHandler.HandleClassApplyRequest(self: SelectionHandler, player: Player, itemEquipper)
+function SelectionHandler.HandleClassApplyRequest(self: SelectionHandler, player: Player, request: { enable: boolean }, itemEquipper)
 	local classId = self.state.playerByClassId()[player.UserId]
 	if not classId then
 		warn(`player {player.UserId} requested class applicable but is not in a class`)
 		warn(self.state.playerByClassId())
 		return
 	end	
+	local character = player.Character
+	if not character then
+		warn(`player {player.UserId} requested class applicable but is not in a character`)
+		return
+	end
 
-	if player.Character then
+	if request.enable then
 		itemEquipper:AssignClassItems(player, classId)
+	else
+		itemEquipper:UnassignClassItems(player, classId)
 	end
 end
 

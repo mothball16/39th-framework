@@ -42,10 +42,10 @@ return function(target: Instance)
 				}),
 			},
 			requestClass = function(classKey, classId)
-				print("Story request:", classKey, classId)
+				print("Story request (change class):", classKey, classId)
 			end,
-			requestClassApply = function()
-				print("Story request: applicable")
+			requestClassApply = function(enable)
+				print("Story request (apply class):", enable)
 			end,
 		})
 	end, target)

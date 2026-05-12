@@ -94,8 +94,8 @@ function ServerRuntime.Start(self: ServerRuntime)
 		self.selectionHandler:HandleClassRequest(player, request)
 	end)
 
-	Events.RequestClassApply.OnServerEvent:Connect(function(player: Player)
-		self.selectionHandler:HandleClassApplyRequest(player, self.itemEquipper)
+	Events.RequestClassApply.OnServerEvent:Connect(function(player: Player, request: { enable: boolean })
+		self.selectionHandler:HandleClassApplyRequest(player, request, self.itemEquipper)
 	end)
 end
 

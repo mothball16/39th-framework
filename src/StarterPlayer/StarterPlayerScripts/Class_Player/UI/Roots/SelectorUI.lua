@@ -21,7 +21,7 @@ return function(props: {
 	playerKey: string,
 	startOpen: boolean,
 	requestClass: ((classKey: string, classId: string) -> ())?,
-	requestClassApply: (() -> ())?,
+	requestClassApply: ((enable: boolean) -> ())?,
 })
 	local variantIndexByClassKey = source({})
 	local isOpen = source(props.startOpen)
@@ -157,10 +157,12 @@ return function(props: {
 	local onOpenToggled = effect(function()
 		if isOpen() then
 			-- stub
-			
+			if Access.Config.ApplyClassMode == Enums.ApplyClassMode.AfterInteraction and props.requestClassApply then
+				props.requestClassApply(false)
+			end
 		else
 			if Access.Config.ApplyClassMode == Enums.ApplyClassMode.AfterInteraction and props.requestClassApply then
-				props.requestClassApply()
+				props.requestClassApply(true)
 			end
 		end
 	end)

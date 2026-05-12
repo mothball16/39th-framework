@@ -31,8 +31,10 @@ local unmountSelector = Vide.mount(function()
 					classId = classId,
 				})
 			end,
-			requestClassApply = function()
-				Events.RequestClassApply:FireServer()
+			requestClassApply = function(enable: boolean)
+				Events.RequestClassApply:FireServer({
+					enable = enable,
+				})
 			end,
 		}),
 	}
