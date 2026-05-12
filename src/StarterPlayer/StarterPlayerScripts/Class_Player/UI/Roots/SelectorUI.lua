@@ -206,7 +206,13 @@ return function(props: {
 				AspectRatio = ASPECT_RATIO,
 				DominantAxis = Enum.DominantAxis.Width,
 			},
-
+			create "UIGradient" {
+				Rotation = 90,
+				Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0),
+					NumberSequenceKeypoint.new(1, 0.7),
+				}),
+			},
 			create "Frame" {
 				Name = "Header",
 				Size = UDim2.fromScale(1, 0.1),
@@ -270,6 +276,15 @@ return function(props: {
 					BackgroundColor3 = Theme.TextColor,
 					BackgroundTransparency = 0.8,
 					BorderSizePixel = 0,
+
+					create "UIGradient" {
+						Rotation = 90,
+						Transparency = NumberSequence.new({
+							NumberSequenceKeypoint.new(0, 1),
+							NumberSequenceKeypoint.new(0.5, 0),
+							NumberSequenceKeypoint.new(1, 1),
+						}),
+					},
 				},
 
 				create "TextLabel" {
