@@ -63,6 +63,7 @@ function TagObserver:Init()
 	table.insert(self.connections, CS:GetInstanceRemovedSignal(self.tag):Connect(function(instance)
 		self:_OnDestroyed(instance)
 	end))
+	return self
 end
 
 function TagObserver:Destroy()
