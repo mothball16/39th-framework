@@ -47,22 +47,12 @@ export type PlayerClassAssignment = {
     ClassId: string,
 }
 
-export type FactionState = {
-    Members: {
-        [string]: {
-            Class: string
-        }
-    }
-}
-
-export type Faction = {
-    Config: FactionConfig,
-    State: FactionState,
-}
-
 export type Class = {
     ID: string,
     Items: {any}
 }
+
+
+
 
 return Types
