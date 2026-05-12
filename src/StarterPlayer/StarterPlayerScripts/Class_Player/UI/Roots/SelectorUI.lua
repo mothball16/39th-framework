@@ -19,12 +19,11 @@ local PADDING_SCALE = 0.02
 return function(props: {
 	state: State.State,
 	playerKey: string,
-	startOpen: boolean,
+	isOpen: Vide.Source<boolean>,
 	requestClass: ((classKey: string, classId: string) -> ())?,
 	requestClassApply: ((enable: boolean) -> ())?,
 })
 	local variantIndexByClassKey = source({})
-	local isOpen = source(props.startOpen)
 
 	local myFactionId: () -> string = derive(function()
 		return props.state.playerByFactionId()[props.playerKey]
@@ -155,7 +154,7 @@ return function(props: {
 	end)
 
 	local onOpenToggled = effect(function()
-		if isOpen() then
+		if props.isOpen() then
 			-- stub
 			if Access.Config.ApplyClassMode == Enums.ApplyClassMode.AfterInteraction and props.requestClassApply then
 				props.requestClassApply(false)
@@ -178,22 +177,22 @@ return function(props: {
 			Position = UDim2.new(0, 5, 1, -5),
 			Text = "class",
 			OnActivated = function()
-				isOpen(true)
+				props.isOpen(true)
 			end,
 			WindowActive = function()
-				return isOpen()
+				return props.isOpen()
 			end,
 		}),
 
 		create "TextButton" {
 			Name = "ModalToggler",
 			Modal = function()
-				return isOpen()
+				return props.isOpen()
 			end,
 		},
 		create "Frame" {
 			Visible = function()
-				return isOpen()
+				return props.isOpen()
 			end,
 			Name = "SelectorUI",
 			AnchorPoint = Vector2.new(0.5, 0.5),
@@ -252,7 +251,7 @@ return function(props: {
 					TextScaled = true,
 					FontFace = Theme.fontH2,
 					Activated = function()
-						isOpen(false)
+						props.isOpen(false)
 					end,
 				},
 			},

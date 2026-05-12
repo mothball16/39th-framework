@@ -20,7 +20,7 @@ return function(target: Instance)
 
 	return Vide.mount(function()
 		return SelectorUI({
-			startOpen = true,
+			isOpen = source(true),
 			playerKey = playerKey,
 			state = {
 				configByFactionId = source(configByFactionId),

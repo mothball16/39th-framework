@@ -17,12 +17,16 @@ local maid = Maid.new()
 local state = State.new()
 local mirror = ClientMirror.new(state, Events)
 
+local isOpen = Vide.source(false)
 local unmountSelector = Vide.mount(function()
 	return create "ScreenGui" {
 		Name = "SelectorUI",
 		ResetOnSpawn = false,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+		
 		SelectorUI({
+			isOpen = isOpen,
+			ManualButton = false,
 			playerKey = tostring(Players.LocalPlayer.UserId),
 			state = state:AsVideSources(),
 			requestClass = function(classKey: string, classId: string)
