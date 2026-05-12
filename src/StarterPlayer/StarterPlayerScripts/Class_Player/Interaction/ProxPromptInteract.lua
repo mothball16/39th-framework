@@ -27,7 +27,6 @@ function PPI.Initialize(isOpen: Charm.Atom<boolean>)
                 prompt.Parent = promptParent
                 prompt.Name = "Class_ProxPrompt"
                 PPI.maid:GiveTask(prompt)
-                return
             end
 
             -- just confirm prompt text is correct if custom prompt values are used
