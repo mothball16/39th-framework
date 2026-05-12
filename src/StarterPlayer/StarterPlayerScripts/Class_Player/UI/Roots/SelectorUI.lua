@@ -351,35 +351,6 @@ return function(props: {
 						end,
 					},
 
-					create "Frame" {
-						Name = "ClassDescription",
-						Position = UDim2.fromScale(0, 0.7),
-						Size = UDim2.fromScale(1, 0.25),
-						BackgroundTransparency = 0.9,
-						BackgroundColor3 = Theme.AccentColor,
-						create "TextLabel" {
-							Name = "DescriptionText",
-							AnchorPoint = Vector2.new(0.5, 0.5),
-							Position = UDim2.fromScale(0.5, 0.5),
-							Size = UDim2.fromScale(0.8, 0.8),
-							BackgroundTransparency = 1,
-							TextColor3 = Theme.TextColor,
-							TextTransparency = 0.5,
-							TextScaled = true,
-							FontFace = Theme.fontNormal,
-							RichText = true,
-							TextXAlignment = Enum.TextXAlignment.Left,
-							TextYAlignment = Enum.TextYAlignment.Top,
-							Text = function()
-								return if myVariantConfig()
-									then (
-										myVariantConfig().Description
-										or "Lorem ipsum on the beat yo!\n\n\n(no description)"
-									)
-									else "<no class selected...>"
-							end,
-						},
-					},
 				},
 
 				create "Frame" {
@@ -402,7 +373,7 @@ return function(props: {
 							HorizontalAlignment = Enum.HorizontalAlignment.Left,
 							VerticalAlignment = Enum.VerticalAlignment.Top,
 							SortOrder = Enum.SortOrder.LayoutOrder,
-							Padding = UDim.new(0, 0),
+							Padding = UDim.new(0.05, 0),
 						},
 
 						VariantSelector {
@@ -425,15 +396,36 @@ return function(props: {
 								cycleVariant(myClassKey(), 1)
 							end,
 						},
-
-						-- VariantSelector {
-						-- 	title = "Uniform",
-						-- 	titleHeight = 0.5,
-						-- 	size = UDim2.fromScale(1, 0.25),
-						-- 	ValueText = function()
-						-- 		return `temp` or "<no uniform name...>"
-						-- 	end,
-						-- },
+						create "Frame" {
+							LayoutOrder = 5,
+							Name = "ClassDescription",
+							Position = UDim2.fromScale(0, 0.7),
+							Size = UDim2.fromScale(1, 0.25),
+							BackgroundTransparency = 0.9,
+							BackgroundColor3 = Theme.AccentColor,
+							create "TextLabel" {
+								Name = "DescriptionText",
+								AnchorPoint = Vector2.new(0.5, 0.5),
+								Position = UDim2.fromScale(0.5, 0.5),
+								Size = UDim2.fromScale(0.8, 0.8),
+								BackgroundTransparency = 1,
+								TextColor3 = Theme.TextColor,
+								TextTransparency = 0.5,
+								TextScaled = true,
+								FontFace = Theme.fontNormal,
+								RichText = true,
+								TextXAlignment = Enum.TextXAlignment.Left,
+								TextYAlignment = Enum.TextYAlignment.Top,
+								Text = function()
+									return if myVariantConfig()
+										then (
+											myVariantConfig().Description
+											or "Lorem ipsum on the beat yo!\n\n\n(no description)"
+										)
+										else "<no class selected...>"
+								end,
+							},
+						},
 					},
 
 					create "ImageLabel" {
