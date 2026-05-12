@@ -1,6 +1,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Vide = require(Packages.Vide)
+local Charm = require(Packages.Charm)
+local VideCharm = require(Packages["vide-charm"])
+local useAtom = VideCharm.useAtom
 local source = Vide.source
 
 local Roots = script.Parent.Parent.Roots
@@ -16,11 +19,12 @@ return function(target: Instance)
 		[factionId] = Mocks.FactionConfig(factionId),
 	}
 
+	local selectorOpen = Charm.atom(false)
 
 
 	return Vide.mount(function()
 		return SelectorUI({
-			isOpen = source(true),
+			isOpen = useAtom(selectorOpen),
 			playerKey = playerKey,
 			state = {
 				configByFactionId = source(configByFactionId),
@@ -41,6 +45,10 @@ return function(target: Instance)
 					},
 				}),
 			},
+			setSelectorOpen = function(open: boolean)
+				print("Story setSelectorOpen", open)
+				selectorOpen(open)
+			end,
 			requestClass = function(classKey, classId)
 				print("Story request (change class):", classKey, classId)
 			end,
