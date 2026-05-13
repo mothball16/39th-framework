@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
 local Types = require(Access.Framework.Core:WaitForChild("Types"))
 local State = require(Access.Framework.Core:WaitForChild("State"))
@@ -195,17 +196,19 @@ return function(props: {
 			end,
 		},
 		create "Frame" {
-			Visible = function()
-				return props.isOpen()
-			end,
+			Visible = true,--function()
+				--return props.isOpen()
+			--end,
 			Name = "SelectorUI",
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vide.spring(function() return if props.isOpen() then Vector2.new(0.5, 0.5) else Vector2.new(0.5, 0) end, 0.25),
+			Position = Vide.spring(function() return if props.isOpen() then UDim2.fromScale(0.5, 0.5) else UDim2.fromScale(0.5, 1) end, 0.25),
 			Size = UDim2.fromScale(0.4, 1),
 			BackgroundColor3 = Theme.Background,
 			BackgroundTransparency = 0.5,
 			BorderSizePixel = 0,
 			BorderColor3 = Theme.AccentColor,
+			
+			
 
 			create "UIAspectRatioConstraint" {
 				AspectRatio = ASPECT_RATIO,
