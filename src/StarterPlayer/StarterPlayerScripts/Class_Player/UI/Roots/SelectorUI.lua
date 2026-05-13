@@ -1,9 +1,9 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local Types = require(Access.Framework.Core:WaitForChild("Types"))
-local State = require(Access.Framework.Core:WaitForChild("State"))
-local Enums = require(Access.Framework.Core:WaitForChild("Enums"))
+local Access = require(ReplicatedStorage:WaitForChild("Class_Framework"):WaitForChild("Access"))
+local Types = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Types"))
+local State = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("State"))
+local Enums = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Enums"))
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Vide = require(Packages.Vide)
 local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect

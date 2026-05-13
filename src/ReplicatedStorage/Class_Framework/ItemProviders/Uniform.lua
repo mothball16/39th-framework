@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local Types = require(Access.Framework.Core:WaitForChild("Types"))
-local Enums = require(Access.Framework.Core:WaitForChild("Enums"))
+local Access = require(ReplicatedStorage:WaitForChild("Class_Framework"):WaitForChild("Access"))
+local Types = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Types"))
+local Enums = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Enums"))
 
 local ORIG_CLOTHING_ATTR = "OriginalClothing"
 

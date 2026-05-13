@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local Maid = require(Access.Packages.maid)
-local Types = require(Access.Framework.Core.Types)
+local Packages = ReplicatedStorage:WaitForChild("Packages")
+local Maid = require(Packages.maid)
+local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
 
 local ItemEquipper = {}
 ItemEquipper.__index = ItemEquipper

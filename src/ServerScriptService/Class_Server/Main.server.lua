@@ -1,11 +1,11 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = ReplicatedStorage:WaitForChild("Utility")
-local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local Types = require(Access.Framework.Core.Types)
+local Access = require(ReplicatedStorage:WaitForChild("Class_Framework"):WaitForChild("Access"))
+local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
 local ServerRuntime = require(script.Parent.ServerRuntime)
 
 if Access.Config.DebugMode then
-	require(Utility.TestRunner)(Access.Framework:WaitForChild("Tests"))
+	require(Utility.TestRunner)(ReplicatedStorage.Class_Framework:WaitForChild("Tests"))
 end
 
 --#region [ helpers ]
@@ -39,7 +39,7 @@ end
 --#endregion [ helpers ]
 
 local runtime = ServerRuntime.new({
-	itemProviders = getItemProviders(Access.Framework.ItemProviders),
+	itemProviders = getItemProviders(ReplicatedStorage.Class_Framework.ItemProviders),
 	classConfigs = getClassConfigs(Access.Assets.ClassConfigs),
 	configByFactionId = getFactionConfigs(Access.Assets.FactionConfigs),
 	shouldSync = true,

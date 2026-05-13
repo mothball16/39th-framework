@@ -5,7 +5,6 @@ this helps reduce the amount of boilerplate that has to be put up top in every s
 
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Framework = ReplicatedStorage:WaitForChild("Class_Framework")
 local Types = require(Framework:WaitForChild("Core"):WaitForChild("Types"))
 local TAG_NAME = "Class_Assets"
@@ -21,8 +20,6 @@ end
 
 local access = table.freeze({
 	Assets = AssetPath,
-	Framework = Framework,
-	Packages = Packages,
 	Config = require(AssetPath:WaitForChild("GameConfig")) :: Types.Settings,
 })
 

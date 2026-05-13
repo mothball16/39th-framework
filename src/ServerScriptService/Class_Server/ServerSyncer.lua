@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local CharmSync = require(Access.Packages["charm-sync"])
-local Maid = require(Access.Packages.maid)
+local Packages = ReplicatedStorage:WaitForChild("Packages")
+local CharmSync = require(Packages["charm-sync"])
+local Maid = require(Packages.maid)
 
 local ServerSyncer = {}
 ServerSyncer.__index = ServerSyncer

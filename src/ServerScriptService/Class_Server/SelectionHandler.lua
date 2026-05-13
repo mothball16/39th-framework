@@ -1,10 +1,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local Types = require(Access.Framework.Core.Types)
-local State = require(Access.Framework.Core.State)
-local Enums = require(Access.Framework.Core.Enums)
-local StateActions = require(Access.Framework.StateActions)
+local Access = require(ReplicatedStorage:WaitForChild("Class_Framework"):WaitForChild("Access"))
+local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
+local State = require(ReplicatedStorage.Class_Framework.Core.State)
+local Enums = require(ReplicatedStorage.Class_Framework.Core.Enums)
+local StateActions = require(ReplicatedStorage.Class_Framework.StateActions)
 
 local SelectionHandler = {}
 SelectionHandler.__index = SelectionHandler

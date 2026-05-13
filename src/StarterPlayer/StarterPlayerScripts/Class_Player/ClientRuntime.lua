@@ -1,16 +1,16 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Access = require(ReplicatedStorage:WaitForChild("Class_Access"))
-local Maid = require(Access.Packages.maid)
-local Vide = require(Access.Packages.Vide)
-local Charm = require(Access.Packages.Charm)
-local VideCharm = require(Access.Packages["vide-charm"])
+local Packages = ReplicatedStorage:WaitForChild("Packages")
+local Maid = require(Packages.maid)
+local Vide = require(Packages.Vide)
+local Charm = require(Packages.Charm)
+local VideCharm = require(Packages["vide-charm"])
 local useAtom = VideCharm.useAtom
 
 local create = Vide.create
-local Events = require(Access.Framework.Core:WaitForChild("Events"))
-local State = require(Access.Framework.Core:WaitForChild("State"))
+local Events = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Events"))
+local State = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("State"))
 
 local ClientMirror = require(script.Parent.ClientMirror)
 local SelectorUI = require(script.Parent.UI.Roots.SelectorUI)
