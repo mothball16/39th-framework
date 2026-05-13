@@ -13,6 +13,7 @@ $RECYCLE.BIN/
 
 # Wally dependencies
 Packages/
+DevPackages/
 ServerPackages/
 
 # Build stuff
