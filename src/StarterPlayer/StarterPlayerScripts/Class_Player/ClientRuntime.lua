@@ -52,7 +52,7 @@ function ClientRuntime.Start(self: ClientRuntime)
 
 			SelectorUI({
 				isOpen = useAtom(self.selectorOpen),
-				ManualButton = false,
+				manualButton = false,
 				playerKey = tostring(Players.LocalPlayer.UserId),
 				state = self.state:AsVideSources(),
 				setSelectorOpen = function(open: boolean)

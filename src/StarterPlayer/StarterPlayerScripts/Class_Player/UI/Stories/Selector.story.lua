@@ -19,12 +19,13 @@ return function(target: Instance)
 		[factionId] = Mocks.FactionConfig(factionId),
 	}
 
-	local selectorOpen = Charm.atom(false)
+	local selectorOpen = Charm.atom(true)
 
 
 	return Vide.mount(function()
 		return SelectorUI({
 			isOpen = useAtom(selectorOpen),
+			manualButton = true,
 			playerKey = playerKey,
 			state = {
 				configByFactionId = source(configByFactionId),

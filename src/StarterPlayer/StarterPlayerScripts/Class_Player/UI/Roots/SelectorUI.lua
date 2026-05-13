@@ -19,6 +19,7 @@ local PADDING_SCALE = 0.02
 return function(props: {
 	state: State.State,
 	playerKey: string,
+	manualButton: boolean,
 	isOpen: Vide.Source<boolean>,
 	setSelectorOpen: ((open: boolean) -> ()) -> (),
 	requestClass: ((classKey: string, classId: string) -> ())?,
@@ -173,18 +174,20 @@ return function(props: {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 
-		MenuActionButton({
-			AnchorPoint = Vector2.new(0, 1),
-			Position = UDim2.new(0, 5, 1, -5),
-			Text = "class",
-			OnActivated = function()
-				props.setSelectorOpen(true)
-			end,
-			WindowActive = function()
-				return props.isOpen()
-			end,
-		}),
-
+		Vide.show(function() return props.manualButton end, function()
+			return MenuActionButton({
+				AnchorPoint = Vector2.new(0, 1),
+				Position = UDim2.new(0, 5, 1, -5),
+				Text = "class",
+				OnActivated = function()
+					props.setSelectorOpen(true)
+				end,
+				WindowActive = function()
+					return props.isOpen()
+				end,
+			})
+		end),
+		
 		create "TextButton" {
 			Name = "ModalToggler",
 			Modal = function()
