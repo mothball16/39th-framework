@@ -17,7 +17,10 @@ module.ejectShell = function(player:Player,tool,gunModel)
 	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 	if not tool or not gunModel or not gunModel:FindFirstChild("Grip") then return end
 	local origin:CFrame = gunModel.Grip:FindFirstChild("Chamber")
-	if not origin then warn(tool.Name.. " does not have a chamber! Add an attachment named 'Chamber' to the gun's grip to resolve this issue.") return end
+	if not origin then
+		warn(tool.Name.. " does not have a chamber! Add an attachment named 'Chamber' to the gun's grip to resolve this issue.") 
+		return
+	end
 	origin = origin.WorldCFrame
 	local distance = player:DistanceFromCharacter(origin.Position)
 	local shellModelFolder = ammoTypes:FindFirstChild(wepStats.ammoType) or ammoTypes.Default

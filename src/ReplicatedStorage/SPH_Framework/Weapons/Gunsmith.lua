@@ -9,10 +9,13 @@ local weldMod = require(script.Parent.WeldMod)
 gunsmith.attStats = {}
 
 local function applyAttachmentData(attStatTable, attachment) -- apply statistical changes to an attachment data set
-	if not assets.Attachments:FindFirstChild(attachment) then warn(attachment.."Not found in SPH_Assets.Attachments!") return attStatTable end
+	if not assets.Attachments:FindFirstChild(attachment) then
+		warn(attachment.."Not found in SPH_Assets.Attachments!")
+		return attStatTable
+	end
 
 	local newAttStatTable = require(assets.Attachments[attachment].AttStats)
-	local newAttModel = assets.Attachments[attachment].AttachmentModel
+	local _newAttModel = assets.Attachments[attachment].AttachmentModel
 
 	-- adjust fire rate
 	if newAttStatTable.fireRate then -- make your rate of fire faster or slower
@@ -202,7 +205,9 @@ end
 gunsmith.placeAttachment = function(weapon, attachmentSlot, weaponAttachment, parentPart) -- place an attachment on a weapon
 	local attac = assets.Attachments:FindFirstChild(weaponAttachment)
 	if not attac then 
-		warn("Model for "..weaponAttachment.." not found") return end
+		warn("Model for "..weaponAttachment.." not found")
+		return
+	end
 	local newAttachment = assets.Attachments[weaponAttachment].AttachmentModel:Clone()
 	newAttachment.Parent = weapon
 	newAttachment.Name = weaponAttachment

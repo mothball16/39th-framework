@@ -45,10 +45,20 @@ Visualization (by Defaultio):
 
 local Spring = {}
 
+export type SpringInstance = {
+	_clock: () -> number,
+	_time0: number,
+	_position0: number | Vector3,
+	_velocity0: number | Vector3,
+	_target: number | Vector3,
+	_damper: number,
+	_speed: number,
+}
+
 --- Creates a new spring
 -- @param initial A number or Vector3 (anything with * number and addition/subtraction defined)
 -- @param[opt=os.clock] clock function to use to update spring
-function Spring.new(initial, clock)
+function Spring.new(initial: (number | Vector3)?, clock: (() -> number)?): SpringInstance
 	local target = initial or 0
 	clock = clock or os.clock
 	return setmetatable({
@@ -64,13 +74,13 @@ end
 
 --- Impulse the spring with a change in velocity
 -- @param velocity The velocity to impulse with
-function Spring:Impulse(velocity)
+function Spring.Impulse(self: SpringInstance, velocity: number | Vector3)
 	self.Velocity = self.Velocity + velocity
 end
 
 --- Skip forwards in now
 -- @param delta now to skip forwards
-function Spring:TimeSkip(delta)
+function Spring.TimeSkip(self: SpringInstance, delta: number)
 	local now = self._clock()
 	local position, velocity = self:_positionVelocity(now+delta)
 	self._position0 = position
@@ -78,7 +88,7 @@ function Spring:TimeSkip(delta)
 	self._time0 = now
 end
 
-function Spring:__index(index)
+function Spring.__index(self: SpringInstance, index: unknown): unknown
 	if Spring[index] then
 		return Spring[index]
 	elseif index == "Value" or index == "Position" or index == "p" then
@@ -100,7 +110,7 @@ function Spring:__index(index)
 	end
 end
 
-function Spring:__newindex(index, value)
+function Spring.__newindex(self: SpringInstance, index: unknown, value: unknown)
 	local now = self._clock()
 
 	if index == "Value" or index == "Position" or index == "p" then
@@ -142,7 +152,7 @@ function Spring:__newindex(index, value)
 	end
 end
 
-function Spring:_positionVelocity(now)
+function Spring._positionVelocity(self: SpringInstance, now: number): (number | Vector3, number | Vector3)
 	local p0 = self._position0
 	local v0 = self._velocity0
 	local p1 = self._target
