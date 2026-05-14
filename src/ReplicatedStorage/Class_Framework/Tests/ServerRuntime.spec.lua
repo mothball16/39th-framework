@@ -1,5 +1,4 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
 local Mocks = require(ReplicatedStorage.Class_Framework.Core.Mocks)
 
 

@@ -9,7 +9,6 @@ local source = Vide.source
 local Roots = script.Parent.Parent.Roots
 local SelectorUI = require(Roots.SelectorUI)
 local Mocks = require(ReplicatedStorage.Class_Framework.Core.Mocks)
-local State = require(ReplicatedStorage.Class_Framework.Core.State)
 
 return function(target: Instance)
 	local playerKey = "0"

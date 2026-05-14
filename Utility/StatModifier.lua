@@ -27,7 +27,7 @@ end
 
 
 
-local function setMod(orig: any, mod: any)
+local function setMod(orig: any, mod: any): any
 	if not orig then
 		return mod
 	end
@@ -51,7 +51,7 @@ local function applyMod(value, add: any, multiply: any)
 	if valueType == "number" then
 		return ((value :: number) + add) * (1 + multiply)
 	elseif valueType == "table" then
-		for k, v in pairs(value) do
+		for k: any, v: any in pairs(value :: { [string]: any }) do
 			-- TODO: refactor this, this is a mess lol
 			local addMod = typeof(add) == "number" and add or (add :: {number})[k]
 			local multiplyMod = typeof(multiply) == "number" and multiply or (multiply :: {number})[k]
@@ -63,8 +63,8 @@ local function applyMod(value, add: any, multiply: any)
 	end
 end
 
-local function modifyTable(tbl, mod)
-	for key, value in mod do
+local function modifyTable(tbl: { [string]: any }, mod: { [string]: any })
+	for key, value in pairs(mod) do
 		tbl[key] = setMod(tbl[key], value)
 	end
 end

@@ -156,7 +156,7 @@ return function(props: {
 		})
 	end)
 
-	local onOpenToggled = effect(function()
+	local _onOpenToggled = effect(function()
 		if props.isOpen() then
 			-- stub
 			if Access.Config.ApplyClassMode == Enums.ApplyClassMode.AfterInteraction and props.requestClassApply then

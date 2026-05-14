@@ -5,7 +5,6 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Maid = require(Packages.maid)
 
 local State = require(ReplicatedStorage.Class_Framework.Core.State)
-local Enums = require(ReplicatedStorage.Class_Framework.Core.Enums)
 local Events = require(ReplicatedStorage.Class_Framework.Core.Events).GetNamespace()
 local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
 local StateActions = require(ReplicatedStorage.Class_Framework.StateActions)

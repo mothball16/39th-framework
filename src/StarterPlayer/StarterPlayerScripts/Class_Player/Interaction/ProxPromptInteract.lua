@@ -1,5 +1,4 @@
 local PPS = game:GetService("ProximityPromptService")
-local CS = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)

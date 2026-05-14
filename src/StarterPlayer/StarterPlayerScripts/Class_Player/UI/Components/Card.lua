@@ -6,9 +6,7 @@ local Vide = require(Packages.Vide)
 local Stroke = require(script.Parent.Stroke)
 local create = Vide.create
 local derive = Vide.derive
-local spring = Vide.spring
 
-local DIVIDER_PX = 3
 local ASPECT_RATIO = 6
 local CONTENT_PADDING_Y = 0.1
 local CONTENT_PADDING_X = 0.2 / ASPECT_RATIO
