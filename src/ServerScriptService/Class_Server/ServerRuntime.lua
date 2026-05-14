@@ -6,7 +6,7 @@ local Maid = require(Packages.maid)
 
 local State = require(ReplicatedStorage.Class_Framework.Core.State)
 local Enums = require(ReplicatedStorage.Class_Framework.Core.Enums)
-local Events = require(ReplicatedStorage.Class_Framework.Core.Events)
+local Events = require(ReplicatedStorage.Class_Framework.Core.Events).GetNamespace()
 local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
 local StateActions = require(ReplicatedStorage.Class_Framework.StateActions)
 
@@ -84,17 +84,16 @@ function ServerRuntime.Start(self: ServerRuntime)
 		StateActions.RemovePlayerFaction(self.state, player.UserId)
 	end)
 
-	Events.RequestFaction.OnServerEvent:Connect(function(player: Player, request: { factionId: string })
-		self.selectionHandler:HandleFactionRequest(player, request)
+	Events.packets.RequestFaction.listen(function(data, player)
+		self.selectionHandler:HandleFactionRequest(player, data)
 	end)
 
-	Events.RequestClass.OnServerEvent:Connect(function(player: Player, request: { classKey: string, classId: string })
-		request["itemEquipper"] = self.itemEquipper
-		self.selectionHandler:HandleClassRequest(player, request)
+	Events.packets.RequestClass.listen(function(data, player)
+		self.selectionHandler:HandleClassRequest(player, data, self.itemEquipper)
 	end)
-
-	Events.RequestClassApply.OnServerEvent:Connect(function(player: Player, request: { enable: boolean })
-		self.selectionHandler:HandleClassApplyRequest(player, request, self.itemEquipper)
+	
+	Events.packets.RequestClassApply.listen(function(data, player)
+		self.selectionHandler:HandleClassApplyRequest(player, data, self.itemEquipper)
 	end)
 end
 

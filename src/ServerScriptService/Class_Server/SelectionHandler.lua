@@ -6,6 +6,7 @@ local State = require(ReplicatedStorage.Class_Framework.Core.State)
 local Enums = require(ReplicatedStorage.Class_Framework.Core.Enums)
 local StateActions = require(ReplicatedStorage.Class_Framework.StateActions)
 
+local ItemEquipper = require(script.Parent.ItemEquipper)
 local SelectionHandler = {}
 SelectionHandler.__index = SelectionHandler
 
@@ -41,11 +42,10 @@ end
 function SelectionHandler.HandleClassRequest(self: SelectionHandler, player: Player, request: {
 	classKey: string,
 	classId: string,
-	itemEquipper: any
-})
+}, itemEquipper: ItemEquipper.ItemEquipper)
 	local prevClassId = self.state.playerByClassId()[player.UserId]
 	if prevClassId then
-		request.itemEquipper:UnassignClassItems(player, prevClassId)
+		itemEquipper:UnassignClassItems(player, prevClassId)
 	end
 
 	local factionId = self.state.playerByFactionId()[player.UserId]
@@ -78,7 +78,7 @@ function SelectionHandler.HandleClassRequest(self: SelectionHandler, player: Pla
 	StateActions.SetPlayerClass(self.state, player.UserId, request.classKey, request.classId)
 	
 	if Access.Config.ApplyClassMode == Enums.ApplyClassMode.Immediate then
-		request.itemEquipper:AssignClassItems(player, request.classId)
+		itemEquipper:AssignClassItems(player, request.classId)
 	end
 end
 

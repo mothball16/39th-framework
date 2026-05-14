@@ -9,7 +9,7 @@ local VideCharm = require(Packages["vide-charm"])
 local useAtom = VideCharm.useAtom
 
 local create = Vide.create
-local Events = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Events"))
+local Events = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Events")).GetNamespace()
 local State = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("State"))
 
 local ClientMirror = require(script.Parent.ClientMirror)
@@ -31,7 +31,7 @@ function ClientRuntime.new()
 	local state = State.new()
 	local self = setmetatable({
 		state = state,
-		mirror = ClientMirror.new(state, Events),
+		mirror = ClientMirror.new(state),
 		maid = Maid.new(),
 		selectorOpen =  Charm.atom(false),
 	} :: self, ClientRuntime)
@@ -59,13 +59,13 @@ function ClientRuntime.Start(self: ClientRuntime)
 					self.selectorOpen(open)
 				end,
 				requestClass = function(classKey: string, classId: string)
-					Events.RequestClass:FireServer({
+					Events.packets.RequestClass.send({
 						classKey = classKey,
 						classId = classId,
 					})
 				end,
 				requestClassApply = function(enable: boolean)
-					Events.RequestClassApply:FireServer({
+					Events.packets.RequestClassApply.send({
 						enable = enable,
 					})
 				end,

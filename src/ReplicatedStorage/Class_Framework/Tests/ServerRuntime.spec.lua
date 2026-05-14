@@ -66,8 +66,7 @@ return function()
 		runtime.selectionHandler:HandleClassRequest(playerOne, {
 			classKey = "Rifleman",
 			classId = "RiflemanA",
-			itemEquipper = runtime.itemEquipper,
-		})
+		}, runtime.itemEquipper)
 
 		expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal("alpha")
 		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Rifleman")
@@ -86,9 +85,8 @@ return function()
 	it("should remove the assignment when a class is assigned to a player that is not in a faction", function()
 		runtime.selectionHandler:HandleClassRequest(playerOne, {
 			classKey = "Rifleman",
-			classId = "RiflemanA",
-			itemEquipper = runtime.itemEquipper,
-		})
+			classId = "RiflemanA"
+		}, runtime.itemEquipper)
 
 		expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
 		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal(nil)
@@ -101,13 +99,11 @@ return function()
 		runtime.selectionHandler:HandleClassRequest(playerOne, {
 			classKey = "Marksman",
 			classId = "MarksmanA",
-			itemEquipper = runtime.itemEquipper,
-		})
+		}, runtime.itemEquipper)
 		runtime.selectionHandler:HandleClassRequest(playerTwo, {
 			classKey = "Marksman",
 			classId = "MarksmanA",
-			itemEquipper = runtime.itemEquipper,
-		})
+		}, runtime.itemEquipper)
 		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Marksman")
 		expect(runtime.state.playerByClassKey()[playerTwo.UserId]).to.equal("Rifleman")
 		expect(runtime.state.classCountByFaction()["alpha"]["Marksman"]).to.equal(1)
