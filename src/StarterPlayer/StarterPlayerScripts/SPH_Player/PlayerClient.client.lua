@@ -1,6 +1,3 @@
-local debugMode = false
-
-local players = game:GetService("Players")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local runService = game:GetService("RunService")
 local Framework = replicatedStorage.SPH_Framework

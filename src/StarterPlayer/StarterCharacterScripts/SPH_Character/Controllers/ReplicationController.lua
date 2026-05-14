@@ -5,7 +5,6 @@ local Framework = ReplicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
 local CharacterStateModule = require(Framework.State.CharacterState)
 
-local assets = Access.assets
 local config = Access.config
 local bridgeNet = require(Framework.Network.BridgeNet)
 

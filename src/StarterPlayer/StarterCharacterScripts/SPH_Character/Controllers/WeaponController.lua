@@ -2,7 +2,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Charm = require(Packages.Charm)
 local Framework = ReplicatedStorage.SPH_Framework
@@ -24,7 +23,6 @@ local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
 local AnimationEvents = require(script.Parent.AnimationEvents)
 local Player = game.Players.LocalPlayer
-local Camera = game.Workspace.CurrentCamera
 
 local storageCFrame = CFrame.new(1000000, 0, 0)
 local defaultCameraMode = Player.CameraMode
@@ -326,8 +324,8 @@ function WC.ToggleADSMesh(toggle)
 		return
 	end
 
-	local ws = weaponState.wepStats()
-	local aimingTime = (ws and ws.aimTime and ws.aimTime / 20) or 0.2
+	--local ws = weaponState.wepStats()
+	--local aimingTime = (ws and ws.aimTime and ws.aimTime / 20) or 0.2
 
 	for _, child in ipairs(weaponState.gunModel():GetDescendants()) do
 		if child.Name == "REG" then
@@ -384,7 +382,10 @@ function WC.SwitchFireMode()
 	end
 	repeat
 		mode += 1
-		if mode > 5 then mode = 0 break end
+		if mode > 5 then
+			mode = 0
+			break
+		end
 	until ws.fireSwitch[mode]
 	weaponState.fireMode(mode)
 end
@@ -675,18 +676,10 @@ function RANDF(Min, Max)
 	return Min + math.random() * Max
 end
 
-function RAND(Min, Max, Accuracy)
-	local Inverse = 1 / (Accuracy or 1)
-	return (math.random(Min * Inverse, Max * Inverse) / Inverse)
-end
-
 function RAND2(mean,range)
 	return (math.random()-0.5)*range + mean
 end
 
-function CFRot(CF)
-	return CFrame.Angles(CF:ToEulerAnglesXYZ())
-end
 
 function PunchCalc(PunchBase,Dir,Default)
 	if not Dir then
@@ -954,11 +947,11 @@ function WC.UpdateRender(dt)
 	weaponState.Spread = math.clamp(math.max(weaponState.Spread, minSpread) - (spreadRecover * dt), minSpread, maxSpread)
 
 	local bipodPart = weaponState.gunModel().Grip:FindFirstChild("Bipod")
-	local bipodModel = weaponState.gunModel()
+	--local bipodModel = weaponState.gunModel()
 	local bipMount = findChildModelWithMainPartChild(weaponState.gunModel(), "Bipod")
 	if bipMount and bipMount.Main:FindFirstChild("Bipod") then
 		bipodPart = bipMount.Main.Bipod
-		bipodModel = bipMount
+		--bipodModel = bipMount
 	end
 
 	if bipodPart then

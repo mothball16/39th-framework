@@ -12,12 +12,12 @@ if config.firstPersonBody then
 	local gunEquipped
 	
 	local humanoid = Character:WaitForChild("Humanoid")
-	local torso
-	if humanoid.RigType == Enum.HumanoidRigType.R6 then
-		torso = Character:WaitForChild("Torso")
-	else
-		torso = Character:WaitForChild("UpperTorso")
-	end
+	-- local torso
+	-- if humanoid.RigType == Enum.HumanoidRigType.R6 then
+	-- 	torso = Character:WaitForChild("Torso")
+	-- else
+	-- 	torso = Character:WaitForChild("UpperTorso")
+	-- end
 	
 	humanoid.Died:Connect(function()
 		dead = true
@@ -32,6 +32,7 @@ if config.firstPersonBody then
 				end
 			end
 		end
+		return nil
 	end
 
 	RunService.RenderStepped:Connect(function(dt)

@@ -86,13 +86,6 @@ end
 
 function CC.UpdateRender(dt)
 	if not State.dead() and State.Parts.Character:FindFirstChild("Head") then
-		local torsoDirection
-		if State.Parts.IsR6 then
-			torsoDirection = State.Parts.Character.Torso.CFrame.LookVector
-		else
-			torsoDirection = State.Parts.Character.UpperTorso.CFrame.LookVector
-		end
-
 		local lookDirection = CC.camera.CFrame
 		if (not config.headRotation or State.sprinting()) and not State.firstPerson() then
 			lookDirection = State.Parts.HRP.CFrame

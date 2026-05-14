@@ -4,7 +4,6 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local Framework = ReplicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
-local assets = Access.assets
 local config = Access.config
 local Enums = require(Framework.Core.Enums)
 local springMod = require(Framework.Weapons.SpringModule)
@@ -76,8 +75,6 @@ function ViewmodelController.ResetHipRotation()
 end
 
 function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
-	local fps = 1 / dt
-
 	local animBase = ViewmodelController.animBase
 	local camera = ViewmodelController.camera
 	local humanoidRootPart = ViewmodelController.humanoidRootPart

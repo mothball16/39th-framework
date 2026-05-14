@@ -1,4 +1,3 @@
-local prevPrompt
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local proxPromptService = game:GetService("ProximityPromptService")
