@@ -36,15 +36,15 @@ type self = {
 	bipodEnabled: Charm.Atom<boolean>,
 	fireMode: Charm.Atom<number>,
 	holdStance: Charm.Atom<number>,
-
+	
 	-- computed (callable)
-	ubglActive: Charm.Getter<boolean>,
-	hasAmmoForMode: Charm.Getter<boolean>,
-	canManipulate: Charm.Getter<boolean>,
-	canTrackAimInput: Charm.Getter<boolean>,
-	aimFOVTarget: Charm.Getter<number>,
-	adsMeshEnabledForActiveSight: Charm.Getter<boolean>,
-	hasAdsMeshLayers: Charm.Getter<boolean>,
+	ubglActive: Charm.Selector<boolean>,
+	hasAmmoForMode: Charm.Selector<boolean>,
+	canManipulate: Charm.Selector<boolean>,
+	canTrackAimInput: Charm.Selector<boolean>,
+	aimFOVTarget: Charm.Selector<number>,
+	adsMeshEnabledForActiveSight: Charm.Selector<boolean>,
+	hasAdsMeshLayers: Charm.Selector<boolean>,
 
 	-- non-atoms
 	maid: any,
