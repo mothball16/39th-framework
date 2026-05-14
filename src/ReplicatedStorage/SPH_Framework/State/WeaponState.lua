@@ -1,11 +1,11 @@
-local sph = require(game.ReplicatedStorage.SPH_Framework.GameAccess)
-local modules = sph.framework
-local Packages = game.ReplicatedStorage:WaitForChild("Packages")
+local Framework = script:FindFirstAncestor("SPH_Framework")
+local Access = require(Framework.Access)
+local Packages = game:GetService("ReplicatedStorage"):WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-local config = sph.config
-local Enums = require(modules.Core.Enums)
-local SP = require(modules.Weapons.Spring.Default)
-local legacySpring = require(modules.Weapons.LegacySpring)
+local config = Access.config
+local Enums = require(Framework.Core.Enums)
+local SP = require(Framework.Weapons.Spring.Default)
+local legacySpring = require(Framework.Weapons.LegacySpring)
 local Maid = require(Packages.maid)
 
 

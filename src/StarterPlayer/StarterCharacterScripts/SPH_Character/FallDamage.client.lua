@@ -1,6 +1,7 @@
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local sph = require(replicatedStorage.SPH_Framework.GameAccess)
-local config = sph.config
+local Framework = replicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local config = Access.config
 local dead = false
 
 if config.fallDamage then
@@ -10,7 +11,7 @@ if config.fallDamage then
 	local humanoidRootPart:BasePart = character:WaitForChild("HumanoidRootPart")
 	local prevHeight = humanoidRootPart.Position.Y
 	
-	local bridgeNet = require(sph.framework.Network.BridgeNet)
+	local bridgeNet = require(Framework.Network.BridgeNet)
 	local fallDamage = bridgeNet.CreateBridge("FallDamage")
 	
 	humanoid.Died:Connect(function()

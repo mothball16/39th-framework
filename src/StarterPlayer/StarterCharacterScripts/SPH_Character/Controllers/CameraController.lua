@@ -4,11 +4,11 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local TweenService = game:GetService("TweenService")
 
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local assets = sph.assets
-local config = sph.config
-local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
-local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
+local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local config = Access.config
+local CharacterStateModule = require(Framework.State.CharacterState)
+local WeaponStateModule = require(Framework.State.WeaponState)
 
 local CC = {
 	camera = nil,

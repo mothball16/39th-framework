@@ -4,29 +4,29 @@ local debugMode = false
 
 local debris = game:GetService("Debris")
 local tweenService = game:GetService("TweenService")
-local replicatedStorage = game:GetService("ReplicatedStorage")
-local sph = require(script.Parent.Parent.GameAccess)
-local assets = sph.assets
-local modules = sph.framework
-local config = sph.config
-local hitFX = require(modules.Ballistics.HitFX)
-local WeaponStatLocator = require(modules.Weapons.WeaponStatLocator)
-local bridgeNet = require(modules.Network.BridgeNet)
+local Framework = script:FindFirstAncestor("SPH_Framework")
+local Access = require(Framework.Access)
+local assets = Access.assets
+local config = Access.config
+local hitFX = require(Framework.Ballistics.HitFX)
+local WeaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
+local bridgeNet = require(Framework.Network.BridgeNet)
 local bulletHit
 
 local sphWorkspace = workspace:WaitForChild("SPH_Workspace")
 local bulletContainer = sphWorkspace:WaitForChild("Projectiles")
 local cacheContainer = workspace.SPH_Workspace:WaitForChild("Cache")
 
-local suppression = replicatedStorage:WaitForChild("Suppression",100)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local suppression = ReplicatedStorage:WaitForChild("Suppression", 100)
 
-local pierceMod = require(modules.Ballistics.PierceMod)
-local partCache = require(modules.Ballistics.PartCache)
+local pierceMod = require(Framework.Ballistics.PierceMod)
+local partCache = require(Framework.Ballistics.PartCache)
 
 local baseBullet = assets:WaitForChild("Projectiles"):WaitForChild("BulletHandlerBase")
 local bulletProvider = partCache.new(baseBullet:Clone(),config.maxBullets or 300,cacheContainer)
 
-local fastCast = require(modules.Ballistics.FastCast)
+local fastCast = require(Framework.Ballistics.FastCast)
 local bulletBehavior
 local rayParams = RaycastParams.new()
 rayParams.IgnoreWater = true

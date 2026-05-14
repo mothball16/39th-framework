@@ -5,9 +5,9 @@ local M = {}
 local ctx
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local HitContextTypes = require(sph.framework.Combat.HitContextTypes)
-local VictimFinder = require(sph.framework.Combat.VictimFinder)
+local Framework = ReplicatedStorage.SPH_Framework
+local HitContextTypes = require(Framework.Combat.HitContextTypes)
+local VictimFinder = require(Framework.Combat.VictimFinder)
 
 local function checkNaughtyList(playerID)
 	if table.find(ctx.naughtyList, playerID) then

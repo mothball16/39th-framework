@@ -7,12 +7,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
-local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
+local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local CharacterStateModule = require(Framework.State.CharacterState)
+local WeaponStateModule = require(Framework.State.WeaponState)
 local AnimationEvents = require(script.Parent.AnimationEvents)
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local config = sph.config
-local Enums = require(sph.framework.Core.Enums)
+local config = Access.config
+local Enums = require(Framework.Core.Enums)
 
 -- Default loop/priority when playing a weapon anim by config key (e.g. "reload", "idle").
 local ANIM_DEFAULTS = {
@@ -306,7 +307,7 @@ function AnimationController.StopAnimation(animName: string, transTime: number)
 	end
 end
 
-function AnimationController.PlayAnimation(animName: string, parameters: table?, animType: string?, propertyKey: string?)
+function AnimationController.PlayAnimation(animName: string, parameters: {[string]: any}?, animType: string?, propertyKey: string?)
 	local merged = resolvePlayParams(propertyKey, parameters)
 	local tracks = getOrCreateTracks(animName, merged)
 

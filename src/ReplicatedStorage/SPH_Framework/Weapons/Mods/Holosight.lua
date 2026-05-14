@@ -1,9 +1,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Framework = ReplicatedStorage.SPH_Framework
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local WeaponStateModule = require(sph.framework.State.WeaponState)
-local config = sph.config
+local Access = require(Framework.Access)
+local WeaponStateModule = require(Framework.State.WeaponState)
+local config = Access.config
 local Camera = workspace.CurrentCamera
 
 local HolosightMod = {}

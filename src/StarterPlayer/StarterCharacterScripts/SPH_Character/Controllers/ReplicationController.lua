@@ -1,13 +1,13 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
+local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local CharacterStateModule = require(Framework.State.CharacterState)
 
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local assets = sph.assets
-local framework = sph.framework
-local config = sph.config
-local bridgeNet = require(framework.Network.BridgeNet)
+local assets = Access.assets
+local config = Access.config
+local bridgeNet = require(Framework.Network.BridgeNet)
 
 local playerLean = bridgeNet.CreateBridge("PlayerLean")
 local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")

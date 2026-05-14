@@ -1,16 +1,16 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local assets = sph.assets
-local config = sph.config
-local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
-local Types = require(sph.framework.Core.ConfigurationTypes)
+local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local Types = require(Framework.Core.ConfigurationTypes)
+local config = Access.config
+local Enums = require(Framework.Core.Enums)
+local CharacterStateModule = require(Framework.State.CharacterState)
 local c0Ref = CFrame.new(0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
 
 local MovementController = {
@@ -32,7 +32,7 @@ local MovementController = {
     PlayCharSound = nil,
 }
 
-local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
+local WeaponStateModule = require(Framework.State.WeaponState)
 local weaponState: WeaponStateModule.WeaponState
 local State: CharacterStateModule.CharacterState
 
@@ -131,6 +131,7 @@ function MovementController.GetTargetCharacterHeight(stance)
 	elseif stance == 2 then
 		return State.Parts.IsR6 and -2 or (MovementController.baseCharacterHipHeight * 0.5)
 	end
+	error("Invalid stance: " .. stance)
 end
 
 function MovementController.GetStanceSpeed(stance)
@@ -141,6 +142,7 @@ function MovementController.GetStanceSpeed(stance)
 	elseif stance == 2 then
 		return config.proneSpeed
 	end
+	error("Invalid stance: " .. stance)
 end
 
 
@@ -162,7 +164,7 @@ function MovementController.SyncLean(lean, oldLean)
 end
 
 function MovementController.SyncHoldStance(holdStance, oldHoldStance)
-	if holdStance ~= sph.enums.HoldStance.Ready then
+	if holdStance ~= Enums.HoldStance.Ready then
 		State.sprinting(false)
 		return
 	end

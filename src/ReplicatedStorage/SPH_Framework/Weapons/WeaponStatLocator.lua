@@ -1,5 +1,6 @@
-local sph = require(script.Parent.Parent.GameAccess)
-local assets = sph.assets
+local Framework = script:FindFirstAncestor("SPH_Framework")
+local Access = require(Framework.Access)
+local assets = Access.assets
 local configs = assets:WaitForChild("Configurations")
 
 local WeaponStatLocator = {}

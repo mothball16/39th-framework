@@ -1,10 +1,11 @@
 local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local Enums = require(sph.framework.Core.Enums)
+local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local Enums = require(Framework.Core.Enums)
 local Intents = Enums.Intents
-local config = sph.config
+local config = Access.config
 
 local InputController = {}
 

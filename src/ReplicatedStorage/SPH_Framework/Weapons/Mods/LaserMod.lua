@@ -8,17 +8,17 @@ local Players = game:GetService("Players")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local assets = sph.assets
-local modules = sph.framework
-local Enums = require(modules.Core.Enums)
-local config = sph.config
-local bridgeNet = require(modules.Network.BridgeNet)
-local weaponPrefsClient = require(modules.Weapons.WeaponPrefsClient)
+local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local assets = Access.assets
+local Enums = require(Framework.Core.Enums)
+local config = Access.config
+local bridgeNet = require(Framework.Network.BridgeNet)
+local weaponPrefsClient = require(Framework.Weapons.WeaponPrefsClient)
 
 local Intents = Enums.Intents
-local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
-local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
+local CharacterStateModule = require(Framework.State.CharacterState)
+local WeaponStateModule = require(Framework.State.WeaponState)
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 

@@ -2,17 +2,17 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
 
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local assets = sph.assets
-local framework = sph.framework
-local config = sph.config
-local hitFX = require(framework.Ballistics.HitFX)
-local shellEjection = require(framework.Weapons.ShellEjection)
-local bulletHandler = require(framework.Ballistics.BulletHandler)
-local weaponStatLocator = require(framework.Weapons.WeaponStatLocator)
+local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local assets = Access.assets
+local config = Access.config
+local hitFX = require(Framework.Ballistics.HitFX)
+local shellEjection = require(Framework.Weapons.ShellEjection)
+local bulletHandler = require(Framework.Ballistics.BulletHandler)
+local weaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
 --local gunsmithHandler = require(ReplicatedStorage:WaitForChild("DD_GunsmithHandler"))
 
-local bridgeNet = require(framework.Network.BridgeNet)
+local bridgeNet = require(Framework.Network.BridgeNet)
 local repFire = bridgeNet.CreateBridge("ReplicateFire")
 local repSound = bridgeNet.CreateBridge("ReplicateSound")
 local repHit = bridgeNet.CreateBridge("ReplicateHit")

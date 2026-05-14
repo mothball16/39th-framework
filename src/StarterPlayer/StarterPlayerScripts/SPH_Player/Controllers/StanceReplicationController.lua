@@ -21,10 +21,9 @@ local Utility = ReplicatedStorage.Utility
 local TagObserver = require(Utility.TagObserver)
 local LocalPlayer = game.Players.LocalPlayer
 
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local assets = sph.assets
-local framework = sph.framework
-local config = sph.config
+local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local config = Access.config
 
 --------------------------------------------------------------------------------
 -- Attribute handler definitions

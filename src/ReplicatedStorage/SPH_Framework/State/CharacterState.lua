@@ -1,7 +1,8 @@
-local sph = require(game.ReplicatedStorage.SPH_Framework.GameAccess)
-local Packages = game.ReplicatedStorage:WaitForChild("Packages")
+local Framework = script:FindFirstAncestor("SPH_Framework")
+local Access = require(Framework.Access)
+local Packages = game:GetService("ReplicatedStorage"):WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-local config = sph.config
+local config = Access.config
 
 local CharState = {}
 CharState.__index = CharState

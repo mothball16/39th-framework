@@ -2,14 +2,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local assets = sph.assets
-local modules = sph.framework
-local config = sph.config
-local Enums = require(modules.Core.Enums)
-local springMod = require(modules.Weapons.SpringModule)
-local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
-local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
+local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local assets = Access.assets
+local config = Access.config
+local Enums = require(Framework.Core.Enums)
+local springMod = require(Framework.Weapons.SpringModule)
+local CharacterStateModule = require(Framework.State.CharacterState)
+local WeaponStateModule = require(Framework.State.WeaponState)
 
 local ViewmodelController = {}
 local weaponState: WeaponStateModule.WeaponState

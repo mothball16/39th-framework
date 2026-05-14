@@ -1,7 +1,8 @@
 local Debris = game:GetService("Debris")
-local sph = require(script.Parent.Parent.GameAccess)
-local config = sph.config
-local assets = sph.assets
+local Framework = script:FindFirstAncestor("SPH_Framework")
+local Access = require(Framework.Access)
+local config = Access.config
+local assets = Access.assets
 
 -- Impact sounds
 local Glass = {"1565824613"; "1565825075";}

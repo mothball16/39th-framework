@@ -17,21 +17,21 @@ physicsService:CollisionGroupSetCollidable("Guns", "Guns", false)
 physicsService:CollisionGroupSetCollidable("Guns", "Players", false)
 physicsService:CollisionGroupSetCollidable("Casings", "Guns", false)
 
-local sph = require(replicatedStorage.SPH_Framework.GameAccess)
-local assets = sph.assets
-local modules = sph.framework
-local config = sph.config
+local Framework = replicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local assets = Access.assets
+local config = Access.config
 local mainui = assets.HUD.SPH_UI
 
-require(Utility.TestRunner)(replicatedStorage:WaitForChild("SPH_Framework"):WaitForChild("Tests"))
+require(Utility.TestRunner)(Framework.Tests)
 
 
-local WeaponStatLocator = require(modules.Weapons.WeaponStatLocator)
-local weldMod = require(modules.Weapons.WeldMod)
-local bridgeNet = require(modules.Network.BridgeNet)
-local viewMod = require(modules.Weapons.ViewMod)
-local explosionMod = require(modules.Effects.ExplosionFX)
-local ragdoll = require(modules.Effects.RagdollMod)
+local WeaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
+local weldMod = require(Framework.Weapons.WeldMod)
+local bridgeNet = require(Framework.Network.BridgeNet)
+local viewMod = require(Framework.Weapons.ViewMod)
+local explosionMod = require(Framework.Effects.ExplosionFX)
+local ragdoll = require(Framework.Effects.RagdollMod)
 local warnPrefix = "【 SPEARHEAD 】 "
 print(warnPrefix .. "Loading Server " .. config.version)
 
@@ -78,7 +78,7 @@ local ctx = {
 	collectionService = collectionService,
 	proxPromptService = proxPromptService,
 	assets = assets,
-	modules = modules,
+	modules = Framework,
 	config = config,
 	warnPrefix = warnPrefix,
 	weldMod = weldMod,

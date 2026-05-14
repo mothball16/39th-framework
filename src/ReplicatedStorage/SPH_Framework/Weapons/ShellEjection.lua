@@ -1,9 +1,10 @@
 local debris = game:GetService("Debris")
 
-local sph = require(script.Parent.Parent.GameAccess)
-local assets = sph.assets
+local Framework = script:FindFirstAncestor("SPH_Framework")
+local Access = require(Framework.Access)
+local assets = Access.assets
 local WeaponStatLocator = require(script.Parent.WeaponStatLocator)
-local config = sph.config
+local config = Access.config
 
 local ammoTypes = assets.Ammo
 local storageFolder = workspace:WaitForChild("SPH_Workspace"):FindFirstChild("Shells")

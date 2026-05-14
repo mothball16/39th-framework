@@ -5,23 +5,23 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
 local Charm = require(Packages.Charm)
-local sph = require(ReplicatedStorage.SPH_Framework.GameAccess)
-local assets = sph.assets
-local modules = sph.framework
-local config = sph.config
-local Enums = require(modules.Core.Enums)
-local bulletHandler = require(modules.Ballistics.BulletHandler)
-local shellEjection = require(modules.Weapons.ShellEjection)
-local weldMod = require(modules.Weapons.WeldMod)
-local bridgeNet = require(modules.Network.BridgeNet)
-local weaponPrefsClient = require(modules.Weapons.WeaponPrefsClient)
-local weaponStatLocator = require(modules.Weapons.WeaponStatLocator)
-local holosightMod = require(modules.Weapons.Mods.Holosight)
+local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local assets = Access.assets
+local config = Access.config
+local Enums = require(Framework.Core.Enums)
+local bulletHandler = require(Framework.Ballistics.BulletHandler)
+local shellEjection = require(Framework.Weapons.ShellEjection)
+local weldMod = require(Framework.Weapons.WeldMod)
+local bridgeNet = require(Framework.Network.BridgeNet)
+local weaponPrefsClient = require(Framework.Weapons.WeaponPrefsClient)
+local weaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
+local holosightMod = require(Framework.Weapons.Mods.Holosight)
 
-local RecoilModule = require(modules.Weapons.Recoil.Default)
+local RecoilModule = require(Framework.Weapons.Recoil.Default)
 
-local CharacterStateModule = require(ReplicatedStorage.SPH_Framework.State.CharacterState)
-local WeaponStateModule = require(ReplicatedStorage.SPH_Framework.State.WeaponState)
+local CharacterStateModule = require(Framework.State.CharacterState)
+local WeaponStateModule = require(Framework.State.WeaponState)
 local AnimationEvents = require(script.Parent.AnimationEvents)
 local Player = game.Players.LocalPlayer
 local Camera = game.Workspace.CurrentCamera
@@ -716,7 +716,7 @@ function RecoilCalc(Recoil,Dir,Default)
 	end
 end
 
-local SP = require(modules.Weapons.Spring.Default)
+local SP = require(Framework.Weapons.Spring.Default)
 
 function WC.PerformRecoil(wepStats)
 	coroutine.wrap(function()

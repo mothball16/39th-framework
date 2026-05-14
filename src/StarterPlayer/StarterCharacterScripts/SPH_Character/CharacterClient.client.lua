@@ -3,12 +3,12 @@ local runService = game:GetService("RunService")
 local userInputService = game:GetService("UserInputService")
 local debris = game:GetService("Debris")
 local players = game:GetService("Players")
-local sph = require(replicatedStorage.SPH_Framework.GameAccess)
-local assets = sph.assets
-local modules = sph.framework
-local Enums = require(modules.Core.Enums)
+local Framework = replicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local assets = Access.assets
+local Enums = require(Framework.Core.Enums)
 local Intents = Enums.Intents
-local config = sph.config
+local config = Access.config
 local animations = assets.Animations
 local player = players.LocalPlayer
 
@@ -33,16 +33,16 @@ if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
 camera.CameraType = Enum.CameraType.Custom
 if camera:FindFirstChild("WeaponRig") then camera.WeaponRig:Destroy() end
 
-local bridgeNet = require(modules.Network.BridgeNet)
-local viewMod = require(modules.Weapons.ViewMod)
-local bulletHandler = require(modules.Ballistics.BulletHandler)
+local bridgeNet = require(Framework.Network.BridgeNet)
+local viewMod = require(Framework.Weapons.ViewMod)
+local bulletHandler = require(Framework.Ballistics.BulletHandler)
 local callbacks = require(assets.Mods)
 local Packages = replicatedStorage.Packages
 local Charm = require(Packages.Charm)
 
 local Controllers = script.Parent:WaitForChild("Controllers")
-local characterState = require(replicatedStorage.SPH_Framework.State.CharacterState).new(character)
-local weaponState = require(replicatedStorage.SPH_Framework.State.WeaponState).new()
+local characterState = require(Framework.State.CharacterState).new(character)
+local weaponState = require(Framework.State.WeaponState).new()
 
 local InputController = require(Controllers:WaitForChild("InputController"))
 local ViewmodelController = require(Controllers:WaitForChild("ViewmodelController"))

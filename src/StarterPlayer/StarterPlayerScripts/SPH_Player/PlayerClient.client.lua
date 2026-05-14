@@ -3,8 +3,9 @@ local debugMode = false
 local players = game:GetService("Players")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local runService = game:GetService("RunService")
-local sph = require(replicatedStorage.SPH_Framework.GameAccess)
-local config = sph.config
+local Framework = replicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local config = Access.config
 
 local warnPrefix = "【 SPEARHEAD 】 "
 print(warnPrefix.."Loading Client "..config.version)
