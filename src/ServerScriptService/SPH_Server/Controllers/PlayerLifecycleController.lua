@@ -125,7 +125,7 @@ function M.Initialize(c)
 					deathForce.Force = Vector3.new(0, 0, -600)
 					ctx.debris:AddItem(deathForce, 0.2)
 
-					delay(ctx.config.bodyAnchorTime, function()
+					task.delay(ctx.config.bodyAnchorTime, function()
 						for _, desc in newBody:GetDescendants() do
 							if desc:IsA("BasePart") then
 								desc.Anchored = true

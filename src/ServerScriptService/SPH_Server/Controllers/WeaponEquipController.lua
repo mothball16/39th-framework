@@ -241,6 +241,7 @@ function M.EquipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 
 		return gun
 	end
+	return nil
 end
 
 function M.CheckTool(player, tool)
