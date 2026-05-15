@@ -2,6 +2,11 @@
 -- isApplying suppresses duplicate remote fires from Charm subscribers during bulk apply.
 -- TODO: this some ai slop and needs to be cleaned up
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Framework = ReplicatedStorage.SPH_Framework
+local Events = require(Framework.Network.Events)
+local P = Events.GetNamespace().packets
+
 local WeaponPrefsClient = {
 	_byWeaponName = {},
 	isApplying = false,
@@ -152,20 +157,20 @@ function WeaponPrefsClient.applyPersisted(weaponName, State, WeaponState, WC)
 			t.FireMode.Value = validated.fireMode
 		end
 		if validated.fireMode ~= baselineFireMode then
-			WC.switchFireMode:Fire(validated.fireMode)
+			P.SwitchFireMode.send({ mode = validated.fireMode })
 		end
 	end
 	if validated.flashlightEnabled ~= nil then
 		WeaponState.flashlightEnabled(validated.flashlightEnabled)
-		WC.playerToggleAttachment:Fire(0, validated.flashlightEnabled)
+		P.PlayerToggleAttachment.send({ attachmentType = 0, enabled = validated.flashlightEnabled })
 	end
 	if validated.laserEnabled ~= nil then
 		WeaponState.laserEnabled(validated.laserEnabled)
-		WC.playerToggleAttachment:Fire(1, validated.laserEnabled)
+		P.PlayerToggleAttachment.send({ attachmentType = 1, enabled = validated.laserEnabled })
 	end
 	if validated.bipodEnabled ~= nil then
 		WeaponState.bipodEnabled(validated.bipodEnabled)
-		WC.playerToggleAttachment:Fire(2, validated.bipodEnabled)
+		P.PlayerToggleAttachment.send({ attachmentType = 2, enabled = validated.bipodEnabled })
 	end
 
 	WC.UpdateAttachmentsVisibility()

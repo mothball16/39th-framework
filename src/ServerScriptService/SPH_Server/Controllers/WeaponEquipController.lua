@@ -263,7 +263,11 @@ function M.Initialize(c)
 		end)
 	end
 
-	ctx.bridges.switchWeapon:Connect(function(player: Player, tool: Tool)
+	ctx.net.packets.SwitchWeapon.listen(function(data, player: Player?)
+		if not player then
+			return
+		end
+		local tool = data.tool
 		if player.Character and player.Character:FindFirstChild("WeaponRig") and player.Character.Humanoid.Health > 0 then
 			local rig = player.Character.WeaponRig
 			local curWeapon = player.Character.WeaponRig.Weapon:FindFirstChildWhichIsA("Model")

@@ -11,11 +11,12 @@ if config.fallDamage then
 	local humanoidRootPart:BasePart = character:WaitForChild("HumanoidRootPart")
 	local prevHeight = humanoidRootPart.Position.Y
 	
-	local bridgeNet = require(Framework.Network.BridgeNet)
-	local fallDamage = bridgeNet.CreateBridge("FallDamage")
-	
+	local Events = require(Framework.Network.Events)
+	local P = Events.GetNamespace().packets
+	local fallDamageActive = true
+
 	humanoid.Died:Connect(function()
-		fallDamage:Destroy()
+		fallDamageActive = false
 		dead = true
 	end)
 	
@@ -39,7 +40,9 @@ if config.fallDamage then
 				airborne = false
 				if fallingDist > config.fallDamageDist then
 					local damage = (fallingDist - config.fallDamageDist) * config.fallDamageMultiplier
-					fallDamage:Fire(damage)
+					if fallDamageActive then
+						P.FallDamage.send({ damage = damage })
+					end
 				end
 				fallingDist = 0
 			end

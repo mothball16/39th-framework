@@ -13,7 +13,8 @@ local Access = require(Framework.Access)
 local assets = Access.assets
 local Enums = require(Framework.Core.Enums)
 local config = Access.config
-local bridgeNet = require(Framework.Network.BridgeNet)
+local Events = require(Framework.Network.Events)
+local P = Events.GetNamespace().packets
 local weaponPrefsClient = require(Framework.Weapons.WeaponPrefsClient)
 
 local Intents = Enums.Intents
@@ -27,7 +28,6 @@ LaserMod.__index = LaserMod
 
 local weaponState: WeaponStateModule.WeaponState
 local State: CharacterStateModule.CharacterState
-LaserMod.playerToggleAttachment = bridgeNet.CreateBridge("PlayerToggleAttachment")
 
 local MAX_DIST = 800
 local MIN_ALPHA = 0.2
@@ -89,7 +89,7 @@ function LaserMod.OnLaserToggled(enabled)
 		LaserMod.WeaponController.PlayRepSound("Button")
 	end
 	if not applying then
-		LaserMod.playerToggleAttachment:Fire(1, enabled)
+		P.PlayerToggleAttachment.send({ attachmentType = 1, enabled = enabled })
 	end
 	LaserMod.laserDotGui.Enabled = enabled
 

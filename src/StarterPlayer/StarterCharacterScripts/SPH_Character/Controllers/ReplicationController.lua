@@ -6,10 +6,8 @@ local Access = require(Framework.Access)
 local CharacterStateModule = require(Framework.State.CharacterState)
 
 local config = Access.config
-local bridgeNet = require(Framework.Network.BridgeNet)
-
-local playerLean = bridgeNet.CreateBridge("PlayerLean")
-local bodyAnimRequest = bridgeNet.CreateBridge("BodyAnimRequest")
+local Events = require(Framework.Network.Events)
+local P = Events.GetNamespace().packets
 
 local RC = {
 	headRotationEventCooldown = 0
@@ -31,7 +29,7 @@ function RC.Initialize(params)
 
 	Charm.subscribe(State.lean, function(lean, oldLean)
 		if lean ~= oldLean then
-			playerLean:Fire(lean)
+			P.PlayerLean.send({ lean = lean })
 		end
 	end)
 end
@@ -41,7 +39,7 @@ function RC.UpdateRender(dt)
 	RC.headRotationEventCooldown -= dt
 	if RC.headRotationEventCooldown <= 0 and not config.disableHeadRotation then
 		RC.headRotationEventCooldown = config.headRotationEventRate
-		bodyAnimRequest:Fire(State.Parts.NeckJoint.C1)
+		P.BodyAnimRequest.send({ neckC1 = State.Parts.NeckJoint.C1 })
 	end
 	debug.profileend()
 end

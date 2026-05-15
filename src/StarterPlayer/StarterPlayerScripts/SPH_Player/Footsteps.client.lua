@@ -4,11 +4,11 @@ local Framework = replicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
 local assets = Access.assets
 local config = Access.config
-local bridgeNet = require(Framework.Network.BridgeNet)
+local Events = require(Framework.Network.Events)
+local P = Events.GetNamespace().packets
 local soundSets = assets.Sounds.WalkSounds
 local player = game:GetService("Players").LocalPlayer
 
-local repFootstep = bridgeNet.CreateBridge("ReplicateFootstep")
 local defaultSoundSet = soundSets.Concrete
 local leftFoot, rightFoot, stepLeftFoot, humanoidRootPart, humanoid:Humanoid
 local character = nil
@@ -70,7 +70,8 @@ end
 player.CharacterAdded:Connect(SetupSoundsForCharacter) -- DD_SPH: CharacterAppearanceLoaded doesn't play with R15 rigs for whatever reason, using CharacterAdded solves this
 --player.CharacterAppearanceLoaded:Connect(SetupSoundsForCharacter)
 
-repFootstep:Connect(function(material, foot, volume)
+P.ReplicateFootstep.listen(function(data, _plr)
+	local material, foot, volume = data.material, data.foot, data.volume
 	foot.Volume = volume
 	Footstep(material, foot)
 end)
@@ -91,7 +92,7 @@ if config.footstepSounds then
 			curFoot.Volume = 0.4 * (humanoidRootPart.AssemblyLinearVelocity.Magnitude / speedRef)
 			
 			Footstep(humanoid.FloorMaterial,curFoot,curFoot.Volume)
-			repFootstep:Fire(humanoid.FloorMaterial,curFoot,curFoot.Volume)
+			P.ReplicateFootstep.send({ material = humanoid.FloorMaterial, foot = curFoot, volume = curFoot.Volume })
 			
 			task.wait(delayTime * (1 / (humanoidRootPart.AssemblyLinearVelocity.Magnitude / speedRef)))
 			stepping = false

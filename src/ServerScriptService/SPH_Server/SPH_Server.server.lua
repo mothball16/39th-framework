@@ -28,7 +28,8 @@ require(Utility.TestRunner)(Framework.Tests)
 
 local WeaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
 local weldMod = require(Framework.Weapons.WeldMod)
-local bridgeNet = require(Framework.Network.BridgeNet)
+local Events = require(Framework.Network.Events)
+local NetUtil = require(Framework.Network.NetUtil)
 local viewMod = require(Framework.Weapons.ViewMod)
 local explosionMod = require(Framework.Effects.ExplosionFX)
 local ragdoll = require(Framework.Effects.RagdollMod)
@@ -50,8 +51,7 @@ local explosionOverlapParams = OverlapParams.new()
 explosionOverlapParams.MaxParts = 500
 
 local Controllers = script.Parent.Controllers
-local ServerBridges = require(Controllers.ServerBridges)
-local bridges = ServerBridges.CreateAll(bridgeNet)
+local net = Events.GetNamespace()
 
 local naughtyList = {}
 game:GetService("SoundService").RespectFilteringEnabled = true
@@ -95,7 +95,8 @@ local ctx = {
 	drops = drops,
 	naughtyList = naughtyList,
 	dropTable = dropTable,
-	bridges = bridges,
+	net = net,
+	netUtil = NetUtil,
 }
 
 local WeaponRigController = require(Controllers.WeaponRigController)

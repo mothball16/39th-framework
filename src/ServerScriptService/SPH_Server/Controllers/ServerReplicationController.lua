@@ -7,34 +7,45 @@ local ctx
 function M.Initialize(c)
 	ctx = c
 
-	ctx.bridges.bodyAnimRequest:Connect(function(player: Player, angle)
-		local char = player.Character
-		if char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")) and char.Humanoid.Health > 0 then
-			char:SetAttribute("BodyRot", angle)
-		end
-	end)
+	local P, U = ctx.net.packets, ctx.netUtil
 
-	ctx.bridges.playerLean:Connect(function(player: Player, lean)
-		local char = player.Character
-		if char then
-			char:SetAttribute("Lean", lean)
-		end
-	end)
-
-	ctx.bridges.playSound:Connect(function(player: Player, soundName: string)
-		local weapon = player.Character.WeaponRig.Weapon:FindFirstChildWhichIsA("Model")
-		if not weapon then
-			warn(ctx.warnPrefix .. "No weapon found when trying to play: '" .. soundName .. "'")
+	P.BodyAnimRequest.listen(function(data, player: Player?)
+		if not player then
 			return
 		end
-		local soundToPlay = weapon.Grip:FindFirstChild(soundName)
+		local char = player.Character
+		if char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")) and char.Humanoid.Health > 0 then
+			char:SetAttribute("BodyRot", data.neckC1)
+		end
+	end)
+
+	P.PlayerLean.listen(function(data, player: Player?)
+		if not player then
+			return
+		end
+		local char = player.Character
+		if char then
+			char:SetAttribute("Lean", data.lean)
+		end
+	end)
+
+	P.PlaySound.listen(function(data, player: Player?)
+		if not player then
+			return
+		end
+		local weapon = player.Character.WeaponRig.Weapon:FindFirstChildWhichIsA("Model")
+		if not weapon then
+			warn(ctx.warnPrefix .. "No weapon found when trying to play: '" .. data.soundName .. "'")
+			return
+		end
+		local soundToPlay = weapon.Grip:FindFirstChild(data.soundName)
 
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
 		if not tool then
 			return
 		end
 
-		if soundName == "Fire" then
+		if data.soundName == "Fire" then
 			for _, child in ipairs(weapon:GetChildren()) do
 				if child:IsA("Model") and child:FindFirstChild("Main") and child.Main:FindFirstChild("Fire") then
 					soundToPlay = child.Main.Fire
@@ -44,18 +55,27 @@ function M.Initialize(c)
 		end
 
 		if soundToPlay then
-			ctx.bridges.repSound:FireToAllExcept(player, player, soundToPlay)
+			P.ReplicateSound.sendToList({ shooter = player, sound = soundToPlay }, U.playersAllExcept(U.asBlacklist(player)))
 		end
 	end)
 
-	ctx.bridges.playCharSound:Connect(function(player, soundType)
-		if ctx.assets.Sounds:FindFirstChild(soundType) then
-			ctx.bridges.repCharSound:FireToAllExcept(player, player, soundType)
+	P.PlayCharacterSound.listen(function(data, player: Player?)
+		if not player then
+			return
+		end
+		if ctx.assets.Sounds:FindFirstChild(data.soundType) then
+			P.ReplicateCharacterSound.sendToList(
+				{ shooter = player, soundType = data.soundType },
+				U.playersAllExcept(U.asBlacklist(player))
+			)
 		end
 	end)
 
-	ctx.bridges.fallDamage:Connect(function(player, damage)
-		damage = math.abs(damage)
+	P.FallDamage.listen(function(data, player: Player?)
+		if not player then
+			return
+		end
+		local damage = math.abs(data.damage)
 		local humanoid = player.Character:FindFirstChild("Humanoid")
 		if humanoid then
 			if humanoid.Health <= damage then
@@ -83,9 +103,16 @@ function M.Initialize(c)
 		end
 	end)
 
-	ctx.bridges.repFootstep:Connect(function(player, material, foot: Sound, volume)
+	P.ReplicateFootstep.listen(function(data, player: Player?)
+		if not player then
+			return
+		end
+		local foot = data.foot
 		if foot and foot:IsDescendantOf(player.Character) and player.Character then
-			ctx.bridges.repFootstep:FireAllInRangeExcept(player, player.Character.HumanoidRootPart.Position, 100, material, foot, volume)
+			P.ReplicateFootstep.sendToList(
+				{ material = data.material, foot = foot, volume = data.volume },
+				U.playersInRangeExcept(U.asBlacklist(player), player.Character.HumanoidRootPart.Position, 100)
+			)
 		end
 	end)
 end

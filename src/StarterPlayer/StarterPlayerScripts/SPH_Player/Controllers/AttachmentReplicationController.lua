@@ -2,9 +2,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Framework = ReplicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
 local assets = Access.assets
-local bridgeNet = require(Framework.Network.BridgeNet)
+local Events = require(Framework.Network.Events)
+local P = Events.GetNamespace().packets
 
-local repToggleAttachment = bridgeNet.CreateBridge("ReplicateToggleAttachment")
 local lasers = {}
 
 local AttachmentReplicationController = {}
@@ -43,7 +43,9 @@ local function resolveLaserPoint(laserLike: Instance?): Attachment?
 end
 
 function AttachmentReplicationController.Initialize()
-	repToggleAttachment:Connect(AttachmentReplicationController.OnToggleAttachment)
+	P.ReplicateToggleAttachment.listen(function(data, _plr)
+		AttachmentReplicationController.OnToggleAttachment(data.attachment, data.enabled, data.character)
+	end)
 end
 
 function AttachmentReplicationController.OnToggleAttachment(attachment, toggle, character)

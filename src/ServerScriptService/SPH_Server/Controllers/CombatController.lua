@@ -113,7 +113,11 @@ local function playerFire(player: Player, firePoint: CFrame)
 	end
 	local point = rootPart.Position
 	local dist = ctx.config.fireEffectDistance
-	ctx.bridges.repFire:FireAllInRangeExcept(player, point, dist, player, firePoint)
+	local U, P = ctx.netUtil, ctx.net.packets
+	P.ReplicateFire.sendToList(
+		{ shooter = player, firePoint = firePoint },
+		U.playersInRangeExcept(U.asBlacklist(player), point, dist)
+	)
 end
 
 function M.Initialize(c)
@@ -142,9 +146,19 @@ function M.Initialize(c)
 		},
 	})
 
-	ctx.bridges.playerFire:Connect(playerFire)
+	ctx.net.packets.PlayerFire.listen(function(data, player)
+		if not player then
+			return
+		end
+		playerFire(player, data.firePoint)
+	end)
 
-	ctx.bridges.bulletHit:Connect(M.OnBulletHit)
+	ctx.net.packets.BulletHit.listen(function(data, player)
+		if not player then
+			return
+		end
+		M.OnBulletHit(player, data.toolData, data.rayHit, data.bulletCFrame)
+	end)
 end
 
 function M.OnBulletHit(player: Player, tool: Tool, raycastResult: RaycastResult, bulletCFrame: CFrame)
@@ -241,7 +255,11 @@ function M.OnBulletHit(player: Player, tool: Tool, raycastResult: RaycastResult,
 		ctx.explosionMod(raycastResult.Position, expRadius, expEffect, player)
 	else
 		local position = raycastResult.Position
-		ctx.bridges.repHit:FireAllInRangeExcept(player, position, ctx.config.maxHitDistance, tool, raycastResult)
+		local U, P = ctx.netUtil, ctx.net.packets
+		P.ReplicateHit.sendToList(
+			{ toolData = tool, rayHit = raycastResult },
+			U.playersInRangeExcept(U.asBlacklist(player), position, ctx.config.maxHitDistance)
+		)
 	end
 
 	local hitInst = raycastResult.Instance

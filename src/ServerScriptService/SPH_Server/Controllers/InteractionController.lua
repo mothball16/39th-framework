@@ -107,7 +107,10 @@ function M.Initialize(c)
 		end
 	end)
 
-	ctx.bridges.playerDropGun:Connect(function(player)
+	ctx.net.packets.PlayerDropGun.listen(function(_data, player: Player?)
+		if not player then
+			return
+		end
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
 		if not ctx.config.gunDropping then
 			return
@@ -126,19 +129,36 @@ function M.Initialize(c)
 		newSound:Destroy()
 	end)
 
-	ctx.bridges.playerToggleAttachment:Connect(function(player, attachmentType, toggle)
+	ctx.net.packets.PlayerToggleAttachment.listen(function(data, player: Player?)
+		if not player then
+			return
+		end
+		local attachmentType = data.attachmentType
+		local toggle = data.enabled
 		local weaponModel = player.Character.WeaponRig.Weapon:FindFirstChildWhichIsA("Model")
+		if not weaponModel or not weaponModel:FindFirstChild("Grip") then
+			return
+		end
 		local grip = weaponModel.Grip
 
-		if weaponModel then
-			if attachmentType == 0 and grip:FindFirstChild("Flashlight") then
-				ctx.bridges.repToggleAttachment:FireToAllExcept(player, grip.Flashlight, toggle)
-			elseif attachmentType == 1 and grip:FindFirstChild("Laser") then
-				ctx.bridges.repToggleAttachment:FireToAllExcept(player, grip.Laser, toggle, player.Character)
-			end
-			if attachmentType == 2 and grip:FindFirstChild("Bipod") then
-				ctx.bridges.repToggleAttachment:FireToAllExcept(player, grip.Bipod, toggle, player.Character)
-			end
+		local P, U = ctx.net.packets, ctx.netUtil
+		if attachmentType == 0 and grip:FindFirstChild("Flashlight") then
+			P.ReplicateToggleAttachment.sendToList(
+				{ attachment = grip.Flashlight, enabled = toggle, character = nil },
+				U.playersAllExcept(U.asBlacklist(player))
+			)
+		elseif attachmentType == 1 and grip:FindFirstChild("Laser") then
+			P.ReplicateToggleAttachment.sendToList(
+				{ attachment = grip.Laser, enabled = toggle, character = player.Character },
+				U.playersAllExcept(U.asBlacklist(player))
+			)
+		end
+		if attachmentType == 2 and grip:FindFirstChild("Bipod") then
+			P.ReplicateToggleAttachment.sendToList(
+				{ attachment = grip.Bipod, enabled = toggle, character = player.Character },
+				U.playersAllExcept(U.asBlacklist(player))
+			)
+		end
 			local tool = player.Character:FindFirstChildWhichIsA("Tool")
 			local wepStats
 			if tool and tool:FindFirstChild("SPH_Weapon") then
@@ -152,26 +172,37 @@ function M.Initialize(c)
 						if attachmentType == 0 then
 							local flashlite = main:FindFirstChild("Flashlight")
 							if flashlite then
-								ctx.bridges.repToggleAttachment:FireToAllExcept(player, flashlite, toggle)
+								P.ReplicateToggleAttachment.sendToList(
+									{ attachment = flashlite, enabled = toggle, character = nil },
+									U.playersAllExcept(U.asBlacklist(player))
+								)
 							end
 						elseif attachmentType == 1 then
 							local laser = main:FindFirstChild("Laser")
 							if laser then
-								ctx.bridges.repToggleAttachment:FireToAllExcept(player, laser, toggle, player.Character)
+								P.ReplicateToggleAttachment.sendToList(
+									{ attachment = laser, enabled = toggle, character = player.Character },
+									U.playersAllExcept(U.asBlacklist(player))
+								)
 							end
 						elseif attachmentType == 2 then
 							local bip = main:FindFirstChild("Bipod")
 							if bip then
-								ctx.bridges.repToggleAttachment:FireToAllExcept(player, bip, toggle, player.Character)
+								P.ReplicateToggleAttachment.sendToList(
+									{ attachment = bip, enabled = toggle, character = player.Character },
+									U.playersAllExcept(U.asBlacklist(player))
+								)
 							end
 						end
 					end
 				end
 			end
-		end
 	end)
 
-	ctx.bridges.magGrab:Connect(function(player)
+	ctx.net.packets.MagGrab.listen(function(_data, player: Player?)
+		if not player then
+			return
+		end
 		if player.Character then
 			local tool = player.Character:FindFirstChildWhichIsA("Tool")
 			local humanoid = player.Character.Humanoid
@@ -185,7 +216,8 @@ function M.Initialize(c)
 			local magPart: BasePart = wepStats.projectile ~= "Bullet" and weaponModel[wepStats.projectile]
 				or weaponModel:FindFirstChild("Mag")
 			if magPart then
-				ctx.bridges.repMagGrab:FireToAllExcept(player, magPart)
+				local P, U = ctx.net.packets, ctx.netUtil
+				P.ReplicateMagGrab.sendToList({ magPart = magPart }, U.playersAllExcept(U.asBlacklist(player)))
 			end
 		end
 	end)

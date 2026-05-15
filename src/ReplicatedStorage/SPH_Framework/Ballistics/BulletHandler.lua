@@ -10,15 +10,15 @@ local assets = Access.assets
 local config = Access.config
 local hitFX = require(Framework.Ballistics.HitFX)
 local WeaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
-local bridgeNet = require(Framework.Network.BridgeNet)
-local bulletHit
+local Events = require(Framework.Network.Events)
+local P = Events.GetNamespace().packets
 
 local sphWorkspace = workspace:WaitForChild("SPH_Workspace")
 local bulletContainer = sphWorkspace:WaitForChild("Projectiles")
 local cacheContainer = workspace.SPH_Workspace:WaitForChild("Cache")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local suppression = ReplicatedStorage:WaitForChild("Suppression", 100)
+local suppression = ReplicatedStorage:FindFirstChild("Suppression")
 
 local pierceMod = require(Framework.Ballistics.PierceMod)
 local partCache = require(Framework.Ballistics.PartCache)
@@ -49,7 +49,6 @@ local player, character
 module.Initialize = function(newPlayer)
 	player = newPlayer
 	character = newPlayer.Character
-	bulletHit = bridgeNet.CreateBridge("BulletHit")
 	rayParams.FilterDescendantsInstances = {character, workspace.CurrentCamera}
 end
 
@@ -285,7 +284,7 @@ caster.LengthChanged:Connect(function(cast, segmentOrigin, segmentDirection, len
 	if not cosmeticBulletObject then return end
 
 	-- Suppression effects
-	if config.suppressionEffects and player ~= cast.UserData.Player and not cast.UserData.Cracked and player:DistanceFromCharacter(cosmeticBulletObject.Position) <= 60 and player:DistanceFromCharacter(cast.UserData.Origin) >= 60 then
+	if suppression and config.suppressionEffects and player ~= cast.UserData.Player and not cast.UserData.Cracked and player:DistanceFromCharacter(cosmeticBulletObject.Position) <= 60 and player:DistanceFromCharacter(cast.UserData.Origin) >= 60 then
 		suppression:Fire(cast.UserData.SuppressionLevel)
 		cast.UserData.Cracked = true
 	end
@@ -356,10 +355,14 @@ caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBul
 			}
 		end
 
-		bulletHit:Fire(cast.UserData.TurretFired and {model = cast.UserData.IgnoreModel, index = cast.UserData.Tool} or toolData, fakeRayResult, cosmeticBulletObject.CFrame)
+		P.BulletHit.send({
+			toolData = cast.UserData.TurretFired and { model = cast.UserData.IgnoreModel, index = cast.UserData.Tool } or toolData,
+			rayHit = fakeRayResult,
+			bulletCFrame = cosmeticBulletObject.CFrame,
+		})
 
 		-- Suppression effects
-		if config.suppressionEffects and player ~= cast.UserData.Player and not cast.UserData.Cracked then
+		if suppression and config.suppressionEffects and player ~= cast.UserData.Player and not cast.UserData.Cracked then
 			suppression:Fire(cast.UserData.SuppressionLevel)
 			cast.UserData.Cracked = true
 		end

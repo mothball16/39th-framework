@@ -7,7 +7,12 @@ local ctx
 function M.Initialize(c)
 	ctx = c
 
-	ctx.bridges.repReload:Connect(function(player: Player)
+	local P, U = ctx.net.packets, ctx.netUtil
+
+	P.Reload.listen(function(_data, player: Player?)
+		if not player then
+			return
+		end
 		if ctx.config.listenForReloadSpam then
 			if player:GetAttribute("LastReload") then
 				if time() - player:GetAttribute("LastReload") <= 0.3 then
@@ -111,7 +116,10 @@ function M.Initialize(c)
 		end
 	end)
 
-	ctx.bridges.repChamber:Connect(function(player: Player)
+	P.PlayerChamber.listen(function(_data, player: Player?)
+		if not player then
+			return
+		end
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
 		if tool and tool.Parent == player.Character then
 			tool.BoltReady.Value = true
@@ -125,7 +133,10 @@ function M.Initialize(c)
 		end
 	end)
 
-	ctx.bridges.repBoltOpen:Connect(function(player: Player)
+	P.RepBoltOpen.listen(function(_data, player: Player?)
+		if not player then
+			return
+		end
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
 		if tool and tool.Parent == player.Character then
 			tool.BoltReady.Value = false
@@ -135,7 +146,11 @@ function M.Initialize(c)
 		end
 	end)
 
-	ctx.bridges.switchFireMode:Connect(function(player: Player, newFireMode)
+	P.SwitchFireMode.listen(function(data, player: Player?)
+		if not player then
+			return
+		end
+		local newFireMode = data.mode
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
 		if tool and tool:FindFirstChild("SPH_Weapon") then
 			local wepStats = ctx.WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
@@ -148,9 +163,15 @@ function M.Initialize(c)
 		end
 	end)
 
-	ctx.bridges.moveBolt:Connect(function(player, direction, magAmmo)
+	P.MoveBolt.listen(function(data, player: Player?)
+		if not player then
+			return
+		end
 		local playerPosition = player.Character.HumanoidRootPart.Position
-		ctx.bridges.repBolt:FireAllInRangeExcept(player, playerPosition, ctx.config.fireEffectDistance, player, direction, magAmmo)
+		P.ReplicateBolt.sendToList(
+			{ shooter = player, direction = data.direction, magAmmo = data.magAmmo },
+			U.playersInRangeExcept(U.asBlacklist(player), playerPosition, ctx.config.fireEffectDistance)
+		)
 	end)
 end
 

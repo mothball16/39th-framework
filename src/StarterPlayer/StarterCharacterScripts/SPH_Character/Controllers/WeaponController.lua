@@ -12,7 +12,7 @@ local Enums = require(Framework.Core.Enums)
 local bulletHandler = require(Framework.Ballistics.BulletHandler)
 local shellEjection = require(Framework.Weapons.ShellEjection)
 local weldMod = require(Framework.Weapons.WeldMod)
-local bridgeNet = require(Framework.Network.BridgeNet)
+local Events = require(Framework.Network.Events)
 local weaponPrefsClient = require(Framework.Weapons.WeaponPrefsClient)
 local weaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
 local holosightMod = require(Framework.Weapons.Mods.Holosight)
@@ -58,17 +58,8 @@ local WC = {
 local weaponState: WeaponStateModule.WeaponState
 local State: CharacterStateModule.CharacterState
 
-WC.switchWeapon = bridgeNet.CreateBridge("SwitchWeapon")
-WC.playerFire = bridgeNet.CreateBridge("PlayerFire")
-WC.playSound = bridgeNet.CreateBridge("PlaySound")
-WC.repReload = bridgeNet.CreateBridge("Reload")
-WC.repChamber = bridgeNet.CreateBridge("PlayerChamber")
-WC.moveBolt = bridgeNet.CreateBridge("MoveBolt")
-WC.switchFireMode = bridgeNet.CreateBridge("SwitchFireMode")
-WC.playerDropGun = bridgeNet.CreateBridge("PlayerDropGun")
-WC.playerToggleAttachment = bridgeNet.CreateBridge("PlayerToggleAttachment")
-WC.repBoltOpen = bridgeNet.CreateBridge("RepBoltOpen")
-WC.magGrab = bridgeNet.CreateBridge("MagGrab")
+local net = Events.GetNamespace()
+local P = net.packets
 
 function WC._applyPersistedWeaponPrefs(weaponName)
 	weaponPrefsClient.applyPersisted(weaponName, State, weaponState, WC)
@@ -174,7 +165,7 @@ function WC.SyncFlashlightEnabled(enabled)
 		return
 	end
 	WC.PlayRepSound("Button")
-	WC.playerToggleAttachment:Fire(0, enabled)
+		P.PlayerToggleAttachment.send({ attachmentType = 0, enabled = enabled })
 	WC.UpdateAttachmentsVisibility()
 end
 
@@ -191,7 +182,7 @@ function WC.SyncBipodEnabled(enabled)
 			return
 		end
 		WC.PlayRepSound("Switch")
-		WC.playerToggleAttachment:Fire(2, enabled)
+		P.PlayerToggleAttachment.send({ attachmentType = 2, enabled = enabled })
 	end
 end
 
@@ -200,7 +191,7 @@ function WC.SyncFireMode(mode)
 	if weaponPrefsClient.isApplying then
 		return
 	end
-	WC.switchFireMode:Fire(mode)
+		P.SwitchFireMode.send({ mode = mode })
 end
 
 
@@ -278,7 +269,7 @@ function WC.PlayRepSound(soundName)
 				clonedSound:Play()
 				Debris:AddItem(clonedSound, clonedSound.TimeLength)
 			end
-			WC.playSound:Fire(soundName, State.firstPerson())
+			P.PlaySound.send({ soundName = soundName, firstPerson = State.firstPerson() })
 		end
 	end
 end
@@ -316,7 +307,10 @@ function WC.MoveBolt(direction:CFrame, silent:boolean)
 	if weaponState.gunAmmo.MagAmmo.Value <= 0 and not silent then
 		WC.PlayRepSound("Empty")
 	end
-	WC.moveBolt:Fire(direction, weaponState.gunAmmo.MagAmmo.Value)
+		P.MoveBolt.send({
+			direction = direction,
+			magAmmo = weaponState.gunAmmo.MagAmmo.Value
+		})
 end
 
 function WC.ToggleADSMesh(toggle)
@@ -397,7 +391,7 @@ function WC.Unequip(tool)
 	WC.viewmodelRig.AnimBase.CFrame = storageCFrame
 	WC.lastGunModel = weaponState.gunModel()
 	
-	WC.switchWeapon:Fire()
+		P.SwitchWeapon.send({ tool = nil })
 	if tool == State.equippedTool() then
 		weaponPrefsClient.set(tool.Name, {
 			laserEnabled = weaponState.laserEnabled(),
@@ -439,7 +433,7 @@ function WC.Equip(newChild)
 	weaponState.wepStats(weaponStatLocator.getWeaponStats(State.equippedTool().SPH_Weapon))
 
 	WC.cycled = true
-	WC.switchWeapon:Fire(newChild)
+		P.SwitchWeapon.send({ tool = newChild })
 
 
 	local ws = weaponState.wepStats()
@@ -565,7 +559,7 @@ function WC.OnDropGunIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then
 		WC.Unequip(State.equippedTool())
-		WC.playerDropGun:Fire()
+		P.PlayerDropGun.send({ _ = 0 })
 	end
 end
 
@@ -885,7 +879,7 @@ function WC.UpdateHeartbeat(dt)
 		end
 
 		local firePoint = State.firstPerson() and WC.GetMuzzlePoint(curModel) or WC.GetMuzzlePoint(WC.GetThirdPersonGunModel())
-		WC.playerFire:Fire(firePoint.WorldCFrame)
+		P.PlayerFire.send({ firePoint = firePoint.WorldCFrame })
 
 		local cycleTime = currentStats.fireRate
 		if fireMode == Enums.FireModes.Burst and currentStats.burstFireRate then cycleTime = currentStats.burstFireRate end
@@ -919,7 +913,7 @@ function WC.UpdateHeartbeat(dt)
 				WC.holdingM1 = false
 			end
 		elseif ws.emptyCloseBolt then
-			WC.repChamber:Fire()
+			P.PlayerChamber.send({ _ = 0 })
 			WC.MoveBolt(CFrame.new())
 		end
 	end
@@ -988,7 +982,7 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 				if child:IsA("BasePart") and string.sub(child.Name, 1, 6) == "Bullet" then child.Transparency = 0 end
 			end
 		end
-		WC.repReload:Fire()
+		P.Reload.send({ _ = 0 })
 		if ws.magType > 1 then newAnim.DidLoop:Once(function() AnimationEvents.StopAnimationRequested:Fire(animName) end) end
 	elseif keyframeName == "ShellInsert" or keyframeName == "BulletInsert" then
 		if WC.cancelReload then
@@ -1020,7 +1014,7 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 			local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
 			if tempBulletPart then tempBulletPart.Transparency = 0 end
 		end
-		WC.repReload:Fire()
+		P.Reload.send({ _ = 0 })
 	elseif keyframeName == "ClipInsertEnd" then
 		local ammoNeeded = weaponState.gunAmmo.MagAmmo.MaxValue - weaponState.gunAmmo.MagAmmo.Value
 		local clipSize = ws.clipSize or ws.magazineCapacity
@@ -1029,9 +1023,9 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 			AnimationEvents.ReloadActionRequested:Fire(ammoNeeded >= clipSize)
 		end
 	elseif keyframeName == "ClipInsert" then
-		WC.repReload:Fire()
+		P.Reload.send({ _ = 0 })
 	elseif keyframeName == "SlideRelease" or keyframeName == "BoltClose" then
-		WC.repChamber:Fire()
+			P.PlayerChamber.send({ _ = 0 })
 		weaponState.reloading(false)
 		WC.MoveBolt(CFrame.new(), true)
 	elseif keyframeName == "SlidePull" and State.equippedTool() and State.equippedTool().Chambered.Value then
@@ -1041,9 +1035,9 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 	elseif keyframeName == "MagGrab" then
 		WC.SetProjectileTransparency(weaponState.gunModel(), 0)
 		WC.SetProjectileTransparency(WC.GetThirdPersonGunModel(), 0)
-		WC.magGrab:Fire()
+		P.MagGrab.send({ _ = 0 })
 	elseif keyframeName == "BoltOpen" then
-		WC.repBoltOpen:Fire()
+		P.RepBoltOpen.send({ _ = 0 })
 		if not WC.ejected then WC.EjectShell() end
 	end
 end

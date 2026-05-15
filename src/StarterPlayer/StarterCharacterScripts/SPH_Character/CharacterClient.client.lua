@@ -33,7 +33,8 @@ if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
 camera.CameraType = Enum.CameraType.Custom
 if camera:FindFirstChild("WeaponRig") then camera.WeaponRig:Destroy() end
 
-local bridgeNet = require(Framework.Network.BridgeNet)
+local Events = require(Framework.Network.Events)
+local P = Events.GetNamespace().packets
 local viewMod = require(Framework.Weapons.ViewMod)
 local bulletHandler = require(Framework.Ballistics.BulletHandler)
 local callbacks = require(assets.Mods)
@@ -67,7 +68,9 @@ rayParams.RespectCanCollide = true
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 rayParams.FilterDescendantsInstances = {character,camera,shellFolder}
 
-local playCharSound = bridgeNet.CreateBridge("PlayCharacterSound")
+local function playCharSound(soundType: string)
+	P.PlayCharacterSound.send({ soundType = soundType })
+end
 
 local storageCFrame = CFrame.new(1000000,0,0) -- This is used for moving the viewmodel super far away.
 -- Doing this to the viewmodel allows animations to be loaded, played, etc, while still having it out of view.
@@ -143,7 +146,7 @@ local function PlayCharSound(soundType)
 		newSound.Parent = humanoidRootPart
 		newSound:Play()
 		debris:AddItem(newSound,newSound.TimeLength)
-		playCharSound:Fire(soundType)
+		playCharSound(soundType)
 	end
 end
 
