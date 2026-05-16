@@ -40,6 +40,10 @@ function RC.UpdateRender(dt)
 	if RC.headRotationEventCooldown <= 0 and not config.disableHeadRotation then
 		RC.headRotationEventCooldown = config.headRotationEventRate
 		P.BodyAnimRequest.send({ neckC1 = State.Parts.NeckJoint.C1 })
+		local char = game.Players.LocalPlayer.Character
+		if char then
+			char:SetAttribute("BodyRot_Client", State.Parts.NeckJoint.C1)
+		end
 	end
 	debug.profileend()
 end

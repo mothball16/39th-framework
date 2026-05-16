@@ -9,17 +9,29 @@
       "Packages": {
         "$path": "Packages"
       },
+
       "DevPackages": {
         "$path": "DevPackages"
       },
+
       "Utility": {
         "$path":"Utility"
+      },
+
+      "Class_Framework": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/ClassSystem/Class_Framework"
       }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "$ignoreUnknownInstances": true,
-      "$path": "src/ServerScriptService"
+      "$path": "src/ServerScriptService",
+
+      "Class_Server": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/ClassSystem/Class_Server"
+      }
     },
     "StarterGui": {
       "$className": "StarterGui",
@@ -37,8 +49,15 @@
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "$ignoreUnknownInstances": true,
-        "$path": "src/StarterPlayer/StarterPlayerScripts"
+        "$path": "src/StarterPlayer/StarterPlayerScripts",
+
+        "Class_Player": {
+          "$ignoreUnknownInstances": false,
+          "$path": "src/ClassSystem/Class_Player"
+        }
       }
+
+      
     }
   }
 }

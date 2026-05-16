@@ -13,7 +13,7 @@ signal = "sleitnick/signal@2.0.3"
 maid = "nightcycle/maid@2.2.2"
 table-util = "sleitnick/table-util@1.2.1"
 Net = "sleitnick/net@0.2.0"
-bytenet-max = "elitriare/bytenet-max@0.2.1"
+bytenet-max = "elitriare/bytenet-max@0.2.7"
 
 [dev-dependencies]
 TestEZ = "roblox/testez@0.4.1"
