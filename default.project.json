@@ -20,12 +20,12 @@
 
       "Class_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/ClassSystem/Class_Framework"
+        "$path": "src/_Systems/ClassSystem/Class_Framework"
       },
 
       "SPH_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/WeaponSystem/SPH_Framework"
+        "$path": "src/_Systems/WeaponSystem/SPH_Framework"
       }
     },
     "ServerScriptService": {
@@ -35,12 +35,12 @@
 
       "Class_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/ClassSystem/Class_Server"
+        "$path": "src/_Systems/ClassSystem/Class_Server"
       },
 
       "SPH_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/WeaponSystem/SPH_Server"
+        "$path": "src/_Systems/WeaponSystem/SPH_Server"
       }
     },
 
@@ -54,7 +54,7 @@
 
         "SPH_Character": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/WeaponSystem/SPH_Character"
+          "$path": "src/_Systems/WeaponSystem/SPH_Character"
         }
       },
 
@@ -65,12 +65,12 @@
 
         "Class_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/ClassSystem/Class_Player"
+          "$path": "src/_Systems/ClassSystem/Class_Player"
         },
 
         "SPH_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/WeaponSystem/SPH_Player"
+          "$path": "src/_Systems/WeaponSystem/SPH_Player"
         }
       }
 
