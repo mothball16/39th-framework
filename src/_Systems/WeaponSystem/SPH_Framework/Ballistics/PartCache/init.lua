@@ -1,4 +1,4 @@
---!strict
+--!nocheck
 
 --[[
 	PartCache V4.0 by Xan the Dragon // Eti the Spirit -- RBX 18406183
