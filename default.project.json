@@ -21,6 +21,11 @@
       "Class_Framework": {
         "$ignoreUnknownInstances": false,
         "$path": "src/ClassSystem/Class_Framework"
+      },
+
+      "SPH_Framework": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/WeaponSystem/SPH_Framework"
       }
     },
     "ServerScriptService": {
@@ -31,21 +36,28 @@
       "Class_Server": {
         "$ignoreUnknownInstances": false,
         "$path": "src/ClassSystem/Class_Server"
+      },
+
+      "SPH_Server": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/WeaponSystem/SPH_Server"
       }
     },
-    "StarterGui": {
-      "$className": "StarterGui",
-      "$ignoreUnknownInstances": true,
-      "$path": "src/StarterGui"
-    },
+
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "$ignoreUnknownInstances": true,
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
         "$ignoreUnknownInstances": true,
-        "$path": "src/StarterPlayer/StarterCharacterScripts"
+        "$path": "src/StarterPlayer/StarterCharacterScripts",
+
+        "SPH_Character": {
+          "$ignoreUnknownInstances": false,
+          "$path": "src/WeaponSystem/SPH_Character"
+        }
       },
+
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "$ignoreUnknownInstances": true,
@@ -54,6 +66,11 @@
         "Class_Player": {
           "$ignoreUnknownInstances": false,
           "$path": "src/ClassSystem/Class_Player"
+        },
+
+        "SPH_Player": {
+          "$ignoreUnknownInstances": false,
+          "$path": "src/WeaponSystem/SPH_Player"
         }
       }
 
