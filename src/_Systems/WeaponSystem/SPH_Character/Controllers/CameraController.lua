@@ -10,111 +10,114 @@ local config = Access.config
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
 
-local CC = {
-	camera = nil,
+local SPRINT_FOV_MULTIPLIER = 1.02
 
+type CameraController = {
+	camera: Camera,
+	cameraRollAngle: number,
+	cameraLeanRotation: number,
+	cameraOffsetTarget: Vector3,
+	weaponState: WeaponStateModule.WeaponState,
+	state: CharacterStateModule.CharacterState,
+
+	aimFOVTarget: Charm.Selector<number>,
+	FOVTarget: Charm.Selector<number>,
+	FOVLerpFactor: Charm.Selector<number>,
+}
+
+local CC: CameraController = {
+	camera = nil,
 	cameraRollAngle = 0,
 	cameraLeanRotation = 0,
 	cameraOffsetTarget = Vector3.zero,
-
-	ReplicationController = nil,
-
-	aimTween = nil :: Tween
+	weaponState = nil,
+	state = nil,
+	aimFOVTarget = nil,
+	FOVTarget = nil,
 }
-
-local weaponState: WeaponStateModule.WeaponState
-local State: CharacterStateModule.CharacterState
 
 local function LerpNumber(number, target, speed)
 	return number + (target - number) * speed
 end
 
 function CC.Initialize(params)
-	CC.camera = params.camera
+	CC.camera = params.camera :: Camera
 
-	CC.ReplicationController = params.ReplicationController
-	weaponState = params.weaponState
-	State = params.state
+	CC.weaponState = params.weaponState :: WeaponStateModule.WeaponState
+	CC.state = params.state :: CharacterStateModule.CharacterState
 
-	Charm.subscribe(State.sprinting, CC.SyncSprinting)
-	Charm.subscribe(State.aiming, CC.SyncAiming)
-end
-
-
-function CC.SyncSprinting(sprinting)
-	--[[
-	if sprinting then
-		if depthOfField then
-			CameraController.ChangeDoF(0, 6, 0, 0.3)
+	CC.aimFOVTarget = Charm.computed(function()
+		if not CC.weaponState.wepStats() or not CC.weaponState.gunModel() then
+			return config.defaultFOV
 		end
-	end]]
+
+		local stat = CC.weaponState.wepStats()
+
+		return stat.aimFovs[CC.weaponState.sightIndex()] or config.defaultFOV
+	end)
+
+	CC.FOVTarget = Charm.computed(function()
+		local isSprinting = CC.state.sprinting()
+		local isAiming = CC.state.aiming()
+
+		if isAiming then
+			return CC.aimFOVTarget()
+		else
+			-- TODO: map this to the actual speed of the char v.s. sprint speed for incrementing FOV
+			return config.defaultFOV * (if isSprinting then SPRINT_FOV_MULTIPLIER else 1)
+		end
+	end)
 end
-
-function CC.SyncAiming(aiming)
-	if CC.aimTween then
-		CC.aimTween:Cancel()
-		CC.aimTween = nil
-	end
-	
-	if aiming then
-		-- nothin yet
-	else
-		local ws = weaponState.wepStats()
-		local aimOutTime = ws and ws.aimTime / 2 or 0.3
-		CC.aimTween = TweenService:Create(
-			CC.camera, TweenInfo.new(aimOutTime),{FieldOfView = config.defaultFOV})
-		CC.aimTween:Play()
-	end
-end
-
-
 
 function CC.OnFreelookIntent(inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then -- Holding
-		State.freeLook(true)
-		State.Parts.Humanoid.AutoRotate = false
-		State.freeLookRotation(CC.camera.CFrame - CC.camera.CFrame.Position)
+		CC.state.freeLook(true)
+		CC.state.Parts.Humanoid.AutoRotate = false
+		CC.state.freeLookRotation(CC.camera.CFrame - CC.camera.CFrame.Position)
 	else -- Stopped holding
-		State.freeLook(false)
-		local freeLookOffset = State.freeLookRotation():ToObjectSpace(CC.camera.CFrame)
-		State.freeLookOffset(freeLookOffset - freeLookOffset.Position)
-		State.Parts.Humanoid.AutoRotate = true
+		CC.state.freeLook(false)
+		local freeLookOffset = CC.state.freeLookRotation():ToObjectSpace(CC.camera.CFrame)
+		CC.state.freeLookOffset(freeLookOffset - freeLookOffset.Position)
+		CC.state.Parts.Humanoid.AutoRotate = true
 	end
 end
 
-
 function CC.UpdateRender(dt)
-	if not State.dead() and State.Parts.Character:FindFirstChild("Head") then
+	if not CC.state.dead() and CC.state.Parts.Character:FindFirstChild("Head") then
 		local lookDirection = CC.camera.CFrame
-		if (not config.headRotation or State.sprinting()) and not State.firstPerson() then
-			lookDirection = State.Parts.HRP.CFrame
+		if (not config.headRotation or CC.state.sprinting()) and not CC.state.firstPerson() then
+			lookDirection = CC.state.Parts.HRP.CFrame
 		end
 
-		local cameraDirection = State.Parts.HRP.CFrame:ToObjectSpace(lookDirection).LookVector
-		local rotationCFrame = CFrame.Angles(0, math.asin(cameraDirection.X)/1.15, 0) * CFrame.Angles(-math.asin(math.clamp(lookDirection.LookVector.Y,-.8,.15)), 0, 0)
+		local cameraDirection = CC.state.Parts.HRP.CFrame:ToObjectSpace(lookDirection).LookVector
+		local rotationCFrame = CFrame.Angles(0, math.asin(cameraDirection.X) / 1.15, 0)
+			* CFrame.Angles(-math.asin(math.clamp(lookDirection.LookVector.Y, -0.8, 0.15)), 0, 0)
 		local neckCFrame
-		if State.Parts.IsR6 then
-			neckCFrame = CFrame.new(0, -.5, 0) * rotationCFrame * CFrame.Angles(-math.rad(90), 0, math.rad(180))
+		if CC.state.Parts.IsR6 then
+			neckCFrame = CFrame.new(0, -0.5, 0) * rotationCFrame * CFrame.Angles(-math.rad(90), 0, math.rad(180))
 		else
-			neckCFrame = CFrame.new(0, -.5, 0) * rotationCFrame * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0))
+			neckCFrame = CFrame.new(0, -0.5, 0) * rotationCFrame * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0))
 		end
-		State.Parts.NeckJoint.C1 = State.Parts.NeckJoint.C1:Lerp(neckCFrame, 1 - math.exp(-config.headRotationSpeed * dt))
-
+		CC.state.Parts.NeckJoint.C1 =
+			CC.state.Parts.NeckJoint.C1:Lerp(neckCFrame, 1 - math.exp(-config.headRotationSpeed * dt))
 
 		local fpThreshold = 0.6
-		if not State.firstPerson() and State.Parts.Character.Head.LocalTransparencyModifier >= fpThreshold then
-			State.firstPerson(true)
-		elseif State.firstPerson() and State.Parts.Character.Head.LocalTransparencyModifier <= fpThreshold then
-			State.firstPerson(false)
-			weaponState.viewmodelVisible(false)
+		if not CC.state.firstPerson() and CC.state.Parts.Character.Head.LocalTransparencyModifier >= fpThreshold then
+			CC.state.firstPerson(true)
+		elseif CC.state.firstPerson() and CC.state.Parts.Character.Head.LocalTransparencyModifier <= fpThreshold then
+			CC.state.firstPerson(false)
+			CC.weaponState.viewmodelVisible(false)
 			CC.cameraOffsetTarget = Vector3.zero
 		end
 	end
-	
+
 	-- Limit camera rotation
-	if (State.Parts.Humanoid.Sit and not State.vehicleSeated() and State.firstPerson() or State.freeLook()) and config.cameraLimitInSeats then
-		local cameraCFrame = State.Parts.HRP.CFrame:ToObjectSpace(CC.camera.CFrame)
+	if
+		(CC.state.Parts.Humanoid.Sit and not CC.state.vehicleSeated() and CC.state.firstPerson() or CC.state.freeLook())
+		and config.cameraLimitInSeats
+	then
+		local cameraCFrame = CC.state.Parts.HRP.CFrame:ToObjectSpace(CC.camera.CFrame)
 		local x, y, z = cameraCFrame:ToOrientation()
 		local a = CC.camera.CFrame.Position.X
 		local b = CC.camera.CFrame.Position.Y
@@ -123,7 +126,8 @@ function CC.UpdateRender(dt)
 		local xlimit = math.rad(math.clamp(math.deg(x), -60, 60))
 		local ylimit = math.rad(math.clamp(math.deg(y), -60, 60))
 		local zlimit = math.rad(math.clamp(math.deg(z), -60, 60))
-		local limitedCFrame = State.Parts.HRP.CFrame:ToWorldSpace(CFrame.new(a, b, c) * CFrame.fromOrientation(xlimit, ylimit, zlimit))
+		local limitedCFrame =
+			CC.state.Parts.HRP.CFrame:ToWorldSpace(CFrame.new(a, b, c) * CFrame.fromOrientation(xlimit, ylimit, zlimit))
 		CC.camera.CFrame = CFrame.new(CC.camera.CFrame.Position) * (limitedCFrame - limitedCFrame.Position)
 	end
 
@@ -131,9 +135,9 @@ function CC.UpdateRender(dt)
 	local yOffset
 	local zOffset
 
-	if State.Parts.IsR6 then -- DD_SPH: Added rig-check to correct positioning
-		if config.firstPersonBody and State.firstPerson() then
-			local xHead = State.Parts.HRP.CFrame:ToObjectSpace(CC.camera.CFrame):ToEulerAngles()
+	if CC.state.Parts.IsR6 then -- DD_SPH: Added rig-check to correct positioning
+		if config.firstPersonBody and CC.state.firstPerson() then
+			local xHead = CC.state.Parts.HRP.CFrame:ToObjectSpace(CC.camera.CFrame):ToEulerAngles()
 			local rotationOffset = -1.2 + (xHead + 1.4) / 2.8
 			CC.cameraOffsetTarget = Vector3.new(0, 0, rotationOffset)
 		else
@@ -144,25 +148,29 @@ function CC.UpdateRender(dt)
 		yOffset = 0
 		zOffset = CC.cameraOffsetTarget.Z
 
-		if State.stance() == 1 then
+		if CC.state.stance() == 1 then
 			yOffset = -1
-			if State.firstPerson() then zOffset -= 0.3 end
-		elseif State.stance() == 2 then
+			if CC.state.firstPerson() then
+				zOffset -= 0.3
+			end
+		elseif CC.state.stance() == 2 then
 			yOffset = -1.2
-			if State.firstPerson() then zOffset = -1.7 end
+			if CC.state.firstPerson() then
+				zOffset = -1.7
+			end
 		end
 
 		-- Lean offset
-		if State.lean() < 0 then
+		if CC.state.lean() < 0 then
 			xOffset = -1
 			yOffset += -0.2
-		elseif State.lean() > 0 then
+		elseif CC.state.lean() > 0 then
 			xOffset = 1
 			yOffset += -0.2
 		end
 	else
-		if config.firstPersonBody and State.firstPerson() then
-			local xHead = State.Parts.HRP.CFrame:ToObjectSpace(CC.camera.CFrame):ToEulerAngles()
+		if config.firstPersonBody and CC.state.firstPerson() then
+			local xHead = CC.state.Parts.HRP.CFrame:ToObjectSpace(CC.camera.CFrame):ToEulerAngles()
 			local rotationOffset = -1.6 + (xHead + 1.4) / 2.8
 			CC.cameraOffsetTarget = Vector3.new(0, 0, rotationOffset)
 		else
@@ -173,41 +181,46 @@ function CC.UpdateRender(dt)
 		yOffset = 0
 		zOffset = CC.cameraOffsetTarget.Z
 
-		if State.stance() == 1 then -- DD_SPH: Adjusted camera positioning to reflect R15.
-			yOffset = .5
-			if State.firstPerson() then zOffset -= 1.5 end --rev
-		elseif State.stance() == 2 then
+		if CC.state.stance() == 1 then -- DD_SPH: Adjusted camera positioning to reflect R15.
+			yOffset = 0.5
+			if CC.state.firstPerson() then
+				zOffset -= 1.5
+			end --rev
+		elseif CC.state.stance() == 2 then
 			yOffset = 1.5
-			if State.firstPerson() then zOffset = -3 end --rev
+			if CC.state.firstPerson() then
+				zOffset = -3
+			end --rev
 		end
 
 		-- Lean offset
-		if State.lean() < 0 then
+		if CC.state.lean() < 0 then
 			xOffset = -1
 			yOffset -= 0.2 --rev
-		elseif State.lean() > 0 then
+		elseif CC.state.lean() > 0 then
 			xOffset = 1
 			yOffset -= 0.2 --rev
 		end
 	end --</DD_SPH>
 
-	if not State.vehicleSeated() and CC.camera.CameraType == Enum.CameraType.Custom then
+	if not CC.state.vehicleSeated() and CC.camera.CameraType == Enum.CameraType.Custom then
 		-- Update camera offset
-		if State.Parts.IsR6 then -- DD_SPH: Different offsets for different rigs
+		if CC.state.Parts.IsR6 then -- DD_SPH: Different offsets for different rigs
 			CC.cameraOffsetTarget = Vector3.new(xOffset, yOffset, zOffset)
 		else
 			CC.cameraOffsetTarget = Vector3.new(xOffset, -yOffset, zOffset)
 		end
-		State.Parts.Humanoid.CameraOffset = State.Parts.Humanoid.CameraOffset:Lerp(CC.cameraOffsetTarget, 0.1 * dt * 60)
+		CC.state.Parts.Humanoid.CameraOffset =
+			CC.state.Parts.Humanoid.CameraOffset:Lerp(CC.cameraOffsetTarget, 0.1 * dt * 60)
 
 		-- </DD_SPH>
-		CC.cameraLeanRotation = LerpNumber(CC.cameraLeanRotation, 15 * -State.lean(), 0.1)
+		CC.cameraLeanRotation = LerpNumber(CC.cameraLeanRotation, 15 * -CC.state.lean(), 0.1)
 		CC.camera.CFrame *= CFrame.Angles(0, 0, math.rad(CC.cameraLeanRotation))
 
 		-- Camera tilt
-		if config.cameraTilting and State.firstPerson() then
+		if config.cameraTilting and CC.state.firstPerson() then
 			local maxTiltAngle = 2
-			local relativeVelocity = State.Parts.HRP.CFrame:VectorToObjectSpace(State.Parts.HRP.Velocity)
+			local relativeVelocity = CC.state.Parts.HRP.CFrame:VectorToObjectSpace(CC.state.Parts.HRP.Velocity)
 			local viewportSize = CC.camera.ViewportSize
 			local mouseDelta = UserInputService:GetMouseDelta() / viewportSize
 			local targetRollAngle = math.clamp(-relativeVelocity.X, -maxTiltAngle, maxTiltAngle) + mouseDelta.X / 2
@@ -217,38 +230,47 @@ function CC.UpdateRender(dt)
 	end
 
 	CC.camera.CFrame = CC.camera.CFrame
-		* CFrame.Angles(weaponState.CameraSpring.p.X, weaponState.CameraSpring.p.Y, weaponState.CameraSpring.p.Z)
-	weaponState.CameraSpring.t = weaponState.CameraSpring.t - weaponState.CameraSpring.p
-	weaponState.CameraSpring.p = Vector3.new()
+		* CFrame.Angles(
+			CC.weaponState.CameraSpring.p.X,
+			CC.weaponState.CameraSpring.p.Y,
+			CC.weaponState.CameraSpring.p.Z
+		)
+	CC.weaponState.CameraSpring.t = CC.weaponState.CameraSpring.t - CC.weaponState.CameraSpring.p
+	CC.weaponState.CameraSpring.p = Vector3.new()
 
 	CC.UpdateFOV(dt)
 end
 
 function CC.UpdateFOV(dt)
 	local camSensFactor = CC.camera.FieldOfView / config.defaultFOV
-	if State.aiming() then
-		CC.camera.FieldOfView = LerpNumber(CC.camera.FieldOfView, weaponState.aimFOVTarget(), 0.3 * (dt * 60))
-		UserInputService.MouseDeltaSensitivity = weaponState.aimSens() * camSensFactor
+	if CC.state.aiming() then
+		UserInputService.MouseDeltaSensitivity = CC.weaponState.aimSens() * camSensFactor
 	else
 		UserInputService.MouseDeltaSensitivity = 1 * camSensFactor
 	end
+	
+	CC.camera.FieldOfView =
+		LerpNumber(CC.camera.FieldOfView, CC.FOVTarget(), (CC.weaponState.aimLerpFactor() / 2) * (dt * 60))
 end
-
 
 -- TODO: REFACTOR
 local depthOfField = game.Lighting:FindFirstChild("SPH_DoF")
 if not depthOfField and config.blurEffects then
-	depthOfField = Instance.new("DepthOfFieldEffect",game.Lighting)
+	depthOfField = Instance.new("DepthOfFieldEffect", game.Lighting)
 end
-if depthOfField then depthOfField.Name = "SPH_DoF" end
+if depthOfField then
+	depthOfField.Name = "SPH_DoF"
+end
 
-function CC.ChangeDoF(fInt,fDist,fRad,nInt)
-	if not depthOfField then return end
-	TweenService:Create(depthOfField,TweenInfo.new(0.2),{
+function CC.ChangeDoF(fInt, fDist, fRad, nInt)
+	if not depthOfField then
+		return
+	end
+	TweenService:Create(depthOfField, TweenInfo.new(0.2), {
 		FarIntensity = fInt,
 		FocusDistance = fDist,
 		InFocusRadius = fRad,
-		NearIntensity = nInt
+		NearIntensity = nInt,
 	}):Play()
 end
 

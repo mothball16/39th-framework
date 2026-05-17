@@ -4,6 +4,7 @@ local Packages = game:GetService("ReplicatedStorage"):WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local config = Access.config
 local Enums = require(Framework.Core.Enums)
+local Types = require(Framework.Core.ConfigurationTypes)
 local SP = require(Framework.Weapons.Spring.Default)
 local legacySpring = require(Framework.Weapons.LegacySpring)
 local Maid = require(Packages.maid)
@@ -15,11 +16,11 @@ WepState.__index = WepState
 
 function WepState.new(): WeaponState
 	local self = setmetatable({
-		wepStats = Charm.atom(nil),
+		wepStats = Charm.atom(nil) :: Charm.Atom<Types.WeaponStats>,
 		equipping = Charm.atom(false),
 		equipped = Charm.atom(false),
 
-		gunModel = Charm.atom(nil),
+		gunModel = Charm.atom(nil) :: Charm.Atom<Model>,
 		gunAmmo = nil,
 		localAmmo = Charm.atom(0),
 		localUbglAmmo = Charm.atom(0),
@@ -86,6 +87,17 @@ function WepState.new(): WeaponState
 		local ws = self.wepStats()
 		local v = ws and ws.ADSEnabled
 		return v and true or false
+	end)
+
+	self.aimLerpFactor = Charm.computed(function()
+		local ws = self.wepStats()
+		if ws then
+			-- how large of a step we need to hit 99% progress in ws.aimTime seconds assuming 60hz
+			local steps = 60 * ws.aimTime
+			return 1 - math.pow(0.01, 1 / steps)
+		end
+
+		return 0.5
 	end)
 	return self
 end

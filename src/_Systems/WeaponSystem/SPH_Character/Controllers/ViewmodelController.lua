@@ -108,12 +108,11 @@ function ViewmodelController.UpdateViewmodelPosition(dt, offset, sightIndex)
 	local aimPart = weaponState.gunModel():FindFirstChild("AimPart" .. sightIndex) or weaponState.gunModel().AimPart
 	aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
 
-	local aimTime = ws.aimTime
-
+	local lerpFactor = weaponState.aimLerpFactor()
 	if State.aiming() then
-		aimingOffset = aimingOffset:Lerp(aimTarget, (0.7 / aimTime) * 0.3 * dt * 60)
+		aimingOffset = aimingOffset:Lerp(aimTarget, lerpFactor * dt * 60)
 	else
-		aimingOffset = aimingOffset:Lerp(CFrame.new(), (0.7 / aimTime) * 0.3 * dt * 60)
+		aimingOffset = aimingOffset:Lerp(CFrame.new(), lerpFactor * dt * 60)
 	end
 	animBase.CFrame *= aimingOffset
 
