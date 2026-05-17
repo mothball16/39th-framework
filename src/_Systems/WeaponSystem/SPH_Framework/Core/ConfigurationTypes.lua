@@ -222,6 +222,7 @@ export type MainGameSettings = {
 	canCrouch: boolean,
 	canProne: boolean,
 	proneAngle: boolean,
+	stanceThrottle: number,
 	jumpCooldown: number,
 
 	keySprint: KeybindBinding?,
