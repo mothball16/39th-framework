@@ -96,8 +96,8 @@ function InputController.BindGunInputs()
 		.BindInput(Intents.HOLD_AIM, config.mobileButtons, config.gunInputPriority, unpack(config.aimGun))
 
 		.BindInput(Intents.SWITCH_FIRE_MODE, false, config.gunInputPriority, unpack(config.switchFireMode))
-		.BindInput(Intents.TOGGLE_LASER, false, config.gunInputPriority, unpack(config.toggleLaser))
-		.BindInput(Intents.TOGGLE_FLASHLIGHT, false, config.gunInputPriority, unpack(config.toggleFlashlight))
+		--.BindInput(Intents.TOGGLE_LASER, false, config.gunInputPriority, unpack(config.toggleLaser))
+		--.BindInput(Intents.TOGGLE_FLASHLIGHT, false, config.gunInputPriority, unpack(config.toggleFlashlight))
 end
 
 function InputController.BindCharacterInputs()
