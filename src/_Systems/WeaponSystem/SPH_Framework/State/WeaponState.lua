@@ -12,54 +12,8 @@ local Maid = require(Packages.maid)
 
 local WepState = {}
 WepState.__index = WepState
-type self = {
-	-- atoms (callable)
-	wepStats: Charm.Atom<any>,
-	equipping: Charm.Atom<boolean>,
-	equipped: Charm.Atom<boolean>,
-	
-	gunModel: Charm.Atom<Instance?>,
-	gunAmmo: any,
-	localAmmo: Charm.Atom<number>,
-	localUbglAmmo: Charm.Atom<number>,
 
-	aimSens: Charm.Atom<number>,
-	sightIndex: Charm.Atom<number>,
-	viewmodelVisible: Charm.Atom<boolean>,
-	reloading: Charm.Atom<boolean>,
-	chambering: Charm.Atom<boolean>,
-	aimHeld: Charm.Atom<boolean>,
-	blocked: Charm.Atom<boolean>,
-
-	laserEnabled: Charm.Atom<boolean>,
-	flashlightEnabled: Charm.Atom<boolean>,
-	bipodEnabled: Charm.Atom<boolean>,
-	fireMode: Charm.Atom<number>,
-	holdStance: Charm.Atom<number>,
-	
-	-- computed (callable)
-	ubglActive: Charm.Selector<boolean>,
-	hasAmmoForMode: Charm.Selector<boolean>,
-	canManipulate: Charm.Selector<boolean>,
-	canTrackAimInput: Charm.Selector<boolean>,
-	aimFOVTarget: Charm.Selector<number>,
-	adsMeshEnabledForActiveSight: Charm.Selector<boolean>,
-	hasAdsMeshLayers: Charm.Selector<boolean>,
-
-	-- non-atoms
-	maid: any,
-	CameraSpring: any,
-	RecoilPos: any,
-	RecoilDir: any,
-	RecoilUp: any,
-	RecoilCF: CFrame,
-	RecoilFactor: number,
-	Spread: number,
-}
-
-export type WeaponState = typeof(setmetatable({}, WepState))
-
-function WepState.new()
+function WepState.new(): WeaponState
 	local self = setmetatable({
 		wepStats = Charm.atom(nil),
 		equipping = Charm.atom(false),
@@ -93,7 +47,7 @@ function WepState.new()
 		RecoilCF = CFrame.new(),
 		RecoilFactor = 0,
 		Spread = 0,
-	} :: self, WepState)
+	}, WepState)
 
 	self.ubglActive = Charm.computed(function()
 		local ws = self.wepStats()
@@ -124,14 +78,6 @@ function WepState.new()
 		return not self.blocked() and not self.reloading() and not self.chambering()
 	end)
 
-	self.aimFOVTarget = Charm.computed(function()
-		local stat = self.wepStats()
-		if not stat or not self.gunModel() then
-			return config.defaultFOV
-		end
-		return stat.aimFovs[self.sightIndex()] or config.defaultFOV
-	end)
-
 	self.adsMeshEnabledForActiveSight = Charm.computed(function()
 		return self:ADSMeshLayerEnabled(self.sightIndex())
 	end)
@@ -143,6 +89,8 @@ function WepState.new()
 	end)
 	return self
 end
+
+export type WeaponState = typeof(WepState.new(...))
 
 function WepState:ADSMeshLayerEnabled(sightIndex: number): boolean
 	local stat = self.wepStats()

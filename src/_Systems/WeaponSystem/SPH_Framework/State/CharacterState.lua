@@ -7,36 +7,6 @@ local config = Access.config
 local CharState = {}
 CharState.__index = CharState
 
-type self = {
-	Parts: {
-		IsR6: boolean,
-		Humanoid: Humanoid,
-		RootJoint: Motor6D,
-		NeckJoint: Motor6D,
-		Character: Model,
-		HRP: BasePart,
-	},
-
-	aimFOVTarget: Charm.Atom<number>,
-
-	aiming: Charm.Atom<boolean>,
-	equippedTool: Charm.Atom<Instance?>,
-	sprinting: Charm.Atom<boolean>,
-
-	firstPerson: Charm.Atom<boolean>,
-	dead: Charm.Atom<boolean>,
-	stance: Charm.Atom<number>,
-	lean: Charm.Atom<number>,
-	moving: Charm.Atom<boolean>,
-	vehicleSeated: Charm.Atom<boolean>,
-
-	freeLook: Charm.Atom<boolean>,
-	freeLookRotation: Charm.Atom<CFrame>,
-	freeLookOffset: Charm.Atom<CFrame>,
-}
-
-export type CharacterState = typeof(setmetatable({}, CharState))
-
 local function resolveParts(character: Model)
 	local hrp = character:WaitForChild("HumanoidRootPart") :: BasePart
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
@@ -82,9 +52,11 @@ function CharState.new(character: Model): CharacterState
 		freeLook = Charm.atom(false),
 		freeLookRotation = Charm.atom(CFrame.new()),
 		freeLookOffset = Charm.atom(CFrame.new()),
-	} :: self, CharState)
+	}, CharState)
 
 	return self
 end
+
+export type CharacterState = typeof(CharState.new(...))
 
 return CharState
