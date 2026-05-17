@@ -20,6 +20,7 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 				}),
 			}),
 			PlaySound = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					soundName = B.string,
 					firstPerson = B.bool,
@@ -31,11 +32,13 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 				}),
 			}),
 			PlayerChamber = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					_ = B.uint8,
 				}),
 			}),
 			MoveBolt = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					-- CFrame offset or numeric bolt travel (see BulletHandler.MoveBolt).
 					direction = B.unknown,
@@ -43,6 +46,7 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 				}),
 			}),
 			SwitchFireMode = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					mode = B.uint8,
 				}),
@@ -59,6 +63,7 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 				}),
 			}),
 			RepBoltOpen = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					_ = B.uint8,
 				}),
@@ -74,6 +79,7 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 				}),
 			}),
 			BodyAnimRequest = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					neckC1 = B.cframe,
 				}),
@@ -84,6 +90,7 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 				}),
 			}),
 			ReplicateFootstep = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					material = B.unknown,
 					foot = B.inst,
@@ -91,6 +98,7 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 				}),
 			}),
 			BulletHit = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					toolData = B.unknown,
 					rayHit = B.unknown,
@@ -98,24 +106,28 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 				}),
 			}),
 			ReplicateFire = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					shooter = B.inst,
 					firePoint = B.cframe,
 				}),
 			}),
 			ReplicateSound = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					shooter = B.inst,
 					sound = B.inst,
 				}),
 			}),
 			ReplicateHit = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					toolData = B.unknown,
 					rayHit = B.unknown,
 				}),
 			}),
 			ReplicateBolt = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					shooter = B.inst,
 					direction = B.unknown,
@@ -123,12 +135,14 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 				}),
 			}),
 			ReplicateCharacterSound = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					shooter = B.inst,
 					soundType = B.string,
 				}),
 			}),
 			PlayCharacterSound = B.definePacket({
+				reliabilityType = "unreliable",
 				value = B.struct({
 					soundType = B.string,
 				}),
