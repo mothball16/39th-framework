@@ -1,14 +1,11 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Vide = require(Packages.Vide)
-local Charm = require(Packages.Charm)
-local VideCharm = require(Packages["vide-charm"])
+local Vide = require("@game/ReplicatedStorage/Packages/Vide")
+local Charm = require("@game/ReplicatedStorage/Packages/Charm")
+local VideCharm = require("@game/ReplicatedStorage/Packages/vide-charm")
 local useAtom = VideCharm.useAtom
 local source = Vide.source
 
-local Roots = script.Parent.Parent.Roots
-local SelectorUI = require(Roots.SelectorUI)
-local Mocks = require(ReplicatedStorage.Class_Framework.Core.Mocks)
+local SelectorUI = require("../Roots/SelectorUI")
+local Mocks = require("@game/ReplicatedStorage/Class_Framework/Core/Mocks")
 
 return function(target: Instance)
 	local playerKey = "0"

@@ -1,6 +1,4 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Vide = require(Packages.Vide)
+local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local create = Vide.create
 
 return function(props)

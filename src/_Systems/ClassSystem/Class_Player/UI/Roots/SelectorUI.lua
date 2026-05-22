@@ -1,18 +1,14 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Access = require(ReplicatedStorage:WaitForChild("Class_Framework"):WaitForChild("Access"))
-local Types = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Types"))
-local State = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("State"))
-local Enums = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Enums"))
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Vide = require(Packages.Vide)
+local Access = require("@game/ReplicatedStorage/Class_Framework/Access")
+local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
+local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
+local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
+local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect
 
-local UI = script.Parent.Parent
-local Theme = require(UI.Theme)
-local Card = require(UI.Components.Card)
-local MenuActionButton = require(UI.Components.MenuActionButton)
-local VariantSelector = require(UI.Components.VariantSelector)
+local Theme = require("../Theme")
+local Card = require("../Components/Card")
+local MenuActionButton = require("../Components/MenuActionButton")
+local VariantSelector = require("../Components/VariantSelector")
 
 local ASPECT_RATIO = 1.5
 local PADDING_SCALE = 0.02

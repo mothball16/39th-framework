@@ -1,7 +1,6 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Access = require(ReplicatedStorage:WaitForChild("Class_Framework"):WaitForChild("Access"))
-local Types = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Types"))
-local Enums = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Enums"))
+local Access = require("../Access")
+local Types = require("../Core/Types")
+local Enums = require("../Core/Enums")
 local ToolProvider: Types.ClassItemProvider = {
     ID = "Tool",
     AssignType = Enums.AssignType.PerCharacter,

@@ -1,9 +1,7 @@
 return function()
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local Access = require(ReplicatedStorage:WaitForChild("Class_Framework"):WaitForChild("Access"))
-	local Packages = ReplicatedStorage:WaitForChild("Packages")
-	local Maid = require(Packages.maid)
-	local UniformProvider = require(ReplicatedStorage.Class_Framework.ItemProviders.Uniform)
+	local Access = require("../Access")
+	local Maid = require("@game/ReplicatedStorage/Packages/maid")
+	local UniformProvider = require("../ItemProviders/Uniform")
 
 	local uniformAssets = Access.Config.ItemTypePaths[UniformProvider.ID]
 	assert(uniformAssets, "Uniform asset path missing from Access.Config.ItemTypePaths")

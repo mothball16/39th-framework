@@ -2,11 +2,9 @@
 utility module for performing state transformations
 ]]
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
-local State = require(ReplicatedStorage.Class_Framework.Core.State)
-local Charm = require(Packages.Charm)
+local Types = require("./Core/Types")
+local State = require("./Core/State")
+local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 
 local StateActions = {}
 

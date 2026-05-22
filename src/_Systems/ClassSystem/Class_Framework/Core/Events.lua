@@ -1,7 +1,5 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local ByteNetMax = require(Packages["bytenet-max"])
-local Net = require(Packages.Net)
+local ByteNetMax = require("@game/ReplicatedStorage/Packages/bytenet-max")
+local Net = require("@game/ReplicatedStorage/Packages/Net")
 
 local legacyEvents = {
    RequestState = Net:RemoteEvent("RequestState"),

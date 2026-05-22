@@ -1,9 +1,6 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Root = script.Parent.Parent
-local Theme = require(Root.Theme)
-local Vide = require(Packages.Vide)
-local Stroke = require(script.Parent.Stroke)
+local Theme = require("../Theme")
+local Vide = require("@game/ReplicatedStorage/Packages/Vide")
+local Stroke = require("./Stroke")
 local create = Vide.create
 local derive = Vide.derive
 

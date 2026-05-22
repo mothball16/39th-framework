@@ -1,20 +1,18 @@
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Maid = require(Packages.maid)
-local Vide = require(Packages.Vide)
-local Charm = require(Packages.Charm)
-local VideCharm = require(Packages["vide-charm"])
+local Maid = require("@game/ReplicatedStorage/Packages/maid")
+local Vide = require("@game/ReplicatedStorage/Packages/Vide")
+local Charm = require("@game/ReplicatedStorage/Packages/Charm")
+local VideCharm = require("@game/ReplicatedStorage/Packages/vide-charm")
 local useAtom = VideCharm.useAtom
 
 local create = Vide.create
-local Events = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Events")).GetNamespace()
-local State = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("State"))
+local Events = require("@game/ReplicatedStorage/Class_Framework/Core/Events").GetNamespace()
+local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
 
-local ClientMirror = require(script.Parent.ClientMirror)
-local SelectorUI = require(script.Parent.UI.Roots.SelectorUI)
-local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
+local ClientMirror = require("./ClientMirror")
+local SelectorUI = require("./UI/Roots/SelectorUI")
+local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
 
 local ClientRuntime = {}
 ClientRuntime.__index = ClientRuntime

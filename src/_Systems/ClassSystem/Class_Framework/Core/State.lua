@@ -1,10 +1,8 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Charm = require(Packages.Charm)
-local VideCharm = require(Packages["vide-charm"])
+local Charm = require("@game/ReplicatedStorage/Packages/Charm")
+local VideCharm = require("@game/ReplicatedStorage/Packages/vide-charm")
 local useAtom = VideCharm.useAtom
 
-local Types = require(script.Parent.Types)
+local Types = require("./Types")
 
 local State = {}
 State.__index = State

@@ -1,17 +1,15 @@
 local Players = game:GetService("Players")
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Maid = require(Packages.maid)
+local Maid = require("@game/ReplicatedStorage/Packages/maid")
 
-local State = require(ReplicatedStorage.Class_Framework.Core.State)
-local Events = require(ReplicatedStorage.Class_Framework.Core.Events).GetNamespace()
-local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
-local StateActions = require(ReplicatedStorage.Class_Framework.StateActions)
+local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
+local Events = require("@game/ReplicatedStorage/Class_Framework/Core/Events").GetNamespace()
+local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
+local StateActions = require("@game/ReplicatedStorage/Class_Framework/StateActions")
 
-local ItemEquipper = require(script.Parent.ItemEquipper)
-local SelectionHandler = require(script.Parent.SelectionHandler)
-local ServerSyncer = require(script.Parent.ServerSyncer)
+local ItemEquipper = require("./ItemEquipper")
+local SelectionHandler = require("./SelectionHandler")
+local ServerSyncer = require("./ServerSyncer")
 
 local ServerRuntime = {}
 ServerRuntime.__index = ServerRuntime

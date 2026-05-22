@@ -1,12 +1,10 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Access = require("@game/ReplicatedStorage/Class_Framework/Access")
+local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
+local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
+local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
+local StateActions = require("@game/ReplicatedStorage/Class_Framework/StateActions")
 
-local Access = require(ReplicatedStorage:WaitForChild("Class_Framework"):WaitForChild("Access"))
-local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
-local State = require(ReplicatedStorage.Class_Framework.Core.State)
-local Enums = require(ReplicatedStorage.Class_Framework.Core.Enums)
-local StateActions = require(ReplicatedStorage.Class_Framework.StateActions)
-
-local ItemEquipper = require(script.Parent.ItemEquipper)
+local ItemEquipper = require("./ItemEquipper")
 local SelectionHandler = {}
 SelectionHandler.__index = SelectionHandler
 

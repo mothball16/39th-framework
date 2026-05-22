@@ -1,5 +1,4 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Vide = require(ReplicatedStorage.Packages.Vide)
+local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Types = {}
 
 

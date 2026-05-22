@@ -1,9 +1,7 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Maid = require(Packages.maid)
-local CharmSync = require(Packages["charm-sync"])
-local State = require(ReplicatedStorage.Class_Framework.Core.State)
-local Events = require(ReplicatedStorage.Class_Framework.Core.Events).GetLegacyEvents()
+local Maid = require("@game/ReplicatedStorage/Packages/maid")
+local CharmSync = require("@game/ReplicatedStorage/Packages/charm-sync")
+local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
+local Events = require("@game/ReplicatedStorage/Class_Framework/Core/Events").GetLegacyEvents()
 local ClientMirror = {}
 ClientMirror.__index = ClientMirror
 

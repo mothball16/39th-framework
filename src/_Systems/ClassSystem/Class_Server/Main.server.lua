@@ -1,11 +1,11 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Utility = ReplicatedStorage:WaitForChild("Utility")
-local Access = require(ReplicatedStorage:WaitForChild("Class_Framework"):WaitForChild("Access"))
-local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
-local ServerRuntime = require(script.Parent.ServerRuntime)
+
+local Access = require("@game/ReplicatedStorage/Class_Framework/Access")
+local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
+local ServerRuntime = require("./ServerRuntime")
 
 if Access.Config.DebugMode then
-	require(Utility.TestRunner)(ReplicatedStorage.Class_Framework:WaitForChild("Tests"))
+	require("@game/ReplicatedStorage/Utility/TestRunner")(ReplicatedStorage.Class_Framework.Tests)
 end
 
 --#region [ helpers ]

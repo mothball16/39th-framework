@@ -4,9 +4,7 @@ this helps reduce the amount of boilerplate that has to be put up top in every s
 ]]
 
 local CollectionService = game:GetService("CollectionService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Framework = ReplicatedStorage:WaitForChild("Class_Framework")
-local Types = require(Framework:WaitForChild("Core"):WaitForChild("Types"))
+local Types = require("./Core/Types")
 local TAG_NAME = "Class_Assets"
 
 local _assetPaths = CollectionService:GetTagged(TAG_NAME)

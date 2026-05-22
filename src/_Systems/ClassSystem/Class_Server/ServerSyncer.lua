@@ -1,8 +1,6 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local CharmSync = require(Packages["charm-sync"])
-local Maid = require(Packages.maid)
-local LegacyEvents = require(ReplicatedStorage.Class_Framework.Core.Events).GetLegacyEvents()
+local CharmSync = require("@game/ReplicatedStorage/Packages/charm-sync")
+local Maid = require("@game/ReplicatedStorage/Packages/maid")
+local LegacyEvents = require("@game/ReplicatedStorage/Class_Framework/Core/Events").GetLegacyEvents()
 local ServerSyncer = {}
 ServerSyncer.__index = ServerSyncer
 

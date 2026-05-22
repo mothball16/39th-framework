@@ -1,11 +1,9 @@
 local PPS = game:GetService("ProximityPromptService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Charm = require(Packages.Charm)
-local Maid = require(Packages.maid)
-local Types = require(ReplicatedStorage.Class_Framework.Core.Types)
-local Consts = require(ReplicatedStorage.Class_Framework.Core.Consts)
-local TagObserver = require(ReplicatedStorage.Utility.TagObserver)
+local Charm = require("@game/ReplicatedStorage/Packages/Charm")
+local Maid = require("@game/ReplicatedStorage/Packages/maid")
+local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
+local Consts = require("@game/ReplicatedStorage/Class_Framework/Core/Consts")
+local TagObserver = require("@game/ReplicatedStorage/Utility/TagObserver")
 
 local PPI: Types.InteractionController = {
     isOpen = nil,

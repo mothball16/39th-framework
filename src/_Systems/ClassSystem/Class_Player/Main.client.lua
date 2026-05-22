@@ -1,4 +1,4 @@
-local ClientRuntime = require(script.Parent.ClientRuntime)
+local ClientRuntime = require("./ClientRuntime")
 
 local runtime = ClientRuntime.new()
 runtime:WireControllers(script.Parent.Interaction)

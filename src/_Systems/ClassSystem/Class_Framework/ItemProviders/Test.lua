@@ -1,6 +1,5 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Types = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Types"))
-local Enums = require(ReplicatedStorage.Class_Framework.Core:WaitForChild("Enums"))
+local Types = require("../Core/Types")
+local Enums = require("../Core/Enums")
 local TestProvider: Types.ClassItemProvider = {
     ID = "Test",
     AssignType = Enums.AssignType.PerCharacter,

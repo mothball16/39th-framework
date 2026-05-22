@@ -1,13 +1,10 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Mocks = require(ReplicatedStorage.Class_Framework.Core.Mocks)
-
+local Mocks = require("../Core/Mocks")
 
 return function()
-	local ServerRoot = game.ServerScriptService.Class_Server
-	local ServerRuntime = require(ServerRoot.ServerRuntime)
-	local StateActions = require(ReplicatedStorage.Class_Framework.StateActions)
+	local ServerRuntime = require("@game/ServerScriptService/Class_Server/ServerRuntime")
+	local StateActions = require("../StateActions")
 	local itemProviders = {
-		Test = require(ReplicatedStorage.Class_Framework.ItemProviders.Test),
+		Test = require("../ItemProviders/Test"),
 	}
 	local classConfigs = {
 		RiflemanA = Mocks.ClassConfig("RiflemanA"),
