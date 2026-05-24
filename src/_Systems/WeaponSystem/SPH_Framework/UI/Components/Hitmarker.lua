@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Vide = require(Packages.Vide)
 local create, spring, derive = Vide.create, Vide.spring, Vide.derive
+local Types = require("../Types")
 
 --#region - - [ utils for sequence values ] - -
 local function evalColorSequence(sequence: ColorSequence, time: number)
@@ -54,21 +55,8 @@ end
 
 --#endregion
 
-export type HitmarkerProps = {
-    springPeriod: number,
-    springDamping: number,
-    image: string,
-    position: UDim2,
-    size: UDim2,
-    transparency: NumberSequence | number,
-    scale: NumberSequence | number,
-    color: ColorSequence | Color3,
-    rotation: NumberSequence | number,
-    lifetime: number,
-    TimeElapsed: Vide.source<number> | nil,
-}
 
-return function(props: HitmarkerProps)
+return function(props: Types.HitmarkerProps)
     assert(props.TimeElapsed, "hitmarker props must have a TimeElapsed. you probably forgot to add it after applying config")
     local lifetime = derive(function()
         return math.clamp(props.TimeElapsed() / props.lifetime, 0, 1)
