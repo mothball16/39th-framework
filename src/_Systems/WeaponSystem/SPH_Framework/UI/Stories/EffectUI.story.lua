@@ -19,8 +19,9 @@ local story = UILabs.CreateVideStory({
 	vide = Vide,
 	controls = controls,
 }, function(props)
-	local effectManager = EffectManager.new()
-
+	local suppressionFactor = Vide.source(0)
+	local effectManager = EffectManager.new(suppressionFactor)
+	
 	Vide.cleanup(function()
 		effectManager:Destroy()
 		warn("unmounted")
@@ -33,7 +34,7 @@ local story = UILabs.CreateVideStory({
 
 		EffectUI({
 			activeHitmarkers = effectManager.activeHitmarkers,
-			suppressionFactor = effectManager.suppressionFactor,
+			suppressionFactor = suppressionFactor,
 		}),
 
 		create "TextButton" {

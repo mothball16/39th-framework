@@ -5,21 +5,20 @@ local Types = require("../Types")
 local EffectManager = {}
 EffectManager.__index = EffectManager
 
-type EffectManagerData = {
+type self = {
     maid: Maid.Maid,
     activeHitmarkers: Vide.source<{Types.HitmarkerProps}>,
-    suppressionFactor: Vide.source<number>,
+    _suppressionSource: Vide.source<number>,
 }
-type EffectManagerInterface = typeof(EffectManager)
 
-export type EffectManager = setmetatable<EffectManagerData, EffectManagerInterface>
+export type EffectManager = setmetatable<self, typeof(EffectManager)>
 
-function EffectManager.new(): EffectManager
-    local self: EffectManagerData = {
+function EffectManager.new(suppressionSource: Vide.source<number>): EffectManager
+    local self = setmetatable({
         maid = Maid.new(),
         activeHitmarkers = Vide.source({}),
-        suppressionFactor = Vide.source(0),
-    }
+        _suppressionSource = suppressionSource,
+    } :: self, EffectManager)
     
     -- hitmarker lifetime upd
     self.maid:GiveTask(RunService.RenderStepped:Connect(function(dt)
@@ -38,7 +37,7 @@ function EffectManager.new(): EffectManager
         end
     end))
 
-    return setmetatable(self, EffectManager)
+    return self
 end
 
 -- creates a new hitmarker
@@ -46,11 +45,6 @@ function EffectManager.PushHitmarker(self: EffectManager, props: Types.Hitmarker
     local state = self.activeHitmarkers()
     table.insert(state, props)
     self.activeHitmarkers(state)
-end
-
--- pushes the suppression factor
-function EffectManager.PushSuppression(self: EffectManager, factor: number)
-    self.suppressionFactor(math.clamp(self.suppressionFactor() + factor, 0, 1))
 end
 
 function EffectManager.Destroy(self: EffectManager)
