@@ -409,10 +409,9 @@ return function(props: {
 								if not variant then
 									return "<no class selected...>"
 								end
-								local classIDs = myClassConfig().ClassIDs
-								local variantIndex = getSelectedVariantIndex(myClassKey(), classIDs)
+								local variantIndex = getSelectedVariantIndex(myClassKey(), myClassIds())
 								local label = variant.Name or variant.Id
-								return `{label} ({variantIndex}/{#classIDs})`
+								return `{label} ({variantIndex}/{#myClassIds()})`
 							end,
 							LeftActivated = function()
 								cycleVariant(myClassKey(), -1)
