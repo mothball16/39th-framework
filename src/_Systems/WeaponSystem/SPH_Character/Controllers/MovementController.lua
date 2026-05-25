@@ -26,7 +26,6 @@ type self = {
 	lastStanceChange: number,
 	humanoid: Humanoid,
 	humanoidRootPart: BasePart,
-	rootJoint: Motor6D,
 	AdjustMoveAnimSpeed: ((number) -> ())?,
 	PlayCharSound: (string) -> (),
 }
@@ -80,7 +79,6 @@ end
 function MovementController.new(params: {
 	humanoid: Humanoid,
 	humanoidRootPart: BasePart,
-	rootJoint: Motor6D,
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
 	AdjustMoveAnimSpeed: ((number) -> ())?,
@@ -96,7 +94,6 @@ function MovementController.new(params: {
 		lastStanceChange = tick(),
 		humanoid = params.humanoid,
 		humanoidRootPart = params.humanoidRootPart,
-		rootJoint = params.rootJoint,
 		AdjustMoveAnimSpeed = params.AdjustMoveAnimSpeed,
 		PlayCharSound = params.PlayCharSound,
 	} :: self, MovementController)
@@ -257,7 +254,7 @@ function MovementController.UpdateCharacterProneAngle(self: MovementController)
 			self.humanoidRootPart.CFrame.UpVector:Cross(rayResult.Normal)
 		local rotateToFloorCFrame = (dot < -0.99999) and CFrame.fromAxisAngle(Vector3.new(1, 0, 0), math.pi)
 			or CFrame.new(0, 0, 0, uxv.X, uxv.Y, uxv.Z, 1 + dot)
-		self.rootJoint.C0 *= CFrame.Angles(rotateToFloorCFrame.X, rotateToFloorCFrame.Y, rotateToFloorCFrame.Z)
+		self.state.Parts.RootJoint.C0 *= CFrame.Angles(rotateToFloorCFrame.X, rotateToFloorCFrame.Y, rotateToFloorCFrame.Z)
 	end
 end
 
@@ -276,12 +273,12 @@ function MovementController.UpdateRender(self: MovementController, dt: number)
 	local xOffset = self.state.lean() * 1
 
 	if self.state.Parts.IsR6 then
-		self.rootJoint.C1 = self.rootJoint.C1:Lerp(
+		self.state.Parts.RootJoint.C1 = self.state.Parts.RootJoint.C1:Lerp(
 			CFrame.new(-xOffset / 2, 0, 0) * CFrame.Angles(math.rad(90), math.rad(180) + math.rad(17 * self.state.lean()), 0),
 			0.1 * dt * 60
 		)
 	else
-		self.rootJoint.C1 = self.rootJoint.C1:Lerp(
+		self.state.Parts.RootJoint.C1 = self.state.Parts.RootJoint.C1:Lerp(
 			CFrame.new(-xOffset / 2, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0) + math.rad(17 * self.state.lean())),
 			0.1 * dt * 60
 		)

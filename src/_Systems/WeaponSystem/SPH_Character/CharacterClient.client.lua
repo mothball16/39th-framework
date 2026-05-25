@@ -9,23 +9,12 @@ local assets = Access.assets
 local Enums = require(Framework.Core.Enums)
 local Intents = Enums.Intents
 local config = Access.config
-local animations = assets.Animations
 local player = players.LocalPlayer
 local character = script.Parent.Parent
-local humanoid:Humanoid = character:WaitForChild("Humanoid")
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-local rootJoint --= humanoidRootPart:WaitForChild("RootJoint")
-local neckJoint
-local rigType -- DD_SPH: Added variable for ease of use
-if humanoid.RigType == Enum.HumanoidRigType.R6 then
-	rootJoint = humanoidRootPart:WaitForChild("RootJoint")
-	neckJoint = character.Torso.Neck
-	rigType = humanoid.RigType
-else
-	rootJoint = character.LowerTorso.Root -- DD_SPH: Root Motor6D is in LowerTorso instead of HRP
-	neckJoint = character.Head.Neck -- DD_SPH: SPH v1.2.3 lists this as UpperTorso which is wrong
-	rigType = humanoid.RigType
-end
+local characterState = require(Framework.State.CharacterState).new(character)
+local humanoid = characterState.Parts.Humanoid
+local humanoidRootPart = characterState.Parts.HRP
+local animations = characterState.Parts.IsR6 and assets.Animations.R6 or assets.Animations.R15
 
 local camera = workspace.CurrentCamera
 if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
@@ -42,17 +31,16 @@ local Packages = replicatedStorage.Packages
 local Charm = require(Packages.Charm)
 
 local Controllers = script.Parent:WaitForChild("Controllers")
-local characterState = require(Framework.State.CharacterState).new(character)
 local weaponState = require(Framework.State.WeaponState).new()
 
-local InputController = require(Controllers:WaitForChild("InputController"))
-local ViewmodelController = require(Controllers:WaitForChild("ViewmodelController"))
-local MovementController = require(Controllers:WaitForChild("MovementController"))
 local AnimationController = require(Controllers:WaitForChild("AnimationController"))
-local WeaponController = require(Controllers:WaitForChild("WeaponController"))
 local CameraController = require(Controllers:WaitForChild("CameraController"))
+local InputController = require(Controllers:WaitForChild("InputController"))
+local MovementController = require(Controllers:WaitForChild("MovementController"))
 local ReplicationController = require(Controllers:WaitForChild("ReplicationController"))
 local UIController = require(Controllers:WaitForChild("UIController"))
+local ViewmodelController = require(Controllers:WaitForChild("ViewmodelController"))
+local WeaponController = require(Controllers:WaitForChild("WeaponController"))
 local EffectManager = require(Framework.UI.Logic.EffectManager)
 
 bulletHandler.Initialize(player)
@@ -75,14 +63,6 @@ end
 
 local storageCFrame = CFrame.new(1000000,0,0) -- This is used for moving the viewmodel super far away.
 -- Doing this to the viewmodel allows animations to be loaded, played, etc, while still having it out of view.
-
--- DD_SPH: Get the character's rig type to determine what animation folder to load from.
-if rigType == Enum.HumanoidRigType.R15 then
-	animations = assets.Animations.R15
-else
-	animations = assets.Animations.R6
-end
--- </DD_SPH>
 
 -- Disable default death sound
 if humanoidRootPart:FindFirstChild("Died") then
@@ -122,7 +102,7 @@ end -- </DD_SPH>
 -- Set up an animator
 local vmHuman = Instance.new("Humanoid",rig)
 
-vmHuman.RigType = rigType -- DD_SPH: sets humanoid rigtype in rig to match player rigtype
+vmHuman.RigType = humanoid.RigType
 
 for _, state in ipairs(Enum.HumanoidStateType:GetEnumItems()) do
 	if state == Enum.HumanoidStateType.None then continue end -- The 'None' state needs to be skipped because it cannot be disabled
@@ -160,6 +140,66 @@ local animationController = AnimationController.new({
 	events = events,
 })
 
+local movementController = MovementController.new({
+	humanoid = humanoid,
+	humanoidRootPart = humanoidRootPart,
+	weaponState = weaponState,
+	state = characterState,
+	AdjustMoveAnimSpeed = function(speed)
+		animationController:AdjustMoveAnimSpeed(speed)
+	end,
+	PlayCharSound = PlayCharSound,
+})
+
+local cameraController = CameraController.new({
+	camera = camera,
+	weaponState = weaponState,
+	state = characterState,
+})
+
+local weaponController = WeaponController.new({
+	player = player,
+	character = character,
+	humanoid = humanoid,
+	humanoidRootPart = humanoidRootPart,
+	camera = camera,
+	viewmodelRig = rig,
+	thirdPersonRig = weaponRig,
+	weaponState = weaponState,
+	state = characterState,
+	events = events,
+})
+
+local viewmodelController = ViewmodelController.new({
+	animBase = animBase,
+	camera = camera,
+	humanoidRootPart = humanoidRootPart,
+	weaponRig = weaponRig,
+	rayParams = rayParams,
+	weaponState = weaponState,
+	state = characterState,
+	StopAnimation = function(animName, transTime)
+		animationController:StopAnimation(animName, transTime)
+	end,
+	player = player,
+	viewmodelRig = rig,
+	vmShirt = vmShirt,
+})
+
+local replicationController = ReplicationController.new({
+	character = character,
+	state = characterState,
+})
+
+local effectManager = EffectManager.new(characterState.suppressionFactor)
+
+local uiController = UIController.new({
+	state = characterState,
+	weaponState = weaponState,
+	events = events,
+	effectManager = effectManager,
+})
+
 local function OnScrollIntent(scrollAmount, holdForZoom)
 	if characterState.aiming() then
 		--[[
@@ -192,37 +232,6 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 	end
 end
 
-local movementController = MovementController.new({
-	humanoid = humanoid,
-	humanoidRootPart = humanoidRootPart,
-	rootJoint = rootJoint,
-	weaponState = weaponState,
-	state = characterState,
-	AdjustMoveAnimSpeed = function(speed)
-		animationController:AdjustMoveAnimSpeed(speed)
-	end,
-	PlayCharSound = PlayCharSound,
-})
-
-local weaponController = WeaponController.new({
-	player = player,
-	character = character,
-	humanoid = humanoid,
-	humanoidRootPart = humanoidRootPart,
-	camera = camera,
-	viewmodelRig = rig,
-	thirdPersonRig = weaponRig,
-	weaponState = weaponState,
-	state = characterState,
-	events = events,
-})
-
-local cameraController = CameraController.new({
-	camera = camera,
-	weaponState = weaponState,
-	state = characterState,
-})
-
 local inputController = InputController.new({
 	callbacks = {
 		[Intents.SPRINT] = function(inputState, inputObject)
@@ -249,7 +258,6 @@ local inputController = InputController.new({
 		end,
 		[Intents.SCROLL] = OnScrollIntent,
 
-
 		[Intents.HOLD_AIM] = function(inputState, inputObject)
 			weaponController:OnAimIntent(inputState, inputObject)
 		end,
@@ -275,36 +283,6 @@ local inputController = InputController.new({
 			weaponController:OnToggleFlashlightIntent(inputState, inputObject)
 		end,
 	}
-})
-
-local viewmodelController = ViewmodelController.new({
-	animBase = animBase,
-	camera = camera,
-	humanoidRootPart = humanoidRootPart,
-	weaponRig = weaponRig,
-	rayParams = rayParams,
-	weaponState = weaponState,
-	state = characterState,
-	StopAnimation = function(animName, transTime)
-		animationController:StopAnimation(animName, transTime)
-	end,
-	player = player,
-	viewmodelRig = rig,
-	vmShirt = vmShirt,
-})
-
-local replicationController = ReplicationController.new({
-	character = character,
-	state = characterState,
-})
-
-local effectManager = EffectManager.new(characterState.suppressionFactor)
-
-local uiController = UIController.new({
-	state = characterState,
-	weaponState = weaponState,
-	events = events,
-	effectManager = effectManager,
 })
 
 inputController:BindCharacterInputs()
