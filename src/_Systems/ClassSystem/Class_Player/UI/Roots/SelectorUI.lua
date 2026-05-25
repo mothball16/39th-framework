@@ -3,7 +3,7 @@ local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
 local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
 local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
-local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect
+local create, source, derive, indexes, effect, untrack = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect, Vide.untrack
 
 local Theme = require("../Theme")
 local Card = require("../Components/Card")
@@ -19,17 +19,23 @@ return function(props: {
 	manualButton: boolean,
 	isOpen: Vide.Source<boolean>,
 	setSelectorOpen: ((open: boolean) -> ()) -> (),
-	requestClass: ((classKey: string, classId: string) -> ())?,
+	requestClass: ((classKey: string, classId: string) -> ()),
 	requestClassApply: ((enable: boolean) -> ())?,
 })
+	local dirty = false
 	local variantIndexByClassKey = source({})
 
+	-- my(...) represents the read-only slice of the state that is relevant to the current player
 	local myFactionId: () -> string = derive(function()
 		return props.state.playerByFactionId()[props.playerKey]
 	end)
 
 	local myFactionConfig: () -> Types.FactionConfig = derive(function()
 		return props.state.configByFactionId()[myFactionId()]
+	end)
+
+	local myClassCounts: () -> { [string]: number } = derive(function()
+		return props.state.classCountByFaction()[myFactionId()] or {}
 	end)
 
 	local myClassKey: () -> string = derive(function()
@@ -40,9 +46,7 @@ return function(props: {
 		return props.state.playerByClassId()[props.playerKey]
 	end)
 
-	local myClassCounts: () -> { [string]: number } = derive(function()
-		return props.state.classCountByFaction()[myFactionId()] or {}
-	end)
+	-----------------------------------------------------------------
 
 	local myClassConfig: () -> Types.ClassConfig = derive(function()
 		if not myFactionConfig() or not myClassKey() then
@@ -51,45 +55,58 @@ return function(props: {
 		return myFactionConfig().Classes[myClassKey()]
 	end)
 
-	local myVariantConfig: () -> Types.ClassVariant = derive(function()
-		if not myClassConfig() or not myClassId() then
-			return nil
-		end
-
-		local variantIndex = variantIndexByClassKey()[myClassKey()]
-		if not variantIndex then
-			variantIndex = 1
-			for i, variant in ipairs(myClassConfig().ClassIDs) do
-				if variant.Id == myClassId() then
-					variantIndex = i
-					break
-				end
-			end
-		end
-
-		variantIndex = math.clamp(variantIndex, 1, #myClassConfig().ClassIDs)
-		return myClassConfig().ClassIDs[variantIndex]
+	local myClassIds: () -> { string } = derive(function()
+		return myClassConfig() and myClassConfig().ClassIDs or {}
 	end)
 
-	local function getSelectedVariantIndex(classKey: string, classIDs: { Types.ClassVariant }): number
-		local id = variantIndexByClassKey()[classKey]
-		if not id then
-			id = 1
-			if classKey == myClassKey() then
+	local function getSelectedVariantIndex(classKey: string?, classIDs: { Types.ClassVariant }): number
+		if not classKey or not classIDs or #classIDs == 0 then
+			return 1
+		end
+
+		local variantIndex = if classKey then variantIndexByClassKey()[classKey] else nil
+		if not variantIndex then
+			variantIndex = 1
+			if classKey and classKey == myClassKey() then
 				local currentId = myClassId()
-				for i, variant in ipairs(classIDs) do
-					if variant.Id == currentId then
-						id = i
-						break
+				if currentId then
+					for i, variant in ipairs(classIDs) do
+						if variant.Id == currentId then
+							variantIndex = i
+							break
+						end
 					end
 				end
 			end
 		end
-		return math.clamp(id, 1, #classIDs)
+		return math.clamp(variantIndex, 1, #classIDs)
 	end
 
-	local function cycleVariant(classKey: string, offset: number)
-		local classIDs = myFactionConfig().Classes[classKey].ClassIDs
+	local myVariantConfig: () -> Types.ClassVariant? = derive(function()
+		local classConfig = myClassConfig()
+		if not classConfig then
+			return nil
+		end
+
+		local classIDs = classConfig.ClassIDs
+		if #classIDs == 0 then
+			return nil
+		end
+
+		return classIDs[getSelectedVariantIndex(myClassKey(), myClassIds())]
+	end)
+
+	local function cycleVariant(classKey: string?, offset: number)
+		if not classKey or not myFactionConfig() then
+			return
+		end
+
+		local classConfig = myFactionConfig().Classes[classKey]
+		if not classConfig then
+			return
+		end
+
+		local classIDs = classConfig.ClassIDs
 		local variantCount = #classIDs
 		if variantCount <= 1 then
 			return
@@ -102,6 +119,7 @@ return function(props: {
 		local nextState = table.clone(variantIndexByClassKey())
 		nextState[classKey] = nextIndex
 		variantIndexByClassKey(nextState)
+		dirty = true
 	end
 
 	-- map faction config classes to a table for indexes to iterate over
@@ -144,9 +162,6 @@ return function(props: {
 			end,
 			
 			SelectClass = function()
-				if not props.requestClass then
-					return
-				end
 				props.requestClass(item().Key, item().ClassIDs[variantIndex()].Id)
 			end,
 		})
@@ -154,11 +169,16 @@ return function(props: {
 
 	local _onOpenToggled = effect(function()
 		if props.isOpen() then
-			-- stub
 			if Access.Config.ApplyClassMode == Enums.ApplyClassMode.AfterInteraction and props.requestClassApply then
 				props.requestClassApply(false)
 			end
 		else
+			if dirty then
+				local localVariantId = myClassIds()[getSelectedVariantIndex(myClassKey(), myClassIds())].Id
+				props.requestClass(myClassKey(), localVariantId)
+				dirty = false
+			end
+
 			if Access.Config.ApplyClassMode == Enums.ApplyClassMode.AfterInteraction and props.requestClassApply then
 				props.requestClassApply(true)
 			end
@@ -385,13 +405,14 @@ return function(props: {
 							titleHeight = 0.5,
 							size = UDim2.fromScale(1, 0.25),
 							ValueText = function()
-								if not myClassConfig() or not myVariantConfig() then
-									return "<no variant selected...>"
+								local variant = myVariantConfig()
+								if not variant then
+									return "<no class selected...>"
 								end
 								local classIDs = myClassConfig().ClassIDs
 								local variantIndex = getSelectedVariantIndex(myClassKey(), classIDs)
-								
-								return `{myVariantConfig().Name} ({variantIndex}/{#classIDs})` or "<no variant name...>"
+								local label = variant.Name or variant.Id
+								return `{label} ({variantIndex}/{#classIDs})`
 							end,
 							LeftActivated = function()
 								cycleVariant(myClassKey(), -1)
