@@ -60,6 +60,14 @@ end
 
 function ServerRuntime.Start(self: ServerRuntime)
 	Players.PlayerAdded:Connect(function(player)
+		local function safeAssignClassItems(player: Player)
+			local classId = self.state.playerByClassId()[player.UserId]
+			if not classId then
+				return
+			end
+
+			self.itemEquipper:AssignClassItems(player, classId)
+		end
 		self.selectionHandler:HandleTeamChange(player, player.Team)
 
 		player:GetPropertyChangedSignal("Team"):Connect(function()
@@ -67,14 +75,12 @@ function ServerRuntime.Start(self: ServerRuntime)
 		end)
 
 		player.CharacterAdded:Connect(function(character)
-			local classId = self.state.playerByClassId()[player.UserId]
-
-			if not classId then
-				return
-			end
-
-			self.itemEquipper:AssignClassItems(player, classId)
+			safeAssignClassItems(player)
 		end)
+		-- if the player has a character, assign the class items immediately
+		if player.Character then
+			safeAssignClassItems(player)
+		end
 	end)
 
 	Players.PlayerRemoving:Connect(function(player)

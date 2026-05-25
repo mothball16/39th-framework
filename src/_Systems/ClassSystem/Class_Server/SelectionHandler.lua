@@ -97,6 +97,7 @@ function SelectionHandler.HandleTeamChange(self: SelectionHandler, player: Playe
 		return
 	end
 
+	-- set the player's faction now that the team has been changed
 	StateActions.SetPlayerFaction(self.state, player.UserId, factionConfig.ID)
 end
 
