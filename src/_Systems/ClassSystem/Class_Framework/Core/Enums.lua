@@ -8,6 +8,13 @@ return {
         Explicit = "Explicit",
     },
 
+    AfterTeamChangeBehavior = {
+        -- nothing happens
+        None = "None",
+        -- assign the class items immediately
+        Assign = "Assign",
+    },
+
     AssignType = {
         -- assign method will hook up to the character of the player and whenever the character spawns
         PerCharacter = "PerCharacter",

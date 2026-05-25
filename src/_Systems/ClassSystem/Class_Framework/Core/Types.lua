@@ -14,6 +14,7 @@ export type ClassItemProvider = {
 
 export type Settings = {
     ApplyClassMode: string,
+    AfterTeamChangeBehavior: string,
     ItemTypePaths: {
         [string]: Folder,
     },
