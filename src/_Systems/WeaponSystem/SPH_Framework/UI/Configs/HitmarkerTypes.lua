@@ -7,10 +7,10 @@ local HitmarkerTypes: {[string]: () -> Types.HitmarkerProps} = {
         return {
             soundType = "Default",
             TimeElapsed = source(0),
-            springPeriod = 0.2,
+            springPeriod = 0.1,
             springDamping = 1,
             position = UDim2.fromScale(0.5, 0.5),
-            size = UDim2.fromScale(0.02, 1),
+            size = UDim2.fromScale(0.015, 1),
             image = "rbxassetid://125718430168410",
             color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
@@ -26,7 +26,7 @@ local HitmarkerTypes: {[string]: () -> Types.HitmarkerProps} = {
                 NumberSequenceKeypoint.new(0.5, 3),
                 NumberSequenceKeypoint.new(1, 3),
             }),
-            rotation = math.random(0, 360),
+            rotation = 45,--math.random(0, 360),
             lifetime = 0.15,
         } 
     end,
@@ -34,10 +34,10 @@ local HitmarkerTypes: {[string]: () -> Types.HitmarkerProps} = {
         return {
             soundType = "Headshot",
             TimeElapsed = source(0),
-            springPeriod = 0.2,
+            springPeriod = 0.1,
             springDamping = 1,
             position = UDim2.fromScale(0.5, 0.5),
-            size = UDim2.fromScale(0.03, 1),
+            size = UDim2.fromScale(0.025, 1),
             image = "rbxassetid://125718430168410",
             color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 118, 118)),
@@ -50,10 +50,10 @@ local HitmarkerTypes: {[string]: () -> Types.HitmarkerProps} = {
             }),
             scale = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 1),
-                NumberSequenceKeypoint.new(0.5, 3),
-                NumberSequenceKeypoint.new(1, 3),
+                NumberSequenceKeypoint.new(0.5, 4),
+                NumberSequenceKeypoint.new(1, 4),
             }),
-            rotation = math.random(0, 360),
+            rotation = 45,--math.random(0, 360),
             lifetime = 0.1,
         }
     end,

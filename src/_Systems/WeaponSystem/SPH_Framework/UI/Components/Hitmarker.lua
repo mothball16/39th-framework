@@ -57,7 +57,6 @@ end
 
 
 return function(props: Types.HitmarkerProps)
-    assert(props.TimeElapsed, "hitmarker props must have a TimeElapsed. you probably forgot to add it after applying config")
     local lifetime = derive(function()
         return math.clamp(props.TimeElapsed() / props.lifetime, 0, 1)
     end)
