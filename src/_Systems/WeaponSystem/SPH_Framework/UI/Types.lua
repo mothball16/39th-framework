@@ -2,6 +2,7 @@ local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Types = {}
 
 export type HitmarkerProps = {
+    soundType: string,
     springPeriod: number,
     springDamping: number,
     image: string,

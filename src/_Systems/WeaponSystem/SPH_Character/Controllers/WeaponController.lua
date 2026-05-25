@@ -912,7 +912,9 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 				}
 			end
 
-			bulletHandler.FireBullet(self.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, bulletData, self.player, tracerColor)
+			bulletHandler.FireBullet(self.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, bulletData, self.player, tracerColor, function(userData, raycastResult)
+				self.events.BulletHit:Fire(userData.wepStats, raycastResult)
+			end)
 		end
 
 		local firePoint = self.state.firstPerson() and self:GetMuzzlePoint(curModel) or self:GetMuzzlePoint(self:GetThirdPersonGunModel())

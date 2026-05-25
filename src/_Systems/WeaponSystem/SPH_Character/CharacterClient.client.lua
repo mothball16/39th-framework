@@ -53,6 +53,7 @@ local WeaponController = require(Controllers:WaitForChild("WeaponController"))
 local CameraController = require(Controllers:WaitForChild("CameraController"))
 local ReplicationController = require(Controllers:WaitForChild("ReplicationController"))
 local UIController = require(Controllers:WaitForChild("UIController"))
+local EffectManager = require(Framework.UI.Logic.EffectManager)
 
 bulletHandler.Initialize(player)
 
@@ -297,9 +298,13 @@ local replicationController = ReplicationController.new({
 	state = characterState,
 })
 
+local effectManager = EffectManager.new(characterState.suppressionFactor)
+
 local uiController = UIController.new({
 	state = characterState,
 	weaponState = weaponState,
+	events = events,
+	effectManager = effectManager,
 })
 
 inputController:BindCharacterInputs()
@@ -322,6 +327,7 @@ humanoid.Died:Connect(function()
 	end
 
 	if rig then rig:Destroy() end
+	effectManager:Destroy()
 end)
 
 runService.RenderStepped:Connect(function(dt:number)

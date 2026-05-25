@@ -1,7 +1,12 @@
+local Debris = game:GetService("Debris")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
 local Types = require("../Types")
+local Access = require(ReplicatedStorage.SPH_Framework.Access)
+local assets = Access.assets
 local EffectManager = {}
 EffectManager.__index = EffectManager
 
@@ -40,8 +45,13 @@ function EffectManager.new(suppressionSource: Vide.source<number>): EffectManage
     return self
 end
 
--- creates a new hitmarker
 function EffectManager.PushHitmarker(self: EffectManager, props: Types.HitmarkerProps)
+    local soundList = assets.Sounds.Hitmarkers[props.soundType]:GetChildren() :: { Sound }
+    local sound = soundList[math.random(#soundList)]:Clone()
+    sound.Parent = SoundService
+    sound:Play()
+    Debris:AddItem(sound, sound.TimeLength)
+
     local state = self.activeHitmarkers()
     table.insert(state, props)
     self.activeHitmarkers(state)

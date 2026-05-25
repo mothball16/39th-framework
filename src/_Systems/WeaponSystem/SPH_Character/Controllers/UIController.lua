@@ -1,3 +1,8 @@
+--[[
+TODO: the UIController is currently ugly as shit because it's mixing imperative and declarative UI and is generally holding onto legacy code.
+if we could pivot strictly to declarative UI, we can make this a lot cleaner and more maintainable.
+]]
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -11,6 +16,18 @@ local config = Access.config
 
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
+local Events = require(script.Parent.Events)
+
+local EffectManager = require(Framework.UI.Logic.EffectManager)
+local EffectUI = require(Framework.UI.Roots.EffectUI)
+local HitmarkerTypes = require(Framework.UI.Configs.HitmarkerTypes)
+
+local Vide = require(Packages.Vide)
+local create = Vide.create
+local useAtom = require(Packages["vide-charm"]).useAtom
+local Maid = require(Packages.maid)
+local Types = require(Framework.Core.ConfigurationTypes)
+local DamageLogic = require(Framework.Combat.DamageLogic)
 
 local FIRE_MODE_NAMES = { "[SAFE]", "[SEMI]", "[AUTO]", "[BURST]", "[UBGL]", "[MANUAL]" }
 
@@ -29,6 +46,8 @@ type self = {
 	attachmentFrame: Frame,
 	aimSens: TextLabel,
 	ubglAmmo: IntValue?,
+	effectManager: EffectManager.EffectManager,
+	maid: Maid.Maid,
 }
 
 export type UIController = setmetatable<self, typeof(UIController)>
@@ -58,6 +77,8 @@ end
 function UIController.new(params: {
 	state: CharacterStateModule.CharacterState,
 	weaponState: WeaponStateModule.WeaponState,
+	events: Events.Events,
+	effectManager: EffectManager.EffectManager,
 }): UIController
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 	local mainUI = playerGui:WaitForChild("SPH_UI")
@@ -84,6 +105,7 @@ function UIController.new(params: {
 	local self = setmetatable({
 		weaponState = params.weaponState,
 		state = params.state,
+		events = params.events,
 		ammoUI = ammoUI,
 		ammoCounter = ammoCounter,
 		ammoPoolUI = ammoPoolUI,
@@ -93,7 +115,23 @@ function UIController.new(params: {
 		attachmentFrame = attachmentFrame,
 		aimSens = aimSens,
 		ubglAmmo = nil,
+		effectManager = params.effectManager,
+		maid = Maid.new(),
 	} :: self, UIController)
+
+	self.maid:GiveTask(Vide.mount(function()
+		return create "ScreenGui" {
+			Name = "SPH_Effects",
+			IgnoreGuiInset = true,
+			DisplayOrder = 100,
+
+			EffectUI({
+				activeHitmarkers = self.effectManager.activeHitmarkers,
+				suppressionFactor = useAtom(self.state.suppressionFactor),
+			}),
+		}
+	end, playerGui))
+
 
 	Charm.subscribe(self.state.equippedTool, function(tool)
 		self:SyncEquippedTool(tool)
@@ -102,7 +140,30 @@ function UIController.new(params: {
 		self:SyncAiming(aiming)
 	end)
 
+	self.events.BulletHit:Connect(function(wepStats, raycastResult)
+		self:OnBulletHit(wepStats, raycastResult)
+	end)
+
 	return self
+end
+
+function UIController.OnBulletHit(self: UIController, wepStats: Types.WeaponStats, raycastResult: RaycastResult)
+
+	if not raycastResult.Instance then
+		return
+	end
+	local zone = DamageLogic.getZone(raycastResult.Instance.Name)
+	local hitmarkerInstance = nil
+	if zone == "Head" then
+		hitmarkerInstance = HitmarkerTypes["Headshot"]()
+	else
+		hitmarkerInstance = HitmarkerTypes["Default"]()
+	end
+
+	local screenPoint = game.Workspace.CurrentCamera:WorldToViewportPoint(raycastResult.Position)
+	hitmarkerInstance.position = UDim2.fromOffset(screenPoint.X, screenPoint.Y)
+
+	self.effectManager:PushHitmarker(hitmarkerInstance)
 end
 
 function UIController.SyncAiming(self: UIController, aiming: boolean)
@@ -207,6 +268,10 @@ function UIController.UpdateHeartbeat(self: UIController, _dt: number)
 	else
 		self.ammoUI.Visible = false
 	end
+end
+
+function UIController.Destroy(self: UIController)
+	self.maid:DoCleaning()
 end
 
 return UIController

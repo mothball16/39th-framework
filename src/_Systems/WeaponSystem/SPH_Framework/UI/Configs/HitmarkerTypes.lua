@@ -5,11 +5,12 @@ local source = Vide.source
 local HitmarkerTypes: {[string]: () -> Types.HitmarkerProps} = {
     Default = function()
         return {
+            soundType = "Default",
             TimeElapsed = source(0),
             springPeriod = 0.2,
             springDamping = 1,
             position = UDim2.fromScale(0.5, 0.5),
-            size = UDim2.fromScale(0.03, 1),
+            size = UDim2.fromScale(0.02, 1),
             image = "rbxassetid://125718430168410",
             color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
@@ -26,16 +27,17 @@ local HitmarkerTypes: {[string]: () -> Types.HitmarkerProps} = {
                 NumberSequenceKeypoint.new(1, 3),
             }),
             rotation = math.random(0, 360),
-            lifetime = 0.3,
+            lifetime = 0.15,
         } 
     end,
     Headshot = function()
         return {
+            soundType = "Headshot",
             TimeElapsed = source(0),
             springPeriod = 0.2,
             springDamping = 1,
             position = UDim2.fromScale(0.5, 0.5),
-            size = UDim2.fromScale(0.2, 0.2),
+            size = UDim2.fromScale(0.03, 1),
             image = "rbxassetid://125718430168410",
             color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 118, 118)),
@@ -52,11 +54,12 @@ local HitmarkerTypes: {[string]: () -> Types.HitmarkerProps} = {
                 NumberSequenceKeypoint.new(1, 3),
             }),
             rotation = math.random(0, 360),
-            lifetime = 0.5,
+            lifetime = 0.1,
         }
     end,
     Test = function()
         return {
+            soundType = "Default",
             TimeElapsed = source(0),
             springPeriod = 0.2,
             springDamping = 1,

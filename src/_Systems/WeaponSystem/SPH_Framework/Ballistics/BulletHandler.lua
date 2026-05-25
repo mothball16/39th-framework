@@ -64,8 +64,8 @@ local function ResetBullet(bulletPart)
 	bulletPart.DistanceEffect.Enabled = false
 	bulletPart.DistanceEffect.Dot.ImageColor3 = baseBullet.DistanceEffect.Dot.ImageColor3
 	bulletPart.DistanceEffect.Flare.ImageColor3 = bulletPart.DistanceEffect.Flare.ImageColor3
-	if bulletPart:FindFirstChild("FakeBullet") then
-		bulletPart.FakeBullet:Destroy()
+	if bulletPart:FindFirstChild("ProjectileVisual") then
+		bulletPart.ProjectileVisual:Destroy()
 	end
 end
 
@@ -103,31 +103,22 @@ local function PlaySFX(parent, playerFired, isUBGL)
 	end
 end
 
-module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity, tool, playerFired, tracerColor, fake, turret)
-	local wepStats
-	if turret then
-		local turretModule = require(rig.Parent.TurretModule)
-		--local gunReference = 
-		--local tempDict = table.clone(gunReference)
-		--for name, value in pairs(gunReference.ammoTypes[rig.Parent.TurretModule[gunReference.name]:GetAttribute("LoadedAmmo")]) do
-		--	tempDict[name] = value
-		--end
-		wepStats = turretModule.guns[tool]
-	else
-		-- [UBGL START] - UBGL Tool Data Handling
-		-- Handle UBGL tool data structure
-		local actualTool = tool
-		if type(tool) == "table" and tool.Tool then
-			actualTool = tool.Tool
-		end
-		wepStats = WeaponStatLocator.getWeaponStats(actualTool.SPH_Weapon)
-
-		-- If this is UBGL mode, get UBGL stats
-		if type(tool) == "table" and tool.fireMode == 4 and wepStats.hasUBGL then
-			wepStats = wepStats.getStatsForMode(4)
-		end
-		-- [UBGL END] - UBGL Tool Data Handling
+module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity, tool, playerFired, tracerColor, onHitCallback)
+	-- [UBGL START] - UBGL Tool Data Handling
+	-- Handle UBGL tool data structure
+	local actualTool = tool
+	if type(tool) == "table" and tool.Tool then
+		actualTool = tool.Tool
 	end
+
+	local wepStats = WeaponStatLocator.getWeaponStats(actualTool.SPH_Weapon)
+
+	-- If this is UBGL mode, get UBGL stats
+	if type(tool) == "table" and tool.fireMode == 4 and wepStats.hasUBGL then
+		wepStats = wepStats.getStatsForMode(4)
+	end
+	-- [UBGL END] - UBGL Tool Data Handling
+
 
 	bulletBehavior.Acceleration = config.bulletAcceleration
 
@@ -135,15 +126,15 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 
 	local newBullet = caster:Fire(bulletOrigin,bulletDirection,bulletVelocity,bulletBehavior)
 	local newData = {}
+	newData.OnHitCallback = onHitCallback
 	newData.Player = playerFired
 	newData.TracerColor = tracerColor
 	newData.Tool = type(tool) == "table" and tool.Tool or tool
 	newData.IgnoreModel = rig
-	newData.FakeBullet = fake
 	newData.Visible = false
 	newData.Origin = bulletOrigin
 	newData.SuppressionLevel = wepStats.suppressionLevel or 1
-	newData.TurretFired = turret
+	newData.wepStats = wepStats
 	-- [UBGL START] - UBGL Fire Mode Data
 	-- Add fire mode information for bullet physics
 	if type(tool) == "table" and tool.fireMode then
@@ -159,11 +150,11 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 	local projectileModel = assets.Projectiles:FindFirstChild(wepStats.projectile)
 	-- Use projectile model for explosives/grenades regardless of tracers, or for non-tracer bullets
 	if projectileModel and (wepStats.explosiveAmmo or not tracerColor) then
-		local fakeBullet = projectileModel:Clone()
-		fakeBullet.Anchored = false
-		fakeBullet.CanCollide = false
-		fakeBullet.Name = "FakeBullet"
-		fakeBullet.Parent = bullet
+		local projectileVisual = projectileModel:Clone()
+		projectileVisual.Anchored = false
+		projectileVisual.CanCollide = false
+		projectileVisual.Name = "ProjectileVisual"
+		projectileVisual.Parent = bullet
 		newData.Visible = true
 	end
 
@@ -325,53 +316,52 @@ caster.LengthChanged:Connect(function(cast, segmentOrigin, segmentDirection, len
 	local baseCFrame = CFrame.new(segmentOrigin, segmentOrigin + segmentDirection)
 	cosmeticBulletObject.CFrame = baseCFrame * CFrame.new(0, 0, -(length - bulletLength))
 
-	if cosmeticBulletObject:FindFirstChild("FakeBullet") then
-		cosmeticBulletObject.FakeBullet.CFrame = cosmeticBulletObject.CFrame
+	if cosmeticBulletObject:FindFirstChild("ProjectileVisual") then
+		cosmeticBulletObject.ProjectileVisual.CFrame = cosmeticBulletObject.CFrame
 	end
 end)
 
 caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBulletObject:BasePart)
-	local wepStats
-	if cast.UserData.TurretFired then
-		local turretModule = require(cast.UserData.IgnoreModel.Parent.TurretModule)
-		wepStats = turretModule.guns[cast.UserData.Tool]
-	else
-		wepStats = WeaponStatLocator.getWeaponStats(cast.UserData.Tool.SPH_Weapon)
+	
+	if cast.UserData.Player ~= player then
+		-- this is a replicated bullet, we don't want to process it
+		return
+	end
+	local hitPart = raycastResult.Instance
+	hitFX.HitEffect(raycastResult.Position,hitPart,raycastResult.Normal)
+
+	if cast.UserData.OnHitCallback then
+		cast.UserData.OnHitCallback(cast.UserData, raycastResult)
 	end
 
-	if not cast.UserData.FakeBullet then
-		local hitPart = raycastResult.Instance
-		hitFX.HitEffect(raycastResult.Position,hitPart,raycastResult.Normal)
+	local fakeRayResult = { -- dict instead of RaycastResult for remote
+		Position = raycastResult.Position,
+		Normal = raycastResult.Normal,
+		Instance = raycastResult.Instance,
+		Origin = cast.UserData.Origin,
+	}
 
-		local fakeRayResult = { -- dict instead of RaycastResult for remote
-			Position = raycastResult.Position,
-			Normal = raycastResult.Normal,
-			Instance = raycastResult.Instance,
-			Origin = cast.UserData.Origin,
+	-- Prepare tool data for server
+	local toolData = cast.UserData.Tool
+	if cast.UserData.fireMode then
+		-- Reconstruct UBGL data structure for server
+		toolData = {
+			Tool = cast.UserData.Tool,
+			fireMode = cast.UserData.fireMode
 		}
-
-		-- Prepare tool data for server
-		local toolData = cast.UserData.Tool
-		if cast.UserData.fireMode then
-			-- Reconstruct UBGL data structure for server
-			toolData = {
-				Tool = cast.UserData.Tool,
-				fireMode = cast.UserData.fireMode
-			}
-		end
-
-		P.BulletHit.send({
-			toolData = cast.UserData.TurretFired and { model = cast.UserData.IgnoreModel, index = cast.UserData.Tool } or toolData,
-			rayHit = fakeRayResult,
-			bulletCFrame = cosmeticBulletObject.CFrame,
-		})
-
-		-- Suppression effects
-		if suppression and config.suppressionEffects and player ~= cast.UserData.Player and not cast.UserData.Cracked then
-			suppression:Fire(cast.UserData.SuppressionLevel)
-			cast.UserData.Cracked = true
-		end
 	end
+	P.BulletHit.send({
+		toolData = toolData,
+		rayHit = fakeRayResult,
+		bulletCFrame = cosmeticBulletObject.CFrame,
+	})
+
+	-- Suppression effects
+	if suppression and config.suppressionEffects and player ~= cast.UserData.Player and not cast.UserData.Cracked then
+		suppression:Fire(cast.UserData.SuppressionLevel)
+		cast.UserData.Cracked = true
+	end
+	
 end)
 
 caster.CastTerminating:Connect(function(cast)

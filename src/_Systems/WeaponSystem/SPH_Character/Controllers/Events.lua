@@ -1,9 +1,11 @@
 local Signal = require("@game/ReplicatedStorage/Packages/signal")
-
+local Types = require("@game/ReplicatedStorage/SPH_Framework/Core/ConfigurationTypes")
 local Events = {}
 Events.__index = Events
 
 type self = {
+	BulletHit: Signal.Signal<Types.WeaponStats, RaycastResult>,
+
 	WeaponEquipRequested: Signal.Signal<>,
 	WeaponIdleRequested: Signal.Signal<>,
 	FireAnimRequested: Signal.Signal<>,
@@ -22,6 +24,8 @@ export type Events = setmetatable<self, typeof(Events)>
 
 function Events.new(): Events
 	return setmetatable({
+		BulletHit = Signal.new(),
+		
 		WeaponEquipRequested = Signal.new(),
 		WeaponIdleRequested = Signal.new(),
 		FireAnimRequested = Signal.new(),
