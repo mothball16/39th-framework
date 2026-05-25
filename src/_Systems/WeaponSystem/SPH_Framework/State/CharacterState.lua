@@ -49,6 +49,8 @@ function CharState.new(character: Model): CharacterState
 		moving = Charm.atom(false),
 		vehicleSeated = Charm.atom(false),
 
+		suppressionFactor = Charm.atom(0),
+
 		freeLook = Charm.atom(false),
 		freeLookRotation = Charm.atom(CFrame.new()),
 		freeLookOffset = Charm.atom(CFrame.new()),
