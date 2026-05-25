@@ -11,9 +11,9 @@ local Framework = ReplicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
-local AnimationEvents = require(script.Parent.AnimationEvents)
 local config = Access.config
 local Enums = require(Framework.Core.Enums)
+local Events = require(script.Parent.Events)
 
 -- Default loop/priority when playing a weapon anim by config key (e.g. "reload", "idle").
 local ANIM_DEFAULTS = {
@@ -47,6 +47,7 @@ type self = {
 	holdAnimKey: string?,
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
+	events: Events.Events,
 }
 
 export type AnimationController = setmetatable<self, typeof(AnimationController)>
@@ -192,12 +193,12 @@ local function getOrCreateTracks(self: AnimationController, animName: string, pl
 
 	vmTrack.KeyframeReached:Connect(function(keyframeName)
 		local currentType = vmTrack:GetAttribute("AnimType") or "Unknown"
-		AnimationEvents.KeyframeReached:Fire(animName, keyframeName, vmTrack, currentType)
+		self.events.KeyframeReached:Fire(animName, keyframeName, vmTrack, currentType)
 	end)
 
 	vmTrack.Stopped:Connect(function()
 		local currentType = vmTrack:GetAttribute("AnimType") or "Unknown"
-		AnimationEvents.AnimationStopped:Fire(animName, vmTrack, currentType)
+		self.events.AnimationStopped:Fire(animName, vmTrack, currentType)
 	end)
 
 	local tracks = { vm = vmTrack, tp = tpTrack }
@@ -223,6 +224,7 @@ function AnimationController.new(params: {
 	animationsFolder: Folder,
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
+	events: Events.Events,
 }): AnimationController
 	local self = setmetatable({
 		loadedAnims = {},
@@ -238,6 +240,7 @@ function AnimationController.new(params: {
 		holdAnimKey = nil,
 		weaponState = params.weaponState,
 		state = params.state,
+		events = params.events,	
 	} :: self, AnimationController)
 
 	self.crouchIdleAnim = loadHumanoidAnim(self, params.animationsFolder.Crouch_Idle, true, Enum.AnimationPriority.Idle)
@@ -261,34 +264,34 @@ function AnimationController.new(params: {
 		self:SyncChambering(value)
 	end)
 
-	AnimationEvents.WeaponEquipRequested:Connect(function()
+	self.events.WeaponEquipRequested:Connect(function()
 		self:WeaponEquip()
 	end)
-	AnimationEvents.WeaponIdleRequested:Connect(function()
+	self.events.WeaponIdleRequested:Connect(function()
 		self:WeaponIdle()
 	end)
-	AnimationEvents.FireAnimRequested:Connect(function()
+	self.events.FireAnimRequested:Connect(function()
 		self:PlayFireAnim()
 	end)
-	AnimationEvents.ReloadRequested:Connect(function(lastGunModelName)
+	self.events.ReloadRequested:Connect(function(lastGunModelName)
 		self:WeaponReload(lastGunModelName)
 	end)
-	AnimationEvents.SwitchFireModeAnimRequested:Connect(function()
+	self.events.SwitchFireModeAnimRequested:Connect(function()
 		self:PlaySwitchFireModeAnim()
 	end)
-	AnimationEvents.StopAllRequested:Connect(function()
+	self.events.StopAllRequested:Connect(function()
 		self:StopAll()
 	end)
-	AnimationEvents.PlayAnimationRequested:Connect(function(animName, parameters, animType, propertyKey)
+	self.events.PlayAnimationRequested:Connect(function(animName, parameters, animType, propertyKey)
 		self:PlayAnimation(animName, parameters, animType, propertyKey)
 	end)
-	AnimationEvents.StopAnimationRequested:Connect(function(animName, transTime)
+	self.events.StopAnimationRequested:Connect(function(animName, transTime)
 		self:StopAnimation(animName, transTime)
 	end)
-	AnimationEvents.BoltActionRequested:Connect(function(boltReady)
+	self.events.BoltActionRequested:Connect(function(boltReady)
 		self:PlayBoltAction(boltReady)
 	end)
-	AnimationEvents.ReloadActionRequested:Connect(function(useClip)
+	self.events.ReloadActionRequested:Connect(function(useClip)
 		self:PlayReloadAction(useClip)
 	end)
 

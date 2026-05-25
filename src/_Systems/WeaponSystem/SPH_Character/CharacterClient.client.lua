@@ -11,7 +11,6 @@ local Intents = Enums.Intents
 local config = Access.config
 local animations = assets.Animations
 local player = players.LocalPlayer
-
 local character = script.Parent.Parent
 local humanoid:Humanoid = character:WaitForChild("Humanoid")
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
@@ -33,8 +32,10 @@ if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
 camera.CameraType = Enum.CameraType.Custom
 if camera:FindFirstChild("WeaponRig") then camera.WeaponRig:Destroy() end
 
-local Events = require(Framework.Network.Events)
-local P = Events.GetNamespace().packets
+local events = require(script.Parent.Controllers.Events).new()
+local NetEvents = require(Framework.Network.Events)
+local P = NetEvents.GetNamespace().packets
+
 local viewMod = require(Framework.Weapons.ViewMod)
 local bulletHandler = require(Framework.Ballistics.BulletHandler)
 local callbacks = require(assets.Mods)
@@ -156,6 +157,7 @@ local animationController = AnimationController.new({
 	animationsFolder = animations,
 	weaponState = weaponState,
 	state = characterState,
+	events = events,
 })
 
 -- Makes the viewmodel visible and refreshes its appearance
@@ -259,6 +261,7 @@ local weaponController = WeaponController.new({
 	thirdPersonRig = weaponRig,
 	weaponState = weaponState,
 	state = characterState,
+	events = events,
 	RefreshViewmodel = RefreshViewmodel,
 })
 
