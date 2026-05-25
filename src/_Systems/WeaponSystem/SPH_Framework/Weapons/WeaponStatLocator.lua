@@ -3,6 +3,8 @@ local Access = require(Framework.Access)
 local assets = Access.assets
 local configs = assets:WaitForChild("Configurations")
 
+local Types = require("@game/ReplicatedStorage/SPH_Framework/Core/ConfigurationTypes")
+
 local WeaponStatLocator = {}
 
 local function getConfig(sphWeapon, configName)
@@ -35,7 +37,7 @@ local function getConfig(sphWeapon, configName)
 	return nil
 end
 
-function WeaponStatLocator.getWeaponStats(sphWeapon)
+function WeaponStatLocator.getWeaponStats(sphWeapon): () -> Types.WeaponStats
 	return getConfig(sphWeapon, "WeaponStats")
 end
 
