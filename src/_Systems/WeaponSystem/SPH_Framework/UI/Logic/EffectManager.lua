@@ -1,11 +1,7 @@
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local SoundService = game:GetService("SoundService")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
 local Types = require("../Types")
-local Access = require(ReplicatedStorage.SPH_Framework.Access)
-local assets = Access.assets
 local EffectManager = {}
 EffectManager.__index = EffectManager
 
@@ -45,16 +41,6 @@ function EffectManager.new(suppressionSource: Vide.source<number>): EffectManage
 end
 
 function EffectManager.PushHitmarker(self: EffectManager, props: Types.HitmarkerProps)
-    if Access.assets then
-        -- game stuff
-        if not Access.config.hitmarkers then
-            return
-        end
-        local soundList = assets.Sounds.Hitmarkers[props.soundType]:GetChildren() :: { Sound }
-        local sound = soundList[math.random(#soundList)]
-        SoundService:PlayLocalSound(sound)    
-    end 
-
     local state = self.activeHitmarkers()
     table.insert(state, props)
     self.activeHitmarkers(state)

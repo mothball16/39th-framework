@@ -5,6 +5,7 @@ if we could pivot strictly to declarative UI, we can make this a lot cleaner and
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+const SoundService = game:GetService("SoundService")
 local UserInputService = game:GetService("UserInputService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
@@ -148,22 +149,33 @@ function UIController.new(params: {
 end
 
 function UIController.OnBulletHit(self: UIController, wepStats: Types.WeaponStats, raycastResult: RaycastResult)
-
-	if not raycastResult.Instance then
+	if not raycastResult.Instance or not Access.config.hitmarkers then
 		return
 	end
 	local zone = DamageLogic.getZone(raycastResult.Instance.Name)
-	local hitmarkerInstance = nil
-	if zone == "Head" then
-		hitmarkerInstance = HitmarkerTypes["Headshot"]()
-	else
-		hitmarkerInstance = HitmarkerTypes["Default"]()
+	if zone ~= DamageLogic.Zones.Head 
+		and zone ~= DamageLogic.Zones.Torso 
+		and zone ~= DamageLogic.Zones.Arm 
+		and zone ~= DamageLogic.Zones.Leg then
+		return
 	end
+
+	local hitmarkerRegion = "Default"
+	if zone == DamageLogic.Zones.Head then
+		hitmarkerRegion = "Headshot"
+	end
+	
+	local hitmarkerInstance = HitmarkerTypes[hitmarkerRegion]()
 
 	local screenPoint = game.Workspace.CurrentCamera:WorldToViewportPoint(raycastResult.Position)
 	hitmarkerInstance.position = UDim2.fromOffset(screenPoint.X, screenPoint.Y)
 
 	self.effectManager:PushHitmarker(hitmarkerInstance)
+
+	-- play the hitmarker sound
+	local soundList = assets.Sounds.Hitmarkers[hitmarkerRegion]:GetChildren() :: { Sound }
+	local sound = soundList[math.random(#soundList)]
+	SoundService:PlayLocalSound(sound) 
 end
 
 function UIController.SyncAiming(self: UIController, aiming: boolean)
