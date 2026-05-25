@@ -9,14 +9,28 @@
 
 local DamageLogic = {}
 
+DamageLogic.Zones = {
+	Head = "Head",
+	Torso = "Torso",
+	Arm = "Arm",
+	Leg = "Leg",
+	Other = "Other",
+}
+
 function DamageLogic.getZone(partName: string): string
 	if partName == "Head" then
-		return "Head"
+		return DamageLogic.Zones.Head
 	end
 	if partName == "Torso" or partName == "UpperTorso" or partName == "HumanoidRootPart" then
-		return "Torso"
+		return DamageLogic.Zones.Torso
 	end
-	return "Other"
+	if partName == "LeftArm" or partName == "RightArm" or partName == "LeftUpperArm" or partName == "RightUpperArm" or partName == "LeftLowerArm" or partName == "RightLowerArm" then
+		return DamageLogic.Zones.Arm
+	end
+	if partName == "LeftLeg" or partName == "RightLeg" or partName == "LeftUpperLeg" or partName == "RightUpperLeg" or partName == "LeftLowerLeg" or partName == "RightLowerLeg" then
+		return DamageLogic.Zones.Leg
+	end
+	return DamageLogic.Zones.Other
 end
 
 --- High damage at/under range.Min, low damage at/over range.Max, linear between.
