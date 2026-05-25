@@ -97,7 +97,18 @@ function WepState.new(): WeaponState
 			return 1 - math.pow(0.01, 1 / steps)
 		end
 
-		return 0.5
+		return 0.1
+	end)
+
+	self.aimCamLerpFactor = Charm.computed(function()
+		local ws = self.wepStats()
+		if ws then
+			-- how large of a step we need to hit 99% progress in ws.aimTime seconds assuming 60hz
+			local steps = 60 * (ws.aimTime / 1.25)
+			return 1 - math.pow(0.01, 1 / steps)
+		end
+
+		return 0.125
 	end)
 	return self
 end

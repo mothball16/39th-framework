@@ -10,7 +10,7 @@ local config = Access.config
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
 
-local SPRINT_FOV_MULTIPLIER = 1.02
+local SPRINT_FOV_MULTIPLIER = 1.03
 
 local CameraController = {}
 CameraController.__index = CameraController
@@ -103,7 +103,7 @@ function CameraController.UpdateFOV(self: CameraController, dt: number)
 	self.camera.FieldOfView = lerpNumber(
 		self.camera.FieldOfView,
 		self.FOVTarget(),
-		(self.weaponState.aimLerpFactor() / 2) * (dt * 60)
+		self.weaponState.aimCamLerpFactor() * (dt * 60)
 	)
 end
 
