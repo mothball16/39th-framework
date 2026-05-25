@@ -82,7 +82,7 @@ function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: 
 			tracerColor = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
 		end
 
-		bulletHandler.FireBullet(rig, bulletOrigin, bulletDirection, bulletVelocity, tool, player, tracerColor, true)
+		bulletHandler.FireBullet(rig, bulletOrigin, bulletDirection, bulletVelocity, tool, player, tracerColor)
 
 		if wepStats.fireMode ~= "Manual" and wepStats.shellEject then
 			if (bulletOrigin - workspace.CurrentCamera.CFrame.Position).Magnitude <= config.shellDistance then
