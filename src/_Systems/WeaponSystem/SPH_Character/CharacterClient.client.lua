@@ -38,7 +38,6 @@ local P = NetEvents.GetNamespace().packets
 
 local viewMod = require(Framework.Weapons.ViewMod)
 local bulletHandler = require(Framework.Ballistics.BulletHandler)
-local callbacks = require(assets.Mods)
 local Packages = replicatedStorage.Packages
 local Charm = require(Packages.Charm)
 
@@ -160,53 +159,6 @@ local animationController = AnimationController.new({
 	events = events,
 })
 
--- Makes the viewmodel visible and refreshes its appearance
-local function RefreshViewmodel()
-	if characterState.firstPerson() then
-		weaponState.viewmodelVisible(true)
-	end
-
-	local plrShirt = character:FindFirstChildWhichIsA("Shirt")
-	if plrShirt then vmShirt.ShirtTemplate = plrShirt.ShirtTemplate end
-
-	--lArm.Color = character["Left Arm"].Color
-	--rArm.Color = character["Right Arm"].Color
-
-	--for _, part in ipairs(rig:GetDescendants()) do
-	--	if part.Name == "Skin" then
-	--		if part.Parent.Name == "Left Arm" then
-	--			part.Color = character["Left Arm"].Color
-	--		elseif part.Parent.Name == "Right Arm" then
-	--			part.Color = character["Right Arm"].Color
-	--		end
-	--	end
-	--end
-
-	if rigType == Enum.HumanoidRigType.R6 then -- DD_SPH: Easy coloring
-		local lArm = rig["Left Arm"]
-		local rArm = rig["Right Arm"]
-		lArm.Color = character["Left Arm"].Color
-		rArm.Color = character["Right Arm"].Color
-
-		for _, part in ipairs(rig:GetDescendants()) do
-			if part.Name == "Skin" then
-				if part.Parent.Name == "Left Arm" then
-					part.Color = character["Left Arm"].Color
-				elseif part.Parent.Name == "Right Arm" then
-					part.Color = character["Right Arm"].Color
-				end
-			end
-		end
-	else
-		local bodyparts = {"LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand"} -- DD_SPH: List of bodyparts for easy iterating
-		for i = 1, #bodyparts do
-			rig[bodyparts[i]].Color = character[bodyparts[i]].Color
-		end
-	end -- </DD_SPH>
-
-	if callbacks.onViewmodelRefresh then callbacks.onViewmodelRefresh(player,rig) end
-end
-
 local function OnScrollIntent(scrollAmount, holdForZoom)
 	if characterState.aiming() then
 		--[[
@@ -262,7 +214,6 @@ local weaponController = WeaponController.new({
 	weaponState = weaponState,
 	state = characterState,
 	events = events,
-	RefreshViewmodel = RefreshViewmodel,
 })
 
 local cameraController = CameraController.new({
@@ -336,7 +287,9 @@ local viewmodelController = ViewmodelController.new({
 	StopAnimation = function(animName, transTime)
 		animationController:StopAnimation(animName, transTime)
 	end,
-	RefreshViewmodel = RefreshViewmodel,
+	player = player,
+	viewmodelRig = rig,
+	vmShirt = vmShirt,
 })
 
 local replicationController = ReplicationController.new({

@@ -4,11 +4,13 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local Framework = ReplicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
+local assets = Access.assets
 local config = Access.config
 local Enums = require(Framework.Core.Enums)
 local springMod = require(Framework.Weapons.SpringModule)
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
+local callbacks = require(assets.Mods)
 
 local STORAGE_CFRAME = CFrame.new(1000000, 0, 0)
 
@@ -23,8 +25,10 @@ type self = {
 	humanoidRootPart: BasePart,
 	weaponRig: Model,
 	rayParams: RaycastParams,
+	player: Player,
+	viewmodelRig: Model,
+	vmShirt: Shirt,
 	StopAnimation: (string, number) -> (),
-	RefreshViewmodel: () -> (),
 	swaySpring: typeof(springMod.new()),
 	moveSpring: typeof(springMod.new()),
 	pushbackOffset: number,
@@ -54,8 +58,10 @@ function ViewmodelController.new(params: {
 	rayParams: RaycastParams,
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
+	player: Player,
+	viewmodelRig: Model,
+	vmShirt: Shirt,
 	StopAnimation: (string, number) -> (),
-	RefreshViewmodel: () -> (),
 }): ViewmodelController
 	local self = setmetatable({
 		state = params.state,
@@ -65,8 +71,10 @@ function ViewmodelController.new(params: {
 		humanoidRootPart = params.humanoidRootPart,
 		weaponRig = params.weaponRig,
 		rayParams = params.rayParams,
+		player = params.player,
+		viewmodelRig = params.viewmodelRig,
+		vmShirt = params.vmShirt,
 		StopAnimation = params.StopAnimation,
-		RefreshViewmodel = params.RefreshViewmodel,
 		swaySpring = springMod.new(),
 		moveSpring = springMod.new(),
 		pushbackOffset = 0,
@@ -81,6 +89,20 @@ function ViewmodelController.new(params: {
 	Charm.subscribe(self.state.equippedTool, function(tool)
 		self:SyncEquippedTool(tool)
 	end)
+	Charm.subscribe(self.state.firstPerson, function(isFirstPerson)
+		if isFirstPerson and self.weaponState.gunModel() then
+			self:RefreshViewmodel()
+		end
+	end)
+	Charm.subscribe(self.weaponState.gunModel, function(gunModel)
+		if gunModel and self.state.firstPerson() then
+			self:RefreshViewmodel()
+		end
+	end)
+
+	if self.state.firstPerson() and self.weaponState.gunModel() then
+		self:RefreshViewmodel()
+	end
 
 	return self
 end
@@ -90,6 +112,46 @@ function ViewmodelController.SyncEquippedTool(self: ViewmodelController, tool: T
 		return
 	end
 	self:ResetHipRotation()
+end
+
+function ViewmodelController.RefreshViewmodel(self: ViewmodelController)
+	if self.state.firstPerson() then
+		self.weaponState.viewmodelVisible(true)
+		self.state.sprinting(false)
+	end
+
+	local character = self.state.Parts.Character
+	local plrShirt = character:FindFirstChildWhichIsA("Shirt")
+	if plrShirt then
+		self.vmShirt.ShirtTemplate = plrShirt.ShirtTemplate
+	end
+
+	local rig = self.viewmodelRig
+	if self.state.Parts.IsR6 then
+		local lArm = rig["Left Arm"]
+		local rArm = rig["Right Arm"]
+		lArm.Color = character["Left Arm"].Color
+		rArm.Color = character["Right Arm"].Color
+
+		for _, part in ipairs(rig:GetDescendants()) do
+			if part.Name == "Skin" then
+				if part.Parent.Name == "Left Arm" then
+					part.Color = character["Left Arm"].Color
+				elseif part.Parent.Name == "Right Arm" then
+					part.Color = character["Right Arm"].Color
+				end
+			end
+		end
+	else
+		local bodyparts = { "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand" }
+		for i = 1, #bodyparts do
+			rig[bodyparts[i]].Color = character[bodyparts[i]].Color
+		end
+	end
+
+	if callbacks.onViewmodelRefresh then
+		callbacks.onViewmodelRefresh(self.player, rig)
+	end
 end
 
 function ViewmodelController.ResetHipRotation(self: ViewmodelController)
@@ -266,11 +328,6 @@ end
 function ViewmodelController.UpdateRender(self: ViewmodelController, dt: number)
 	local camera = self.camera
 	if self.state.equippedTool() and self.weaponState.gunModel() and camera.CameraType == Enum.CameraType.Custom then
-		if self.state.firstPerson() and not self.weaponState.viewmodelVisible() then
-			self.RefreshViewmodel()
-			self.state.sprinting(false)
-		end
-
 		local ws = self.weaponState.wepStats()
 		local currentOffset = ws and ws.viewmodelOffset or CFrame.new()
 		self:UpdateViewmodelPosition(dt, currentOffset, self.weaponState.sightIndex())

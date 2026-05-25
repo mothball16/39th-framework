@@ -54,7 +54,6 @@ type self = {
 	viewmodelRig: Model,
 	thirdPersonRig: Model,
 	holosightMod: any,
-	RefreshViewmodel: () -> (),
 }
 
 export type WeaponController = setmetatable<self, typeof(WeaponController)>
@@ -100,7 +99,6 @@ function WeaponController.new(params: {
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
 	events: Events.Events,
-	RefreshViewmodel: () -> (),
 }): WeaponController
 	local self = setmetatable({
 		state = params.state,
@@ -124,7 +122,6 @@ function WeaponController.new(params: {
 		viewmodelRig = params.viewmodelRig,
 		thirdPersonRig = params.thirdPersonRig,
 		holosightMod = holosightMod.new(params.weaponState),
-		RefreshViewmodel = params.RefreshViewmodel,
 		events = params.events,
 	} :: self, WeaponController)
 
@@ -528,10 +525,6 @@ function WeaponController.Equip(self: WeaponController, newChild)
 	self.weaponState.gunModel(gun)
 
 	self.weaponState.maid:GiveTask(weldMod.BlankM6D(self.viewmodelRig.AnimBase, gun.Grip))
-
-	if self.state.firstPerson() then
-		self.RefreshViewmodel()
-	end
 
 	self.events.WeaponEquipRequested:Fire()
 	self.events.WeaponIdleRequested:Fire()
