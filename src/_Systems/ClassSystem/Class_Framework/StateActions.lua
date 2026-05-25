@@ -70,6 +70,11 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string)
 end
 
 function StateActions.SetPlayerFaction(state: State.State, userId: string, factionId: string)
+	-- if the faction id is the same as the previous, don't update
+	if state.playerByFactionId()[userId] == factionId then
+		return
+	end
+
 	_updateMapValue(state.playerByFactionId, userId, factionId)
 	StateActions.SetPlayerToDefaultClass(state, userId, factionId)
 end
@@ -81,6 +86,12 @@ function StateActions.SetPlayerClass(state: State.State, userId: string, classKe
 		classKey = nil
 		classId = nil
 	end
+
+	-- if the class key and id are the same as the previous, don't update
+	if state.playerByClassKey()[userId] == classKey and state.playerByClassId()[userId] == classId then
+		return
+	end
+
 	Charm.batch(function()
 		_updateMapValue(state.playerByClassKey, userId, classKey)
 		_updateMapValue(state.playerByClassId, userId, classId)
@@ -111,6 +122,10 @@ function StateActions.SetPlayerToDefaultClass(state: State.State, userId: string
 
 	local classConfig = factionConfig.Classes[defaultClassKey]
 	local classId = classConfig.ClassIDs[1].Id
+
+	if not classId then
+		error(`faction {factionId} has no class id!`)
+	end
 
 	Charm.batch(function()
 		_updateMapValue(state.playerByClassKey, userId, defaultClassKey)
