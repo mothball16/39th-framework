@@ -331,6 +331,8 @@ export type MainGameSettings = {
 	serverBanList: boolean,
 
 	version: string,
+
+	hitmarkers: boolean,
 }
 
 return nil

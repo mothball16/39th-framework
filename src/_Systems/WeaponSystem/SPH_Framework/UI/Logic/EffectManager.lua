@@ -1,4 +1,3 @@
-local Debris = game:GetService("Debris")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
@@ -46,11 +45,15 @@ function EffectManager.new(suppressionSource: Vide.source<number>): EffectManage
 end
 
 function EffectManager.PushHitmarker(self: EffectManager, props: Types.HitmarkerProps)
-    local soundList = assets.Sounds.Hitmarkers[props.soundType]:GetChildren() :: { Sound }
-    local sound = soundList[math.random(#soundList)]:Clone()
-    sound.Parent = SoundService
-    sound:Play()
-    Debris:AddItem(sound, sound.TimeLength)
+    if Access.assets then
+        -- game stuff
+        if not Access.config.hitmarkers then
+            return
+        end
+        local soundList = assets.Sounds.Hitmarkers[props.soundType]:GetChildren() :: { Sound }
+        local sound = soundList[math.random(#soundList)]
+        SoundService:PlayLocalSound(sound)    
+    end 
 
     local state = self.activeHitmarkers()
     table.insert(state, props)
