@@ -9,7 +9,7 @@
 
 local DamageLogic = {}
 
-local function zone(partName: string): string
+function DamageLogic.getZone(partName: string): string
 	if partName == "Head" then
 		return "Head"
 	end
@@ -25,7 +25,7 @@ function DamageLogic.getDamage(damageStats: any, hitPartName: string, distance: 
 		return 0
 	end
 
-	local z = damageStats[zone(hitPartName)]
+	local z = damageStats[DamageLogic.getZone(hitPartName)]
 	if typeof(z) == "table" and typeof(z.Min) == "number" and typeof(z.Max) == "number" then
 		local low = math.min(z.Min, z.Max)
 		local high = math.max(z.Min, z.Max)
