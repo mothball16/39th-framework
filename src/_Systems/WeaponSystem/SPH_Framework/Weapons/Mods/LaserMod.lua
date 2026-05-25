@@ -85,8 +85,8 @@ function LaserMod.OnLaserToggled(enabled)
 	end
 
 	local applying = weaponPrefsClient.isApplying
-	if LaserMod.WeaponController and LaserMod.WeaponController.PlayRepSound and not applying then
-		LaserMod.WeaponController.PlayRepSound("Button")
+	if LaserMod.WeaponController and not applying then
+		LaserMod.WeaponController:PlayRepSound("Button")
 	end
 	if not applying then
 		P.PlayerToggleAttachment.send({ attachmentType = 1, enabled = enabled })
@@ -175,9 +175,7 @@ function LaserMod.new(params)
 		end
 	end)
 
-	if InputController and InputController.SetIntentCallback then
-		InputController.SetIntentCallback(Intents.TOGGLE_LASER, LaserMod.OnToggleLaserIntent)
-	end
+	InputController:SetIntentCallback(Intents.TOGGLE_LASER, LaserMod.OnToggleLaserIntent)
 end
 
 local function numLerp(a, b, t)

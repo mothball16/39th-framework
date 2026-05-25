@@ -12,182 +12,200 @@ local config = Access.config
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
 
-local UIController = {
-	PlayerGui = nil,
-	MainUI = nil,
-	ammoUI = nil,
-	
-	ammoCounter = nil,
-	ammoPoolUI = nil,
-	bulletType = nil,
-	fireMode = nil,
-	chambered = nil,
-	attachmentFrame = nil,
-	aimSens = nil,
-	
-	fireModeNames = {"[SAFE]", "[SEMI]", "[AUTO]", "[BURST]", "[UBGL]", "[MANUAL]"},
-	
-	ubglAmmo = nil
+local FIRE_MODE_NAMES = { "[SAFE]", "[SEMI]", "[AUTO]", "[BURST]", "[UBGL]", "[MANUAL]" }
+
+local UIController = {}
+UIController.__index = UIController
+
+type self = {
+	weaponState: WeaponStateModule.WeaponState,
+	state: CharacterStateModule.CharacterState,
+	ammoUI: Frame,
+	ammoCounter: TextLabel,
+	ammoPoolUI: TextLabel,
+	bulletType: TextLabel,
+	fireMode: TextLabel,
+	chambered: TextLabel,
+	attachmentFrame: Frame,
+	aimSens: TextLabel,
+	ubglAmmo: IntValue?,
 }
 
-local weaponState: WeaponStateModule.WeaponState
-local State: CharacterStateModule.CharacterState
+export type UIController = setmetatable<self, typeof(UIController)>
 
-function UIController.splitNumber(number)
+local function splitNumber(number: number): { string }
 	local numberStr = tostring(number)
 	local leadingZeros = ""
 	local restOfNumber = numberStr
 
-	-- Calculate the number of leading zeros needed
 	local totalLength = 3
 	local leadingZerosCount = totalLength - #numberStr
 
-	-- Add leading zeros if necessary
 	if leadingZerosCount > 0 then
 		for i = 1, leadingZerosCount do
 			leadingZeros = leadingZeros .. "0"
 		end
 	end
 
-	-- If the number is longer than 3 digits, take the last 3 digits only
 	if #numberStr > totalLength then
 		restOfNumber = numberStr:sub(-totalLength)
 		leadingZeros = ""
 	end
 
-	return {leadingZeros, restOfNumber}
+	return { leadingZeros, restOfNumber }
 end
 
-function UIController.Initialize(params)
-	UIController.PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
-	UIController.MainUI = UIController.PlayerGui:WaitForChild("SPH_UI")
-	weaponState = params.weaponState
-	State = params.state
-	
-	UIController.ammoUI = UIController.MainUI:WaitForChild("Ammo")
-	UIController.MainUI:WaitForChild("Version").Text = "Spearhead "..config.version
-	
-	UIController.ammoCounter = UIController.ammoUI.AmmoFrame.Frame.MagAmmo
-	UIController.ammoPoolUI = UIController.ammoUI.AmmoFrame.Frame.AmmoPool
-	UIController.bulletType = UIController.ammoUI.Other.AmmoType
-	UIController.fireMode = UIController.ammoUI.FiremodeFrame.Firemode
-	UIController.chambered = UIController.ammoUI.AmmoFrame.Frame.Chambered
-	
-	UIController.attachmentFrame = UIController.ammoUI:WaitForChild("AttachmentFrame")
-	UIController.aimSens = UIController.ammoUI.FiremodeFrame.Sens
+function UIController.new(params: {
+	state: CharacterStateModule.CharacterState,
+	weaponState: WeaponStateModule.WeaponState,
+}): UIController
+	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+	local mainUI = playerGui:WaitForChild("SPH_UI")
+	local ammoUI = mainUI:WaitForChild("Ammo")
+	mainUI:WaitForChild("Version").Text = "Spearhead " .. config.version
 
-	UIController.attachmentFrame.Flashlight.KeybindText.Text = "["..UserInputService:GetStringForKeyCode(config.toggleFlashlight[1]).."]"
-	UIController.attachmentFrame.Laser.KeybindText.Text = "["..UserInputService:GetStringForKeyCode(config.toggleLaser[1]).."]"
+	local ammoCounter = ammoUI.AmmoFrame.Frame.MagAmmo
+	local ammoPoolUI = ammoUI.AmmoFrame.Frame.AmmoPool
+	local bulletType = ammoUI.Other.AmmoType
+	local fireMode = ammoUI.FiremodeFrame.Firemode
+	local chambered = ammoUI.AmmoFrame.Frame.Chambered
+	local attachmentFrame = ammoUI:WaitForChild("AttachmentFrame")
+	local aimSens = ammoUI.FiremodeFrame.Sens
+
+	attachmentFrame.Flashlight.KeybindText.Text =
+		"[" .. UserInputService:GetStringForKeyCode(config.toggleFlashlight[1]) .. "]"
+	attachmentFrame.Laser.KeybindText.Text =
+		"[" .. UserInputService:GetStringForKeyCode(config.toggleLaser[1]) .. "]"
 
 	if UserInputService.TouchEnabled then
-		UIController.ammoUI.Position = UDim2.new(1, -30, 1, -100)
+		ammoUI.Position = UDim2.new(1, -30, 1, -100)
 	end
-	
-	Charm.subscribe(State.equippedTool, UIController.SyncEquippedTool)
-    Charm.subscribe(State.aiming, UIController.SyncAiming)
+
+	local self = setmetatable({
+		weaponState = params.weaponState,
+		state = params.state,
+		ammoUI = ammoUI,
+		ammoCounter = ammoCounter,
+		ammoPoolUI = ammoPoolUI,
+		bulletType = bulletType,
+		fireMode = fireMode,
+		chambered = chambered,
+		attachmentFrame = attachmentFrame,
+		aimSens = aimSens,
+		ubglAmmo = nil,
+	} :: self, UIController)
+
+	Charm.subscribe(self.state.equippedTool, function(tool)
+		self:SyncEquippedTool(tool)
+	end)
+	Charm.subscribe(self.state.aiming, function(aiming)
+		self:SyncAiming(aiming)
+	end)
+
+	return self
 end
 
-function UIController.SyncAiming(aiming)
-    UIController.aimSens.TextTransparency = aiming and 0 or 1
+function UIController.SyncAiming(self: UIController, aiming: boolean)
+	self.aimSens.TextTransparency = aiming and 0 or 1
 end
 
-
-function UIController.SyncEquippedTool(tool)
+function UIController.SyncEquippedTool(self: UIController, tool: Tool?)
 	if tool then
-		local ws = weaponState.wepStats()
+		local ws = self.weaponState.wepStats()
 		if ws and ws.hasUBGL then
-			UIController.ubglAmmo = tool:FindFirstChild("UBGLAmmo")
+			self.ubglAmmo = tool:FindFirstChild("UBGLAmmo")
 		else
-			UIController.ubglAmmo = nil
+			self.ubglAmmo = nil
 		end
-		
+
 		local wepModel = assets.WeaponModels:FindFirstChild(tool.Name)
 		if wepModel and wepModel.Grip:FindFirstChild("Flashlight") then
-			UIController.attachmentFrame.Flashlight.Visible = true
+			self.attachmentFrame.Flashlight.Visible = true
 		end
 		if wepModel and wepModel.Grip:FindFirstChild("Laser") then
-			UIController.attachmentFrame.Laser.Visible = true
+			self.attachmentFrame.Laser.Visible = true
 		end
-		
+
 		if ws and ws.ammoType then
-			UIController.bulletType.Text = ws.ammoType
+			self.bulletType.Text = ws.ammoType
 		end
 	else
-		UIController.ubglAmmo = nil
-		if UIController.attachmentFrame then
-			UIController.attachmentFrame.Laser.Visible = false
-			UIController.attachmentFrame.Flashlight.Visible = false
-		end
+		self.ubglAmmo = nil
+		self.attachmentFrame.Laser.Visible = false
+		self.attachmentFrame.Flashlight.Visible = false
 	end
 end
 
-function UIController.UpdateHeartbeat(dt)
-	local tool = State.equippedTool()
-	local wepStats = weaponState.wepStats()
-	local magAmmo = weaponState.gunAmmo and weaponState.gunAmmo:FindFirstChild("MagAmmo")
-	
-	if not UIController.ammoUI then return end
+function UIController.UpdateHeartbeat(self: UIController, _dt: number)
+	local tool = self.state.equippedTool()
+	local wepStats = self.weaponState.wepStats()
+	local magAmmo = self.weaponState.gunAmmo and self.weaponState.gunAmmo:FindFirstChild("MagAmmo")
 
-	if tool and wepStats and (tool:FindFirstChild("Chambered") or wepStats.openBolt) and magAmmo and not State.dead() then
-		if State.Parts.Humanoid.SeatPart ~= nil and State.Parts.Humanoid.SeatPart.ClassName == "VehicleSeat" then return end
-		UIController.ammoUI.Visible = true
-		
-		local fireModeVal = weaponState.fireMode()
-		
-		if fireModeVal == 4 and wepStats.hasUBGL and UIController.ubglAmmo then
+	if tool and wepStats and (tool:FindFirstChild("Chambered") or wepStats.openBolt) and magAmmo and not self.state.dead() then
+		if self.state.Parts.Humanoid.SeatPart ~= nil and self.state.Parts.Humanoid.SeatPart.ClassName == "VehicleSeat" then
+			return
+		end
+		self.ammoUI.Visible = true
+
+		local fireModeVal = self.weaponState.fireMode()
+
+		if fireModeVal == 4 and wepStats.hasUBGL and self.ubglAmmo then
 			local ubglAmmoPool = tool:FindFirstChild("UBGLAmmoPool")
-			UIController.ammoCounter.Text = UIController.ubglAmmo.Value
-			UIController.ammoPoolUI.Text = "/" .. (ubglAmmoPool and ubglAmmoPool.Value or 0)
-			UIController.bulletType.Text = wepStats.ubgl.ammoType
-			UIController.chambered.TextTransparency = 1
-			UIController.ammoCounter.TextColor3 = Color3.new(1,1,1)
-			if UIController.ubglAmmo.Value > 0 then
-				UIController.ammoCounter.TextColor3 = Color3.new(1,1,1)
+			self.ammoCounter.Text = self.ubglAmmo.Value
+			self.ammoPoolUI.Text = "/" .. ubglAmmoPool.Value
+			self.bulletType.Text = wepStats.ubgl.ammoType
+			self.chambered.TextTransparency = 1
+			if self.ubglAmmo.Value > 0 then
+				self.ammoCounter.TextColor3 = Color3.new(1, 1, 1)
 			else
-				UIController.ammoCounter.TextColor3 = Color3.new(1,0.1,0.1)
+				self.ammoCounter.TextColor3 = Color3.new(1, 0.1, 0.1)
 			end
 		else
 			local chamberedVal = tool:FindFirstChild("Chambered") and tool.Chambered.Value
-			
+
 			if wepStats.operationType == 4 and chamberedVal then
-				local digits = UIController.splitNumber(magAmmo.Value+1)
-				UIController.ammoCounter.Text = [[<font transparency="0.5">]]..digits[1]..[[</font>]]..digits[2]
+				local digits = splitNumber(magAmmo.Value + 1)
+				self.ammoCounter.Text = [[<font transparency="0.5">]] .. digits[1] .. [[</font>]] .. digits[2]
 			else
-				local digits = UIController.splitNumber(magAmmo.Value)
-				UIController.ammoCounter.Text = [[<font transparency="0.5">]]..digits[1]..[[</font>]]..digits[2]
+				local digits = splitNumber(magAmmo.Value)
+				self.ammoCounter.Text = [[<font transparency="0.5">]] .. digits[1] .. [[</font>]] .. digits[2]
 			end
-			
-			UIController.ammoPoolUI.Text = "/"
+
+			self.ammoPoolUI.Text = "/"
 			if wepStats.infiniteAmmo then
-				UIController.ammoPoolUI.Text = UIController.ammoPoolUI.Text.."INF"
+				self.ammoPoolUI.Text = self.ammoPoolUI.Text .. "INF"
 			else
-				local ammoPoolVal = weaponState.gunAmmo.ArcadeAmmoPool.Value
-				local digits = UIController.splitNumber(ammoPoolVal)
-				UIController.ammoPoolUI.Text = UIController.ammoPoolUI.Text..[[<font transparency="0.5">]]..digits[1]..[[</font>]]..digits[2]
+				local ammoPoolVal = self.weaponState.gunAmmo.ArcadeAmmoPool.Value
+				local digits = splitNumber(ammoPoolVal)
+				self.ammoPoolUI.Text = self.ammoPoolUI.Text
+					.. [[<font transparency="0.5">]]
+					.. digits[1]
+					.. [[</font>]]
+					.. digits[2]
 				if ammoPoolVal > 0 then
-					UIController.ammoPoolUI.TextColor3 = Color3.fromRGB(255, 255, 255)
+					self.ammoPoolUI.TextColor3 = Color3.fromRGB(255, 255, 255)
 				else
-					UIController.ammoPoolUI.TextColor3 = Color3.new(1,0,0)				
+					self.ammoPoolUI.TextColor3 = Color3.new(1, 0, 0)
 				end
 			end
-			
+
 			if fireModeVal == 0 then
-				UIController.ammoCounter.TextColor3 = Color3.new(0.5,0.5,0.5)
+				self.ammoCounter.TextColor3 = Color3.new(0.5, 0.5, 0.5)
 			elseif chamberedVal or (wepStats.openBolt and magAmmo.Value > 1) then
 				if wepStats.operationType < 4 then
-					UIController.chambered.TextTransparency = 0
+					self.chambered.TextTransparency = 0
 				end
-				UIController.ammoCounter.TextColor3 = Color3.fromRGB(255,255,255)
+				self.ammoCounter.TextColor3 = Color3.fromRGB(255, 255, 255)
 			else
-				UIController.chambered.TextTransparency = 1
-				UIController.ammoCounter.TextColor3 = Color3.new(1, 0, 0)
+				self.chambered.TextTransparency = 1
+				self.ammoCounter.TextColor3 = Color3.new(1, 0, 0)
 			end
 		end
 
-		UIController.fireMode.Text = UIController.fireModeNames[fireModeVal + 1]
-		UIController.aimSens.Text = string.format("%.2f", weaponState.aimSens())
+		self.fireMode.Text = FIRE_MODE_NAMES[fireModeVal + 1]
+		self.aimSens.Text = string.format("%.2f", self.weaponState.aimSens())
 	else
-		UIController.ammoUI.Visible = false
+		self.ammoUI.Visible = false
 	end
 end
 

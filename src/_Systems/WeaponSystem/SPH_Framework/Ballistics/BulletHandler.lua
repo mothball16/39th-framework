@@ -284,7 +284,12 @@ caster.LengthChanged:Connect(function(cast, segmentOrigin, segmentDirection, len
 	if not cosmeticBulletObject then return end
 
 	-- Suppression effects
-	if suppression and config.suppressionEffects and player ~= cast.UserData.Player and not cast.UserData.Cracked and player:DistanceFromCharacter(cosmeticBulletObject.Position) <= 60 and player:DistanceFromCharacter(cast.UserData.Origin) >= 60 then
+	if suppression and config.suppressionEffects --[[and player ~= cast.UserData.Player ]] 
+	and not cast.UserData.Cracked
+	and player:DistanceFromCharacter(cosmeticBulletObject.Position) <= 60
+	and player:DistanceFromCharacter(cast.UserData.Origin) >= 0
+	then
+		print("suppression")
 		suppression:Fire(cast.UserData.SuppressionLevel)
 		cast.UserData.Cracked = true
 	end

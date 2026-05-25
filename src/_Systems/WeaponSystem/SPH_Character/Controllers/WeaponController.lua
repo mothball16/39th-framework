@@ -24,46 +24,41 @@ local WeaponStateModule = require(Framework.State.WeaponState)
 local AnimationEvents = require(script.Parent.AnimationEvents)
 local Player = game.Players.LocalPlayer
 
-local storageCFrame = CFrame.new(1000000, 0, 0)
+local STORAGE_CFRAME = CFrame.new(1000000, 0, 0)
 local defaultCameraMode = Player.CameraMode
 
-local WC = {
-	holdingM1 = false,
-	cycled = true,
-	canFire = true,
-	canBipod = false,
-	bipodRayIgnore = {},
-	ejected = true,
-	cancelReload = false,
-	bulletsCurrentlyFired = 0,
-	ubglAmmo = nil,
-	sights = {},
-	lastGunModel = nil,
+local WeaponController = {}
+WeaponController.__index = WeaponController
 
-	-- Dependencies
-	player = nil,
-	character = nil,
-	humanoid = nil,
-	humanoidRootPart = nil,
-	camera = nil,
-	viewmodelRig = nil,
-	thirdPersonRig = nil,
-	rigType = nil,
-
-	holosightMod = nil,
-	
-	RefreshViewmodel = nil,
+type self = {
+	state: CharacterStateModule.CharacterState,
+	weaponState: WeaponStateModule.WeaponState,
+	holdingM1: boolean,
+	cycled: boolean,
+	canFire: boolean,
+	canBipod: boolean,
+	bipodRayIgnore: { Instance },
+	ejected: boolean,
+	cancelReload: boolean,
+	bulletsCurrentlyFired: number,
+	ubglAmmo: IntValue?,
+	sights: { Instance },
+	lastGunModel: Instance?,
+	player: Player,
+	character: Model,
+	humanoid: Humanoid,
+	humanoidRootPart: BasePart,
+	camera: Camera,
+	viewmodelRig: Model,
+	thirdPersonRig: Model,
+	holosightMod: any,
+	RefreshViewmodel: () -> (),
 }
 
-local weaponState: WeaponStateModule.WeaponState
-local State: CharacterStateModule.CharacterState
+export type WeaponController = setmetatable<self, typeof(WeaponController)>
 
 local net = Events.GetNamespace()
 local P = net.packets
-
-function WC._applyPersistedWeaponPrefs(weaponName)
-	weaponPrefsClient.applyPersisted(weaponName, State, weaponState, WC)
-end
 
 local function findChildModelWithMainPartChild(gun, partName)
 	if not gun then
@@ -88,54 +83,99 @@ local function findFireSoundInstance(gun)
 	return nil
 end
 
-function WC.Initialize(params)
-	WC.player = params.player
-	WC.character = params.character
-	WC.humanoid = params.humanoid
-	WC.humanoidRootPart = params.humanoidRootPart
-	WC.camera = params.camera
-	WC.viewmodelRig = params.viewmodelRig
-	WC.thirdPersonRig = params.thirdPersonRig
-	WC.rigType = params.rigType
-	weaponState = params.weaponState
-	State = params.state
-	
-	WC.bipodRayIgnore = {params.character}
-	WC.RefreshViewmodel = params.RefreshViewmodel
+function WeaponController._applyPersistedWeaponPrefs(self: WeaponController, weaponName: string)
+	weaponPrefsClient.applyPersisted(weaponName, self.state, self.weaponState, self)
+end
 
-	WC.holosightMod = holosightMod.new(weaponState)
+function WeaponController.new(params: {
+	player: Player,
+	character: Model,
+	humanoid: Humanoid,
+	humanoidRootPart: BasePart,
+	camera: Camera,
+	viewmodelRig: Model,
+	thirdPersonRig: Model,
+	weaponState: WeaponStateModule.WeaponState,
+	state: CharacterStateModule.CharacterState,
+	RefreshViewmodel: () -> (),
+}): WeaponController
+	local self = setmetatable({
+		state = params.state,
+		weaponState = params.weaponState,
+		holdingM1 = false,
+		cycled = true,
+		canFire = true,
+		canBipod = false,
+		bipodRayIgnore = { params.character },
+		ejected = true,
+		cancelReload = false,
+		bulletsCurrentlyFired = 0,
+		ubglAmmo = nil,
+		sights = {},
+		lastGunModel = nil,
+		player = params.player,
+		character = params.character,
+		humanoid = params.humanoid,
+		humanoidRootPart = params.humanoidRootPart,
+		camera = params.camera,
+		viewmodelRig = params.viewmodelRig,
+		thirdPersonRig = params.thirdPersonRig,
+		holosightMod = holosightMod.new(params.weaponState),
+		RefreshViewmodel = params.RefreshViewmodel,
+	} :: self, WeaponController)
 
-	WC.character.ChildAdded:Connect(function(child)
-		WC.Equip(child)
+	self.character.ChildAdded:Connect(function(child)
+		self:Equip(child)
 	end)
-	
-	WC.character.ChildRemoved:Connect(function(child)
-		if State.equippedTool() and child == State.equippedTool() then
-			WC.Unequip(child)
+
+	self.character.ChildRemoved:Connect(function(child)
+		if self.state.equippedTool() and child == self.state.equippedTool() then
+			self:Unequip(child)
 		end
 	end)
 
-	Charm.subscribe(State.aiming, WC.SyncAiming)
-	Charm.subscribe(State.firstPerson, WC.SyncFirstPerson)
-	Charm.subscribe(State.sprinting, WC.SyncSprinting)
+	Charm.subscribe(self.state.aiming, function(aiming)
+		self:SyncAiming(aiming)
+	end)
+	Charm.subscribe(self.state.firstPerson, function(isFirstPerson)
+		self:SyncFirstPerson(isFirstPerson)
+	end)
+	Charm.subscribe(self.state.sprinting, function(sprinting)
+		self:SyncSprinting(sprinting)
+	end)
 
-	Charm.subscribe(weaponState.sightIndex, WC.SyncSightIndex)
-	Charm.subscribe(weaponState.flashlightEnabled, WC.SyncFlashlightEnabled)
-	Charm.subscribe(weaponState.bipodEnabled, WC.SyncBipodEnabled)
-	Charm.subscribe(weaponState.fireMode, WC.SyncFireMode)
-	Charm.subscribe(weaponState.chambering, WC.SyncChambering)
+	Charm.subscribe(self.weaponState.sightIndex, function(index)
+		self:SyncSightIndex(index)
+	end)
+	Charm.subscribe(self.weaponState.flashlightEnabled, function(enabled)
+		self:SyncFlashlightEnabled(enabled)
+	end)
+	Charm.subscribe(self.weaponState.bipodEnabled, function(enabled)
+		self:SyncBipodEnabled(enabled)
+	end)
+	Charm.subscribe(self.weaponState.fireMode, function(mode)
+		self:SyncFireMode(mode)
+	end)
+	Charm.subscribe(self.weaponState.chambering, function(chambering)
+		self:SyncChambering(chambering)
+	end)
 
-	-- Listen for animation events via signals
-	AnimationEvents.KeyframeReached:Connect(WC.OnKeyframeReached)
-	AnimationEvents.AnimationStopped:Connect(WC.OnAnimationStopped)
+	AnimationEvents.KeyframeReached:Connect(function(animName, keyframeName, newAnim, animType)
+		self:OnKeyframeReached(animName, keyframeName, newAnim, animType)
+	end)
+	AnimationEvents.AnimationStopped:Connect(function(animName, newAnim, animType)
+		self:OnAnimationStopped(animName, newAnim, animType)
+	end)
+
+	return self
 end
 
-function WC.UpdateAttachmentsVisibility()
-	if not State.equippedTool() then return end
+function WeaponController.UpdateAttachmentsVisibility(self: WeaponController)
+	if not self.state.equippedTool() then return end
 	
-	local isFirstPerson = State.firstPerson()
-	local flashlightOn = weaponState.flashlightEnabled()
-	local tpModel = WC.GetThirdPersonGunModel()
+	local isFirstPerson = self.state.firstPerson()
+	local flashlightOn = self.weaponState.flashlightEnabled()
+	local tpModel = self:GetThirdPersonGunModel()
 	
 	local function updateLight(model, enabled)
 		if not model then return end
@@ -154,40 +194,40 @@ function WC.UpdateAttachmentsVisibility()
 		end
 	end
 	
-	updateLight(weaponState.gunModel(), flashlightOn and isFirstPerson)
+	updateLight(self.weaponState.gunModel(), flashlightOn and isFirstPerson)
 	updateLight(tpModel, flashlightOn and not isFirstPerson)
 end
 
-function WC.SyncFlashlightEnabled(enabled)
-	if not State.equippedTool() then return end
+function WeaponController.SyncFlashlightEnabled(self: WeaponController, enabled)
+	if not self.state.equippedTool() then return end
 	if weaponPrefsClient.isApplying then
-		WC.UpdateAttachmentsVisibility()
+		self:UpdateAttachmentsVisibility()
 		return
 	end
-	WC.PlayRepSound("Button")
+	self:PlayRepSound("Button")
 		P.PlayerToggleAttachment.send({ attachmentType = 0, enabled = enabled })
-	WC.UpdateAttachmentsVisibility()
+	self:UpdateAttachmentsVisibility()
 end
 
-function WC.SyncBipodEnabled(enabled)
-	if not State.equippedTool() then return end
-	local bipodModel = weaponState.gunModel()
-	local bipMount = findChildModelWithMainPartChild(weaponState.gunModel(), "Bipod")
+function WeaponController.SyncBipodEnabled(self: WeaponController, enabled)
+	if not self.state.equippedTool() then return end
+	local bipodModel = self.weaponState.gunModel()
+	local bipMount = findChildModelWithMainPartChild(self.weaponState.gunModel(), "Bipod")
 	if bipMount then
 		bipodModel = bipMount
 	end
 	if bipodModel then
-		WC.ToggleBipod(bipodModel, enabled)
+		self:ToggleBipod(bipodModel, enabled)
 		if weaponPrefsClient.isApplying then
 			return
 		end
-		WC.PlayRepSound("Switch")
+		self:PlayRepSound("Switch")
 		P.PlayerToggleAttachment.send({ attachmentType = 2, enabled = enabled })
 	end
 end
 
-function WC.SyncFireMode(mode)
-	if not State.equippedTool() then return end
+function WeaponController.SyncFireMode(self: WeaponController, mode)
+	if not self.state.equippedTool() then return end
 	if weaponPrefsClient.isApplying then
 		return
 	end
@@ -195,22 +235,22 @@ function WC.SyncFireMode(mode)
 end
 
 
-function WC.SyncAiming(aiming)
+function WeaponController.SyncAiming(self: WeaponController, aiming)
 	if aiming then
 		-- effects n stuff
-		local ADSMeshEnabled = weaponState.adsMeshEnabledForActiveSight()
-		WC.PlayRepSound("AimUp")
-		WC.ToggleADSMesh(ADSMeshEnabled)
+		local ADSMeshEnabled = self.weaponState.adsMeshEnabledForActiveSight()
+		self:PlayRepSound("AimUp")
+		self:ToggleADSMesh(ADSMeshEnabled)
 		if not config.lockFirstPerson then
 			Player.CameraMode = Enum.CameraMode.LockFirstPerson
 		end
 
 		-- ready the character
-		State.sprinting(false)
-		weaponState.holdStance(Enums.HoldStance.Ready)
+		self.state.sprinting(false)
+		self.weaponState.holdStance(Enums.HoldStance.Ready)
 	else
-		WC.PlayRepSound("AimDown")
-		WC.ToggleADSMesh(false)
+		self:PlayRepSound("AimDown")
+		self:ToggleADSMesh(false)
 
 		if not config.lockFirstPerson then
 			Player.CameraMode = defaultCameraMode
@@ -218,34 +258,34 @@ function WC.SyncAiming(aiming)
 	end
 end
 
-function WC.SyncFirstPerson(isFirstPerson)
-	WC.UpdateAttachmentsVisibility()
+function WeaponController.SyncFirstPerson(self: WeaponController, isFirstPerson)
+	self:UpdateAttachmentsVisibility()
 end
 
-function WC.SyncSprinting(sprinting)
+function WeaponController.SyncSprinting(self: WeaponController, sprinting)
 	if sprinting then
-		State.aiming(false)
-		weaponState.holdStance(Enums.HoldStance.Ready)
-		WC.holdingM1 = false
+		self.state.aiming(false)
+		self.weaponState.holdStance(Enums.HoldStance.Ready)
+		self.holdingM1 = false
 	end
 end
 
-function WC.SyncSightIndex(index)
-	if weaponState:ADSMeshLayerEnabled(index) then
-		WC.ToggleADSMesh(true)
+function WeaponController.SyncSightIndex(self: WeaponController, index)
+	if self.weaponState:ADSMeshLayerEnabled(index) then
+		self:ToggleADSMesh(true)
 	else
-		WC.ToggleADSMesh(false)
+		self:ToggleADSMesh(false)
 	end
 end
 
 
 
-function WC.PlayRepSound(soundName)
-	local ws = weaponState.wepStats()
-	if not State.dead() and ws then
+function WeaponController.PlayRepSound(self: WeaponController, soundName)
+	local ws = self.weaponState.wepStats()
+	if not self.state.dead() and ws then
 		local soundToPlay
-		local gm = weaponState.gunModel()
-		if weaponState.ubglActive() then
+		local gm = self.weaponState.gunModel()
+		if self.weaponState.ubglActive() then
 			soundToPlay = gm.Grip:FindFirstChild("UBGL_" .. soundName)
 			if not soundToPlay then
 				soundToPlay = gm.Grip:FindFirstChild(soundName)
@@ -260,68 +300,68 @@ function WC.PlayRepSound(soundName)
 			end
 		end
 
-		if soundToPlay and State.equippedTool() then
-			if State.firstPerson() then
+		if soundToPlay and self.state.equippedTool() then
+			if self.state.firstPerson() then
 				soundToPlay:Play()
 			else
 				local clonedSound = soundToPlay:Clone()
-				clonedSound.Parent = WC.humanoidRootPart
+				clonedSound.Parent = self.humanoidRootPart
 				clonedSound:Play()
 				Debris:AddItem(clonedSound, clonedSound.TimeLength)
 			end
-			P.PlaySound.send({ soundName = soundName, firstPerson = State.firstPerson() })
+			P.PlaySound.send({ soundName = soundName, firstPerson = self.state.firstPerson() })
 		end
 	end
 end
 
-function WC.GetCurrentWepStats()
-	if weaponState.ubglActive() then
-		local ws = weaponState.wepStats()
+function WeaponController.GetCurrentWepStats(self: WeaponController)
+	if self.weaponState.ubglActive() then
+		local ws = self.weaponState.wepStats()
 		return ws and ws.getStatsForMode(4)
 	else
-		return weaponState.wepStats()
+		return self.weaponState.wepStats()
 	end
 end
 
-function WC.IsLoaded()
-	local currentStats = WC.GetCurrentWepStats()
-	if weaponState.ubglActive() then
-		return WC.ubglAmmo and WC.ubglAmmo.Value > 0
+function WeaponController.IsLoaded(self: WeaponController)
+	local currentStats = self:GetCurrentWepStats()
+	if self.weaponState.ubglActive() then
+		return self.ubglAmmo and self.ubglAmmo.Value > 0
 	else
-		return not currentStats.openBolt and State.equippedTool().Chambered.Value or currentStats.openBolt and weaponState.gunAmmo.MagAmmo.Value > 0
+		return not currentStats.openBolt and self.state.equippedTool().Chambered.Value or currentStats.openBolt and self.weaponState.gunAmmo.MagAmmo.Value > 0
 	end
 end
 
-function WC.GetMuzzlePoint(gunModel)
-	if weaponState.ubglActive() then
+function WeaponController.GetMuzzlePoint(self: WeaponController, gunModel)
+	if self.weaponState.ubglActive() then
 		local ubglMuzzle = gunModel.Grip:FindFirstChild("UBGLMuzzle")
 		if ubglMuzzle then return ubglMuzzle end
 	end
 	return gunModel.Grip.Muzzle
 end
 
-function WC.MoveBolt(direction:CFrame, silent:boolean)
-	local ws = weaponState.wepStats()
-	bulletHandler.MoveBolt(weaponState.gunModel(), ws, direction, weaponState.gunAmmo.MagAmmo.Value)
-	bulletHandler.MoveBolt(WC.thirdPersonRig.Weapon:FindFirstChildWhichIsA("Model"), ws, direction, weaponState.gunAmmo.MagAmmo.Value)
-	if weaponState.gunAmmo.MagAmmo.Value <= 0 and not silent then
-		WC.PlayRepSound("Empty")
+function WeaponController.MoveBolt(self: WeaponController, direction:CFrame, silent:boolean)
+	local ws = self.weaponState.wepStats()
+	bulletHandler.MoveBolt(self.weaponState.gunModel(), ws, direction, self.weaponState.gunAmmo.MagAmmo.Value)
+	bulletHandler.MoveBolt(self.thirdPersonRig.Weapon:FindFirstChildWhichIsA("Model"), ws, direction, self.weaponState.gunAmmo.MagAmmo.Value)
+	if self.weaponState.gunAmmo.MagAmmo.Value <= 0 and not silent then
+		self:PlayRepSound("Empty")
 	end
 		P.MoveBolt.send({
 			direction = direction,
-			magAmmo = weaponState.gunAmmo.MagAmmo.Value
+			magAmmo = self.weaponState.gunAmmo.MagAmmo.Value
 		})
 end
 
-function WC.ToggleADSMesh(toggle)
-	if not weaponState.hasAdsMeshLayers() then
+function WeaponController.ToggleADSMesh(self: WeaponController, toggle)
+	if not self.weaponState.hasAdsMeshLayers() then
 		return
 	end
 
-	--local ws = weaponState.wepStats()
+	--local ws = self.weaponState.wepStats()
 	--local aimingTime = (ws and ws.aimTime and ws.aimTime / 20) or 0.2
 
-	for _, child in ipairs(weaponState.gunModel():GetDescendants()) do
+	for _, child in ipairs(self.weaponState.gunModel():GetDescendants()) do
 		if child.Name == "REG" then
 			child.Transparency = toggle and 1 or 0
 		elseif child.Name == "ADS" then
@@ -330,7 +370,7 @@ function WC.ToggleADSMesh(toggle)
 	end
 end
 
-function WC.ToggleBipod(bipodModel, toggle)
+function WeaponController.ToggleBipod(self: WeaponController, bipodModel, toggle)
 	for _, bipObject in ipairs(bipodModel:GetChildren()) do
 		if bipObject.Name == "Bipod_On" then
 			bipObject.Transparency = toggle and 0 or 1
@@ -340,8 +380,8 @@ function WC.ToggleBipod(bipodModel, toggle)
 	end
 end
 
-function WC.SetProjectileTransparency(model, transparency)
-	local ws = weaponState.wepStats()
+function WeaponController.SetProjectileTransparency(self: WeaponController, model, transparency)
+	local ws = self.weaponState.wepStats()
 	if not ws or ws.projectile == "Bullet" or not model then return end
 	local projectile = model:FindFirstChild(ws.projectile)
 	if projectile then
@@ -352,25 +392,25 @@ function WC.SetProjectileTransparency(model, transparency)
 	end
 end
 
-function WC.EjectShell()
-	WC.ejected = true
-	local ws = weaponState.wepStats()
+function WeaponController.EjectShell(self: WeaponController)
+	self.ejected = true
+	local ws = self.weaponState.wepStats()
 	if ws and ws.shellEject then
-		if State.firstPerson() then
-			shellEjection.ejectShell(WC.player, State.equippedTool(), weaponState.gunModel())
+		if self.state.firstPerson() then
+			shellEjection.ejectShell(self.player, self.state.equippedTool(), self.weaponState.gunModel())
 		else
-			shellEjection.ejectShell(WC.player, State.equippedTool(), WC.thirdPersonRig.Weapon:FindFirstChildWhichIsA("Model"))
+			shellEjection.ejectShell(self.player, self.state.equippedTool(), self.thirdPersonRig.Weapon:FindFirstChildWhichIsA("Model"))
 		end
 	end
 end
 
-function WC.GetThirdPersonGunModel()
-	return WC.thirdPersonRig.Weapon:FindFirstChildWhichIsA("Model")
+function WeaponController.GetThirdPersonGunModel(self: WeaponController)
+	return self.thirdPersonRig.Weapon:FindFirstChildWhichIsA("Model")
 end
 
-function WC.SwitchFireMode()
-	local mode = weaponState.fireMode()
-	local ws = weaponState.wepStats()
+function WeaponController.SwitchFireMode(self: WeaponController)
+	local mode = self.weaponState.fireMode()
+	local ws = self.weaponState.wepStats()
 	if not ws then
 		return
 	end
@@ -381,71 +421,71 @@ function WC.SwitchFireMode()
 			break
 		end
 	until ws.fireSwitch[mode]
-	weaponState.fireMode(mode)
+	self.weaponState.fireMode(mode)
 end
 
 
-function WC.Unequip(tool)
-	weaponState.equipped(false)
-	weaponState.equipping(false)
-	WC.viewmodelRig.AnimBase.CFrame = storageCFrame
-	WC.lastGunModel = weaponState.gunModel()
+function WeaponController.Unequip(self: WeaponController, tool)
+	self.weaponState.equipped(false)
+	self.weaponState.equipping(false)
+	self.viewmodelRig.AnimBase.CFrame = STORAGE_CFRAME
+	self.lastGunModel = self.weaponState.gunModel()
 	
 		P.SwitchWeapon.send({ tool = nil })
-	if tool == State.equippedTool() then
+	if tool == self.state.equippedTool() then
 		weaponPrefsClient.set(tool.Name, {
-			laserEnabled = weaponState.laserEnabled(),
-			flashlightEnabled = weaponState.flashlightEnabled(),
-			bipodEnabled = weaponState.bipodEnabled(),
-			fireMode = weaponState.fireMode(),
-			aimSens = weaponState.aimSens(),
-			sightIndex = weaponState.sightIndex(),
+			laserEnabled = self.weaponState.laserEnabled(),
+			flashlightEnabled = self.weaponState.flashlightEnabled(),
+			bipodEnabled = self.weaponState.bipodEnabled(),
+			fireMode = self.weaponState.fireMode(),
+			aimSens = self.weaponState.aimSens(),
+			sightIndex = self.weaponState.sightIndex(),
 		})
-		State.equippedTool(nil)
-		weaponState:Reset()
+		self.state.equippedTool(nil)
+		self.weaponState:Reset()
 	end
 	UserInputService.MouseIconEnabled = true
 	AnimationEvents.StopAllRequested:Fire()
 
 	if config.lockFirstPerson then
-		WC.player.CameraMode = Enum.CameraMode.Classic
+		self.player.CameraMode = Enum.CameraMode.Classic
 	end
 
-	WC.sights = {}
+	self.sights = {}
 end
 
-function WC.Equip(newChild)
+function WeaponController.Equip(self: WeaponController, newChild)
 	if
 		not newChild:FindFirstChild("SPH_Weapon")
 		or (newChild:FindFirstChild("SPH_Weapon") and not assets.WeaponModels:FindFirstChild(newChild.Name))
-		or State.dead()
-		or (WC.humanoid.Sit and not State.vehicleSeated())
+		or self.state.dead()
+		or (self.humanoid.Sit and not self.state.vehicleSeated())
 	then
 		return
 	end
 
 	UserInputService.MouseIconEnabled = false
 
-	weaponState:Reset()
-	weaponState.equipping(true)
+	self.weaponState:Reset()
+	self.weaponState.equipping(true)
 
-	State.equippedTool(newChild)
-	weaponState.wepStats(weaponStatLocator.getWeaponStats(State.equippedTool().SPH_Weapon))
+	self.state.equippedTool(newChild)
+	self.weaponState.wepStats(weaponStatLocator.getWeaponStats(self.state.equippedTool().SPH_Weapon))
 
-	WC.cycled = true
+	self.cycled = true
 		P.SwitchWeapon.send({ tool = newChild })
 
 
-	local ws = weaponState.wepStats()
+	local ws = self.weaponState.wepStats()
 	if ws and ws.PunchSpeed then
-		weaponState.RecoilPos.s = ws.PunchSpeed
-		weaponState.RecoilDir.s = ws.PunchSpeed
-		weaponState.RecoilUp.s = ws.PunchSpeed
+		self.weaponState.RecoilPos.s = ws.PunchSpeed
+		self.weaponState.RecoilDir.s = ws.PunchSpeed
+		self.weaponState.RecoilUp.s = ws.PunchSpeed
 	end
 	if ws and ws.PunchDamper then
-		weaponState.RecoilPos.d = ws.PunchDamper
-		weaponState.RecoilDir.d = ws.PunchDamper
-		weaponState.RecoilUp.d = ws.PunchDamper
+		self.weaponState.RecoilPos.d = ws.PunchDamper
+		self.weaponState.RecoilDir.d = ws.PunchDamper
+		self.weaponState.RecoilUp.d = ws.PunchDamper
 	end
 
 
@@ -458,7 +498,7 @@ function WC.Equip(newChild)
 		ws.magType = 1
 	end
 
-	local oldGun = WC.viewmodelRig.Weapon:FindFirstChildWhichIsA("Model")
+	local oldGun = self.viewmodelRig.Weapon:FindFirstChildWhichIsA("Model")
 	if oldGun then
 		oldGun:Destroy()
 	end
@@ -477,43 +517,43 @@ function WC.Equip(newChild)
 	end
 
 	for _, part in ipairs(gun:GetDescendants()) do
-		if part.Name == "SightReticle" then table.insert(WC.sights, part) end
+		if part.Name == "SightReticle" then table.insert(self.sights, part) end
 	end
 
-	gun.Parent = WC.viewmodelRig.Weapon
-	weaponState.gunModel(gun)
+	gun.Parent = self.viewmodelRig.Weapon
+	self.weaponState.gunModel(gun)
 
-	weaponState.maid:GiveTask(weldMod.BlankM6D(WC.viewmodelRig.AnimBase, gun.Grip))
+	self.weaponState.maid:GiveTask(weldMod.BlankM6D(self.viewmodelRig.AnimBase, gun.Grip))
 
-	if State.firstPerson() then
-		WC.RefreshViewmodel()
+	if self.state.firstPerson() then
+		self.RefreshViewmodel()
 	end
 
 	AnimationEvents.WeaponEquipRequested:Fire()
 	AnimationEvents.WeaponIdleRequested:Fire()
 
 	if not ws then return end
-	if ws.openBolt or not State.equippedTool().Chambered.Value then
-		WC.SetProjectileTransparency(weaponState.gunModel(), 1)
+	if ws.openBolt or not self.state.equippedTool().Chambered.Value then
+		self:SetProjectileTransparency(self.weaponState.gunModel(), 1)
 	end
 
-	weaponState.gunAmmo = State.equippedTool():WaitForChild("Ammo")
-	weaponState.localAmmo(weaponState.gunAmmo.MagAmmo.Value)
+	self.weaponState.gunAmmo = self.state.equippedTool():WaitForChild("Ammo")
+	self.weaponState.localAmmo(self.weaponState.gunAmmo.MagAmmo.Value)
 	if ws.hasUBGL then
-		WC.ubglAmmo = newChild:FindFirstChild("UBGLAmmo")
+		self.ubglAmmo = newChild:FindFirstChild("UBGLAmmo")
 		local ubglAmmoPool = newChild:FindFirstChild("UBGLAmmoPool")
-		if not WC.ubglAmmo then
-			WC.ubglAmmo = Instance.new("IntValue", newChild)
-			WC.ubglAmmo.Name = "UBGLAmmo"
+		if not self.ubglAmmo then
+			self.ubglAmmo = Instance.new("IntValue", newChild)
+			self.ubglAmmo.Name = "UBGLAmmo"
 			local totalStartAmmo = ws.ubgl.startAmmoPool or 6
-			WC.ubglAmmo.Value = (totalStartAmmo > 0 and (not ubglAmmoPool or ubglAmmoPool.Value > 0)) and 1 or 0
+			self.ubglAmmo.Value = (totalStartAmmo > 0 and (not ubglAmmoPool or ubglAmmoPool.Value > 0)) and 1 or 0
 		end
 		if not ubglAmmoPool then
 			ubglAmmoPool = Instance.new("DoubleConstrainedValue", newChild)
 			ubglAmmoPool.Name = "UBGLAmmoPool"
 			ubglAmmoPool.MaxValue = ws.ubgl.maxAmmoPool or 12
 			local totalStartAmmo = ws.ubgl.startAmmoPool or 6
-			ubglAmmoPool.Value = totalStartAmmo > 0 and (totalStartAmmo - WC.ubglAmmo.Value) or 0
+			ubglAmmoPool.Value = totalStartAmmo > 0 and (totalStartAmmo - self.ubglAmmo.Value) or 0
 		end
 
 		if ws.ubgl.reloadAnim then
@@ -521,147 +561,147 @@ function WC.Equip(newChild)
 			AnimationEvents.PlayAnimationRequested:Fire(ws.ubgl.reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
 		end
 	else
-		WC.ubglAmmo = nil
+		self.ubglAmmo = nil
 	end
 
-	if not State.equippedTool().BoltReady.Value then
-		WC.MoveBolt(ws.boltDist, true)
+	if not self.state.equippedTool().BoltReady.Value then
+		self:MoveBolt(ws.boltDist, true)
 	end
 
-	if config.lockFirstPerson then WC.player.CameraMode = Enum.CameraMode.LockFirstPerson end
-	weaponState.fireMode(State.equippedTool().FireMode.Value)
-	weaponState.holdStance(Enums.HoldStance.Ready)
+	if config.lockFirstPerson then self.player.CameraMode = Enum.CameraMode.LockFirstPerson end
+	self.weaponState.fireMode(self.state.equippedTool().FireMode.Value)
+	self.weaponState.holdStance(Enums.HoldStance.Ready)
 
-	WC._applyPersistedWeaponPrefs(newChild.Name)
-	weaponState.equipped(true)
+	self:_applyPersistedWeaponPrefs(newChild.Name)
+	self.weaponState.equipped(true)
 
-	task.delay(1, function() WC.lastGunModel = newChild end)
+	task.delay(1, function() self.lastGunModel = newChild end)
 end
 
-function WC.OnTriggerIntent(inputState, inputObject)
+function WeaponController.OnTriggerIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then
-		WC.cancelReload = true
-		if not (State.sprinting() or weaponState.reloading()) then
-			WC.holdingM1 = true
-			if not WC.IsLoaded() and not (State.equippedTool():GetAttribute("FireMode") == Enums.FireModes.Manual and State.equippedTool():GetAttribute("MagAmmo") > 0) then
-				WC.PlayRepSound("Click")
+		self.cancelReload = true
+		if not (self.state.sprinting() or self.weaponState.reloading()) then
+			self.holdingM1 = true
+			if not self:IsLoaded() and not (self.state.equippedTool():GetAttribute("FireMode") == Enums.FireModes.Manual and self.state.equippedTool():GetAttribute("MagAmmo") > 0) then
+				self:PlayRepSound("Click")
 			end
 		end
 	else
-		WC.holdingM1 = false
-		WC.canFire = true
-		WC.bulletsCurrentlyFired = 0
+		self.holdingM1 = false
+		self.canFire = true
+		self.bulletsCurrentlyFired = 0
 	end
 end
 
-function WC.OnDropGunIntent(inputState, inputObject)
+function WeaponController.OnDropGunIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then
-		WC.Unequip(State.equippedTool())
+		self:Unequip(self.state.equippedTool())
 		P.PlayerDropGun.send({ _ = 0 })
 	end
 end
 
-function WC.OnReloadIntent(inputState, inputObject)
+function WeaponController.OnReloadIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
-	if inputState ~= inputBegan or not weaponState.canManipulate() or not WC.cycled then return end
-	weaponState.holdStance(Enums.HoldStance.Ready)
-	State.aiming(false)
-	if weaponState.ubglActive() then
-		local ubglAmmoPool = State.equippedTool():FindFirstChild("UBGLAmmoPool")
-		if WC.ubglAmmo and WC.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
-			WC.cancelReload = false
-			AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
+	if inputState ~= inputBegan or not self.weaponState.canManipulate() or not self.cycled then return end
+	self.weaponState.holdStance(Enums.HoldStance.Ready)
+	self.state.aiming(false)
+	if self.weaponState.ubglActive() then
+		local ubglAmmoPool = self.state.equippedTool():FindFirstChild("UBGLAmmoPool")
+		if self.ubglAmmo and self.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
+			self.cancelReload = false
+			AnimationEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
 		end
 	else
-		local ws = weaponState.wepStats()
+		local ws = self.weaponState.wepStats()
 		if not ws then
 			return
 		end
-		if ws.infiniteAmmo or weaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
-			if (ws.openBolt and weaponState.gunAmmo.MagAmmo.Value < weaponState.gunAmmo.MagAmmo.MaxValue) then
-				WC.cancelReload = false
-				AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
+		if ws.infiniteAmmo or self.weaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
+			if (ws.openBolt and self.weaponState.gunAmmo.MagAmmo.Value < self.weaponState.gunAmmo.MagAmmo.MaxValue) then
+				self.cancelReload = false
+				AnimationEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
 			else
-				if (ws.operationType == 4 and State.equippedTool().Chambered.Value)
-					or (ws.operationType == 3 and weaponState.gunAmmo.MagAmmo.Value + 1 >= weaponState.gunAmmo.MagAmmo.MaxValue)
-					or (ws.operationType == 2 and weaponState.gunAmmo.MagAmmo.Value >= weaponState.gunAmmo.MagAmmo.MaxValue) then
+				if (ws.operationType == 4 and self.state.equippedTool().Chambered.Value)
+					or (ws.operationType == 3 and self.weaponState.gunAmmo.MagAmmo.Value + 1 >= self.weaponState.gunAmmo.MagAmmo.MaxValue)
+					or (ws.operationType == 2 and self.weaponState.gunAmmo.MagAmmo.Value >= self.weaponState.gunAmmo.MagAmmo.MaxValue) then
 					return
 				end
-				WC.cancelReload = false
-				AnimationEvents.ReloadRequested:Fire(WC.lastGunModel and WC.lastGunModel.Name)
+				self.cancelReload = false
+				AnimationEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
 			end
 		end
 	end
 	
 end
 
-function WC.OnChamberIntent(inputState, inputObject)
+function WeaponController.OnChamberIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
-	if inputState == inputBegan and weaponState.canManipulate() and WC.cycled then
-		weaponState.chambering(true)
+	if inputState == inputBegan and self.weaponState.canManipulate() and self.cycled then
+		self.weaponState.chambering(true)
 	end
 end
 
-function WC.SyncChambering(chambering)
+function WeaponController.SyncChambering(self: WeaponController, chambering)
 	if chambering then
-		weaponState.holdStance(Enums.HoldStance.Ready)
-		State.aiming(false)
+		self.weaponState.holdStance(Enums.HoldStance.Ready)
+		self.state.aiming(false)
 	end
 end
 
-function WC.OnSwitchSightsIntent(inputState, inputObject)
+function WeaponController.OnSwitchSightsIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
-	if inputState == inputBegan and State.aiming() and weaponState.gunModel():FindFirstChild("AimPart2") then
-		local tempIndex = weaponState.sightIndex() + 1
-		if weaponState.gunModel():FindFirstChild("AimPart"..tempIndex) then
-			weaponState.sightIndex(tempIndex)
-			WC.PlayRepSound("AimUp")
+	if inputState == inputBegan and self.state.aiming() and self.weaponState.gunModel():FindFirstChild("AimPart2") then
+		local tempIndex = self.weaponState.sightIndex() + 1
+		if self.weaponState.gunModel():FindFirstChild("AimPart"..tempIndex) then
+			self.weaponState.sightIndex(tempIndex)
+			self:PlayRepSound("AimUp")
 		else
-			weaponState.sightIndex(1)
-			WC.PlayRepSound("AimDown")
+			self.weaponState.sightIndex(1)
+			self:PlayRepSound("AimDown")
 		end
 	end
 end
 
-function WC.OnSwitchFireModeIntent(inputState, inputObject)
+function WeaponController.OnSwitchFireModeIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then
 		AnimationEvents.SwitchFireModeAnimRequested:Fire()
 	end
 end
 
-function WC.OnToggleFlashlightIntent(inputState, inputObject)
+function WeaponController.OnToggleFlashlightIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then
-		weaponState.flashlightEnabled(not weaponState.flashlightEnabled())
+		self.weaponState.flashlightEnabled(not self.weaponState.flashlightEnabled())
 	end
 end
 
-function WC.OnAimIntent(inputState, inputObject)
+function WeaponController.OnAimIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = inputState == Enum.UserInputState.Begin
 	if not UserInputService.TouchEnabled and not config.toggleAiming then -- Hold aiming
 		if inputBegan
-			and State.firstPerson()
-			and not State.freeLook()
-			and weaponState.canTrackAimInput() then
-			weaponState.aimHeld(true)
-			State.aiming(true)
+			and self.state.firstPerson()
+			and not self.state.freeLook()
+			and self.weaponState.canTrackAimInput() then
+			self.weaponState.aimHeld(true)
+			self.state.aiming(true)
 		else
-			weaponState.aimHeld(false)
-			State.aiming(false)
+			self.weaponState.aimHeld(false)
+			self.state.aiming(false)
 		end
 	elseif inputBegan then -- Mobile and toggle aiming
-		if State.firstPerson()
-		and not State.freeLook()
-		and weaponState.canTrackAimInput()
-		and not State.aiming() then
-			weaponState.aimHeld(true)
-			State.aiming(true)
+		if self.state.firstPerson()
+		and not self.state.freeLook()
+		and self.weaponState.canTrackAimInput()
+		and not self.state.aiming() then
+			self.weaponState.aimHeld(true)
+			self.state.aiming(true)
 		else
-			weaponState.aimHeld(false)
-			State.aiming(false)
+			self.weaponState.aimHeld(false)
+			self.state.aiming(false)
 		end
 	end
 end
@@ -705,7 +745,7 @@ end
 
 local SP = require(Framework.Weapons.Spring.Default)
 
-function WC.PerformRecoil(wepStats)
+function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 	coroutine.wrap(function()
 		local vr, hr, vP, hP, dP
 
@@ -713,7 +753,7 @@ function WC.PerformRecoil(wepStats)
 		local HRecoil = RANDF(wepStats.HRecoil[1], wepStats.HRecoil[2])/1000
 		local finalRecoilPunch = wepStats.RecoilPunch
 		
-		-- if State.aiming() then
+		-- if self.state.aiming() then
 		-- 	VRecoil /= wepStats.AimRecoilReduction
 		-- 	HRecoil /= wepStats.AimRecoilReduction
 		-- end
@@ -726,7 +766,7 @@ function WC.PerformRecoil(wepStats)
 		dP = PunchCalc(wepStats.DPunchBase, wepStats.DPunchDir,"Side")
 
 
-		if State.aiming() then
+		if self.state.aiming() then
 			vr /= wepStats.AimRecoilReduction
 			hr /= wepStats.AimRecoilReduction
 			vP /= wepStats.AimRotationalPunchReduction
@@ -735,7 +775,7 @@ function WC.PerformRecoil(wepStats)
 			finalRecoilPunch /= wepStats.AimBackwardPunchReduction
 		end
 
-		if weaponState.bipodEnabled() then
+		if self.weaponState.bipodEnabled() then
 			vr  = vr/3
 			hr = hr/3
 
@@ -744,21 +784,21 @@ function WC.PerformRecoil(wepStats)
 			hP = hP/2.5
 			dP = dP/2.5
 
-			weaponState.RecoilCF = RecoilModule.BipodRecoil(
-				weaponState.RecoilCF, finalRecoilPunch, weaponState.RecoilFactor,vP,hP,dP)
+			self.weaponState.RecoilCF = RecoilModule.BipodRecoil(
+				self.weaponState.RecoilCF, finalRecoilPunch, self.weaponState.RecoilFactor,vP,hP,dP)
 		else
-			weaponState.RecoilCF = RecoilModule.Recoil(
-				weaponState.RecoilCF, finalRecoilPunch, weaponState.RecoilFactor,vP,hP,dP)
+			self.weaponState.RecoilCF = RecoilModule.Recoil(
+				self.weaponState.RecoilCF, finalRecoilPunch, self.weaponState.RecoilFactor,vP,hP,dP)
 		end
 
-		weaponState.RecoilPos.t = weaponState.RecoilCF.Position
-		weaponState.RecoilDir.t = weaponState.RecoilCF.LookVector
-		weaponState.RecoilUp.t = weaponState.RecoilCF.UpVector
+		self.weaponState.RecoilPos.t = self.weaponState.RecoilCF.Position
+		self.weaponState.RecoilDir.t = self.weaponState.RecoilCF.LookVector
+		self.weaponState.RecoilUp.t = self.weaponState.RecoilCF.UpVector
 		
-		weaponState.CameraSpring.t = weaponState.CameraSpring.t + Vector3.new(vr, hr, 0)
-		weaponState.CameraSpring.p = weaponState.CameraSpring.p + Vector3.new(vr, hr, 0) * 0.5
+		self.weaponState.CameraSpring.t = self.weaponState.CameraSpring.t + Vector3.new(vr, hr, 0)
+		self.weaponState.CameraSpring.p = self.weaponState.CameraSpring.p + Vector3.new(vr, hr, 0) * 0.5
 		local duration = 0.25 --ServerConfig.AimRecoverDuration
-		task.wait(duration/5 * weaponState.CameraSpring.s / SP.cs)
+		task.wait(duration/5 * self.weaponState.CameraSpring.s / SP.cs)
 		--cwait(duration/5 * CameraSpring.s / SP.cs)
 		local t = 0
 		if wepStats.AimRecoverDuration then
@@ -767,7 +807,7 @@ function WC.PerformRecoil(wepStats)
 		while t <= duration do
 			local step = RunService.Heartbeat:Wait()
 			t = t + step
-			weaponState.CameraSpring.t = weaponState.CameraSpring.t - Vector3.new(vr, hr, 0) 
+			self.weaponState.CameraSpring.t = self.weaponState.CameraSpring.t - Vector3.new(vr, hr, 0) 
 				* wepStats.AimRecover * step / duration
 		end
 	end)()
@@ -776,62 +816,62 @@ end
 
 
 
-function WC.UpdateHeartbeat(dt)
-	if not State.equippedTool() or State.dead() then return end
-	local ws = weaponState.wepStats()
+function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
+	if not self.state.equippedTool() or self.state.dead() then return end
+	local ws = self.weaponState.wepStats()
 	if not ws then
 		return
 	end
 	
 	-- General state checks: prevents execution if sprinting, reloading, chambering, or not holding M1
-	if State.sprinting() or weaponState.reloading() or weaponState.chambering() then return end
-	if not WC.holdingM1 or not WC.cycled then return end
+	if self.state.sprinting() or self.weaponState.reloading() or self.weaponState.chambering() then return end
+	if not self.holdingM1 or not self.cycled then return end
 
-	local freeLook = State.freeLook()
-	local blocked = weaponState.blocked()
-	local fireMode = weaponState.fireMode()
+	local freeLook = self.state.freeLook()
+	local blocked = self.weaponState.blocked()
+	local fireMode = self.weaponState.fireMode()
 
-	local canFireShot = WC.canFire
+	local canFireShot = self.canFire
 		and not blocked
-		and weaponState.holdStance() == Enums.HoldStance.Ready
-		and WC.IsLoaded()
+		and self.weaponState.holdStance() == Enums.HoldStance.Ready
+		and self:IsLoaded()
 		and fireMode > 0
 		and (config.fireWithFreelook or not freeLook)
-		and not weaponState.equipping()
+		and not self.weaponState.equipping()
 
 	if canFireShot then
-		if not State.firstPerson() and not config.thirdPersonFiring then return end
+		if not self.state.firstPerson() and not config.thirdPersonFiring then return end
 
-		local currentStats = WC.GetCurrentWepStats()
+		local currentStats = self:GetCurrentWepStats()
 		AnimationEvents.FireAnimRequested:Fire()
-		WC.PerformRecoil(currentStats)
+		self:PerformRecoil(currentStats)
 
-		WC.bulletsCurrentlyFired += 1
-		WC.ejected = false
+		self.bulletsCurrentlyFired += 1
+		self.ejected = false
 
-		if fireMode == Enums.FireModes.Semi or fireMode == Enums.FireModes.Manual or fireMode == Enums.FireModes.UBGL or (fireMode == Enums.FireModes.Burst and WC.bulletsCurrentlyFired >= currentStats.burstNumber) then
-			WC.canFire = false
-			WC.holdingM1 = false
+		if fireMode == Enums.FireModes.Semi or fireMode == Enums.FireModes.Manual or fireMode == Enums.FireModes.UBGL or (fireMode == Enums.FireModes.Burst and self.bulletsCurrentlyFired >= currentStats.burstNumber) then
+			self.canFire = false
+			self.holdingM1 = false
 		end
 		
-		WC.cycled = false
-		local curModel = weaponState.gunModel()
+		self.cycled = false
+		local curModel = self.weaponState.gunModel()
 
 		if fireMode ~= Enums.FireModes.Manual and fireMode ~= Enums.FireModes.UBGL then
-			WC.EjectShell()
+			self:EjectShell()
 		end
 
 		if fireMode ~= Enums.FireModes.UBGL then
-			local bulletHandlerPart = ws.bulletHandler and weaponState.gunModel():FindFirstChild(ws.bulletHolder)
+			local bulletHandlerPart = ws.bulletHandler and self.weaponState.gunModel():FindFirstChild(ws.bulletHolder)
 			if bulletHandlerPart then
-				local bulletNumber = weaponState.gunAmmo.MagAmmo.MaxValue - (weaponState.gunAmmo.MagAmmo.Value - 1)
+				local bulletNumber = self.weaponState.gunAmmo.MagAmmo.MaxValue - (self.weaponState.gunAmmo.MagAmmo.Value - 1)
 				local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
 				if tempBulletPart then tempBulletPart.Transparency = 1 end
 			end
 		end
 
-		local tempGunModel = weaponState.gunModel()
-		if not State.firstPerson() then tempGunModel = WC.GetThirdPersonGunModel() end
+		local tempGunModel = self.weaponState.gunModel()
+		if not self.state.firstPerson() then tempGunModel = self:GetThirdPersonGunModel() end
 
 		local muzzleName = (fireMode == Enums.FireModes.UBGL) and "UBGLMuzzle" or "Muzzle"
 		local muCh = ws.muzzleChance
@@ -840,20 +880,20 @@ function WC.UpdateHeartbeat(dt)
 			tempGunModel = muzzleHost
 		end
 
-		bulletHandler.FireFX(WC.player, tempGunModel, muzzleName, muCh, fireMode == Enums.FireModes.UBGL)
-		WC.PlayRepSound("Fire")
+		bulletHandler.FireFX(self.player, tempGunModel, muzzleName, muCh, fireMode == Enums.FireModes.UBGL)
+		self:PlayRepSound("Fire")
 
 		if fireMode ~= Enums.FireModes.UBGL then
-			WC.MoveBolt(currentStats.boltDist)
+			self:MoveBolt(currentStats.boltDist)
 		end
 
 		local shotCount = (currentStats.shotgun and currentStats.shotgunPellets) or 1
 		for _ = 1, shotCount do
 			local bulletOrigin, bulletDirection
-		local tempSpread = weaponState.Spread * 100
+		local tempSpread = self.weaponState.Spread * 100
 			local spreadCFrame = CFrame.Angles(math.rad(math.random(-tempSpread, tempSpread) / 100), math.rad(math.random(-tempSpread, tempSpread) / 100), 0)
 
-			local muzzlePoint = WC.GetMuzzlePoint(State.firstPerson() and curModel or WC.GetThirdPersonGunModel())
+			local muzzlePoint = self:GetMuzzlePoint(self.state.firstPerson() and curModel or self:GetThirdPersonGunModel())
 			bulletOrigin = muzzlePoint.WorldCFrame.Position
 			bulletDirection = (muzzlePoint.WorldCFrame * spreadCFrame).LookVector
 
@@ -862,87 +902,87 @@ function WC.UpdateHeartbeat(dt)
 
 			local tracerColor = nil
 			local TrTi = currentStats.tracerTiming
-			if fireMode ~= Enums.FireModes.UBGL and currentStats.tracers and TrTi and weaponState.gunAmmo.MagAmmo.Value % TrTi == 0 then
+			if fireMode ~= Enums.FireModes.UBGL and currentStats.tracers and TrTi and self.weaponState.gunAmmo.MagAmmo.Value % TrTi == 0 then
 				tracerColor = currentStats.tracerColor
 			end
 
-			local bulletData = State.equippedTool()
+			local bulletData = self.state.equippedTool()
 			if fireMode == Enums.FireModes.UBGL then
 				bulletData = {
-					Tool = State.equippedTool(),
+					Tool = self.state.equippedTool(),
 					fireMode = fireMode,
-					SPH_Weapon = State.equippedTool().SPH_Weapon
+					SPH_Weapon = self.state.equippedTool().SPH_Weapon
 				}
 			end
 
-			bulletHandler.FireBullet(WC.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, bulletData, WC.player, tracerColor)
+			bulletHandler.FireBullet(self.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, bulletData, self.player, tracerColor)
 		end
 
-		local firePoint = State.firstPerson() and WC.GetMuzzlePoint(curModel) or WC.GetMuzzlePoint(WC.GetThirdPersonGunModel())
+		local firePoint = self.state.firstPerson() and self:GetMuzzlePoint(curModel) or self:GetMuzzlePoint(self:GetThirdPersonGunModel())
 		P.PlayerFire.send({ firePoint = firePoint.WorldCFrame })
 
 		local cycleTime = currentStats.fireRate
 		if fireMode == Enums.FireModes.Burst and currentStats.burstFireRate then cycleTime = currentStats.burstFireRate end
 
 		if currentStats.projectile ~= "Bullet" then
-			WC.SetProjectileTransparency(weaponState.gunModel(), 1)
+			self:SetProjectileTransparency(self.weaponState.gunModel(), 1)
 		end
 
 		-- spread and recoil step
-		weaponState.RecoilFactor = math.clamp(weaponState.RecoilFactor + ws.RecoilStepAmount,
+		self.weaponState.RecoilFactor = math.clamp(self.weaponState.RecoilFactor + ws.RecoilStepAmount,
 			ws.MinRecoilFactor, ws.MaxRecoilFactor)
 
 		local spreadStep = ws.SpreadStepAmount
 		local minSpread = ws.MinSpread
 		local maxSpread = ws.MaxSpread
-		weaponState.Spread = math.clamp(math.max(weaponState.Spread, minSpread) + spreadStep, minSpread, maxSpread)
+		self.weaponState.Spread = math.clamp(math.max(self.weaponState.Spread, minSpread) + spreadStep, minSpread, maxSpread)
 
 		task.wait(60 / cycleTime)
-		if not State.equippedTool() then return end
+		if not self.state.equippedTool() then return end
 
-		if currentStats.autoChamber and fireMode == Enums.FireModes.Manual and not weaponState.reloading() then
-			weaponState.holdStance(Enums.HoldStance.Ready)
-			weaponState.chambering(true)
+		if currentStats.autoChamber and fireMode == Enums.FireModes.Manual and not self.weaponState.reloading() then
+			self.weaponState.holdStance(Enums.HoldStance.Ready)
+			self.weaponState.chambering(true)
 		end
-		WC.cycled = true
+		self.cycled = true
 	else
-		if not WC.IsLoaded() then
-			if fireMode == Enums.FireModes.Manual and weaponState.gunAmmo.MagAmmo.Value > 0 then
-				weaponState.holdStance(Enums.HoldStance.Ready)
-				weaponState.chambering(true)
-				WC.holdingM1 = false
+		if not self:IsLoaded() then
+			if fireMode == Enums.FireModes.Manual and self.weaponState.gunAmmo.MagAmmo.Value > 0 then
+				self.weaponState.holdStance(Enums.HoldStance.Ready)
+				self.weaponState.chambering(true)
+				self.holdingM1 = false
 			end
 		elseif ws.emptyCloseBolt then
 			P.PlayerChamber.send({ _ = 0 })
-			WC.MoveBolt(CFrame.new())
+			self:MoveBolt(CFrame.new())
 		end
 	end
 end
 
-function WC.UpdateRender(dt)
+function WeaponController.UpdateRender(self: WeaponController, dt)
 	local adjust = dt * 60
-	if not State.equippedTool() or WC.camera.CameraType ~= Enum.CameraType.Custom then return end
-	local ws = weaponState.wepStats()
+	if not self.state.equippedTool() or self.camera.CameraType ~= Enum.CameraType.Custom then return end
+	local ws = self.weaponState.wepStats()
 	if not ws then
 		return
 	end
 
 	--recoil logic
-	weaponState.RecoilCF = weaponState.RecoilCF:Lerp(CFrame.new(),math.min(1, ws.PunchRecover * adjust))
-	weaponState.RecoilPos.t = weaponState.RecoilCF.Position
-	weaponState.RecoilDir.t = weaponState.RecoilCF.LookVector
-	weaponState.RecoilUp.t = weaponState.RecoilCF.UpVector
-	weaponState.RecoilFactor = math.clamp(weaponState.RecoilFactor - ws.RecoilRecoverPerSecond * dt,
+	self.weaponState.RecoilCF = self.weaponState.RecoilCF:Lerp(CFrame.new(),math.min(1, ws.PunchRecover * adjust))
+	self.weaponState.RecoilPos.t = self.weaponState.RecoilCF.Position
+	self.weaponState.RecoilDir.t = self.weaponState.RecoilCF.LookVector
+	self.weaponState.RecoilUp.t = self.weaponState.RecoilCF.UpVector
+	self.weaponState.RecoilFactor = math.clamp(self.weaponState.RecoilFactor - ws.RecoilRecoverPerSecond * dt,
 		ws.MinRecoilFactor, ws.MaxRecoilFactor)
 
 	local spreadRecover = ws.SpreadRecoverPerSecond
 	local minSpread = ws.MinSpread
 	local maxSpread = ws.MaxSpread
-	weaponState.Spread = math.clamp(math.max(weaponState.Spread, minSpread) - (spreadRecover * dt), minSpread, maxSpread)
+	self.weaponState.Spread = math.clamp(math.max(self.weaponState.Spread, minSpread) - (spreadRecover * dt), minSpread, maxSpread)
 
-	local bipodPart = weaponState.gunModel().Grip:FindFirstChild("Bipod")
-	--local bipodModel = weaponState.gunModel()
-	local bipMount = findChildModelWithMainPartChild(weaponState.gunModel(), "Bipod")
+	local bipodPart = self.weaponState.gunModel().Grip:FindFirstChild("Bipod")
+	--local bipodModel = self.weaponState.gunModel()
+	local bipMount = findChildModelWithMainPartChild(self.weaponState.gunModel(), "Bipod")
 	if bipMount and bipMount.Main:FindFirstChild("Bipod") then
 		bipodPart = bipMount.Main.Bipod
 		--bipodModel = bipMount
@@ -951,32 +991,32 @@ function WC.UpdateRender(dt)
 	if bipodPart then
 		local bipodRayParams = RaycastParams.new()
 		bipodRayParams.FilterType = Enum.RaycastFilterType.Exclude
-		bipodRayParams.FilterDescendantsInstances = WC.bipodRayIgnore
+		bipodRayParams.FilterDescendantsInstances = self.bipodRayIgnore
 		bipodRayParams.RespectCanCollide = true
 		local rayResult = workspace:Raycast(bipodPart.WorldCFrame.Position, Vector3.new(0,-1.5,0), bipodRayParams)
-		WC.canBipod = rayResult ~= nil
+		self.canBipod = rayResult ~= nil
 
-		if WC.canBipod ~= weaponState.bipodEnabled() then
-			weaponState.bipodEnabled(WC.canBipod)
+		if self.canBipod ~= self.weaponState.bipodEnabled() then
+			self.weaponState.bipodEnabled(self.canBipod)
 		end
 	end
 
-	WC.holosightMod:UpdateRender(dt)
+	self.holosightMod:UpdateRender(dt)
 end
 
-function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
-	local ws = weaponState.wepStats()
+function WeaponController.OnKeyframeReached(self: WeaponController, animName, keyframeName, newAnim, animType)
+	local ws = self.weaponState.wepStats()
 	if not ws then
 		return
 	end
-	if weaponState.gunModel().Grip:FindFirstChild(keyframeName) then WC.PlayRepSound(keyframeName) end
+	if self.weaponState.gunModel().Grip:FindFirstChild(keyframeName) then self:PlayRepSound(keyframeName) end
 	if keyframeName == "MagIn" then
-		if State.equippedTool() and (not State.equippedTool().Chambered.Value or ws.openBolt) and ws.autoChamber then
-			weaponState.reloading(true)
+		if self.state.equippedTool() and (not self.state.equippedTool().Chambered.Value or ws.openBolt) and ws.autoChamber then
+			self.weaponState.reloading(true)
 			AnimationEvents.StopAnimationRequested:Fire(animName, 0.4)
-			AnimationEvents.BoltActionRequested:Fire(State.equippedTool().BoltReady.Value)
+			AnimationEvents.BoltActionRequested:Fire(self.state.equippedTool().BoltReady.Value)
 		end
-		local bulletHandlerPart = ws.bulletHandler and weaponState.gunModel():FindFirstChild(ws.bulletHolder)
+		local bulletHandlerPart = ws.bulletHandler and self.weaponState.gunModel():FindFirstChild(ws.bulletHolder)
 		if bulletHandlerPart then
 			for _, child in bulletHandlerPart:GetChildren() do
 				if child:IsA("BasePart") and string.sub(child.Name, 1, 6) == "Bullet" then child.Transparency = 0 end
@@ -985,38 +1025,38 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 		P.Reload.send({ _ = 0 })
 		if ws.magType > 1 then newAnim.DidLoop:Once(function() AnimationEvents.StopAnimationRequested:Fire(animName) end) end
 	elseif keyframeName == "ShellInsert" or keyframeName == "BulletInsert" then
-		if WC.cancelReload then
-			WC.cancelReload = false
+		if self.cancelReload then
+			self.cancelReload = false
 			newAnim.Looped = false
 			newAnim.Stopped:Once(function()
-				if not State.equippedTool() then return end
+				if not self.state.equippedTool() then return end
 				AnimationEvents.StopAnimationRequested:Fire(newAnim.Name)
-				if not State.equippedTool().BoltReady.Value or ws.openBolt then
+				if not self.state.equippedTool().BoltReady.Value or ws.openBolt then
 					AnimationEvents.BoltActionRequested:Fire(false)
 				else
-					weaponState.reloading(false)
+					self.weaponState.reloading(false)
 				end
 			end)
-		elseif weaponState.gunAmmo.MagAmmo.Value + 1 >= weaponState.gunAmmo.MagAmmo.MaxValue or weaponState.gunAmmo.ArcadeAmmoPool.Value - 1 <= 0 then
+		elseif self.weaponState.gunAmmo.MagAmmo.Value + 1 >= self.weaponState.gunAmmo.MagAmmo.MaxValue or self.weaponState.gunAmmo.ArcadeAmmoPool.Value - 1 <= 0 then
 			newAnim.DidLoop:Once(function()
-				if not State.equippedTool() then return end
+				if not self.state.equippedTool() then return end
 				AnimationEvents.StopAnimationRequested:Fire(newAnim.Name)
-				if not State.equippedTool().BoltReady.Value or ws.operationType == 3 or ws.openBolt then
+				if not self.state.equippedTool().BoltReady.Value or ws.operationType == 3 or ws.openBolt then
 					AnimationEvents.BoltActionRequested:Fire(false)
 				else
-					weaponState.reloading(false)
+					self.weaponState.reloading(false)
 				end
 			end)
 		end
-		local bulletHandlerPart = ws.bulletHolder and weaponState.gunModel():FindFirstChild(ws.bulletHolder)
+		local bulletHandlerPart = ws.bulletHolder and self.weaponState.gunModel():FindFirstChild(ws.bulletHolder)
 		if bulletHandlerPart then
-			local bulletNumber = weaponState.gunAmmo.MagAmmo.MaxValue - weaponState.gunAmmo.MagAmmo.Value
+			local bulletNumber = self.weaponState.gunAmmo.MagAmmo.MaxValue - self.weaponState.gunAmmo.MagAmmo.Value
 			local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
 			if tempBulletPart then tempBulletPart.Transparency = 0 end
 		end
 		P.Reload.send({ _ = 0 })
 	elseif keyframeName == "ClipInsertEnd" then
-		local ammoNeeded = weaponState.gunAmmo.MagAmmo.MaxValue - weaponState.gunAmmo.MagAmmo.Value
+		local ammoNeeded = self.weaponState.gunAmmo.MagAmmo.MaxValue - self.weaponState.gunAmmo.MagAmmo.Value
 		local clipSize = ws.clipSize or ws.magazineCapacity
 		if ammoNeeded > 0 then
 			AnimationEvents.StopAnimationRequested:Fire(newAnim.Name)
@@ -1026,29 +1066,29 @@ function WC.OnKeyframeReached(animName, keyframeName, newAnim, animType)
 		P.Reload.send({ _ = 0 })
 	elseif keyframeName == "SlideRelease" or keyframeName == "BoltClose" then
 			P.PlayerChamber.send({ _ = 0 })
-		weaponState.reloading(false)
-		WC.MoveBolt(CFrame.new(), true)
-	elseif keyframeName == "SlidePull" and State.equippedTool() and State.equippedTool().Chambered.Value then
-		WC.EjectShell()
-	elseif keyframeName == "Switch" and not weaponState.reloading() then
-		WC.SwitchFireMode()
+		self.weaponState.reloading(false)
+		self:MoveBolt(CFrame.new(), true)
+	elseif keyframeName == "SlidePull" and self.state.equippedTool() and self.state.equippedTool().Chambered.Value then
+		self:EjectShell()
+	elseif keyframeName == "Switch" and not self.weaponState.reloading() then
+		self:SwitchFireMode()
 	elseif keyframeName == "MagGrab" then
-		WC.SetProjectileTransparency(weaponState.gunModel(), 0)
-		WC.SetProjectileTransparency(WC.GetThirdPersonGunModel(), 0)
+		self:SetProjectileTransparency(self.weaponState.gunModel(), 0)
+		self:SetProjectileTransparency(self:GetThirdPersonGunModel(), 0)
 		P.MagGrab.send({ _ = 0 })
 	elseif keyframeName == "BoltOpen" then
 		P.RepBoltOpen.send({ _ = 0 })
-		if not WC.ejected then WC.EjectShell() end
+		if not self.ejected then self:EjectShell() end
 	end
 end
 
-function WC.OnAnimationStopped(animName, newAnim, animType)
+function WeaponController.OnAnimationStopped(self: WeaponController, animName, newAnim, animType)
 	if animType == "Reload" then
-		weaponState.reloading(false)
-		if State.equippedTool() and State.equippedTool().Chambered.Value then
-			WC.SetProjectileTransparency(weaponState.gunModel(), 0)
+		self.weaponState.reloading(false)
+		if self.state.equippedTool() and self.state.equippedTool().Chambered.Value then
+			self:SetProjectileTransparency(self.weaponState.gunModel(), 0)
 		end
 	end
 end
 
-return WC
+return WeaponController

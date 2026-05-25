@@ -173,7 +173,7 @@ function WeaponPrefsClient.applyPersisted(weaponName, State, WeaponState, WC)
 		P.PlayerToggleAttachment.send({ attachmentType = 2, enabled = validated.bipodEnabled })
 	end
 
-	WC.UpdateAttachmentsVisibility()
+	WC:UpdateAttachmentsVisibility()
 	WeaponPrefsClient.endApply()
 end
 

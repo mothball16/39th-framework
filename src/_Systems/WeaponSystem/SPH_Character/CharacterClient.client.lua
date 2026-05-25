@@ -150,7 +150,7 @@ local function PlayCharSound(soundType)
 	end
 end
 
-AnimationController.Initialize({
+local animationController = AnimationController.new({
 	vmAnimator = vmAnimator,
 	characterAnimator = characterAnimator,
 	animationsFolder = animations,
@@ -237,73 +237,19 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 	end
 end
 
-InputController.Initialize({
-	callbacks = {
-		[Intents.SPRINT] = MovementController.OnSprintIntent,
-		[Intents.STANCE_DOWN] = MovementController.OnStanceDownIntent,
-		[Intents.STANCE_UP] = MovementController.OnStanceUpIntent,
-		[Intents.LEAN_LEFT] = MovementController.OnLeanLeftIntent,
-		[Intents.LEAN_RIGHT] = MovementController.OnLeanRightIntent,
-		[Intents.JUMP] = MovementController.Jump,
-
-		[Intents.FREELOOK] = CameraController.OnFreelookIntent,
-		[Intents.SCROLL] = OnScrollIntent,
-
-
-		[Intents.HOLD_AIM] = WeaponController.OnAimIntent,
-		[Intents.TRIGGER] = WeaponController.OnTriggerIntent,
-		[Intents.DROP_GUN] = WeaponController.OnDropGunIntent,
-		[Intents.RELOAD] = WeaponController.OnReloadIntent,
-		[Intents.CHAMBER] = WeaponController.OnChamberIntent,
-		[Intents.SWITCH_SIGHTS] = WeaponController.OnSwitchSightsIntent,
-		[Intents.SWITCH_FIRE_MODE] = WeaponController.OnSwitchFireModeIntent,
-		[Intents.TOGGLE_FLASHLIGHT] = WeaponController.OnToggleFlashlightIntent,
-	}
-})
-
-MovementController.Initialize({
+local movementController = MovementController.new({
 	humanoid = humanoid,
 	humanoidRootPart = humanoidRootPart,
 	rootJoint = rootJoint,
-	rigType = rigType,
-	script = script,
 	weaponState = weaponState,
 	state = characterState,
-	ChangeHoldStance = WeaponController.ChangeHoldStance,
-	PlayAnimation = AnimationController.PlayAnimation,
-	StopAnimation = AnimationController.StopAnimation,
-	AdjustMoveAnimSpeed = AnimationController.AdjustMoveAnimSpeed,
+	AdjustMoveAnimSpeed = function(speed)
+		animationController:AdjustMoveAnimSpeed(speed)
+	end,
 	PlayCharSound = PlayCharSound,
 })
 
-ViewmodelController.Initialize({
-	animBase = animBase,
-	camera = camera,
-	humanoidRootPart = humanoidRootPart,
-	weaponRig = weaponRig,
-	rayParams = rayParams,
-	weaponState = weaponState,
-	state = characterState,
-	ChangeHoldStance = WeaponController.ChangeHoldStance,
-	PlayAnimation = AnimationController.PlayAnimation,
-	StopAnimation = AnimationController.StopAnimation,
-	RefreshViewmodel = RefreshViewmodel,
-})
-
-CameraController.Initialize({
-	camera = camera,
-	character = character,
-	humanoid = humanoid,
-	humanoidRootPart = humanoidRootPart,
-	rootJoint = rootJoint,
-	neckJoint = neckJoint,
-	rigType = rigType,
-	ReplicationController = ReplicationController,
-	weaponState = weaponState,
-	state = characterState,
-})
-
-WeaponController.Initialize({
+local weaponController = WeaponController.new({
 	player = player,
 	character = character,
 	humanoid = humanoid,
@@ -311,35 +257,108 @@ WeaponController.Initialize({
 	camera = camera,
 	viewmodelRig = rig,
 	thirdPersonRig = weaponRig,
-	rigType = rigType,
 	weaponState = weaponState,
 	state = characterState,
 	RefreshViewmodel = RefreshViewmodel,
 })
 
-ReplicationController.Initialize({
+local cameraController = CameraController.new({
+	camera = camera,
+	weaponState = weaponState,
+	state = characterState,
+})
+
+local inputController = InputController.new({
+	callbacks = {
+		[Intents.SPRINT] = function(inputState, inputObject)
+			movementController:OnSprintIntent(inputState, inputObject)
+		end,
+		[Intents.STANCE_DOWN] = function(inputState, inputObject)
+			movementController:OnStanceDownIntent(inputState, inputObject)
+		end,
+		[Intents.STANCE_UP] = function(inputState, inputObject)
+			movementController:OnStanceUpIntent(inputState, inputObject)
+		end,
+		[Intents.LEAN_LEFT] = function(inputState, inputObject)
+			movementController:OnLeanLeftIntent(inputState, inputObject)
+		end,
+		[Intents.LEAN_RIGHT] = function(inputState, inputObject)
+			movementController:OnLeanRightIntent(inputState, inputObject)
+		end,
+		[Intents.JUMP] = function()
+			movementController:Jump()
+		end,
+
+		[Intents.FREELOOK] = function(inputState, inputObject)
+			cameraController:OnFreelookIntent(inputState, inputObject)
+		end,
+		[Intents.SCROLL] = OnScrollIntent,
+
+
+		[Intents.HOLD_AIM] = function(inputState, inputObject)
+			weaponController:OnAimIntent(inputState, inputObject)
+		end,
+		[Intents.TRIGGER] = function(inputState, inputObject)
+			weaponController:OnTriggerIntent(inputState, inputObject)
+		end,
+		[Intents.DROP_GUN] = function(inputState, inputObject)
+			weaponController:OnDropGunIntent(inputState, inputObject)
+		end,
+		[Intents.RELOAD] = function(inputState, inputObject)
+			weaponController:OnReloadIntent(inputState, inputObject)
+		end,
+		[Intents.CHAMBER] = function(inputState, inputObject)
+			weaponController:OnChamberIntent(inputState, inputObject)
+		end,
+		[Intents.SWITCH_SIGHTS] = function(inputState, inputObject)
+			weaponController:OnSwitchSightsIntent(inputState, inputObject)
+		end,
+		[Intents.SWITCH_FIRE_MODE] = function(inputState, inputObject)
+			weaponController:OnSwitchFireModeIntent(inputState, inputObject)
+		end,
+		[Intents.TOGGLE_FLASHLIGHT] = function(inputState, inputObject)
+			weaponController:OnToggleFlashlightIntent(inputState, inputObject)
+		end,
+	}
+})
+
+local viewmodelController = ViewmodelController.new({
+	animBase = animBase,
+	camera = camera,
+	humanoidRootPart = humanoidRootPart,
+	weaponRig = weaponRig,
+	rayParams = rayParams,
+	weaponState = weaponState,
+	state = characterState,
+	StopAnimation = function(animName, transTime)
+		animationController:StopAnimation(animName, transTime)
+	end,
+	RefreshViewmodel = RefreshViewmodel,
+})
+
+local replicationController = ReplicationController.new({
 	character = character,
 	state = characterState,
 })
 
-UIController.Initialize({
+local uiController = UIController.new({
 	state = characterState,
 	weaponState = weaponState,
 })
 
-InputController.BindCharacterInputs()
-InputController.BindGunInputs()
+inputController:BindCharacterInputs()
+inputController:BindGunInputs()
 
 humanoid.Died:Connect(function()
 	characterState.dead(true)
 	if characterState.equippedTool() then
-		WeaponController.Unequip(characterState.equippedTool())
+		weaponController:Unequip(characterState.equippedTool())
 	end
 	userInputService.MouseIconEnabled = true
 	weaponState.viewmodelVisible(false)
 	animBase.CFrame = storageCFrame
 
-	InputController.UnbindGunInputs()
+	inputController:UnbindGunInputs()
 
 	if config.useDeathCameraSubject then
 		repeat task.wait() until humanoid.Parent ~= character
@@ -356,26 +375,26 @@ runService.RenderStepped:Connect(function(dt:number)
 	end
 
 	if not characterState.dead() and character:FindFirstChild("Head") then
-		MovementController.UpdateRender(dt)
-		CameraController.UpdateRender(dt)
-		ViewmodelController.UpdateRender(dt)
-		ViewmodelController.UpdateMovementSway(dt, MovementController.tempWalkSpeed, characterState.vehicleSeated())
-		WeaponController.UpdateRender(dt)
-		ReplicationController.UpdateRender(dt)
+		movementController:UpdateRender(dt)
+		cameraController:UpdateRender(dt)
+		viewmodelController:UpdateRender(dt)
+		viewmodelController:UpdateMovementSway(dt, movementController.tempWalkSpeed, characterState.vehicleSeated())
+		weaponController:UpdateRender(dt)
+		replicationController:UpdateRender(dt)
 	end
 
 end)
 
 runService.Heartbeat:Connect(function(dt:number)
-	MovementController.UpdateHeartbeat(dt)
-	WeaponController.UpdateHeartbeat(dt)
-	UIController.UpdateHeartbeat(dt)
+	movementController:UpdateHeartbeat(dt)
+	weaponController:UpdateHeartbeat(dt)
+	uiController:UpdateHeartbeat(dt)
 end)
 
 Charm.effect(function()
 	if weaponState.equipped() then
-		InputController.BindGunInputs()
+		inputController:BindGunInputs()
 	else
-		InputController.UnbindGunInputs()
+		inputController:UnbindGunInputs()
 	end
 end)

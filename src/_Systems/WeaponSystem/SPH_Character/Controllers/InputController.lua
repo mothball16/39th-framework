@@ -8,10 +8,15 @@ local Intents = Enums.Intents
 local config = Access.config
 
 local InputController = {}
+InputController.__index = InputController
 
-InputController._callbacks = {}
+type self = {
+	callbacks: { [string]: (...any) -> () },
+}
 
-local function isValidIntent(actionName)
+export type InputController = setmetatable<self, typeof(InputController)>
+
+local function isValidIntent(actionName: string): boolean
 	for _, intentName in pairs(Intents) do
 		if intentName == actionName then
 			return true
@@ -20,21 +25,27 @@ local function isValidIntent(actionName)
 	return false
 end
 
+function InputController.new(params: {
+	callbacks: { [string]: (...any) -> () },
+}): InputController
+	local self = setmetatable({
+		callbacks = params.callbacks,
+	} :: self, InputController)
 
-function InputController.Initialize(args)
-	for intentKey, _ in pairs(Intents) do
-		local callback = args.callbacks[intentKey]
-		if not callback then
-			warn(`[pearhead] no callback defined for intent key {intentKey}`)
+	UserInputService.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseWheel then
+			self.callbacks[Intents.SCROLL](input.Position.Z, UserInputService:IsKeyDown(config.holdForScrollZoom))
 		end
+	end)
 
-		InputController._callbacks[intentKey] = callback or function(inputState, inputObject)
-			warn(`[pearhead] no callback defined for intent key {intentKey}`)
-		end
-	end
+	UserInputService.JumpRequest:Connect(function()
+		self.callbacks[Intents.JUMP]()
+	end)
+
+	return self
 end
 
-function InputController.SetIntentCallback(actionName, callback)
+function InputController.SetIntentCallback(self: InputController, actionName: string, callback: (...any) -> ())
 	if not isValidIntent(actionName) then
 		warn(`[pearhead] {actionName} isn't a valid intent in Enums.Intents`)
 		return false
@@ -44,73 +55,68 @@ function InputController.SetIntentCallback(actionName, callback)
 		return false
 	end
 
-	InputController._callbacks[actionName] = callback
+	self.callbacks[actionName] = callback
 	return true
 end
 
-function InputController.ClearIntentCallback(actionName)
+function InputController.ClearIntentCallback(self: InputController, actionName: string): boolean
 	if not isValidIntent(actionName) then
 		warn(`[pearhead] {actionName} isn't a valid intent in Enums.Intents`)
 		return false
 	end
 
-	InputController._callbacks[actionName] = function(inputState, inputObject)
-		warn(`[pearhead] no callback defined for intent key {actionName}`)
-	end
+	self.callbacks[actionName] = nil
 	return true
 end
 
-
-function InputController.HandleInput(actionName, inputState, inputObject)
-	if not InputController._callbacks[actionName] then
+function InputController.HandleInput(self: InputController, actionName: string, inputState: Enum.UserInputState, inputObject: InputObject)
+	local callback = self.callbacks[actionName]
+	if not callback then
 		warn(`[pearhead] no callback defined for intent key {actionName}`)
 		return
 	end
-	InputController._callbacks[actionName](inputState, inputObject)
+	callback(inputState, inputObject)
 end
 
-function InputController.BindInput(actionName, touchButton, priority, ...)
+function InputController.BindInput(self: InputController, actionName: string, touchButton: boolean, priority: number, ...): InputController
 	if not isValidIntent(actionName) then
 		warn(`[pearhead] {actionName} isn't a valid intent in Enums.Intents`)
 	end
-	ContextActionService:BindActionAtPriority(actionName, InputController.HandleInput,touchButton, priority, ...)
-	return InputController
+	ContextActionService:BindActionAtPriority(actionName, function(name, state, obj)
+		self:HandleInput(name, state, obj)
+	end, touchButton, priority, ...)
+	return self
 end
 
-function InputController.UnbindInput(...)
-	for _, actionName in ipairs({...}) do
-		ContextActionService:UnbindAction(actionName)
+function InputController.UnbindInput(self: InputController, ...)
+	for _, name in ipairs({ ... }) do
+		ContextActionService:UnbindAction(name)
 	end
 end
 
-----------------------------------------------------------------------------------------------------------------
-
-function InputController.BindGunInputs()
-	InputController
-		.BindInput(Intents.TRIGGER, false, config.gunInputPriority, unpack(config.fireGun))
-		.BindInput(Intents.DROP_GUN, false, config.gunInputPriority, unpack(config.dropKey))
-		.BindInput(Intents.RELOAD, false, config.gunInputPriority, unpack(config.keyReload))
-		.BindInput(Intents.CHAMBER, false, config.gunInputPriority, unpack(config.keyChamber))
-		.BindInput(Intents.SWITCH_SIGHTS, false, config.gunInputPriority, unpack(config.sightSwitch))
-		.BindInput(Intents.FREELOOK, false, config.gunInputPriority, unpack(config.freeLook))
-		.BindInput(Intents.HOLD_AIM, config.mobileButtons, config.gunInputPriority, unpack(config.aimGun))
-
-		.BindInput(Intents.SWITCH_FIRE_MODE, false, config.gunInputPriority, unpack(config.switchFireMode))
-		--.BindInput(Intents.TOGGLE_LASER, false, config.gunInputPriority, unpack(config.toggleLaser))
-		--.BindInput(Intents.TOGGLE_FLASHLIGHT, false, config.gunInputPriority, unpack(config.toggleFlashlight))
+function InputController.BindGunInputs(self: InputController)
+	self
+		:BindInput(Intents.TRIGGER, false, config.gunInputPriority, unpack(config.fireGun))
+		:BindInput(Intents.DROP_GUN, false, config.gunInputPriority, unpack(config.dropKey))
+		:BindInput(Intents.RELOAD, false, config.gunInputPriority, unpack(config.keyReload))
+		:BindInput(Intents.CHAMBER, false, config.gunInputPriority, unpack(config.keyChamber))
+		:BindInput(Intents.SWITCH_SIGHTS, false, config.gunInputPriority, unpack(config.sightSwitch))
+		:BindInput(Intents.FREELOOK, false, config.gunInputPriority, unpack(config.freeLook))
+		:BindInput(Intents.HOLD_AIM, config.mobileButtons, config.gunInputPriority, unpack(config.aimGun))
+		:BindInput(Intents.SWITCH_FIRE_MODE, false, config.gunInputPriority, unpack(config.switchFireMode))
 end
 
-function InputController.BindCharacterInputs()
-	InputController
-		.BindInput(Intents.LEAN_LEFT, false, config.movementInputPriority, unpack(config.leanLeft))
-		.BindInput(Intents.LEAN_RIGHT, false, config.movementInputPriority, unpack(config.leanRight))
-		.BindInput(Intents.SPRINT, false, config.movementInputPriority, unpack(config.keySprint))
-		.BindInput(Intents.STANCE_DOWN, false, config.movementInputPriority, unpack(config.lowerStance))
-		.BindInput(Intents.STANCE_UP, false, config.movementInputPriority, unpack(config.raiseStance))
+function InputController.BindCharacterInputs(self: InputController)
+	self
+		:BindInput(Intents.LEAN_LEFT, false, config.movementInputPriority, unpack(config.leanLeft))
+		:BindInput(Intents.LEAN_RIGHT, false, config.movementInputPriority, unpack(config.leanRight))
+		:BindInput(Intents.SPRINT, false, config.movementInputPriority, unpack(config.keySprint))
+		:BindInput(Intents.STANCE_DOWN, false, config.movementInputPriority, unpack(config.lowerStance))
+		:BindInput(Intents.STANCE_UP, false, config.movementInputPriority, unpack(config.raiseStance))
 end
 
-function InputController.UnbindGunInputs()
-	InputController.UnbindInput(
+function InputController.UnbindGunInputs(self: InputController)
+	self:UnbindInput(
 		Intents.TRIGGER,
 		Intents.DROP_GUN,
 		Intents.RELOAD,
@@ -126,15 +132,5 @@ function InputController.UnbindGunInputs()
 		Intents.TOGGLE_FLASHLIGHT
 	)
 end
-
-UserInputService.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseWheel then
-		InputController._callbacks[Intents.SCROLL](input.Position.Z, UserInputService:IsKeyDown(config.holdForScrollZoom))
-	end
-end)
-
-UserInputService.JumpRequest:Connect(function()
-	InputController._callbacks[Intents.JUMP]()
-end)
 
 return InputController

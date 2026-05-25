@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local Framework = ReplicatedStorage.SPH_Framework
@@ -9,43 +10,56 @@ local config = Access.config
 local Events = require(Framework.Network.Events)
 local P = Events.GetNamespace().packets
 
-local RC = {
-	headRotationEventCooldown = 0
+local ReplicationController = {}
+ReplicationController.__index = ReplicationController
+
+type self = {
+	character: Model,
+	state: CharacterStateModule.CharacterState,
+	headRotationEventCooldown: number,
 }
-RC.character = nil
-local State: CharacterStateModule.CharacterState
 
-function RC.Initialize(params)
-	RC.character = params.character
-	State = params.state
+export type ReplicationController = setmetatable<self, typeof(ReplicationController)>
 
-	Charm.subscribe(State.sprinting, function(sprinting)
-		if RC.character then RC.character:SetAttribute("Sprinting", sprinting) end
+function ReplicationController.new(params: {
+	character: Model,
+	state: CharacterStateModule.CharacterState,
+}): ReplicationController
+	local self = setmetatable({
+		character = params.character,
+		state = params.state,
+		headRotationEventCooldown = 0,
+	} :: self, ReplicationController)
+
+	Charm.subscribe(self.state.sprinting, function(sprinting)
+		self.character:SetAttribute("Sprinting", sprinting)
 	end)
 
-	Charm.subscribe(State.aiming, function(aiming)
-		if RC.character then RC.character:SetAttribute("Aiming", aiming) end
+	Charm.subscribe(self.state.aiming, function(aiming)
+		self.character:SetAttribute("Aiming", aiming)
 	end)
 
-	Charm.subscribe(State.lean, function(lean, oldLean)
+	Charm.subscribe(self.state.lean, function(lean, oldLean)
 		if lean ~= oldLean then
 			P.PlayerLean.send({ lean = lean })
 		end
 	end)
+
+	return self
 end
 
-function RC.UpdateRender(dt)
+function ReplicationController.UpdateRender(self: ReplicationController, dt: number)
 	debug.profilebegin("SPH.CharacterReplication.UpdateRender")
-	RC.headRotationEventCooldown -= dt
-	if RC.headRotationEventCooldown <= 0 and not config.disableHeadRotation then
-		RC.headRotationEventCooldown = config.headRotationEventRate
-		P.BodyAnimRequest.send({ neckC1 = State.Parts.NeckJoint.C1 })
-		local char = game.Players.LocalPlayer.Character
+	self.headRotationEventCooldown -= dt
+	if self.headRotationEventCooldown <= 0 and not config.disableHeadRotation then
+		self.headRotationEventCooldown = config.headRotationEventRate
+		P.BodyAnimRequest.send({ neckC1 = self.state.Parts.NeckJoint.C1 })
+		local char = Players.LocalPlayer.Character
 		if char then
-			char:SetAttribute("BodyRot_Client", State.Parts.NeckJoint.C1)
+			char:SetAttribute("BodyRot_Client", self.state.Parts.NeckJoint.C1)
 		end
 	end
 	debug.profileend()
 end
 
-return RC
+return ReplicationController
