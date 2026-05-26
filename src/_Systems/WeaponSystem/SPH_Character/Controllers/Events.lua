@@ -4,7 +4,7 @@ local Events = {}
 Events.__index = Events
 
 type self = {
-	BulletHit: Signal.Signal<Types.WeaponStats, RaycastResult>,
+	BulletHit: Signal.Signal<Types.WeaponStats, Vector3, RaycastResult>,
 
 	WeaponEquipRequested: Signal.Signal<>,
 	WeaponIdleRequested: Signal.Signal<>,
@@ -20,7 +20,7 @@ type self = {
 	AnimationStopped: Signal.Signal<string, AnimationTrack, string>,
 }
 
-export type Events = setmetatable<self, typeof(Events)>
+export type Events = typeof(setmetatable({} :: self, Events))
 
 function Events.new(): Events
 	return setmetatable({

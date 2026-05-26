@@ -38,6 +38,7 @@ UIController.__index = UIController
 type self = {
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
+	events: Events.Events,
 	ammoUI: Frame,
 	ammoCounter: TextLabel,
 	ammoPoolUI: TextLabel,
@@ -141,8 +142,8 @@ function UIController.new(params: {
 		self:SyncAiming(aiming)
 	end)
 
-	self.events.BulletHit:Connect(function(wepStats, raycastResult)
-		self:OnBulletHit(wepStats, raycastResult)
+	self.events.BulletHit:Connect(function(...)
+		self:OnBulletHit(...)
 	end)
 
 	return self

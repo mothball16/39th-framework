@@ -913,7 +913,8 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 			end
 
 			bulletHandler.FireBullet(self.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, bulletData, self.player, tracerColor, function(userData, raycastResult)
-				self.events.BulletHit:Fire(userData.wepStats, raycastResult)
+				-- when bullet hits, this callback lets other controllers know about it
+				self.events.BulletHit:Fire(userData.wepStats, bulletOrigin, raycastResult)
 			end)
 		end
 
