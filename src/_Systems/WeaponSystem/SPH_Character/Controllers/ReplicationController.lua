@@ -19,7 +19,7 @@ type self = {
 	headRotationEventCooldown: number,
 }
 
-export type ReplicationController = setmetatable<self, typeof(ReplicationController)>
+export type ReplicationController = typeof(setmetatable({} :: self, ReplicationController))
 
 function ReplicationController.new(params: {
 	character: Model,

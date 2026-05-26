@@ -14,7 +14,7 @@ type self = {
 	callbacks: { [string]: (...any) -> () },
 }
 
-export type InputController = setmetatable<self, typeof(InputController)>
+export type InputController = typeof(setmetatable({} :: self, InputController))
 
 local function isValidIntent(actionName: string): boolean
 	for _, intentName in pairs(Intents) do

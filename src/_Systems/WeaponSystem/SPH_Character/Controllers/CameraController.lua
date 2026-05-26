@@ -26,7 +26,7 @@ type self = {
 	FOVTarget: () -> number,
 }
 
-export type CameraController = setmetatable<self, typeof(CameraController)>
+export type CameraController = typeof(setmetatable({} :: self, CameraController))
 
 local function lerpNumber(number: number, target: number, speed: number): number
 	return number + (target - number) * speed

@@ -50,7 +50,7 @@ type self = {
 	events: Events.Events,
 }
 
-export type AnimationController = setmetatable<self, typeof(AnimationController)>
+export type AnimationController = typeof(setmetatable({} :: self, AnimationController))
 
 -- ---------------------------------------------------------------------------
 -- Play options: optional `propertyKey` picks ANIM_DEFAULTS; explicit fields in `parameters` win.

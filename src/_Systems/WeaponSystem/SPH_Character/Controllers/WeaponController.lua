@@ -56,7 +56,7 @@ type self = {
 	holosightMod: any,
 }
 
-export type WeaponController = setmetatable<self, typeof(WeaponController)>
+export type WeaponController = typeof(setmetatable({} :: self, WeaponController))
 
 local net = NetEvents.GetNamespace()
 local P = net.packets

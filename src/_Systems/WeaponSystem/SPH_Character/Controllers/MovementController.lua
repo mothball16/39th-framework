@@ -30,7 +30,7 @@ type self = {
 	PlayCharSound: (string) -> (),
 }
 
-export type MovementController = setmetatable<self, typeof(MovementController)>
+export type MovementController = typeof(setmetatable({} :: self, MovementController))
 
 local function lerpNumber(number: number, target: number, speed: number): number
 	return number + (target - number) * speed

@@ -40,7 +40,7 @@ type self = {
 	aimTarget: CFrame,
 }
 
-export type ViewmodelController = setmetatable<self, typeof(ViewmodelController)>
+export type ViewmodelController = typeof(setmetatable({} :: self, ViewmodelController))
 
 local function lerpNumber(number: number, target: number, speed: number): number
 	return number + (target - number) * speed

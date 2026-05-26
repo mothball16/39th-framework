@@ -51,7 +51,7 @@ type self = {
 	maid: Maid.Maid,
 }
 
-export type UIController = setmetatable<self, typeof(UIController)>
+export type UIController = typeof(setmetatable({} :: self, UIController))
 
 local function splitNumber(number: number): { string }
 	local numberStr = tostring(number)
