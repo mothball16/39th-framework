@@ -5,12 +5,11 @@ local source = Vide.source
 local HitmarkerTypes: {[string]: () -> Types.HitmarkerProps} = {
     Default = function()
         return {
+            smoothingOffset = 0.25,
             soundType = "Default",
             TimeElapsed = source(0),
-            springPeriod = 0.1,
-            springDamping = 1,
             position = UDim2.fromScale(0.5, 0.5),
-            size = UDim2.fromScale(0.015, 1),
+            size = UDim2.fromScale(0.025, 1),
             image = "rbxassetid://125718430168410",
             color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
@@ -18,51 +17,49 @@ local HitmarkerTypes: {[string]: () -> Types.HitmarkerProps} = {
             }),
             transparency = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 0),
-                NumberSequenceKeypoint.new(0.5, 1),
+                NumberSequenceKeypoint.new(0.5, 0),
                 NumberSequenceKeypoint.new(1, 1),
             }),
             scale = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 1),
-                NumberSequenceKeypoint.new(0.5, 3),
+                -- NumberSequenceKeypoint.new(0.5, 3),
                 NumberSequenceKeypoint.new(1, 3),
             }),
-            rotation = 45,--math.random(0, 360),
-            lifetime = 0.15,
+            rotation = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 45),
+                NumberSequenceKeypoint.new(1, 45 + math.random(-15, 15)),
+            }),
+            lifetime = 0.25,
         } 
     end,
     Headshot = function()
         return {
+            smoothingOffset = 0.25,
             soundType = "Headshot",
             TimeElapsed = source(0),
-            springPeriod = 0.1,
-            springDamping = 1,
             position = UDim2.fromScale(0.5, 0.5),
-            size = UDim2.fromScale(0.025, 1),
+            size = UDim2.fromScale(0.035, 1),
             image = "rbxassetid://125718430168410",
-            color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 118, 118)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0)),
-            }),
+            color =  Color3.fromRGB(255, 118, 118),
             transparency = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 0),
-                NumberSequenceKeypoint.new(0.5, 1),
+                NumberSequenceKeypoint.new(0.5, 0),
                 NumberSequenceKeypoint.new(1, 1),
             }),
             scale = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 1),
-                NumberSequenceKeypoint.new(0.5, 4),
-                NumberSequenceKeypoint.new(1, 4),
+                -- NumberSequenceKeypoint.new(0.8, 4),
+                NumberSequenceKeypoint.new(1, 3),
             }),
             rotation = 45,--math.random(0, 360),
-            lifetime = 0.1,
+            lifetime = 0.35,
         }
     end,
     Test = function()
         return {
+            smoothingOffset = 0.2,
             soundType = "Default",
             TimeElapsed = source(0),
-            springPeriod = 0.2,
-            springDamping = 1,
             position = UDim2.fromScale(0.5, 0.5),
             size = UDim2.fromScale(0.2, 0.2),
             image = "rbxassetid://125718430168410",

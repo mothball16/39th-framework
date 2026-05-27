@@ -1,17 +1,26 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Vide = require(Packages.Vide)
-local create, spring, derive = Vide.create, Vide.spring, Vide.derive
+local Vide = require("@game/ReplicatedStorage/Packages/Vide")
+local create, derive = Vide.create, Vide.derive
 local Types = require("../Types")
 
 --#region - - [ utils for sequence values ] - -
-local function evalColorSequence(sequence: ColorSequence, time: number)
+local function evalColorSequence(sequence: ColorSequence, time: number, backOffset: number?, blendAlpha: number?)
     -- If time is 0 or 1, return the first or last value respectively
     if time == 0 then
         return sequence.Keypoints[1].Value
     elseif time == 1 then
         return sequence.Keypoints[#sequence.Keypoints].Value
     end
+
+	-- Optional smoothing: blend with value further back in lifetime.
+	-- This avoids maintaining any "previous frame" state, and instead samples the authored curve twice.
+	local offset = backOffset or 0
+	local blend = blendAlpha or 1
+	if offset > 0 and blend < 1 then
+		local backTime = math.clamp(time - offset, 0, 1)
+		local backValue = evalColorSequence(sequence, backTime)
+		local currValue = evalColorSequence(sequence, time)
+		return backValue:Lerp(currValue, blend)
+	end
 
     -- Otherwise, step through each sequential pair of keypoints
     for i = 1, #sequence.Keypoints - 1 do
@@ -31,13 +40,23 @@ local function evalColorSequence(sequence: ColorSequence, time: number)
     return Color3.new(0, 0, 0)
 end
 
-local function evalNumberSequence(sequence: NumberSequence, time: number)
+local function evalNumberSequence(sequence: NumberSequence, time: number, backOffset: number?, blendAlpha: number?)
     -- If time is 0 or 1, return the first or last value respectively
     if time == 0 then
         return sequence.Keypoints[1].Value
     elseif time == 1 then
         return sequence.Keypoints[#sequence.Keypoints].Value
     end
+
+	-- Optional smoothing: blend with value further back in lifetime.
+	local offset = backOffset or 0
+	local blend = blendAlpha or 1
+	if offset > 0 and blend < 1 then
+		local backTime = math.clamp(time - offset, 0, 1)
+		local backValue = evalNumberSequence(sequence, backTime)
+		local currValue = evalNumberSequence(sequence, time)
+		return backValue + (currValue - backValue) * blend
+	end
 
     -- Otherwise, step through each sequential pair of keypoints
     for i = 1, #sequence.Keypoints - 1 do
@@ -55,38 +74,39 @@ end
 
 --#endregion
 
+local BLEND_ALPHA = 0.5
 
 return function(props: Types.HitmarkerProps)
     local lifetime = derive(function()
         return math.clamp(props.TimeElapsed() / props.lifetime, 0, 1)
     end)
-    
+
     local scale = derive(function()
         if typeof(props.scale) == "number" then
             return props.scale
         end
-        return evalNumberSequence(props.scale, lifetime())
+        return evalNumberSequence(props.scale, lifetime(), props.smoothingOffset, BLEND_ALPHA)
     end)
 
     local transparency = derive(function()
         if typeof(props.transparency) == "number" then
             return props.transparency
         end
-        return evalNumberSequence(props.transparency, lifetime())
+        return evalNumberSequence(props.transparency, lifetime(), props.smoothingOffset, BLEND_ALPHA)
     end)
 
     local rotation = derive(function()
         if typeof(props.rotation) == "number" then
             return props.rotation
         end
-        return evalNumberSequence(props.rotation, lifetime())
+        return evalNumberSequence(props.rotation, lifetime(), props.smoothingOffset, BLEND_ALPHA)
     end)
 
     local color = derive(function()
         if typeof(props.color) == "Color3" then
             return props.color
         end
-        return evalColorSequence(props.color, lifetime())
+        return evalColorSequence(props.color, lifetime(), props.smoothingOffset, BLEND_ALPHA)
     end)
 
     local size = derive(function()
@@ -104,10 +124,10 @@ return function(props: Types.HitmarkerProps)
         Position = props.position,
         Image = props.image,
         BackgroundTransparency = 1,
-        Size = spring(size, props.springPeriod, props.springDamping),
-        ImageColor3 = spring(color, props.springPeriod, props.springDamping),
-        ImageTransparency = spring(transparency, props.springPeriod, props.springDamping),
-        Rotation = spring(rotation, props.springPeriod, props.springDamping),
+        Size = size,
+        ImageColor3 = color,
+        ImageTransparency = transparency,
+        Rotation = rotation,
 
         create "UIAspectRatioConstraint" {
             AspectRatio = 1

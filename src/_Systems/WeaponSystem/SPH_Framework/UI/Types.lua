@@ -3,8 +3,7 @@ local Types = {}
 
 export type HitmarkerProps = {
     soundType: string,
-    springPeriod: number,
-    springDamping: number,
+    smoothingOffset: number,
     image: string,
     position: UDim2,
     size: UDim2,
@@ -19,6 +18,8 @@ export type HitmarkerProps = {
 export type EffectViewProps = {
     activeHitmarkers: Vide.source<{HitmarkerProps}>,
     suppressionFactor: Vide.source<number>,
+    activeDamage: Vide.source<number>,
+    panelPosition: Vide.source<Vector2>,
 }
 
 return Types
