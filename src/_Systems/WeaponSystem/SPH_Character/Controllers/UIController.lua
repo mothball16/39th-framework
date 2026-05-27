@@ -49,6 +49,7 @@ type self = {
 	aimSens: TextLabel,
 	ubglAmmo: IntValue?,
 	effectManager: EffectManager.EffectManager,
+	panelPositionSource: Vide.source<UDim2>,
 	maid: Maid.Maid,
 }
 
@@ -121,15 +122,20 @@ function UIController.new(params: {
 		maid = Maid.new(),
 	} :: self, UIController)
 
+	
+	self.panelPositionSource = Vide.source(UIController.GetMuzzleScreenPosition(self))
 	self.maid:GiveTask(Vide.mount(function()
 		return create "ScreenGui" {
 			Name = "SPH_Effects",
 			IgnoreGuiInset = true,
 			DisplayOrder = 100,
+			ResetOnSpawn = true,
 
 			EffectUI({
+				activeDamage = self.effectManager.activeDamage,
 				activeHitmarkers = self.effectManager.activeHitmarkers,
 				suppressionFactor = useAtom(self.state.suppressionFactor),
+				panelPosition = self.panelPositionSource,
 			}),
 		}
 	end, playerGui))
@@ -149,15 +155,26 @@ function UIController.new(params: {
 	return self
 end
 
-function UIController.OnBulletHit(self: UIController, wepStats: Types.WeaponStats, raycastResult: RaycastResult)
+function UIController.GetMuzzleScreenPosition(self: UIController): UDim2
+	local gunModel = self.weaponState.gunModel()
+	if not gunModel then
+		return UDim2.fromScale(0.5, 0.5)
+	end
+	local muzzle = gunModel:FindFirstChild("Grip") and gunModel.Grip:FindFirstChild("Muzzle")
+	if not muzzle then
+		return UDim2.fromScale(0.5, 0.5)
+	end
+	local screenPoint = game.Workspace.CurrentCamera:WorldToViewportPoint(
+		(muzzle.WorldCFrame * CFrame.new(0, 0, -50)).Position)
+	return UDim2.fromOffset(screenPoint.X, screenPoint.Y)
+end
+
+function UIController.OnBulletHit(self: UIController, wepStats: Types.WeaponStats, bulletOrigin: Vector3, raycastResult: RaycastResult)
 	if not raycastResult.Instance or not Access.config.hitmarkers then
 		return
 	end
 	local zone = DamageLogic.getZone(raycastResult.Instance.Name)
-	if zone ~= DamageLogic.Zones.Head 
-		and zone ~= DamageLogic.Zones.Torso 
-		and zone ~= DamageLogic.Zones.Arm 
-		and zone ~= DamageLogic.Zones.Leg then
+	if zone == DamageLogic.Zones.None then
 		return
 	end
 
@@ -165,13 +182,15 @@ function UIController.OnBulletHit(self: UIController, wepStats: Types.WeaponStat
 	if zone == DamageLogic.Zones.Head then
 		hitmarkerRegion = "Headshot"
 	end
-	
+	local distance = (bulletOrigin - raycastResult.Position).Magnitude
 	local hitmarkerInstance = HitmarkerTypes[hitmarkerRegion]()
+	local estimatedDamage = DamageLogic.getDamage(wepStats.damage, raycastResult.Instance.Name, distance, wepStats.range)
 
 	local screenPoint = game.Workspace.CurrentCamera:WorldToViewportPoint(raycastResult.Position)
 	hitmarkerInstance.position = UDim2.fromOffset(screenPoint.X, screenPoint.Y)
 
 	self.effectManager:PushHitmarker(hitmarkerInstance)
+	self.effectManager:PushDamage(estimatedDamage)
 
 	-- play the hitmarker sound
 	local soundList = assets.Sounds.Hitmarkers[hitmarkerRegion]:GetChildren() :: { Sound }
@@ -214,6 +233,8 @@ function UIController.UpdateHeartbeat(self: UIController, _dt: number)
 	local tool = self.state.equippedTool()
 	local wepStats = self.weaponState.wepStats()
 	local magAmmo = self.weaponState.gunAmmo and self.weaponState.gunAmmo:FindFirstChild("MagAmmo")
+
+	self.panelPositionSource(UIController.GetMuzzleScreenPosition(self))
 
 	if tool and wepStats and (tool:FindFirstChild("Chambered") or wepStats.openBolt) and magAmmo and not self.state.dead() then
 		if self.state.Parts.Humanoid.SeatPart ~= nil and self.state.Parts.Humanoid.SeatPart.ClassName == "VehicleSeat" then
