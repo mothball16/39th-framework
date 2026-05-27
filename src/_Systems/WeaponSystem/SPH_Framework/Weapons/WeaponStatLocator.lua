@@ -37,7 +37,7 @@ local function getConfig(sphWeapon, configName)
 	return nil
 end
 
-function WeaponStatLocator.getWeaponStats(sphWeapon): () -> Types.WeaponStats
+function WeaponStatLocator.getWeaponStats(sphWeapon): Types.WeaponStats
 	return getConfig(sphWeapon, "WeaponStats")
 end
 
