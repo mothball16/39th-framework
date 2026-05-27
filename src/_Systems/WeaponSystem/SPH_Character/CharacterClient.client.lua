@@ -35,6 +35,7 @@ local weaponState = require(Framework.State.WeaponState).new()
 
 local AnimationController = require(Controllers:WaitForChild("AnimationController"))
 local CameraController = require(Controllers:WaitForChild("CameraController"))
+local EffectController = require(Controllers:WaitForChild("EffectController"))
 local InputController = require(Controllers:WaitForChild("InputController"))
 local MovementController = require(Controllers:WaitForChild("MovementController"))
 local ReplicationController = require(Controllers:WaitForChild("ReplicationController"))
@@ -200,6 +201,11 @@ local uiController = UIController.new({
 	events = events,
 	effectManager = effectManager,
 })
+local effectController = EffectController.new({
+	state = characterState,
+	weaponState = weaponState,
+	effectManager = effectManager,
+})
 
 local function OnScrollIntent(scrollAmount, holdForZoom)
 	if characterState.aiming() then
@@ -307,6 +313,7 @@ humanoid.Died:Connect(function()
 	end
 
 	if rig then rig:Destroy() end
+	effectController:Destroy()
 	effectManager:Destroy()
 end)
 
@@ -331,6 +338,7 @@ runService.Heartbeat:Connect(function(dt:number)
 	movementController:UpdateHeartbeat(dt)
 	weaponController:UpdateHeartbeat(dt)
 	uiController:UpdateHeartbeat(dt)
+	effectController:UpdateHeartbeat(dt)
 end)
 
 Charm.effect(function()
