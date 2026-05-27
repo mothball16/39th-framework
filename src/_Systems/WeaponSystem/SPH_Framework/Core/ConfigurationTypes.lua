@@ -200,7 +200,6 @@ export type MainGameSettings = {
 
 	useDeathCameraSubject: boolean,
 	explosionRaycast: boolean,
-	lockFirstPerson: boolean,
 
 	gunDropping: boolean,
 	dropOnDeath: boolean,
@@ -333,6 +332,11 @@ export type MainGameSettings = {
 	version: string,
 
 	hitmarkers: boolean,
+
+	suppressionVignetteLimit: number,
+	suppressionAimPunchFactor: number,
+	suppressionAimPunchThrottle: number,
+	suppressionLimitsZoom: boolean,
 }
 
 return nil

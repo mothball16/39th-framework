@@ -1,16 +1,16 @@
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Packages = ReplicatedStorage:WaitForChild("Packages")
-local Vide = require(Packages.Vide)
-local create = Vide.create
-local useAtom = require(Packages["vide-charm"]).useAtom
-local Maid = require(Packages.maid)
+local Charm = require("@game/ReplicatedStorage/Packages/Charm")
+local Vide = require("@game/ReplicatedStorage/Packages/Vide")
+local Maid = require("@game/ReplicatedStorage/Packages/maid")
 
-local Framework = ReplicatedStorage.SPH_Framework
-local CharacterStateModule = require(Framework.State.CharacterState)
-local WeaponStateModule = require(Framework.State.WeaponState)
-local EffectManager = require(Framework.UI.Logic.EffectManager)
-local EffectUI = require(Framework.UI.Roots.EffectUI)
+
+local create = Vide.create
+local useAtom = require("@game/ReplicatedStorage/Packages/vide-charm").useAtom
+
+local CharacterStateModule = require("@game/ReplicatedStorage/SPH_Framework/State/CharacterState")
+local WeaponStateModule = require("@game/ReplicatedStorage/SPH_Framework/State/WeaponState")
+local EffectManager = require("@game/ReplicatedStorage/SPH_Framework/UI/Logic/EffectManager")
+local EffectUI = require("@game/ReplicatedStorage/SPH_Framework/UI/Roots/EffectUI")
 
 local EffectController = {}
 EffectController.__index = EffectController
@@ -40,7 +40,7 @@ function EffectController.new(params: {
 
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-	self.panelPositionSource = Vide.source(self:GetMuzzleScreenPosition())
+	self.panelPositionSource = Vide.source(self:GetForwardPanelPosition())
 	self.maid:GiveTask(Vide.mount(function()
 		return create "ScreenGui" {
 			Name = "SPH_Effects",
@@ -57,10 +57,23 @@ function EffectController.new(params: {
 		}
 	end, playerGui))
 
+	self.maid:GiveTask(Charm.subscribe(self.state.suppressionFactor, function(value, oldValue)
+		self:SyncSuppressionFactor(value, oldValue)
+	end))
+
 	return self
 end
 
-function EffectController.GetMuzzleScreenPosition(self: EffectController): UDim2
+function EffectController.SyncSuppressionFactor(self: EffectController, value: number, oldValue: number)
+	local delta = value - oldValue
+	if delta > 0 then
+
+	else
+
+	end
+end
+
+function EffectController.GetForwardPanelPosition(self: EffectController): UDim2
 	local gunModel = self.weaponState.gunModel()
 	if not gunModel then
 		return UDim2.fromScale(0.5, 0.5)
@@ -76,7 +89,7 @@ function EffectController.GetMuzzleScreenPosition(self: EffectController): UDim2
 end
 
 function EffectController.UpdateHeartbeat(self: EffectController, _dt: number)
-	self.panelPositionSource(self:GetMuzzleScreenPosition())
+	self.panelPositionSource(self:GetForwardPanelPosition())
 end
 
 function EffectController.Destroy(self: EffectController)
