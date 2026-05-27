@@ -7,8 +7,11 @@ realm = "shared"
 [dependencies]
 Charm = "littensy/charm@0.10.0"
 charm-sync = "littensy/charm-sync@0.3.0"
-vide-charm = "littensy/vide-charm@0.3.0"
 Vide = "centau/vide@0.3.1"
+vide-charm = "littensy/vide-charm@0.3.0"
+vide-ripple = "littensy/vide-ripple@0.10.2"
+ripple = "littensy/ripple@0.10.2"
+
 signal = "sleitnick/signal@2.0.3"
 maid = "nightcycle/maid@2.2.2"
 table-util = "sleitnick/table-util@1.2.1"

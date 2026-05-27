@@ -8,6 +8,11 @@ version = "0.3.1"
 dependencies = []
 
 [[package]]
+name = "centau/vide"
+version = "0.4.0"
+dependencies = []
+
+[[package]]
 name = "elitriare/bytenet-max"
 version = "0.2.7"
 dependencies = []
@@ -15,7 +20,7 @@ dependencies = []
 [[package]]
 name = "jzou0/39th-framework"
 version = "0.1.0"
-dependencies = [["Charm", "littensy/charm@0.10.0"], ["Net", "sleitnick/net@0.2.0"], ["Vide", "centau/vide@0.3.1"], ["bytenet-max", "elitriare/bytenet-max@0.2.7"], ["charm-sync", "littensy/charm-sync@0.3.0"], ["maid", "nightcycle/maid@2.2.2"], ["signal", "sleitnick/signal@2.0.3"], ["table-util", "sleitnick/table-util@1.2.1"], ["vide-charm", "littensy/vide-charm@0.3.0"], ["TestEZ", "roblox/testez@0.4.1"], ["ui-labs", "pepeeltoro41/ui-labs@2.4.2"]]
+dependencies = [["Charm", "littensy/charm@0.10.0"], ["Net", "sleitnick/net@0.2.0"], ["Vide", "centau/vide@0.3.1"], ["bytenet-max", "elitriare/bytenet-max@0.2.7"], ["charm-sync", "littensy/charm-sync@0.3.0"], ["maid", "nightcycle/maid@2.2.2"], ["ripple", "littensy/ripple@0.10.2"], ["signal", "sleitnick/signal@2.0.3"], ["table-util", "sleitnick/table-util@1.2.1"], ["vide-charm", "littensy/vide-charm@0.3.0"], ["vide-ripple", "littensy/vide-ripple@0.10.2"], ["TestEZ", "roblox/testez@0.4.1"], ["ui-labs", "pepeeltoro41/ui-labs@2.4.2"]]
 
 [[package]]
 name = "littensy/charm"
@@ -28,9 +33,19 @@ version = "0.3.0"
 dependencies = [["charm", "littensy/charm@0.10.0"]]
 
 [[package]]
+name = "littensy/ripple"
+version = "0.10.2"
+dependencies = []
+
+[[package]]
 name = "littensy/vide-charm"
 version = "0.3.0"
 dependencies = [["Vide", "centau/vide@0.3.1"], ["charm", "littensy/charm@0.10.0"]]
+
+[[package]]
+name = "littensy/vide-ripple"
+version = "0.10.2"
+dependencies = [["Ripple", "littensy/ripple@0.10.2"], ["Vide", "centau/vide@0.4.0"]]
 
 [[package]]
 name = "nightcycle/maid"
