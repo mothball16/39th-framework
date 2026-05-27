@@ -12,25 +12,34 @@ local DamageLogic = {}
 DamageLogic.Zones = {
 	Head = "Head",
 	Torso = "Torso",
-	Arm = "Arm",
-	Leg = "Leg",
 	Other = "Other",
+	None = "None",
+}
+
+DamageLogic.ZoneByPartName = {
+	["Head"] = DamageLogic.Zones.Head,
+	["Torso"] = DamageLogic.Zones.Torso,
+	["HumanoidRootPart"] = DamageLogic.Zones.Torso,
+	["Left Arm"] = DamageLogic.Zones.Other,
+	["Right Arm"] = DamageLogic.Zones.Other,
+	["Left Leg"] = DamageLogic.Zones.Other,
+	["Right Leg"] = DamageLogic.Zones.Other,
+
+	["UpperTorso"] = DamageLogic.Zones.Torso,
+	["LeftUpperArm"] = DamageLogic.Zones.Other,
+	["RightUpperArm"] = DamageLogic.Zones.Other,
+	["LeftLowerArm"] = DamageLogic.Zones.Other,
+	["RightLowerArm"] = DamageLogic.Zones.Other,
+	["LeftUpperLeg"] = DamageLogic.Zones.Other,
+	["RightUpperLeg"] = DamageLogic.Zones.Other,
+	["LeftLowerLeg"] = DamageLogic.Zones.Other,
 }
 
 function DamageLogic.getZone(partName: string): string
-	if partName == "Head" then
-		return DamageLogic.Zones.Head
+	if DamageLogic.ZoneByPartName[partName] then
+		return DamageLogic.ZoneByPartName[partName]
 	end
-	if partName == "Torso" or partName == "UpperTorso" or partName == "HumanoidRootPart" then
-		return DamageLogic.Zones.Torso
-	end
-	if partName == "LeftArm" or partName == "RightArm" or partName == "LeftUpperArm" or partName == "RightUpperArm" or partName == "LeftLowerArm" or partName == "RightLowerArm" then
-		return DamageLogic.Zones.Arm
-	end
-	if partName == "LeftLeg" or partName == "RightLeg" or partName == "LeftUpperLeg" or partName == "RightUpperLeg" or partName == "LeftLowerLeg" or partName == "RightLowerLeg" then
-		return DamageLogic.Zones.Leg
-	end
-	return DamageLogic.Zones.Other
+	return DamageLogic.Zones.None
 end
 
 --- High damage at/under range.Min, low damage at/over range.Max, linear between.
