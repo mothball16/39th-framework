@@ -20,7 +20,7 @@ return function(props: Types.EffectViewProps)
         BackgroundTransparency = 1,
         Size = UDim2.fromScale(1, 1),
         indexes(props.activeHitmarkers, function(item, index)
-            return Hitmarker(item())
+            return Hitmarker(item().props)
         end),
         create "Frame" {
             Name = "Panel",

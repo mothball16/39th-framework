@@ -187,9 +187,9 @@ function UIController.OnBulletHit(self: UIController, wepStats: Types.WeaponStat
 	local estimatedDamage = DamageLogic.getDamage(wepStats.damage, raycastResult.Instance.Name, distance, wepStats.range)
 
 	local screenPoint = game.Workspace.CurrentCamera:WorldToViewportPoint(raycastResult.Position)
-	hitmarkerInstance.position = UDim2.fromOffset(screenPoint.X, screenPoint.Y)
+	hitmarkerInstance.Position(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
 
-	self.effectManager:PushHitmarker(hitmarkerInstance)
+	self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position)
 	self.effectManager:PushDamage(estimatedDamage)
 
 	-- play the hitmarker sound

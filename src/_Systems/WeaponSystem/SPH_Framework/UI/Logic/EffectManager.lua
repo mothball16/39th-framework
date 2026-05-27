@@ -7,7 +7,10 @@ EffectManager.__index = EffectManager
 
 type self = {
     maid: Maid.Maid,
-    activeHitmarkers: Vide.source<{Types.HitmarkerProps}>,
+    activeHitmarkers: Vide.source<{
+        props: Types.HitmarkerProps,
+        anchorPoint: Vector3 | nil
+    }>,
     activeDamage: Vide.source<{number}>,
 
     _suppressionSource: Vide.source<number>,
@@ -31,9 +34,18 @@ function EffectManager.new(suppressionSource: Vide.source<number>): EffectManage
     self.maid:GiveTask(RunService.RenderStepped:Connect(function(dt)
         local state = self.activeHitmarkers()
         local indexesDirty = false
-        for i, v in state do
-            v.TimeElapsed(v.TimeElapsed() + dt)
-            if v.TimeElapsed() >= v.lifetime then
+        for i, hitmarker in state do
+            if hitmarker.anchorPoint then
+                local screenPoint, onScreen = game.Workspace.CurrentCamera:WorldToViewportPoint(hitmarker.anchorPoint)
+	            if onScreen then
+                    hitmarker.props.Position(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
+                else
+                    hitmarker.props.Position(UDim2.fromScale(100, 100))
+                end
+            end
+
+            hitmarker.props.TimeElapsed(hitmarker.props.TimeElapsed() + dt)
+            if hitmarker.props.TimeElapsed() >= hitmarker.props.lifetime then
                 state[i] = nil
                 indexesDirty = true
             end
@@ -51,9 +63,12 @@ function EffectManager.new(suppressionSource: Vide.source<number>): EffectManage
     return self
 end
 
-function EffectManager.PushHitmarker(self: EffectManager, props: Types.HitmarkerProps)
-    local state = self.activeHitmarkers()
-    table.insert(state, props)
+function EffectManager.PushHitmarker(self: EffectManager, props: Types.HitmarkerProps, anchorPoint: Vector3 | nil)
+    local state = table.clone(self.activeHitmarkers())
+    table.insert(state, {
+        props = props,
+        anchorPoint = anchorPoint,
+    })
     self.activeHitmarkers(state)
 end
 

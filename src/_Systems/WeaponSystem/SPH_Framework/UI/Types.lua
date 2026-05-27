@@ -5,13 +5,13 @@ export type HitmarkerProps = {
     soundType: string,
     smoothingOffset: number,
     image: string,
-    position: UDim2,
     size: UDim2,
     transparency: NumberSequence | number,
     scale: NumberSequence | number,
     color: ColorSequence | Color3,
     rotation: NumberSequence | number,
     lifetime: number,
+    Position: Vide.source<UDim2>,
     TimeElapsed: Vide.source<number> | nil,
 }
 

@@ -121,7 +121,7 @@ return function(props: Types.HitmarkerProps)
     return create "ImageLabel" {
         Name = "Hitmarker",
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = props.position,
+        Position = props.Position,
         Image = props.image,
         BackgroundTransparency = 1,
         Size = size,
