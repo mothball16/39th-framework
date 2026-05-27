@@ -29,6 +29,7 @@ local useAtom = require(Packages["vide-charm"]).useAtom
 local Maid = require(Packages.maid)
 local Types = require(Framework.Core.ConfigurationTypes)
 local DamageLogic = require(Framework.Combat.DamageLogic)
+local WeaponPrefs = require(Framework.Weapons.WeaponPrefsClient)
 
 local FIRE_MODE_NAMES = { "[SAFE]", "[SEMI]", "[AUTO]", "[BURST]", "[UBGL]", "[MANUAL]" }
 
@@ -298,7 +299,7 @@ function UIController.UpdateHeartbeat(self: UIController, _dt: number)
 		end
 
 		self.fireMode.Text = FIRE_MODE_NAMES[fireModeVal + 1]
-		self.aimSens.Text = string.format("%.2f", self.weaponState.aimSens())
+		self.aimSens.Text = string.format("%.2f", WeaponPrefs.getGlobal("aimSens"))
 	else
 		self.ammoUI.Visible = false
 	end

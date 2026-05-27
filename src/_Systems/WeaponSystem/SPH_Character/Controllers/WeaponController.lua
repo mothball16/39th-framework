@@ -439,7 +439,6 @@ function WeaponController.Unequip(self: WeaponController, tool)
 			flashlightEnabled = self.weaponState.flashlightEnabled(),
 			bipodEnabled = self.weaponState.bipodEnabled(),
 			fireMode = self.weaponState.fireMode(),
-			aimSens = self.weaponState.aimSens(),
 			sightIndex = self.weaponState.sightIndex(),
 		})
 		self.state.equippedTool(nil)

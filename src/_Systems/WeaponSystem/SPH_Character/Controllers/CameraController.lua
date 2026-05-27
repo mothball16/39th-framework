@@ -9,6 +9,7 @@ local Access = require(Framework.Access)
 local config = Access.config
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
+local WeaponPrefs = require(Framework.Weapons.WeaponPrefsClient)
 
 local SPRINT_FOV_MULTIPLIER = 1.03
 
@@ -95,7 +96,7 @@ end
 function CameraController.UpdateFOV(self: CameraController, dt: number)
 	local camSensFactor = self.camera.FieldOfView / config.defaultFOV
 	if self.state.aiming() then
-		UserInputService.MouseDeltaSensitivity = self.weaponState.aimSens() * camSensFactor
+		UserInputService.MouseDeltaSensitivity = WeaponPrefs.getGlobal("aimSens") * camSensFactor
 	else
 		UserInputService.MouseDeltaSensitivity = 1 * camSensFactor
 	end

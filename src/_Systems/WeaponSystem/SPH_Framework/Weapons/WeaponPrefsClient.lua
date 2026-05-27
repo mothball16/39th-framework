@@ -4,14 +4,27 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Framework = ReplicatedStorage.SPH_Framework
+local Access = require(Framework.Access)
+local config = Access.config
 local Events = require(Framework.Network.Events)
 local P = Events.GetNamespace().packets
 
 local WeaponPrefsClient = {
-	_byWeaponName = {},
 	isApplying = false,
 	_applyDepth = 0,
+	_byWeaponName = {},
+	_global = {
+		aimSens = config.defaultAimSensitivity,
+	},
 }
+
+function WeaponPrefsClient.getGlobal(pref)
+	return WeaponPrefsClient._global[pref]
+end
+
+function WeaponPrefsClient.setGlobal(pref, value)
+	WeaponPrefsClient._global[pref] = value
+end
 
 function WeaponPrefsClient.get(weaponName)
 	return WeaponPrefsClient._byWeaponName[weaponName]
@@ -123,8 +136,6 @@ function WeaponPrefsClient.applyPersisted(weaponName, State, WeaponState, WC)
 			validated.bipodEnabled = val
 		elseif key == "fireMode" and fireModeSupported(val, wepStats) then
 			validated.fireMode = val
-		elseif key == "aimSens" then
-			validated.aimSens = math.clamp(val, 0.01, 1)
 		elseif key == "sightIndex" and sightIndexSupported(val, gun) then
 			validated.sightIndex = val
 		end
@@ -144,9 +155,6 @@ function WeaponPrefsClient.applyPersisted(weaponName, State, WeaponState, WC)
 
 	WeaponPrefsClient.beginApply()
 
-	if validated.aimSens then
-		WeaponState.aimSens(validated.aimSens)
-	end
 	if validated.sightIndex then
 		WeaponState.sightIndex(validated.sightIndex)
 	end

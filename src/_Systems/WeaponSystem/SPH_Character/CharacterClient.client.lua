@@ -42,6 +42,7 @@ local UIController = require(Controllers:WaitForChild("UIController"))
 local ViewmodelController = require(Controllers:WaitForChild("ViewmodelController"))
 local WeaponController = require(Controllers:WaitForChild("WeaponController"))
 local EffectManager = require(Framework.UI.Logic.EffectManager)
+local WeaponPrefs = require(Framework.Weapons.WeaponPrefsClient)
 
 bulletHandler.Initialize(player)
 
@@ -221,7 +222,8 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 		end]]
 
 		-- Sensitivity
-		weaponState.aimSens(math.clamp(weaponState.aimSens() + (0.01 * scrollAmount), 0.01, 1))
+		local currentSens = WeaponPrefs.getGlobal("aimSens")
+		WeaponPrefs.setGlobal("aimSens", math.clamp(currentSens + (0.01 * scrollAmount), 0.01, 1))
 	else
 		if not weaponState.canManipulate() then
 			return
