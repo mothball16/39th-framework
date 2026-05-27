@@ -242,9 +242,7 @@ function WeaponController.SyncAiming(self: WeaponController, aiming)
 		local ADSMeshEnabled = self.weaponState.adsMeshEnabledForActiveSight()
 		self:PlayRepSound("AimUp")
 		self:ToggleADSMesh(ADSMeshEnabled)
-		if not config.lockFirstPerson then
-			Player.CameraMode = Enum.CameraMode.LockFirstPerson
-		end
+
 
 		-- ready the character
 		self.state.sprinting(false)
@@ -253,9 +251,6 @@ function WeaponController.SyncAiming(self: WeaponController, aiming)
 		self:PlayRepSound("AimDown")
 		self:ToggleADSMesh(false)
 
-		if not config.lockFirstPerson then
-			Player.CameraMode = defaultCameraMode
-		end
 	end
 end
 
@@ -447,9 +442,7 @@ function WeaponController.Unequip(self: WeaponController, tool)
 	UserInputService.MouseIconEnabled = true
 	self.events.StopAllRequested:Fire()
 
-	if config.lockFirstPerson then
-		self.player.CameraMode = Enum.CameraMode.Classic
-	end
+
 
 	self.sights = {}
 end
@@ -564,7 +557,6 @@ function WeaponController.Equip(self: WeaponController, newChild)
 		self:MoveBolt(ws.boltDist, true)
 	end
 
-	if config.lockFirstPerson then self.player.CameraMode = Enum.CameraMode.LockFirstPerson end
 	self.weaponState.fireMode(self.state.equippedTool().FireMode.Value)
 	self.weaponState.holdStance(Enums.HoldStance.Ready)
 

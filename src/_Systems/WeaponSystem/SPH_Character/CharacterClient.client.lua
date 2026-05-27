@@ -71,10 +71,8 @@ if humanoidRootPart:FindFirstChild("Died") then
 	humanoidRootPart.Died.Volume = 0
 end
 
--- Unlock the camera if lock first person for guns is enabled
-if config.lockFirstPerson then
-	player.CameraMode = Enum.CameraMode.Classic
-end
+-- Unlock the camera in case something went wrong
+player.CameraMode = Enum.CameraMode.Classic
 
 -- Create new viewmodel
 local rig = viewMod.RigModel(player)
