@@ -191,7 +191,10 @@ local replicationController = ReplicationController.new({
 	state = characterState,
 })
 
-local effectManager = EffectManager.new(characterState.suppressionFactor)
+local effectManager = EffectManager.new(
+	characterState.suppressionFactor,
+	config.suppressionRecovery
+)
 
 local uiController = UIController.new({
 	state = characterState,

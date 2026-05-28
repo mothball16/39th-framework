@@ -105,12 +105,17 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 					bulletCFrame = B.cframe,
 				}),
 			}),
-			PlayerSuppressionReport = B.definePacket({
-				reliabilityType = "unreliable",
+			RequestSuppression = B.definePacket({
 				value = B.struct({
 					target = B.inst,
 				}),
 			}),
+			ReportSuppression = B.definePacket({
+				value = B.struct({
+					level = B.float32,
+				}),
+			}),
+
 			ReplicateFire = B.definePacket({
 				reliabilityType = "unreliable",
 				value = B.struct({
@@ -132,12 +137,7 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 					rayHit = B.unknown,
 				}),
 			}),
-			ReplicateSuppression = B.definePacket({
-				reliabilityType = "unreliable",
-				value = B.struct({
-					level = B.float32,
-				}),
-			}),
+
 			ReplicateBolt = B.definePacket({
 				reliabilityType = "unreliable",
 				value = B.struct({

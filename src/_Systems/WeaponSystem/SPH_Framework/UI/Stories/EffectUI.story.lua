@@ -24,7 +24,7 @@ local story = UILabs.CreateVideStory({
 	controls = controls,
 }, function(props)
 	local suppressionFactor = Vide.source(0)
-	local effectManager = EffectManager.new(suppressionFactor)
+	local effectManager = EffectManager.new(suppressionFactor, 0.2)
 
 	Vide.cleanup(function()
 		effectManager:Destroy()

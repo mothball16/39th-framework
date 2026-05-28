@@ -7,7 +7,10 @@ local derive = Vide.derive
 local spring = Vide.spring
 local untrack = Vide.untrack
 local Hitmarker = require("../Components/Hitmarker")
+local SuppressionCanvas = require("../Components/SuppressionCanvas")
 local Types = require("../Types")
+
+
 
 return function(props: Types.EffectViewProps)
     local showDamage = derive(function()
@@ -16,14 +19,22 @@ return function(props: Types.EffectViewProps)
 
     local transparency = spring(function() return showDamage() and 0.25 or 1 end, 0.1, 0.1)
     local panelLerpPosition = spring(function() return props.panelPosition() end, 0.05, 0.5)
+
     return create "Frame" {
         BackgroundTransparency = 1,
         Size = UDim2.fromScale(1, 1),
         indexes(props.activeHitmarkers, function(item, index)
             return Hitmarker(item().props)
         end),
+
+        SuppressionCanvas({
+            factor = props.suppressionFactor,
+            minSize = 0.5,
+        }),
+
+        -- forward-panel, based off the muzzle position
         create "Frame" {
-            Name = "Panel",
+            Name = "ForwardPanel",
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(0.1, 1),
             AnchorPoint = Vector2.new(0.5, 0.5),
@@ -67,8 +78,7 @@ return function(props: Types.EffectViewProps)
                     TextScaled = true,
                     FontFace = Font.new("RobotoMono", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
                 },
-            }
-            
+            },
         },
 
     }

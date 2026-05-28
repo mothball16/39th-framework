@@ -22,4 +22,9 @@ export type EffectViewProps = {
     panelPosition: Vide.source<Vector2>,
 }
 
+export type SuppressionCanvasProps = {
+    minSize: UDim2,
+    factor: Vide.source<number>,
+}
+
 return Types

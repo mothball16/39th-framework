@@ -332,11 +332,14 @@ export type MainGameSettings = {
 	version: string,
 
 	hitmarkers: boolean,
+	damageIndicators: boolean,
 
 	suppressionVignetteLimit: number,
+	suppressionRecovery: number,
 	suppressionAimPunchFactor: number,
 	suppressionAimPunchThrottle: number,
 	suppressionLimitsZoom: boolean,
+
 }
 
 return nil

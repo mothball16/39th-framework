@@ -3,7 +3,6 @@ local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
 
-
 local create = Vide.create
 local useAtom = require("@game/ReplicatedStorage/Packages/vide-charm").useAtom
 

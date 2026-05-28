@@ -21,7 +21,7 @@ export type EffectManager = setmetatable<self, typeof(EffectManager)>
 
 local DAMAGE_DISPLAY_TIME = 3
 
-function EffectManager.new(suppressionSource: Vide.source<number>): EffectManager
+function EffectManager.new(suppressionSource: Vide.source<number>, suppressionRecovery: number): EffectManager
     local self = setmetatable({
         maid = Maid.new(),
         activeHitmarkers = Vide.source({}),
@@ -58,6 +58,8 @@ function EffectManager.new(suppressionSource: Vide.source<number>): EffectManage
         if tick() - self._lastDamageUpdate > DAMAGE_DISPLAY_TIME then
             self.activeDamage(0)
         end
+
+        self._suppressionSource(self._suppressionSource() - dt * suppressionRecovery)
     end))
 
     return self
