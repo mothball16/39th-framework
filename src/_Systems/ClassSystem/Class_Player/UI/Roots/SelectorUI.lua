@@ -1,4 +1,3 @@
-local Access = require("@game/ReplicatedStorage/Class_Framework/Access")
 local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
 local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
 local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
@@ -21,6 +20,7 @@ return function(props: {
 	setSelectorOpen: ((open: boolean) -> ()) -> (),
 	requestGroupClass: ((groupKey: string, classId: string) -> ()),
 	requestClassApply: ((enable: boolean) -> ())?,
+	applyClassMode: string?,
 })
 	local dirty = false
 	local classIndex = source(1)
@@ -129,8 +129,9 @@ return function(props: {
 	end)
 
 	local _onOpenToggled = effect(function()
+		local shouldToggleClassApply = props.applyClassMode == Enums.ApplyClassMode.AfterInteraction
 		if props.isOpen() then
-			if Access.Config.ApplyClassMode == Enums.ApplyClassMode.AfterInteraction and props.requestClassApply then
+			if shouldToggleClassApply and props.requestClassApply then
 				props.requestClassApply(false)
 			end
 		else
@@ -143,7 +144,7 @@ return function(props: {
 				dirty = false
 			end
 
-			if Access.Config.ApplyClassMode == Enums.ApplyClassMode.AfterInteraction and props.requestClassApply then
+			if shouldToggleClassApply and props.requestClassApply then
 				props.requestClassApply(true)
 			end
 		end
