@@ -15,7 +15,7 @@ return function()
 	local itemProviders = {
 		Test = require("../ItemProviders/Test"),
 	}
-	local classConfigs = {
+	local configByClassId = {
 		RiflemanA = Mocks.ClassConfig("RiflemanA"),
 		RiflemanB = Mocks.ClassConfig("RiflemanB"),
 		EngineerA = Mocks.ClassConfig("EngineerA"),
@@ -42,7 +42,7 @@ return function()
         runtime = ServerRuntime.new({
 			access = testAccess,
             itemProviders = itemProviders,
-            classConfigs = classConfigs,
+            configByClassId = configByClassId,
             configByFactionId = configByFactionId,
             shouldSync = false,
         })
@@ -60,26 +60,26 @@ return function()
 
 	it("should assign the default class when a player is set to a faction", function()
 		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
-		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Rifleman")
+		expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
 		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
 
-		StateActions.SetPlayerClass(runtime.state, playerOne.UserId, "Rifleman", "RiflemanB")
+		StateActions.SetPlayerGroupClass(runtime.state, playerOne.UserId, "Rifleman", "RiflemanB")
 
 		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "bravo")
-		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Rifleman")
+		expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
 		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
 	end)
 
 	it("should update state accordingly when a class is assigned to a player", function()
 		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
 		
-		runtime.selectionHandler:HandleClassRequest(playerOne, {
-			classKey = "Rifleman",
+		runtime.selectionHandler:HandleGroupClassRequest(playerOne, {
+			groupKey = "Rifleman",
 			classId = "RiflemanA",
 		}, runtime.itemEquipper)
 
 		expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal("alpha")
-		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Rifleman")
+		expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
 		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
 	end)
 
@@ -88,36 +88,36 @@ return function()
 		StateActions.RemovePlayerFaction(runtime.state, playerOne.UserId)
 
 		expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
-		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal(nil)
+		expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal(nil)
 		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal(nil)
 	end)
 
 	it("should remove the assignment when a class is assigned to a player that is not in a faction", function()
-		runtime.selectionHandler:HandleClassRequest(playerOne, {
-			classKey = "Rifleman",
+		runtime.selectionHandler:HandleGroupClassRequest(playerOne, {
+			groupKey = "Rifleman",
 			classId = "RiflemanA"
 		}, runtime.itemEquipper)
 
 		expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
-		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal(nil)
+		expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal(nil)
 		expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal(nil)
 	end)
 
 	it("should not assign the class when a player is assigned to a full class slot", function()
 		StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
 		StateActions.SetPlayerFaction(runtime.state, playerTwo.UserId, "alpha")
-		runtime.selectionHandler:HandleClassRequest(playerOne, {
-			classKey = "Marksman",
+		runtime.selectionHandler:HandleGroupClassRequest(playerOne, {
+			groupKey = "Marksman",
 			classId = "MarksmanA",
 		}, runtime.itemEquipper)
-		runtime.selectionHandler:HandleClassRequest(playerTwo, {
-			classKey = "Marksman",
+		runtime.selectionHandler:HandleGroupClassRequest(playerTwo, {
+			groupKey = "Marksman",
 			classId = "MarksmanA",
 		}, runtime.itemEquipper)
-		expect(runtime.state.playerByClassKey()[playerOne.UserId]).to.equal("Marksman")
-		expect(runtime.state.playerByClassKey()[playerTwo.UserId]).to.equal("Rifleman")
-		expect(runtime.state.classCountByFaction()["alpha"]["Marksman"]).to.equal(1)
-		expect(runtime.state.classCountByFaction()["alpha"]["Rifleman"]).to.equal(1)
+		expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Marksman")
+		expect(runtime.state.playerByGroupKey()[playerTwo.UserId]).to.equal("Rifleman")
+		expect(runtime.state.groupCountByFaction()["alpha"]["Marksman"]).to.equal(1)
+		expect(runtime.state.groupCountByFaction()["alpha"]["Rifleman"]).to.equal(1)
 	end)
 	
 

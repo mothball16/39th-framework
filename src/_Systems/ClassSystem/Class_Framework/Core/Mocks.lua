@@ -23,9 +23,9 @@ function Mocks.FactionConfig(factionId: string)
     return {
         ID = factionId,
         Name = "United States Marine Corps",
-        Classes = {
+        Groups = {
             Rifleman = {
-                ClassIDs = {
+                Classes = {
                     {
                         Id = "RiflemanA",
                         Name = "Rifleman",
@@ -41,7 +41,7 @@ function Mocks.FactionConfig(factionId: string)
                 Default = true,
             },
             Engineer = {
-                ClassIDs = {
+                Classes = {
                     {
                         Id = "EngineerA",
                         Name = "Engineer",
@@ -52,7 +52,7 @@ function Mocks.FactionConfig(factionId: string)
                 Default = false,
             },
             Marksman = {
-                ClassIDs = {
+                Classes = {
                     {
                         Id = "MarksmanA",
                         Name = "Marksman",

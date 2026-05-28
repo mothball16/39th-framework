@@ -16,9 +16,9 @@ function Events.GetNamespace()
    return ByteNetMax.defineNamespace("Class_Framework", function()
       return {
          packets = {
-            RequestClass = ByteNetMax.definePacket({
+            RequestGroupClass = ByteNetMax.definePacket({
                value = ByteNetMax.struct({
-                  classKey = ByteNetMax.string,
+                  groupKey = ByteNetMax.string,
                   classId = ByteNetMax.string,
                }),
             }),
@@ -49,7 +49,7 @@ return Events
 -- local Events = {
 --    RequestState = Net:RemoteEvent("RequestState"),
 --    SyncState = Net:RemoteEvent("SyncState"),
---    RequestClass = Net:RemoteEvent("RequestClass"),
+--    RequestGroupClass = Net:RemoteEvent("RequestGroupClass"),
 --    RequestFaction = Net:RemoteEvent("RequestFaction"),
 --    RequestClassApply = Net:RemoteEvent("RequestClassApply"),
 -- }

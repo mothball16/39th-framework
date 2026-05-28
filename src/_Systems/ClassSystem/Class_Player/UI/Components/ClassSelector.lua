@@ -11,7 +11,7 @@ return function(props: {
     RightActivated: () -> (),
 })
     return create "Frame" {
-        Name = "VariantOption",
+        Name = "ClassOption",
         LayoutOrder = 1,
         Size = props.size,
 
@@ -40,7 +40,7 @@ return function(props: {
             BackgroundTransparency = 1,
             BorderSizePixel = 0,
             create "TextButton" {
-                Name = "PreviousVariant",
+                Name = "PreviousClass",
                 AnchorPoint = Vector2.new(0, 0.5),
                 Position = UDim2.fromScale(0, 0.5),
                 Size = UDim2.fromScale(0.15, 0.8),
@@ -59,7 +59,7 @@ return function(props: {
             },
     
             create "TextLabel" {
-                Name = "VariantValue",
+                Name = "ClassValue",
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.fromScale(0.5, 0.5),
                 Size = UDim2.fromScale(0.6, 0.8),
@@ -71,7 +71,7 @@ return function(props: {
             },
     
             create "TextButton" {
-                Name = "NextVariant",
+                Name = "NextClass",
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.fromScale(1, 0.5),
                 Size = UDim2.fromScale(0.15, 0.8),

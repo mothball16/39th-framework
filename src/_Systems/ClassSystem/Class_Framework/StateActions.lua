@@ -21,10 +21,10 @@ function StateActions.CreateFaction(state: State.State, config: Types.FactionCon
 		local nextState = table.clone(previous)
 		nextState[config.ID] = config
 
-		-- resolve default class for future use
-		for classKey, classConfig in pairs(config.Classes) do
-			if classConfig.Default then
-				nextState[config.ID].DefaultClassKey = classKey
+		-- resolve default group for future use
+		for groupKey, groupConfig in pairs(config.Groups) do
+			if groupConfig.Default then
+				nextState[config.ID].DefaultGroupKey = groupKey
 			end
 		end
 		return nextState
@@ -54,17 +54,17 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string)
 
 	-- is dirty, update reactively
 	local nextplayerByFactionId = table.clone(state.playerByFactionId())
-	local nextplayerByClassKey = table.clone(state.playerByClassKey())
+	local nextplayerByGroupKey = table.clone(state.playerByGroupKey())
 	local nextplayerByClassId = table.clone(state.playerByClassId())
 	for _, playerKey in ipairs(affectedPlayers) do
 		nextplayerByFactionId[playerKey] = nil
-		nextplayerByClassKey[playerKey] = nil
+		nextplayerByGroupKey[playerKey] = nil
 		nextplayerByClassId[playerKey] = nil
 	end
 
 	Charm.batch(function()
 		state.playerByFactionId(nextplayerByFactionId)
-		state.playerByClassKey(nextplayerByClassKey)
+		state.playerByGroupKey(nextplayerByGroupKey)
 		state.playerByClassId(nextplayerByClassId)
 	end)
 end
@@ -76,59 +76,59 @@ function StateActions.SetPlayerFaction(state: State.State, userId: string, facti
 	end
 
 	_updateMapValue(state.playerByFactionId, userId, factionId)
-	StateActions.SetPlayerToDefaultClass(state, userId, factionId)
+	StateActions.SetPlayerToDefaultGroupClass(state, userId, factionId)
 end
 
-function StateActions.SetPlayerClass(state: State.State, userId: string, classKey: string?, classId: string?)
+function StateActions.SetPlayerGroupClass(state: State.State, userId: string, groupKey: string?, classId: string?)
 	-- either intentionally or accidentally empty, remove everything cause
 	-- it will brick the classes otherwise
-	if not classKey or not classId then
-		classKey = nil
+	if not groupKey or not classId then
+		groupKey = nil
 		classId = nil
 	end
 
-	-- if the class key and id are the same as the previous, don't update
-	if state.playerByClassKey()[userId] == classKey and state.playerByClassId()[userId] == classId then
+	-- if the group key and class id are the same as the previous, don't update
+	if state.playerByGroupKey()[userId] == groupKey and state.playerByClassId()[userId] == classId then
 		return
 	end
 
 	Charm.batch(function()
-		_updateMapValue(state.playerByClassKey, userId, classKey)
+		_updateMapValue(state.playerByGroupKey, userId, groupKey)
 		_updateMapValue(state.playerByClassId, userId, classId)
 	end)
 end
 
 function StateActions.RemovePlayerFaction(state: State.State, userId: string)
 	_updateMapValue(state.playerByFactionId, userId, nil)
-	StateActions.RemovePlayerClass(state, userId)
+	StateActions.RemovePlayerGroupClass(state, userId)
 end
 
-function StateActions.RemovePlayerClass(state: State.State, userId: string)
-	return StateActions.SetPlayerClass(state, userId, nil, nil)
+function StateActions.RemovePlayerGroupClass(state: State.State, userId: string)
+	return StateActions.SetPlayerGroupClass(state, userId, nil, nil)
 end
 
-function StateActions.SetPlayerToDefaultClass(state: State.State, userId: string, factionId: string)
+function StateActions.SetPlayerToDefaultGroupClass(state: State.State, userId: string, factionId: string)
 	print(`player {userId} has faction {factionId}`)
 	local factionConfig = state.configByFactionId()[factionId]
 	if not factionConfig then
 		return
 	end
 
-	local defaultClassKey = factionConfig.DefaultClassKey
-	if not defaultClassKey then
-		warn(`faction {factionId} has no default class`)
-		defaultClassKey = next(factionConfig.Classes)
+	local defaultGroupKey = factionConfig.DefaultGroupKey
+	if not defaultGroupKey then
+		warn(`faction {factionId} has no default group`)
+		defaultGroupKey = next(factionConfig.Groups)
 	end
 
-	local classConfig = factionConfig.Classes[defaultClassKey]
-	local classId = classConfig.ClassIDs[1].Id
+	local groupConfig = factionConfig.Groups[defaultGroupKey]
+	local classId = groupConfig.Classes[1].Id
 
 	if not classId then
 		error(`faction {factionId} has no class id!`)
 	end
 
 	Charm.batch(function()
-		_updateMapValue(state.playerByClassKey, userId, defaultClassKey)
+		_updateMapValue(state.playerByGroupKey, userId, defaultGroupKey)
 		_updateMapValue(state.playerByClassId, userId, classId)
 	end)
 end

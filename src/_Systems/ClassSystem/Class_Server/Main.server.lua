@@ -48,7 +48,7 @@ end
 local runtime = ServerRuntime.new({
 	access = Access,
 	itemProviders = getItemProviders(ReplicatedStorage.Class_Framework.ItemProviders),
-	classConfigs = getClassConfigs(Access.Assets.ClassConfigs),
+	configByClassId = getClassConfigs(Access.Assets.ClassConfigs),
 	configByFactionId = getFactionConfigs(Access.Assets.FactionConfigs),
 	shouldSync = true,
 })

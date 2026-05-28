@@ -28,7 +28,7 @@ export type Access = {
     Config: Settings,
 }
 
-export type ClassVariant = {
+export type ClassDescriptor = {
     Id: string,
     Name: string?,
     Description: string?,
@@ -37,21 +37,21 @@ export type ClassVariant = {
 export type FactionConfig = {
     ID: string,
     Name: string,
-    Classes: {
-        [string]: ClassConfig,
+    Groups: {
+        [string]: GroupConfig,
     },
-    DefaultClassKey: string?,
+    DefaultGroupKey: string?,
 }
 
-export type ClassConfig = {
-    ClassIDs: {ClassVariant},
+export type GroupConfig = {
+    Classes: {ClassDescriptor},
     Limit: number,
     Default: boolean,
 }
 
 export type PlayerClassAssignment = {
     FactionId: string,
-    ClassKey: string,
+    GroupKey: string,
     ClassId: string,
 }
 

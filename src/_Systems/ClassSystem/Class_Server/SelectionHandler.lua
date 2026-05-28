@@ -15,19 +15,16 @@ SelectionHandler.__index = SelectionHandler
 type self = {
 	state: State.State,
 	setting: Types.Settings,
-	classConfigs: { [string]: Types.ClassConfig },
 }
 export type SelectionHandler = typeof(setmetatable({} :: self, SelectionHandler))
 
 function SelectionHandler.new(
 	state: State.State,
-	setting: Types.Settings,
-	classConfigs: { [string]: Types.ClassConfig }
+	setting: Types.Settings
 ): SelectionHandler
 	local self = setmetatable({
 		state = state,
 		setting = setting,
-		classConfigs = classConfigs,
 	} :: self, SelectionHandler)
 
 	return self
@@ -44,8 +41,8 @@ function SelectionHandler.HandleFactionRequest(self: SelectionHandler, player: P
 	StateActions.SetPlayerFaction(self.state, player.UserId, factionConfig.ID)
 end
 
-function SelectionHandler.HandleClassRequest(self: SelectionHandler, player: Player, request: {
-	classKey: string,
+function SelectionHandler.HandleGroupClassRequest(self: SelectionHandler, player: Player, request: {
+	groupKey: string,
 	classId: string,
 }, itemEquipper: ItemEquipper.ItemEquipper)
 	local prevClassId = self.state.playerByClassId()[player.UserId]
@@ -57,30 +54,30 @@ function SelectionHandler.HandleClassRequest(self: SelectionHandler, player: Pla
 	local factionConfig = self.state.configByFactionId()[factionId]
 
 	if not factionConfig then
-		warn(`player {player.UserId} requested class {request.classKey} but is not in a faction`)
+		warn(`player {player.UserId} requested group {request.groupKey} but is not in a faction`)
 		return
 	end
 
-	local classConfig = factionConfig.Classes[request.classKey]
-	if not classConfig then
-		warn(`player {player.UserId} requested class {request.classKey} but it is not a valid class`)
+	local groupConfig = factionConfig.Groups[request.groupKey]
+	if not groupConfig then
+		warn(`player {player.UserId} requested group {request.groupKey} but it is not a valid group`)
 		player:Kick("invalid action 1")
 		return
 	end
 
-	if not factionConfig.Classes[request.classKey] then
-		warn(`player {player.UserId} requested class {request.classKey} but it is not a valid class for faction {factionConfig.ID}`)
+	if not factionConfig.Groups[request.groupKey] then
+		warn(`player {player.UserId} requested group {request.groupKey} but it is not a valid group for faction {factionConfig.ID}`)
 		player:Kick("invalid action 2")
 		return
 	end
 
-	local classCount = self.state.classCountByFaction()[factionConfig.ID][request.classKey]
-	if classCount >= classConfig.Limit then
-		warn(`player {player.UserId} requested class {request.classKey} but it is full for faction {factionConfig.ID}`)
+	local groupCount = self.state.groupCountByFaction()[factionConfig.ID][request.groupKey]
+	if groupCount >= groupConfig.Limit then
+		warn(`player {player.UserId} requested group {request.groupKey} but it is full for faction {factionConfig.ID}`)
 		return
 	end
 
-	StateActions.SetPlayerClass(self.state, player.UserId, request.classKey, request.classId)
+	StateActions.SetPlayerGroupClass(self.state, player.UserId, request.groupKey, request.classId)
 	
 	-- if Access.Config.ApplyClassMode == Enums.ApplyClassMode.Immediate then
 	-- 	itemEquipper:AssignClassItems(player, request.classId)

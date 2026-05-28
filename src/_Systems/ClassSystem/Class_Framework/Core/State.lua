@@ -10,10 +10,10 @@ State.__index = State
 type self = {
 	configByFactionId: Charm.Atom<{ [string]: Types.FactionConfig }>,
 	playerByFactionId: Charm.Atom<{ [string]: string }>,
-	playerByClassKey: Charm.Atom<{ [string]: string }>,
+	playerByGroupKey: Charm.Atom<{ [string]: string }>,
 	playerByClassId: Charm.Atom<{ [string]: string }>,
 
-	classCountByFaction: () -> { [string]: { [string]: number } },
+	groupCountByFaction: () -> { [string]: { [string]: number } },
 }
 export type State = typeof(setmetatable({} :: self, State))
 
@@ -22,29 +22,29 @@ function State.new(): State
 		{
 			configByFactionId = Charm.atom({}),
 			playerByFactionId = Charm.atom({}),
-			playerByClassKey = Charm.atom({}),
+			playerByGroupKey = Charm.atom({}),
 			playerByClassId = Charm.atom({}),
 		} :: self,
 		State
 	)
 
-	self.classCountByFaction = Charm.computed(function()
+	self.groupCountByFaction = Charm.computed(function()
 		local configByFactionId = self.configByFactionId()
 		local playerByFactionId = self.playerByFactionId()
-		local playerByClassKey = self.playerByClassKey()
+		local playerByGroupKey = self.playerByGroupKey()
 		local countsByFaction = {}
 
 		for factionId, factionConfig in pairs(configByFactionId) do
 			local counts = {}
-			for classKey, _ in pairs(factionConfig.Classes) do
-				counts[classKey] = 0
+			for groupKey, _ in pairs(factionConfig.Groups) do
+				counts[groupKey] = 0
 			end
 			countsByFaction[factionId] = counts
 		end
 
 		for playerKey, factionId in pairs(playerByFactionId) do
-			local classKey = playerByClassKey[playerKey]
-			if not classKey then
+			local groupKey = playerByGroupKey[playerKey]
+			if not groupKey then
 				continue
 			end
 
@@ -53,7 +53,7 @@ function State.new(): State
 				factionCounts = {}
 				countsByFaction[factionId] = factionCounts
 			end
-			factionCounts[classKey] = (factionCounts[classKey] or 0) + 1
+			factionCounts[groupKey] = (factionCounts[groupKey] or 0) + 1
 		end
 
 		return countsByFaction
@@ -66,9 +66,9 @@ function State:AsVideSources()
 	return {
 		configByFactionId = useAtom(self.configByFactionId),
 		playerByFactionId = useAtom(self.playerByFactionId),
-		playerByClassKey = useAtom(self.playerByClassKey),
+		playerByGroupKey = useAtom(self.playerByGroupKey),
 		playerByClassId = useAtom(self.playerByClassId),
-		classCountByFaction = useAtom(self.classCountByFaction),
+		groupCountByFaction = useAtom(self.groupCountByFaction),
 	}
 end
 

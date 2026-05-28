@@ -28,13 +28,13 @@ return function(target: Instance)
 				playerByFactionId = source({
 					[playerKey] = factionId,
 				}),
-				playerByClassKey = source({
+				playerByGroupKey = source({
 					[playerKey] = "Rifleman",
 				}),
 				playerByClassId = source({
 					[playerKey] = "RiflemanA",
 				}),
-				classCountByFaction = source({
+				groupCountByFaction = source({
 					[factionId] = {
 						Rifleman = 4,
 						Engineer = 1,
@@ -46,8 +46,8 @@ return function(target: Instance)
 				print("Story setSelectorOpen", open)
 				selectorOpen(open)
 			end,
-			requestClass = function(classKey, classId)
-				print("Story request (change class):", classKey, classId)
+			requestGroupClass = function(groupKey, classId)
+				print("Story request (change group/class):", groupKey, classId)
 			end,
 			requestClassApply = function(enable)
 				print("Story request (apply class):", enable)

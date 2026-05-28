@@ -25,7 +25,7 @@ export type ServerRuntime = typeof(setmetatable({} :: self, ServerRuntime))
 
 function ServerRuntime.new(args: {
 	itemProviders: { [string]: Types.ClassItemProvider },
-	classConfigs: { [string]: Types.ClassConfig },
+	configByClassId: { [string]: Types.Class },
 	configByFactionId: { [string]: Types.FactionConfig },
 	access: Types.Access,
 	shouldSync: boolean,
@@ -36,8 +36,8 @@ function ServerRuntime.new(args: {
 		access = args.access,
 		state = state,
 		configByFactionId = args.configByFactionId,
-		itemEquipper = ItemEquipper.new(args.itemProviders, args.classConfigs),
-		selectionHandler = SelectionHandler.new(state, args.access.Config, args.classConfigs),
+		itemEquipper = ItemEquipper.new(args.itemProviders, args.configByClassId),
+		selectionHandler = SelectionHandler.new(state, args.access.Config),
 		maid = Maid.new(),
 	} :: self, ServerRuntime)
 
@@ -49,9 +49,9 @@ function ServerRuntime.new(args: {
 		self.maid:GiveTask(ServerSyncer.new({
 			configByFactionId = state.configByFactionId,
 			playerByFactionId = state.playerByFactionId,
-			playerByClassKey = state.playerByClassKey,
+			playerByGroupKey = state.playerByGroupKey,
 			playerByClassId = state.playerByClassId,
-			classCountByFaction = state.classCountByFaction,
+			groupCountByFaction = state.groupCountByFaction,
 		}, Events))
 	end
 
@@ -93,8 +93,8 @@ function ServerRuntime.Start(self: ServerRuntime)
 		self.selectionHandler:HandleFactionRequest(player, data)
 	end)
 
-	Events.packets.RequestClass.listen(function(data, player)
-		self.selectionHandler:HandleClassRequest(player, data, self.itemEquipper)
+	Events.packets.RequestGroupClass.listen(function(data, player)
+		self.selectionHandler:HandleGroupClassRequest(player, data, self.itemEquipper)
 	end)
 	
 	Events.packets.RequestClassApply.listen(function(data, player)

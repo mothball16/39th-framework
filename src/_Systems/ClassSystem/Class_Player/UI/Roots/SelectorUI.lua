@@ -3,12 +3,12 @@ local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
 local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
 local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
-local create, source, derive, indexes, effect, untrack = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect, Vide.untrack
+local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect
 
 local Theme = require("../Theme")
 local Card = require("../Components/Card")
 local MenuActionButton = require("../Components/MenuActionButton")
-local VariantSelector = require("../Components/VariantSelector")
+local ClassSelector = require("../Components/ClassSelector")
 
 local ASPECT_RATIO = 1.5
 local PADDING_SCALE = 0.02
@@ -19,11 +19,11 @@ return function(props: {
 	manualButton: boolean,
 	isOpen: Vide.Source<boolean>,
 	setSelectorOpen: ((open: boolean) -> ()) -> (),
-	requestClass: ((classKey: string, classId: string) -> ()),
+	requestGroupClass: ((groupKey: string, classId: string) -> ()),
 	requestClassApply: ((enable: boolean) -> ())?,
 })
 	local dirty = false
-	local variantIndexByClassKey = source({})
+	local classIndex = source(1)
 
 	-- my(...) represents the read-only slice of the state that is relevant to the current player
 	local myFactionId: () -> string = derive(function()
@@ -34,135 +34,96 @@ return function(props: {
 		return props.state.configByFactionId()[myFactionId()]
 	end)
 
-	local myClassCounts: () -> { [string]: number } = derive(function()
-		return props.state.classCountByFaction()[myFactionId()] or {}
+	local myGroupCounts: () -> { [string]: number } = derive(function()
+		return props.state.groupCountByFaction()[myFactionId()] or {}
 	end)
 
-	local myClassKey: () -> string = derive(function()
-		return props.state.playerByClassKey()[props.playerKey]
-	end)
-
-	local myClassId: () -> string = derive(function()
-		return props.state.playerByClassId()[props.playerKey]
+	local myGroupKey: () -> string = derive(function()
+		return props.state.playerByGroupKey()[props.playerKey]
 	end)
 
 	-----------------------------------------------------------------
 
-	local myClassConfig: () -> Types.ClassConfig = derive(function()
-		if not myFactionConfig() or not myClassKey() then
+	local myGroupConfig: () -> Types.GroupConfig = derive(function()
+		if not myFactionConfig() or not myGroupKey() then
 			return nil
 		end
-		return myFactionConfig().Classes[myClassKey()]
+		return myFactionConfig().Groups[myGroupKey()]
 	end)
 
-	local myClassIds: () -> { string } = derive(function()
-		return myClassConfig() and myClassConfig().ClassIDs or {}
+	local myClasses: () -> { Types.ClassDescriptor } = derive(function()
+		return myGroupConfig() and myGroupConfig().Classes or {}
 	end)
 
-	local function getSelectedVariantIndex(classKey: string?, classIDs: { Types.ClassVariant }): number
-		if not classKey or not classIDs or #classIDs == 0 then
-			return 1
-		end
+	effect(function()
+		myGroupKey()
+		classIndex(1)
+	end)
 
-		local variantIndex = if classKey then variantIndexByClassKey()[classKey] else nil
-		if not variantIndex then
-			variantIndex = 1
-			if classKey and classKey == myClassKey() then
-				local currentId = myClassId()
-				if currentId then
-					for i, variant in ipairs(classIDs) do
-						if variant.Id == currentId then
-							variantIndex = i
-							break
-						end
-					end
-				end
-			end
-		end
-		return math.clamp(variantIndex, 1, #classIDs)
-	end
-
-	local myVariantConfig: () -> Types.ClassVariant? = derive(function()
-		local classConfig = myClassConfig()
-		if not classConfig then
+	local mySelectedClass: () -> Types.ClassDescriptor? = derive(function()
+		local classes = myClasses()
+		if #classes == 0 then
 			return nil
 		end
-
-		local classIDs = classConfig.ClassIDs
-		if #classIDs == 0 then
-			return nil
-		end
-
-		return classIDs[getSelectedVariantIndex(myClassKey(), myClassIds())]
+		return classes[math.clamp(classIndex(), 1, #classes)]
 	end)
 
-	local function cycleVariant(classKey: string?, offset: number)
-		if not classKey or not myFactionConfig() then
+	local function cycleClass(offset: number)
+		local classes = myClasses()
+		if #classes <= 1 then
 			return
 		end
-
-		local classConfig = myFactionConfig().Classes[classKey]
-		if not classConfig then
-			return
-		end
-
-		local classIDs = classConfig.ClassIDs
-		local variantCount = #classIDs
-		if variantCount <= 1 then
-			return
-		end
-
-		local currentIndex = getSelectedVariantIndex(classKey, classIDs)
-		local nextIndex = ((currentIndex - 1 + offset) % variantCount) + 1
-
-		-- update the local state (gotta do it like this cause of how updating works with vide)
-		local nextState = table.clone(variantIndexByClassKey())
-		nextState[classKey] = nextIndex
-		variantIndexByClassKey(nextState)
+		local nextIndex = ((classIndex() - 1 + offset) % #classes) + 1
+		classIndex(nextIndex)
 		dirty = true
 	end
 
-	-- map faction config classes to a table for indexes to iterate over
+	-- map faction config groups to a table for indexes to iterate over
 	-- this runs only when myFactionConfig() changes so its not that expensive
-	local classEntries = derive(function()
-		local classes = {}
+	local groupEntries = derive(function()
+		local groups = {}
 		if not myFactionConfig() then
-			return classes
+			return groups
 		end
 
-		for key, config in pairs(myFactionConfig().Classes) do
+		for key, config in pairs(myFactionConfig().Groups) do
 			local entry = table.clone(config)
 			entry.Key = key
-			table.insert(classes, entry)
+			table.insert(groups, entry)
 		end
-		return classes
+		return groups
 	end)
 
-	local cardRows = indexes(classEntries, function(item, I)
-		-- not sure if this needs to be derived - look into how vide indexes works
-		local variantIndex = derive(function()
-			return getSelectedVariantIndex(item().Key, item().ClassIDs)
-		end)
-
+	local cardRows = indexes(groupEntries, function(item, I)
 		return Card({
 			title = function()
 				return item().Key or "<no key?>"
 			end,
 			classId = function()
-				return item().ClassIDs[variantIndex()].Id
+				local classes = item().Classes
+				if #classes == 0 then
+					return ""
+				end
+				local index = if item().Key == myGroupKey() then classIndex() else 1
+				return classes[math.clamp(index, 1, #classes)].Id
 			end,
 			count = function()
-				return myClassCounts()[item().Key] or 0
+				return myGroupCounts()[item().Key] or 0
 			end,
 			limit = function()
 				return item().Limit
 			end,
 			isSelected = function()
-				return myClassKey() == item().Key
+				return myGroupKey() == item().Key
 			end,
 			
 			SelectClass = function()
-				props.requestClass(item().Key, item().ClassIDs[variantIndex()].Id)
+				local classes = item().Classes
+				if #classes == 0 then
+					return
+				end
+				local index = if item().Key == myGroupKey() then classIndex() else 1
+				props.requestGroupClass(item().Key, classes[math.clamp(index, 1, #classes)].Id)
 			end,
 		})
 	end)
@@ -174,8 +135,11 @@ return function(props: {
 			end
 		else
 			if dirty then
-				local localVariantId = myClassIds()[getSelectedVariantIndex(myClassKey(), myClassIds())].Id
-				props.requestClass(myClassKey(), localVariantId)
+				local classes = myClasses()
+				if #classes > 0 then
+					local index = math.clamp(classIndex(), 1, #classes)
+					props.requestGroupClass(myGroupKey(), classes[index].Id)
+				end
 				dirty = false
 			end
 
@@ -365,11 +329,11 @@ return function(props: {
 						FontFace = Theme.fontNormal,
 						Text = function()
 							if not myFactionConfig() then
-								return "No class options available yet."
+								return "No group options available yet."
 							end
 							-- cool trick to check if the dictis empty
-							if not next(myFactionConfig().Classes) then
-								return "Faction has no classes configured."
+							if not next(myFactionConfig().Groups) then
+								return "Faction has no groups configured."
 							end
 							return ""
 						end,
@@ -400,24 +364,23 @@ return function(props: {
 							Padding = UDim.new(0.05, 0),
 						},
 
-						VariantSelector {
-							title = "Variant",
+						ClassSelector {
+							title = "Class",
 							titleHeight = 0.5,
 							size = UDim2.fromScale(1, 0.25),
 							ValueText = function()
-								local variant = myVariantConfig()
-								if not variant then
+								local class = mySelectedClass()
+								if not class then
 									return "<no class selected...>"
 								end
-								local variantIndex = getSelectedVariantIndex(myClassKey(), myClassIds())
-								local label = variant.Name or variant.Id
-								return `{label} ({variantIndex}/{#myClassIds()})`
+								local label = class.Name or class.Id
+								return `{label} ({classIndex()}/{#myClasses()})`
 							end,
 							LeftActivated = function()
-								cycleVariant(myClassKey(), -1)
+								cycleClass(-1)
 							end,
 							RightActivated = function()
-								cycleVariant(myClassKey(), 1)
+								cycleClass(1)
 							end,
 						},
 						create "Frame" {
@@ -441,9 +404,9 @@ return function(props: {
 								TextXAlignment = Enum.TextXAlignment.Left,
 								TextYAlignment = Enum.TextYAlignment.Top,
 								Text = function()
-									return if myVariantConfig()
+									return if mySelectedClass()
 										then (
-											myVariantConfig().Description
+											mySelectedClass().Description
 											or "Lorem ipsum on the beat yo!\n\n\n(no description)"
 										)
 										else "<no class selected...>"
