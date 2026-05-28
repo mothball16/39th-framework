@@ -6,7 +6,13 @@ local ToolProvider: Types.ClassItemProvider = {
     AssignType = Enums.AssignType.PerCharacter,
 }
 
-local function _resolveItemAmount(itemArgs: any): number
+export type ItemArgs = {
+    itemType: "Tool",
+    itemName: string,
+    amount: number?,
+}
+
+local function _resolveItemAmount(itemArgs: ItemArgs): number
 	return itemArgs.amount or 1
 end
 
@@ -17,7 +23,7 @@ function ToolProvider.GetItem(itemName: string)
     return assetPath:FindFirstChild(itemName)
 end
 
-function ToolProvider.Assign(player: Player, itemArgs: any)
+function ToolProvider.Assign(player: Player, itemArgs: ItemArgs)
     local itemName = itemArgs.itemName
     if not itemName then
         warn("tool item name not found in item args")
@@ -39,7 +45,7 @@ function ToolProvider.Assign(player: Player, itemArgs: any)
     end
 end
 
-function ToolProvider.Unassign(player: Player, itemArgs: any)
+function ToolProvider.Unassign(player: Player, itemArgs: ItemArgs)
     local itemName = itemArgs.itemName
     if not itemName then
         warn("tool item name not found in item args")

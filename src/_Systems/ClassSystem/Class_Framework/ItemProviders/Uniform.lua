@@ -15,6 +15,11 @@ local UniformProvider: Types.ClassItemProvider = {
     AssignType = Enums.AssignType.PerCharacter,
 }
 
+export type ItemArgs = {
+    itemType: "Uniform",
+    itemName: string,
+}
+
 function UniformProvider.GetItem(itemName: string)
     local assetPath = Access.Config.ItemTypePaths[UniformProvider.ID]
     assert(assetPath, `asset path not found for ItemType {script.Name} - a folder of name {UniformProvider.ID} must be linked within the config`)
@@ -34,7 +39,7 @@ function UniformProvider.GetItem(itemName: string)
     }
 end
 
-function UniformProvider.Assign(player: Player, itemArgs: any)
+function UniformProvider.Assign(player: Player, itemArgs: ItemArgs)
     local character = player.Character
     if not character then
         warn("character not found")
@@ -78,7 +83,7 @@ function UniformProvider.Assign(player: Player, itemArgs: any)
     assignClothing("ShirtGraphic", item.TShirt)
 end
 
-function UniformProvider.Unassign(player: Player, itemArgs: any)
+function UniformProvider.Unassign(player: Player, itemArgs: ItemArgs)
     local character = player.Character
     if not character then
         warn("character not found")

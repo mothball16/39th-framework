@@ -4,12 +4,18 @@ local TestProvider: Types.ClassItemProvider = {
     ID = "Test",
     AssignType = Enums.AssignType.PerCharacter,
 }
-function TestProvider.Assign(player: Player, itemArgs: any)
+
+export type ItemArgs = {
+    itemType: "Test",
+    itemName: string,
+}
+
+function TestProvider.Assign(player: Player, itemArgs: ItemArgs)
     print(`{player.UserId} assigned to {TestProvider.ID} with args:`)
     print(itemArgs)
 end
 
-function TestProvider.Unassign(player: Player, itemArgs: any)
+function TestProvider.Unassign(player: Player, itemArgs: ItemArgs)
     print(`{player.UserId} unassigned from {TestProvider.ID} with args:`)
     print(itemArgs)
 end
