@@ -22,24 +22,25 @@ return function(props: {
 	requestClassApply: ((enable: boolean) -> ())?,
 	applyClassMode: string?,
 })
+	local state = props.state:AsVideSources()
 	local dirty = false
 	local classIndex = source(1)
 
 	-- my(...) represents the read-only slice of the state that is relevant to the current player
 	local myFactionId: () -> string = derive(function()
-		return props.state.playerByFactionId()[props.playerKey]
+		return state.playerByFactionId()[props.playerKey]
 	end)
 
 	local myFactionConfig: () -> Types.FactionConfig = derive(function()
-		return props.state.configByFactionId()[myFactionId()]
+		return state.configByFactionId()[myFactionId()]
 	end)
 
 	local myGroupCounts: () -> { [string]: number } = derive(function()
-		return props.state.groupCountByFaction()[myFactionId()] or {}
+		return state.groupCountByFaction()[myFactionId()] or {}
 	end)
 
 	local myGroupKey: () -> string = derive(function()
-		return props.state.playerByGroupKey()[props.playerKey]
+		return state.playerByGroupKey()[props.playerKey]
 	end)
 
 	-----------------------------------------------------------------

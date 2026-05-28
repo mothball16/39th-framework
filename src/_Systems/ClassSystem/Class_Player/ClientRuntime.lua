@@ -54,7 +54,7 @@ function ClientRuntime.Start(self: ClientRuntime)
 				isOpen = useAtom(self.selectorOpen),
 				manualButton = self.access.Config.ShowManualButton,
 				playerKey = tostring(Players.LocalPlayer.UserId),
-				state = self.state:AsVideSources(),
+				state = self.state,
 				setSelectorOpen = function(open: boolean)
 					self.selectorOpen(open)
 				end,
@@ -69,6 +69,7 @@ function ClientRuntime.Start(self: ClientRuntime)
 						enable = enable,
 					})
 				end,
+				applyClassMode = self.access.Config.ApplyClassMode,
 			}),
 		}
 	end, playerGui)
