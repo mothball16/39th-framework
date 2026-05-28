@@ -17,8 +17,7 @@ local TweenService = game:GetService("TweenService")
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Utility = ReplicatedStorage.Utility
-local TagObserver = require(Utility.TagObserver)
+local TagObserver = require("@game/ReplicatedStorage/Packages/tag-observer")
 local LocalPlayer = game.Players.LocalPlayer
 
 local Framework = ReplicatedStorage.SPH_Framework
