@@ -1,4 +1,5 @@
 local Types = require("./Types")
+local Item = require("./Item")
 local Mocks = {}
 
 
@@ -13,8 +14,9 @@ function Mocks.ClassConfig(classId: string)
     return {
         ID = classId,
         Items = {
-            itemType = "Test",
-            itemName = `{classId}_Test`,
+            Item.test({
+                itemName = `{classId}_Test`,
+            }),
         }
     }
 end

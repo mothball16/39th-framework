@@ -1,16 +1,26 @@
 local Access = require("../Access")
 local Types = require("../Core/Types")
 local Enums = require("../Core/Enums")
-local ToolProvider: Types.ClassItemProvider = {
+local ToolProvider: Types.ClassItemProvider<BuildArgs> = {
     ID = "Tool",
     AssignType = Enums.AssignType.PerCharacter,
 }
 
-export type ItemArgs = {
-    itemType: "Tool",
+
+export type BuildArgs = {
     itemName: string,
     amount: number?,
 }
+export type ItemArgs = { itemType: "Tool" } & BuildArgs
+
+
+function ToolProvider.Build(itemArgs: BuildArgs): ItemArgs
+    return {
+        itemType = ToolProvider.ID,
+        itemName = itemArgs.itemName,
+        amount = itemArgs.amount,
+    }
+end
 
 local function _resolveItemAmount(itemArgs: ItemArgs): number
 	return itemArgs.amount or 1

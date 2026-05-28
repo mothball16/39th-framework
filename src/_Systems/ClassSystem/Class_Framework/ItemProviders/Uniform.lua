@@ -10,15 +10,23 @@ local PROPERTY_BY_TYPE = {
     ShirtGraphic = "Graphic",
 }
 
-local UniformProvider: Types.ClassItemProvider = {
+local UniformProvider: Types.ClassItemProvider<BuildArgs> = {
     ID = "Uniform",
     AssignType = Enums.AssignType.PerCharacter,
 }
 
-export type ItemArgs = {
-    itemType: "Uniform",
+export type BuildArgs = {
     itemName: string,
 }
+export type ItemArgs = { itemType: "Uniform" } & BuildArgs
+
+
+function UniformProvider.Build(itemArgs: BuildArgs): ItemArgs
+    return {
+        itemType = UniformProvider.ID,
+        itemName = itemArgs.itemName,
+    }
+end
 
 function UniformProvider.GetItem(itemName: string)
     local assetPath = Access.Config.ItemTypePaths[UniformProvider.ID]

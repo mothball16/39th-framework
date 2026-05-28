@@ -4,16 +4,25 @@ local Enums = require("../Core/Enums")
 
 local ATTR_LIMB_NAME = "AccessoryLimbName"
 
-local AccessoryProvider: Types.ClassItemProvider = {
+local AccessoryProvider: Types.ClassItemProvider<BuildArgs> = {
     ID = "Accessory",
     AssignType = Enums.AssignType.PerCharacter,
 }
 
-export type ItemArgs = {
-    itemType: "Accessory",
+
+export type BuildArgs = {
     itemName: string,
     limbName: string?,
 }
+export type ItemArgs = { itemType: "Accessory" } & BuildArgs
+
+function AccessoryProvider.Build(itemArgs: BuildArgs): ItemArgs
+    return {
+        itemType = AccessoryProvider.ID,
+        itemName = itemArgs.itemName,
+        limbName = itemArgs.limbName,
+    }
+end
 
 function AccessoryProvider.GetItem(itemName: string)
     local assetPath = Access.Config.ItemTypePaths[AccessoryProvider.ID]
@@ -105,7 +114,7 @@ function AccessoryProvider.Assign(player: Player, itemArgs: ItemArgs)
     end
 end
 
-function AccessoryProvider.Unassign(player: Player, itemArgs: any)
+function AccessoryProvider.Unassign(player: Player, itemArgs: ItemArgs)
     local character = player.Character
     if not character then
         warn("character not found")

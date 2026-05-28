@@ -2,14 +2,16 @@ local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Types = {}
 
 
-export type ClassItemProvider = {
+export type ClassItemProvider<TBuild = any> = {
     -- identifier for item type within configurations
     ID: string,
     AssignType: string?,
+    -- constructs config-friendly item args for this provider
+    Build: (itemArgs: TBuild) -> ({ itemType: string } & TBuild),
     -- runs when the class containing the item is assigned to a player
-    Assign: (player: Player, itemArgs: any) -> (),
+    Assign: (player: Player, itemArgs: { itemType: string } & TBuild) -> (),
     -- runs when the class containing the item is unassigned from a player
-    Unassign: (player: Player, itemArgs: any) -> ()
+    Unassign: (player: Player, itemArgs: { itemType: string } & TBuild) -> (),
 }
 
 export type Settings = {
