@@ -1,8 +1,17 @@
 local Mocks = require("../Core/Mocks")
+local ServerRuntime = require("@game/ServerScriptService/Class_Server/ServerRuntime")
+local StateActions = require("../StateActions")
+local Maid = require("@game/ReplicatedStorage/Packages/maid")
 
 return function()
-	local ServerRuntime = require("@game/ServerScriptService/Class_Server/ServerRuntime")
-	local StateActions = require("../StateActions")
+	local globalMaid = Maid.new()
+	local testAccess = {
+		Assets = globalMaid:GiveTask(Instance.new("Folder")),
+		Config = {
+			DebugMode = true,
+		},
+	}
+
 	local itemProviders = {
 		Test = require("../ItemProviders/Test"),
 	}
@@ -22,11 +31,16 @@ return function()
     local playerOne
     local playerTwo
 
+	afterAll(function()
+		globalMaid:DoCleaning()
+	end)
+
     beforeEach(function()
         playerOne = Mocks.Player(1)
         playerTwo = Mocks.Player(2)
 
         runtime = ServerRuntime.new({
+			access = testAccess,
             itemProviders = itemProviders,
             classConfigs = classConfigs,
             configByFactionId = configByFactionId,

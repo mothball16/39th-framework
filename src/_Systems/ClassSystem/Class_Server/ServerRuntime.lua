@@ -27,15 +27,17 @@ function ServerRuntime.new(args: {
 	itemProviders: { [string]: Types.ClassItemProvider },
 	classConfigs: { [string]: Types.ClassConfig },
 	configByFactionId: { [string]: Types.FactionConfig },
+	access: Types.Access,
 	shouldSync: boolean,
 })
 	local state = State.new()
 
 	local self = setmetatable({
+		access = args.access,
 		state = state,
 		configByFactionId = args.configByFactionId,
 		itemEquipper = ItemEquipper.new(args.itemProviders, args.classConfigs),
-		selectionHandler = SelectionHandler.new(state, args.classConfigs),
+		selectionHandler = SelectionHandler.new(state, args.access.Config, args.classConfigs),
 		maid = Maid.new(),
 	} :: self, ServerRuntime)
 

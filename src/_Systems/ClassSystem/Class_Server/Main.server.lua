@@ -5,7 +5,14 @@ local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
 local ServerRuntime = require("./ServerRuntime")
 
 if Access.Config.DebugMode then
-	require("@game/ReplicatedStorage/Utility/TestRunner")(ReplicatedStorage.Class_Framework.Tests)
+	if not game:GetService("RunService"):IsStudio() then
+        return
+    end
+
+    local DevPackages = ReplicatedStorage:WaitForChild("DevPackages")
+    local TestEZ = require(DevPackages:WaitForChild("TestEZ"))
+
+    TestEZ.TestBootstrap:run({ ReplicatedStorage.Class_Framework.Tests }, TestEZ.Reporters.TextReporterQuiet)
 end
 
 --#region [ helpers ]
@@ -39,6 +46,7 @@ end
 --#endregion [ helpers ]
 
 local runtime = ServerRuntime.new({
+	access = Access,
 	itemProviders = getItemProviders(ReplicatedStorage.Class_Framework.ItemProviders),
 	classConfigs = getClassConfigs(Access.Assets.ClassConfigs),
 	configByFactionId = getFactionConfigs(Access.Assets.FactionConfigs),

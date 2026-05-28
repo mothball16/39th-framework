@@ -13,6 +13,7 @@ export type ClassItemProvider = {
 }
 
 export type Settings = {
+    ShowManualButton: boolean,
     ApplyClassMode: string,
     AfterTeamChangeBehavior: string,
     ItemTypePaths: {
@@ -20,6 +21,11 @@ export type Settings = {
     },
 
     DebugMode: boolean,
+}
+
+export type Access = {
+    Assets: Folder,
+    Config: Settings,
 }
 
 export type ClassVariant = {
@@ -55,8 +61,8 @@ export type Class = {
 }
 
 export type InteractionController = {
-    isOpen: Vide.Source<boolean>,
-    Initialize: (isOpen: Vide.Source<boolean>) -> (),
+    isOpen: Vide.source<boolean>,
+    Initialize: (isOpen: Vide.source<boolean>) -> (),
     Destroy: () -> (),
 }
 

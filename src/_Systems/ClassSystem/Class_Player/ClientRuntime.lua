@@ -19,16 +19,18 @@ ClientRuntime.__index = ClientRuntime
 
 type self = {
 	state: State.State,
+	access: Types.Access,
 	mirror: any,
 	maid: Maid.Maid,
 	selectorOpen: Charm.Atom<boolean>,
 }
 export type ClientRuntime = typeof(setmetatable({} :: self, ClientRuntime))
 
-function ClientRuntime.new()
+function ClientRuntime.new(access: Types.Access)
 	local state = State.new()
 	local self = setmetatable({
 		state = state,
+		access = access,
 		mirror = ClientMirror.new(state),
 		maid = Maid.new(),
 		selectorOpen =  Charm.atom(false),
@@ -50,7 +52,7 @@ function ClientRuntime.Start(self: ClientRuntime)
 
 			SelectorUI({
 				isOpen = useAtom(self.selectorOpen),
-				manualButton = false,
+				manualButton = self.access.Config.ShowManualButton,
 				playerKey = tostring(Players.LocalPlayer.UserId),
 				state = self.state:AsVideSources(),
 				setSelectorOpen = function(open: boolean)

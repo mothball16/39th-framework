@@ -1,4 +1,8 @@
-local Access = require("@game/ReplicatedStorage/Class_Framework/Access")
+--[[
+validates and translates request events into stateaction calls.
+NO LOGIC should be done here because thatd fuck with tests that rely on stateaction alone
+]]
+
 local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
 local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
 local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
@@ -10,16 +14,19 @@ SelectionHandler.__index = SelectionHandler
 
 type self = {
 	state: State.State,
+	setting: Types.Settings,
 	classConfigs: { [string]: Types.ClassConfig },
 }
 export type SelectionHandler = typeof(setmetatable({} :: self, SelectionHandler))
 
 function SelectionHandler.new(
 	state: State.State,
+	setting: Types.Settings,
 	classConfigs: { [string]: Types.ClassConfig }
 ): SelectionHandler
 	local self = setmetatable({
 		state = state,
+		setting = setting,
 		classConfigs = classConfigs,
 	} :: self, SelectionHandler)
 
@@ -75,9 +82,9 @@ function SelectionHandler.HandleClassRequest(self: SelectionHandler, player: Pla
 
 	StateActions.SetPlayerClass(self.state, player.UserId, request.classKey, request.classId)
 	
-	if Access.Config.ApplyClassMode == Enums.ApplyClassMode.Immediate then
-		itemEquipper:AssignClassItems(player, request.classId)
-	end
+	-- if Access.Config.ApplyClassMode == Enums.ApplyClassMode.Immediate then
+	-- 	itemEquipper:AssignClassItems(player, request.classId)
+	-- end
 end
 
 function SelectionHandler.HandleTeamChange(self: SelectionHandler, player: Player, team: Team)
