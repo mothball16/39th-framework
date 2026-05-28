@@ -8,61 +8,57 @@ local ToolProvider: Types.ClassItemProvider<BuildArgs> = {
 
 
 export type BuildArgs = {
-    itemName: string,
+    name: string,
     amount: number?,
 }
-export type ItemArgs = { itemType: "Tool" } & BuildArgs
+export type ItemArgs = { type: "Tool" } & BuildArgs
 
 
-function ToolProvider.Build(itemArgs: BuildArgs): ItemArgs
+function ToolProvider.Build(args: BuildArgs): ItemArgs
     return {
-        itemType = ToolProvider.ID,
-        itemName = itemArgs.itemName,
-        amount = itemArgs.amount,
+        type = ToolProvider.ID,
+        name = args.name,
+        amount = args.amount or 1,
     }
 end
 
-local function _resolveItemAmount(itemArgs: ItemArgs): number
-	return itemArgs.amount or 1
-end
 
-function ToolProvider.GetItem(itemName: string)
+function ToolProvider.GetItem(name: string)
     local assetPath = Access.Config.ItemTypePaths[ToolProvider.ID]
     assert(assetPath, `asset path not found for ItemType {script.Name} - a folder of name {ToolProvider.ID} must be linked within the config`)
 
-    return assetPath:FindFirstChild(itemName)
+    return assetPath:FindFirstChild(name)
 end
 
-function ToolProvider.Assign(player: Player, itemArgs: ItemArgs)
-    local itemName = itemArgs.itemName
-    if not itemName then
-        warn("tool item name not found in item args")
+function ToolProvider.Assign(player: Player, args: ItemArgs)
+    local name = args.name
+    if not name then
+        warn("tool name not found in args")
         return
     end
 
-    local item = ToolProvider.GetItem(itemName)
+    local item = ToolProvider.GetItem(name)
     if not item then
-        warn(`item {itemName} not found for ItemType {script.Name}`)
+        warn(`tool {name} not found for ItemType {script.Name}`)
         return
     end
-    local amount = _resolveItemAmount(itemArgs)
     local backpack = player:FindFirstChildOfClass("Backpack") or player:WaitForChild("Backpack")
-    for _ = 1, amount do
+    for _ = 1, args.amount do
         local itemInstance = item:Clone()
         itemInstance:SetAttribute(Enums.KeyAttributes.ItemProvider, ToolProvider.ID)
-        itemInstance:SetAttribute(Enums.KeyAttributes.ItemName, itemName)
+        itemInstance:SetAttribute(Enums.KeyAttributes.ItemName, name)
         itemInstance.Parent = backpack
     end
 end
 
-function ToolProvider.Unassign(player: Player, itemArgs: ItemArgs)
-    local itemName = itemArgs.itemName
-    if not itemName then
-        warn("tool item name not found in item args")
+function ToolProvider.Unassign(player: Player, args: ItemArgs)
+    local name = args.name
+    if not name then
+        warn("tool name not found in args")
         return
     end
 
-    local remaining = _resolveItemAmount(itemArgs)
+    local remaining = args.amount
 
     local function tryRemoveFrom(container: Instance?)
         if not container or remaining <= 0 then
@@ -73,13 +69,13 @@ function ToolProvider.Unassign(player: Player, itemArgs: ItemArgs)
             if remaining <= 0 then
                 break
             end
-            if not child:IsA("Tool") or child.Name ~= itemName then
+            if not child:IsA("Tool") or child.Name ~= name then
                 continue
             end
 
             local provider = child:GetAttribute(Enums.KeyAttributes.ItemProvider)
-            local taggedItemName = child:GetAttribute(Enums.KeyAttributes.ItemName)
-            if provider ~= ToolProvider.ID or taggedItemName ~= itemName then
+            local taggedName = child:GetAttribute(Enums.KeyAttributes.ItemName)
+            if provider ~= ToolProvider.ID or taggedName ~= name then
                 continue
             end
 

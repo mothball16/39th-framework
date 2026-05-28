@@ -11,37 +11,37 @@ local AccessoryProvider: Types.ClassItemProvider<BuildArgs> = {
 
 
 export type BuildArgs = {
-    itemName: string,
+    name: string,
     limbName: string?,
 }
-export type ItemArgs = { itemType: "Accessory" } & BuildArgs
+export type ItemArgs = { type: "Accessory" } & BuildArgs
 
-function AccessoryProvider.Build(itemArgs: BuildArgs): ItemArgs
+function AccessoryProvider.Build(args: BuildArgs): ItemArgs
     return {
-        itemType = AccessoryProvider.ID,
-        itemName = itemArgs.itemName,
-        limbName = itemArgs.limbName,
+        type = AccessoryProvider.ID,
+        name = args.name,
+        limbName = args.limbName or "Head",
     }
 end
 
-function AccessoryProvider.GetItem(itemName: string)
+function AccessoryProvider.GetItem(name: string)
     local assetPath = Access.Config.ItemTypePaths[AccessoryProvider.ID]
     assert(assetPath, `asset path not found for ItemType {script.Name} - a folder of name {AccessoryProvider.ID} must be linked within the config`)
 
-    local item = assetPath:FindFirstChild(itemName)
+    local item = assetPath:FindFirstChild(name)
     if not item then
         return nil
     end
     if not item:IsA("Accessory") then
-        warn(`item {itemName} found for ItemType {script.Name} but it is not an Accessory`)
+        warn(`accessory {name} found for ItemType {script.Name} but it is not an Accessory`)
         return nil
     end
     return item
 end
 
-local function _tagAccessory(accessory: Accessory, itemName: string, limbName: string?)
+local function _tagAccessory(accessory: Accessory, name: string, limbName: string?)
     accessory:SetAttribute(Enums.KeyAttributes.ItemProvider, AccessoryProvider.ID)
-    accessory:SetAttribute(Enums.KeyAttributes.ItemName, itemName)
+    accessory:SetAttribute(Enums.KeyAttributes.ItemName, name)
     if limbName then
         accessory:SetAttribute(ATTR_LIMB_NAME, limbName)
     else
@@ -76,7 +76,7 @@ local function _attachToLimb(character: Model, accessory: Accessory, limbName: s
     return true
 end
 
-function AccessoryProvider.Assign(player: Player, itemArgs: ItemArgs)
+function AccessoryProvider.Assign(player: Player, args: ItemArgs)
     local character = player.Character
     if not character then
         warn("character not found")
@@ -89,21 +89,21 @@ function AccessoryProvider.Assign(player: Player, itemArgs: ItemArgs)
         return
     end
 
-    local itemName = itemArgs.itemName
-    if not itemName then
-        warn("accessory item name not found in item args")
+    local name = args.name
+    if not name then
+        warn("accessory name not found in args")
         return
     end
 
-    local template = AccessoryProvider.GetItem(itemName)
+    local template = AccessoryProvider.GetItem(name)
     if not template then
-        warn(`item {itemName} not found for ItemType {script.Name}`)
+        warn(`accessory {name} not found for ItemType {script.Name}`)
         return
     end
 
-    local limbName = itemArgs.limbName
+    local limbName = args.limbName
     local accessory = template:Clone()
-    _tagAccessory(accessory, itemName, limbName)
+    _tagAccessory(accessory, name, limbName)
     humanoid:AddAccessory(accessory)
 
     if limbName then
@@ -114,30 +114,30 @@ function AccessoryProvider.Assign(player: Player, itemArgs: ItemArgs)
     end
 end
 
-function AccessoryProvider.Unassign(player: Player, itemArgs: ItemArgs)
+function AccessoryProvider.Unassign(player: Player, args: ItemArgs)
     local character = player.Character
     if not character then
         warn("character not found")
         return
     end
 
-    local itemName = itemArgs.itemName
-    if not itemName then
-        warn("accessory item name not found in item args")
+    local name = args.name
+    if not name then
+        warn("accessory name not found in args")
         return
     end
 
-    local limbName = itemArgs.limbName
+    local limbName = args.limbName
 
     for _, child in ipairs(character:GetChildren()) do
-        if not child:IsA("Accessory") or child.Name ~= itemName then
+        if not child:IsA("Accessory") or child.Name ~= name then
             continue
         end
 
         local provider = child:GetAttribute(Enums.KeyAttributes.ItemProvider)
-        local taggedItemName = child:GetAttribute(Enums.KeyAttributes.ItemName)
+        local taggedName = child:GetAttribute(Enums.KeyAttributes.ItemName)
         local taggedLimbName = child:GetAttribute(ATTR_LIMB_NAME)
-        if provider ~= AccessoryProvider.ID or taggedItemName ~= itemName then
+        if provider ~= AccessoryProvider.ID or taggedName ~= name then
             continue
         end
         if limbName and taggedLimbName ~= limbName then

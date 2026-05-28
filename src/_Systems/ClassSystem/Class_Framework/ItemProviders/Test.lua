@@ -7,26 +7,26 @@ local TestProvider: Types.ClassItemProvider<BuildArgs> = {
 
 
 export type BuildArgs = {
-    itemName: string,
+    name: string?,
 }
-export type ItemArgs = { itemType: "Test" } & BuildArgs
+export type ItemArgs = { type: "Test" } & BuildArgs
 
 
-function TestProvider.Build(itemArgs: BuildArgs): ItemArgs
+function TestProvider.Build(args: BuildArgs): ItemArgs
     return {
-        itemType = TestProvider.ID,
-        itemName = itemArgs.itemName,
+        type = TestProvider.ID,
+        name = args.name or "Test",
     }
 end
 
-function TestProvider.Assign(player: Player, itemArgs: ItemArgs)
+function TestProvider.Assign(player: Player, args: ItemArgs)
     print(`{player.UserId} assigned to {TestProvider.ID} with args:`)
-    print(itemArgs)
+    print(args)
 end
 
-function TestProvider.Unassign(player: Player, itemArgs: ItemArgs)
+function TestProvider.Unassign(player: Player, args: ItemArgs)
     print(`{player.UserId} unassigned from {TestProvider.ID} with args:`)
-    print(itemArgs)
+    print(args)
 end
 
 return TestProvider

@@ -15,7 +15,7 @@ function Mocks.ClassConfig(classId: string)
         ID = classId,
         Items = {
             Item.test({
-                itemName = `{classId}_Test`,
+                name = `{classId}_Test`,
             }),
         }
     }

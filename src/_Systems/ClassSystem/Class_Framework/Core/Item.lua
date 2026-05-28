@@ -5,20 +5,20 @@ local UniformProvider = require("../ItemProviders/Uniform")
 
 local Item = {}
 
-function Item.accessory(itemArgs: AccessoryProvider.BuildArgs): AccessoryProvider.ItemArgs
-    return AccessoryProvider.Build(itemArgs)
+function Item.accessory(args: AccessoryProvider.BuildArgs): AccessoryProvider.ItemArgs
+    return AccessoryProvider.Build(args)
 end
 
-function Item.test(itemArgs: TestProvider.BuildArgs): TestProvider.ItemArgs
-    return TestProvider.Build(itemArgs)
+function Item.test(args: TestProvider.BuildArgs): TestProvider.ItemArgs
+    return TestProvider.Build(args)
 end
 
-function Item.tool(itemArgs: ToolProvider.BuildArgs): ToolProvider.ItemArgs
-    return ToolProvider.Build(itemArgs)
+function Item.tool(args: ToolProvider.BuildArgs): ToolProvider.ItemArgs
+    return ToolProvider.Build(args)
 end
 
-function Item.uniform(itemArgs: UniformProvider.BuildArgs): UniformProvider.ItemArgs
-    return UniformProvider.Build(itemArgs)
+function Item.uniform(args: UniformProvider.BuildArgs): UniformProvider.ItemArgs
+    return UniformProvider.Build(args)
 end
 
 

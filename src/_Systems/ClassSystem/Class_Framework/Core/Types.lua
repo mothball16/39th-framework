@@ -7,11 +7,11 @@ export type ClassItemProvider<TBuild = any> = {
     ID: string,
     AssignType: string?,
     -- constructs config-friendly item args for this provider
-    Build: (itemArgs: TBuild) -> ({ itemType: string } & TBuild),
+    Build: (args: TBuild) -> ({ type: string } & TBuild),
     -- runs when the class containing the item is assigned to a player
-    Assign: (player: Player, itemArgs: { itemType: string } & TBuild) -> (),
+    Assign: (player: Player, args: { type: string } & TBuild) -> (),
     -- runs when the class containing the item is unassigned from a player
-    Unassign: (player: Player, itemArgs: { itemType: string } & TBuild) -> (),
+    Unassign: (player: Player, args: { type: string } & TBuild) -> (),
 }
 
 export type Settings = {

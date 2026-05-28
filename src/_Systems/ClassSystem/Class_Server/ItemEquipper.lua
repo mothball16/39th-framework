@@ -26,9 +26,9 @@ function ItemEquipper.new(itemProviders: { [string]: Types.ClassItemProvider }, 
 end
 
 function ItemEquipper.GetProvider(self: ItemEquipper, itemArgs: any): Types.ClassItemProvider
-	local itemType = itemArgs.itemType or itemArgs.ItemType or itemArgs.Type
+	local itemType = itemArgs.type or itemArgs.itemType or itemArgs.ItemType or itemArgs.Type
 	if not itemType then
-		warn(`item type not found for item args {itemArgs}`)
+		warn(`type not found for item args {itemArgs}`)
 		return nil
 	end
 

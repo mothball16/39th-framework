@@ -16,24 +16,24 @@ local UniformProvider: Types.ClassItemProvider<BuildArgs> = {
 }
 
 export type BuildArgs = {
-    itemName: string,
+    name: string,
 }
-export type ItemArgs = { itemType: "Uniform" } & BuildArgs
+export type ItemArgs = { type: "Uniform" } & BuildArgs
 
 
-function UniformProvider.Build(itemArgs: BuildArgs): ItemArgs
+function UniformProvider.Build(args: BuildArgs): ItemArgs
     return {
-        itemType = UniformProvider.ID,
-        itemName = itemArgs.itemName,
+        type = UniformProvider.ID,
+        name = args.name,
     }
 end
 
-function UniformProvider.GetItem(itemName: string)
+function UniformProvider.GetItem(name: string)
     local assetPath = Access.Config.ItemTypePaths[UniformProvider.ID]
     assert(assetPath, `asset path not found for ItemType {script.Name} - a folder of name {UniformProvider.ID} must be linked within the config`)
-    local uniformPath = assetPath:FindFirstChild(itemName)
+    local uniformPath = assetPath:FindFirstChild(name)
     if not uniformPath then
-        warn(`uniform {itemName} not found for ItemType {script.Name}`)
+        warn(`uniform {name} not found for ItemType {script.Name}`)
         return nil
     end
     local shirt = uniformPath:FindFirstChildOfClass("Shirt")
@@ -47,22 +47,22 @@ function UniformProvider.GetItem(itemName: string)
     }
 end
 
-function UniformProvider.Assign(player: Player, itemArgs: ItemArgs)
+function UniformProvider.Assign(player: Player, args: ItemArgs)
     local character = player.Character
     if not character then
         warn("character not found")
         return
     end
 
-    local itemName = itemArgs.itemName
-    if not itemName then
-        warn("tool item name not found in item args")
+    local name = args.name
+    if not name then
+        warn("uniform name not found in args")
         return
     end
 
-    local item = UniformProvider.GetItem(itemName)
+    local item = UniformProvider.GetItem(name)
     if not item then
-        warn(`item {itemName} not found for ItemType {script.Name}`)
+        warn(`uniform {name} not found for ItemType {script.Name}`)
         return
     end
     
@@ -91,16 +91,16 @@ function UniformProvider.Assign(player: Player, itemArgs: ItemArgs)
     assignClothing("ShirtGraphic", item.TShirt)
 end
 
-function UniformProvider.Unassign(player: Player, itemArgs: ItemArgs)
+function UniformProvider.Unassign(player: Player, args: ItemArgs)
     local character = player.Character
     if not character then
         warn("character not found")
         return
     end
 
-    local itemName = itemArgs.itemName
-    if not itemName then
-        warn("tool item name not found in item args")
+    local name = args.name
+    if not name then
+        warn("uniform name not found in args")
         return
     end
 
