@@ -59,7 +59,7 @@ function EffectManager.new(suppressionSource: Vide.source<number>, suppressionRe
             self.activeDamage(0)
         end
 
-        self._suppressionSource(self._suppressionSource() - dt * suppressionRecovery)
+        self._suppressionSource(math.clamp(self._suppressionSource() - dt * suppressionRecovery, 0, 1))
     end))
 
     return self
