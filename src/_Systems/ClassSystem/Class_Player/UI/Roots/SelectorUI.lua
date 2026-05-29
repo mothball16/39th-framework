@@ -326,7 +326,8 @@ return function(props: {
 						Size = UDim2.fromScale(1, 0.1),
 						BackgroundTransparency = 1,
 						TextColor3 = Color3.fromRGB(180, 180, 180),
-						TextXAlignment = Enum.TextXAlignment.Left,
+						TextXAlignment = Enum.TextXAlignment.Center,
+						TextYAlignment = Enum.TextYAlignment.Center,
 						TextScaled = true,
 						FontFace = Theme.fontNormal,
 						Text = function()
