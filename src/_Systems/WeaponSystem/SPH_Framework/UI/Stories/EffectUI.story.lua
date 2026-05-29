@@ -66,6 +66,7 @@ local story = UILabs.CreateVideStory({
 			activeHitmarkers = effectManager.activeHitmarkers,
 			suppressionFactor = suppressionFactor,
 			panelPosition = Vide.source(UDim2.fromScale(0.53, 0.55)),
+			suppressionLimit = 1,
 		}),
 
 		StoryButtonList({

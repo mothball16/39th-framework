@@ -10,7 +10,7 @@ local CharacterStateModule = require("@game/ReplicatedStorage/SPH_Framework/Stat
 local WeaponStateModule = require("@game/ReplicatedStorage/SPH_Framework/State/WeaponState")
 local EffectManager = require("@game/ReplicatedStorage/SPH_Framework/UI/Logic/EffectManager")
 local EffectUI = require("@game/ReplicatedStorage/SPH_Framework/UI/Roots/EffectUI")
-
+local Access = require("@game/ReplicatedStorage/SPH_Framework/Access")
 local EffectController = {}
 EffectController.__index = EffectController
 
@@ -52,12 +52,23 @@ function EffectController.new(params: {
 				activeHitmarkers = self.effectManager.activeHitmarkers,
 				suppressionFactor = useAtom(self.state.suppressionFactor),
 				panelPosition = self.panelPositionSource,
+				suppressionLimit = Access.config.suppressionVignetteLimit,
 			}),
 		}
 	end, playerGui))
 
 	self.maid:GiveTask(Charm.subscribe(self.state.suppressionFactor, function(value, oldValue)
 		self:SyncSuppressionFactor(value, oldValue)
+	end))
+
+	return self
+end
+
+function EffectController.Wire(self: EffectController)
+	local net = require("@game/ReplicatedStorage/SPH_Framework/Network/Events").GetNamespace()
+	local P = net.packets
+	self.maid:GiveTask(P.ReportSuppression.listen(function(data, _serverPlayer)
+		self.effectManager:PushSuppression(data.level, data.factor)
 	end))
 
 	return self

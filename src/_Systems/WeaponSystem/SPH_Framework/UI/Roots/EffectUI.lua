@@ -29,7 +29,7 @@ return function(props: Types.EffectViewProps)
 
         SuppressionCanvas({
             factor = props.suppressionFactor,
-            minSize = 0.5,
+            minSize = props.suppressionLimit,
         }),
 
         -- forward-panel, based off the muzzle position

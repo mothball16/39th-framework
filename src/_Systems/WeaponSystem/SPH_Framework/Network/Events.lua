@@ -108,11 +108,14 @@ local namespace = B.defineNamespace("SPH_Framework", function()
 			RequestSuppression = B.definePacket({
 				value = B.struct({
 					target = B.inst,
+					level = B.float32,
+					factor = B.float32,
 				}),
 			}),
 			ReportSuppression = B.definePacket({
 				value = B.struct({
 					level = B.float32,
+					factor = B.float32,
 				}),
 			}),
 

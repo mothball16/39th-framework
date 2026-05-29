@@ -4,6 +4,7 @@ local debugMode = false
 
 local debris = game:GetService("Debris")
 local tweenService = game:GetService("TweenService")
+local players = game:GetService("Players")
 local Framework = script:FindFirstAncestor("SPH_Framework")
 local Access = require(Framework.Access)
 local assets = Access.assets
@@ -16,9 +17,6 @@ local P = Events.GetNamespace().packets
 local sphWorkspace = workspace:WaitForChild("SPH_Workspace")
 local bulletContainer = sphWorkspace:WaitForChild("Projectiles")
 local cacheContainer = workspace.SPH_Workspace:WaitForChild("Cache")
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local suppression = ReplicatedStorage:FindFirstChild("Suppression")
 
 local pierceMod = require(Framework.Ballistics.PierceMod)
 local partCache = require(Framework.Ballistics.PartCache)
@@ -45,11 +43,115 @@ bulletBehavior.CanPierceFunction = pierceMod.CanPierce
 local caster = fastCast.new()
 fastCast.VisualizeCasts = debugMode
 
+local SUPPRESSION_RADIUS = 60
+local suppressionOverlapParams = OverlapParams.new()
+suppressionOverlapParams.FilterType = Enum.RaycastFilterType.Exclude
+suppressionOverlapParams.FilterDescendantsInstances = {}
+suppressionOverlapParams.CollisionGroup = "SuppressionTargets"
+
 local player, character
 module.Initialize = function(newPlayer)
 	player = newPlayer
 	character = newPlayer.Character
 	rayParams.FilterDescendantsInstances = {character, workspace.CurrentCamera}
+	suppressionOverlapParams.FilterDescendantsInstances = {character}
+end
+
+local function segmentPointToPartDistance(segStart: Vector3, segDir: Vector3, t: number, part: BasePart): number
+	local segPoint = segStart + segDir * t
+	local surfacePoint = part:GetClosestPointOnSurface(segPoint)
+	return (segPoint - surfacePoint).Magnitude
+end
+
+local function closestDistanceSegmentToPart(segStart: Vector3, segDir: Vector3, segLength: number, part: BasePart): number
+	local minDist = math.huge
+
+	minDist = math.min(minDist, segmentPointToPartDistance(segStart, segDir, 0, part))
+	minDist = math.min(minDist, segmentPointToPartDistance(segStart, segDir, segLength, part))
+
+	-- Closest point on segment to part center, then measure to part surface.
+	local distAlongRay = (part.Position - segStart):Dot(segDir)
+	local tCenter = math.clamp(distAlongRay, 0, segLength)
+	minDist = math.min(minDist, segmentPointToPartDistance(segStart, segDir, tCenter, part))
+
+	return minDist
+end
+
+local function ReportSuppressionVictims(cast, lastPoint: Vector3, direction: Vector3, length: number)
+	if length <= 0 then
+		return
+	end
+
+	local segDir = direction.Unit
+	local seenTargets = cast.UserData.AlreadySuppressedTargets
+	if not seenTargets then
+		seenTargets = {}
+		cast.UserData.AlreadySuppressedTargets = seenTargets
+	end
+
+	local midPoint = lastPoint + segDir * (length * 0.5)
+	local segmentSize = Vector3.new(
+		SUPPRESSION_RADIUS * 2,
+		SUPPRESSION_RADIUS * 2,
+		length + SUPPRESSION_RADIUS * 2
+	)
+	local segmentCFrame = CFrame.lookAt(midPoint, midPoint + segDir)
+	local nearbyParts = workspace:GetPartBoundsInBox(segmentCFrame, segmentSize, suppressionOverlapParams)
+
+	for _, part in nearbyParts do
+		local targetPlayer = players:GetPlayerFromCharacter(part:FindFirstAncestorOfClass("Model"))
+		if not targetPlayer 
+		or targetPlayer == player 
+		or cast.UserData.AlreadySuppressedTargets[targetPlayer.UserId] then
+			continue
+		end
+
+		local closestDistance = closestDistanceSegmentToPart(lastPoint, segDir, length, part)
+		local proximityFactor = math.clamp(1 - (closestDistance / SUPPRESSION_RADIUS), 0, 1)
+		if proximityFactor <= 0 then
+			continue
+		end
+
+		local userId = targetPlayer.UserId
+
+		-- create/update suppression entry in currently suppressed targets
+		local existing = cast.UserData.CurrentlySuppressedTargets[userId]
+		if not existing then
+			existing = {
+				target = targetPlayer,
+				factor = proximityFactor,
+				suppressedTick = tick(),
+				dirty = true,
+			}
+		else
+			-- only mark as dirty if the new proximity factor is greater than the existing one
+			-- this prevents suppression from being sent in the processing loop
+			if proximityFactor > existing.factor then
+				existing.factor = proximityFactor
+				existing.dirty = true
+			end
+		end
+		cast.UserData.CurrentlySuppressedTargets[userId] = existing
+	end
+
+	-- iterate through currently suppressed targets
+	-- if not suppressed this time or with a lower suppression, then fire event and mark as suppressed
+	for userId, entry in cast.UserData.CurrentlySuppressedTargets do
+		if not entry.dirty or tick() - entry.suppressedTick > 0.15 then
+			cast.UserData.CurrentlySuppressedTargets[userId] = nil
+			cast.UserData.AlreadySuppressedTargets[userId] = true
+
+			-- print(`suppressing {entry.target.Name} with factor {entry.factor}`)
+			P.RequestSuppression.send({
+				target = entry.target,
+				factor = entry.factor,
+				level = cast.UserData.wepStats.suppressionLevel,
+			})
+		else
+			entry.dirty = false
+		end
+
+	end
 end
 
 local function ResetBullet(bulletPart)
@@ -133,7 +235,8 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 	newData.IgnoreModel = rig
 	newData.Visible = false
 	newData.Origin = bulletOrigin
-	newData.SuppressionLevel = wepStats.suppressionLevel or 1
+	newData.CurrentlySuppressedTargets = {}
+	newData.AlreadySuppressedTargets = {}
 	newData.wepStats = wepStats
 	-- [UBGL START] - UBGL Fire Mode Data
 	-- Add fire mode information for bullet physics
@@ -271,18 +374,10 @@ module.MoveBolt = function(gunModel,wepStats,direction,magAmmo)
 end
 
 
-caster.LengthChanged:Connect(function(cast, segmentOrigin, segmentDirection, length, segmentVelocity, cosmeticBulletObject)
+caster.LengthChanged:Connect(function(cast, lastPoint, direction, length, segmentVelocity, cosmeticBulletObject)
 	if not cosmeticBulletObject then return end
-
-	-- Suppression effects
-	if suppression and config.suppressionEffects --[[and player ~= cast.UserData.Player ]] 
-	and not cast.UserData.Cracked
-	and player:DistanceFromCharacter(cosmeticBulletObject.Position) <= 60
-	and player:DistanceFromCharacter(cast.UserData.Origin) >= 0
-	then
-		print("suppression")
-		suppression:Fire(cast.UserData.SuppressionLevel)
-		cast.UserData.Cracked = true
+	if cast.UserData.Player == player and config.suppressionEffects then
+		ReportSuppressionVictims(cast, lastPoint, direction, length)
 	end
 
 	-- Tracer effects
@@ -313,7 +408,7 @@ caster.LengthChanged:Connect(function(cast, segmentOrigin, segmentDirection, len
 
 	-- Step bullet to new position
 	local bulletLength = cosmeticBulletObject.Size.Z / 2
-	local baseCFrame = CFrame.new(segmentOrigin, segmentOrigin + segmentDirection)
+	local baseCFrame = CFrame.new(lastPoint, lastPoint + direction)
 	cosmeticBulletObject.CFrame = baseCFrame * CFrame.new(0, 0, -(length - bulletLength))
 
 	if cosmeticBulletObject:FindFirstChild("ProjectileVisual") then
@@ -356,12 +451,6 @@ caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBul
 		bulletCFrame = cosmeticBulletObject.CFrame,
 	})
 
-	-- Suppression effects
-	if suppression and config.suppressionEffects and player ~= cast.UserData.Player and not cast.UserData.Cracked then
-		suppression:Fire(cast.UserData.SuppressionLevel)
-		cast.UserData.Cracked = true
-	end
-	
 end)
 
 caster.CastTerminating:Connect(function(cast)

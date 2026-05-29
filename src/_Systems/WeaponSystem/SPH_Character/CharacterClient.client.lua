@@ -63,6 +63,7 @@ local function playCharSound(soundType: string)
 	P.PlayCharacterSound.send({ soundType = soundType })
 end
 
+
 local storageCFrame = CFrame.new(1000000,0,0) -- This is used for moving the viewmodel super far away.
 -- Doing this to the viewmodel allows animations to be loaded, played, etc, while still having it out of view.
 
@@ -207,6 +208,7 @@ local effectController = EffectController.new({
 	weaponState = weaponState,
 	effectManager = effectManager,
 })
+effectController:Wire():Wire()
 
 local function OnScrollIntent(scrollAmount, holdForZoom)
 	if characterState.aiming() then

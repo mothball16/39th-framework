@@ -20,6 +20,7 @@ export type EffectViewProps = {
     suppressionFactor: Vide.source<number>,
     activeDamage: Vide.source<number>,
     panelPosition: Vide.source<Vector2>,
+    suppressionLimit: number,
 }
 
 export type SuppressionCanvasProps = {

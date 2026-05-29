@@ -11,12 +11,17 @@ physicsService:RegisterCollisionGroup("Casings")
 physicsService:RegisterCollisionGroup("Players")
 physicsService:RegisterCollisionGroup("RootParts")
 physicsService:RegisterCollisionGroup("Guns")
+physicsService:RegisterCollisionGroup("SuppressionTargets")
 physicsService:CollisionGroupSetCollidable("Casings", "Casings", false)
 physicsService:CollisionGroupSetCollidable("Casings", "Players", false)
 physicsService:CollisionGroupSetCollidable("Guns", "Guns", false)
 physicsService:CollisionGroupSetCollidable("Guns", "Players", false)
 physicsService:CollisionGroupSetCollidable("Casings", "Guns", false)
 
+physicsService:CollisionGroupSetCollidable("SuppressionTargets", "Players", false)
+physicsService:CollisionGroupSetCollidable("SuppressionTargets", "Guns", false)
+physicsService:CollisionGroupSetCollidable("SuppressionTargets", "Casings", false)
+physicsService:CollisionGroupSetCollidable("SuppressionTargets", "Default", false)
 local Framework = replicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
 local assets = Access.assets
@@ -499,6 +504,7 @@ local function initializePlayerLifecycle()
 		newPlayer.CharacterAdded:Connect(function(newChar: Model)
 			newChar.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 			newChar:AddTag("SPH_Character")
+			
 			print(warnPrefix .. newPlayer.Name .. " spawned.")
 			local humanoid = newChar:WaitForChild("Humanoid", 20)
 			humanoid:WaitForChild("Animator", 20)
@@ -1115,6 +1121,19 @@ local function initializeServerReplication()
 				U.playersInRangeExcept(U.asBlacklist(player), player.Character.HumanoidRootPart.Position, 100)
 			)
 		end
+	end)
+	P.RequestSuppression.listen(function(data, player: Player?)
+		if not player then
+			return
+		end
+		local target = data.target
+		if typeof(target) ~= "Instance" or not target:IsA("Player") then
+			return
+		end
+		P.ReportSuppression.sendToList(
+			{ level = data.level, factor = data.factor },
+			{ target }
+		)
 	end)
 end
 

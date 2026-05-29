@@ -79,6 +79,11 @@ function EffectManager.PushDamage(self: EffectManager, damage: number)
     self._lastDamageUpdate = tick()
 end
 
+function EffectManager.PushSuppression(self: EffectManager, level: number, factor: number)
+	local amount = level * factor
+	self._suppressionSource(math.clamp(self._suppressionSource() + amount, 0, 1))
+end
+
 function EffectManager.Destroy(self: EffectManager)
     self.maid:DoCleaning()
 end
