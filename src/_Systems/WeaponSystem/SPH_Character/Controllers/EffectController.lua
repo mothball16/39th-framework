@@ -26,10 +26,18 @@ type self = {
 	weaponState: WeaponStateModule.WeaponState,
 	effectManager: EffectManager.EffectManager,
 	panelPositionSource: Vide.source<UDim2>,
+	
 	maid: Maid.Maid,
+
+	_colorCorrection: ColorCorrectionEffect,
+	_lastSuppressionTick: number,
+	_lastAimPunchTick: number,
 }
 
 export type EffectController = typeof(setmetatable({} :: self, EffectController))
+
+local WHIZ_SOUNDS = {"342190005", "342190012", "342190017", "342190024"}
+
 
 function EffectController.new(params: {
 	state: CharacterStateModule.CharacterState,
@@ -42,6 +50,8 @@ function EffectController.new(params: {
 		effectManager = params.effectManager,
 		panelPositionSource = nil :: Vide.source<UDim2>,
 		maid = Maid.new(),
+		_lastSuppressionTick = tick(),
+		_lastAimPunchTick = tick(),
 	} :: self, EffectController)
 
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -64,17 +74,58 @@ function EffectController.new(params: {
 		}
 	end, playerGui))
 
+	self._colorCorrection = game.Lighting:FindFirstChild("SuppressionColorCorrection")
+
+	if not self._colorCorrection then
+		self._colorCorrection = Instance.new("ColorCorrectionEffect", game.Lighting)
+		self._colorCorrection.Name = "SuppressionColorCorrection"
+	end
+
+	
 	self.maid:GiveTask(Charm.subscribe(self.state.suppressionFactor, function(value, oldValue)
 		self:SyncSuppressionFactor(value, oldValue)
+	end))
+
+	self.maid:GiveTask(Charm.effect(function()
+		self._colorCorrection.Saturation = -self.state.suppressionFactor() * 0.4
 	end))
 
 	return self
 end
 
-function EffectController.Wire(self: EffectController)
+function EffectController.Wire(self: EffectController, events: EventsModule.Events)
 	local net = require("@game/ReplicatedStorage/SPH_Framework/Network/Events").GetNamespace()
 	local P = net.packets
+
+	self.maid:GiveTask(events.BulletHit:Connect(function(...)
+		self:OnBulletHit(...)
+	end))
+
 	self.maid:GiveTask(P.ReportSuppression.listen(function(data, _serverPlayer)
+		if tick() - self._lastSuppressionTick < Access.config.suppressionThrottle then
+			return
+		end
+
+		-- TEMP: play a whiz sound (this should be replaced later)
+		local Som = Instance.new("Sound")
+		Som.Parent = Players.LocalPlayer.PlayerGui
+		Som.SoundId = "rbxassetid://" .. WHIZ_SOUNDS[math.random(1, 4)]
+		Som.Volume = 2
+		Som.PlayOnRemove = true
+		Som:Destroy()
+
+		if tick() - self._lastAimPunchTick > Access.config.suppressionAimPunchThrottle then
+			local tempBlur = Instance.new("BlurEffect", game.Lighting)
+			tempBlur.Size = 15 * data.factor
+			game.Debris:AddItem(tempBlur, 0.5)
+			TweenService:Create(tempBlur, TweenInfo.new(0.5), { Size = 0 }):Play()
+
+			self._lastAimPunchTick = tick()
+			self:ApplySuppressionAimPunch(data.factor)
+		end
+
+
+		self._lastSuppressionTick = tick()
 		self.effectManager:PushSuppression(data.level, data.factor)
 	end))
 
