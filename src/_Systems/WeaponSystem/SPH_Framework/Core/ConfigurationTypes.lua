@@ -92,6 +92,7 @@ export type WeaponStats = {
     aimFovs: {number},
 
 	suppressionLevel: number,
+	suppressionDistance: number,
 
 	holster: boolean,
 	holsterPart: string,
@@ -334,11 +335,18 @@ export type MainGameSettings = {
 	hitmarkers: boolean,
 	damageIndicators: boolean,
 
+	suppressionMinDistance: number,
 	suppressionVignetteLimit: number,
 	suppressionRecovery: number,
+	suppressionThrottle: number,
 	suppressionAimPunchFactor: number,
 	suppressionAimPunchThrottle: number,
-	suppressionLimitsZoom: boolean,
+
+	fullySuppressedZoomFactor: number,
+	fullySuppressedThreshold: number,
+	
+
+	playerZoomDistance: number,
 
 }
 

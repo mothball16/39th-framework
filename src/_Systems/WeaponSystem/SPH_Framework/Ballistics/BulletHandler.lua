@@ -43,7 +43,7 @@ bulletBehavior.CanPierceFunction = pierceMod.CanPierce
 local caster = fastCast.new()
 fastCast.VisualizeCasts = debugMode
 
-local SUPPRESSION_RADIUS = 60
+local DEFAULT_SUPPRESSION_DISTANCE = 60
 local suppressionOverlapParams = OverlapParams.new()
 suppressionOverlapParams.FilterType = Enum.RaycastFilterType.Exclude
 suppressionOverlapParams.FilterDescendantsInstances = {}
@@ -83,6 +83,7 @@ local function ReportSuppressionVictims(cast, lastPoint: Vector3, direction: Vec
 	end
 
 	local segDir = direction.Unit
+	local suppressionRadius = cast.UserData.wepStats.suppressionDistance or DEFAULT_SUPPRESSION_DISTANCE
 	local seenTargets = cast.UserData.AlreadySuppressedTargets
 	if not seenTargets then
 		seenTargets = {}
@@ -91,9 +92,9 @@ local function ReportSuppressionVictims(cast, lastPoint: Vector3, direction: Vec
 
 	local midPoint = lastPoint + segDir * (length * 0.5)
 	local segmentSize = Vector3.new(
-		SUPPRESSION_RADIUS * 2,
-		SUPPRESSION_RADIUS * 2,
-		length + SUPPRESSION_RADIUS * 2
+		suppressionRadius * 2,
+		suppressionRadius * 2,
+		length + suppressionRadius * 2
 	)
 	local segmentCFrame = CFrame.lookAt(midPoint, midPoint + segDir)
 	local nearbyParts = workspace:GetPartBoundsInBox(segmentCFrame, segmentSize, suppressionOverlapParams)
@@ -101,16 +102,29 @@ local function ReportSuppressionVictims(cast, lastPoint: Vector3, direction: Vec
 	for _, part in nearbyParts do
 		local targetPlayer = players:GetPlayerFromCharacter(part:FindFirstAncestorOfClass("Model"))
 		if not targetPlayer 
-		or targetPlayer == player 
 		or cast.UserData.AlreadySuppressedTargets[targetPlayer.UserId] then
 			continue
 		end
 
+		-- check if the target is further than minsuppressiondistance from the origin
+		if (cast.UserData.Origin - part.Position).Magnitude < config.suppressionMinDistance then
+			continue
+		end
+
+		
 		local closestDistance = closestDistanceSegmentToPart(lastPoint, segDir, length, part)
-		local proximityFactor = math.clamp(1 - (closestDistance / SUPPRESSION_RADIUS), 0, 1)
+		if closestDistance > suppressionRadius then
+			continue
+		end
+
+
+		local proximityFactor = math.clamp(1 - closestDistance  / suppressionRadius, 0, 1)
 		if proximityFactor <= 0 then
 			continue
 		end
+
+		-- decrease suppression factor exponentially - lower values are more affected
+		proximityFactor = math.pow(proximityFactor, 1.7)
 
 		local userId = targetPlayer.UserId
 
