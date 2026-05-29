@@ -10,6 +10,7 @@ local config = Access.config
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
 local WeaponPrefs = require(Framework.Weapons.WeaponPrefsClient)
+local player = game:GetService("Players").LocalPlayer
 
 local SPRINT_FOV_MULTIPLIER = 1.03
 
@@ -76,6 +77,22 @@ function CameraController.new(params: {
 		return config.defaultFOV * (if isSprinting then SPRINT_FOV_MULTIPLIER else 1)
 	end)
 
+	self.zoomDistance = Charm.computed(function()
+		local weaponEquipped = self.state.equippedTool()
+		local fullySuppressed = self.state.suppressionFactor() >= config.fullySuppressedThreshold
+
+		if weaponEquipped then
+			return 0.5
+		end
+
+		return if fullySuppressed
+			then math.min(0.5, self.state.suppressionFactor() / config.fullySuppressedThreshold)
+			else config.playerZoomDistance
+	end)
+
+	Charm.effect(function()
+		player.CameraMaxZoomDistance = self.zoomDistance()
+	end)
 	return self
 end
 
