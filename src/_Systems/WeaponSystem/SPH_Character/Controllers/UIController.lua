@@ -5,7 +5,6 @@ if we could pivot strictly to declarative UI, we can make this a lot cleaner and
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-const SoundService = game:GetService("SoundService")
 local UserInputService = game:GetService("UserInputService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
@@ -17,13 +16,7 @@ local config = Access.config
 
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
-local Events = require(script.Parent.Events)
 
-local EffectManager = require(Framework.UI.Logic.EffectManager)
-local HitmarkerTypes = require(Framework.UI.Configs.HitmarkerTypes)
-
-local Types = require(Framework.Core.ConfigurationTypes)
-local DamageLogic = require(Framework.Combat.DamageLogic)
 local WeaponPrefs = require(Framework.Weapons.WeaponPrefsClient)
 
 local FIRE_MODE_NAMES = { "[SAFE]", "[SEMI]", "[AUTO]", "[BURST]", "[UBGL]", "[MANUAL]" }
@@ -34,7 +27,6 @@ UIController.__index = UIController
 type self = {
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
-	events: Events.Events,
 	ammoUI: Frame,
 	ammoCounter: TextLabel,
 	ammoPoolUI: TextLabel,
@@ -44,7 +36,6 @@ type self = {
 	attachmentFrame: Frame,
 	aimSens: TextLabel,
 	ubglAmmo: IntValue?,
-	effectManager: EffectManager.EffectManager,
 }
 
 export type UIController = typeof(setmetatable({} :: self, UIController))
@@ -74,8 +65,6 @@ end
 function UIController.new(params: {
 	state: CharacterStateModule.CharacterState,
 	weaponState: WeaponStateModule.WeaponState,
-	events: Events.Events,
-	effectManager: EffectManager.EffectManager,
 }): UIController
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 	local mainUI = playerGui:WaitForChild("SPH_UI")
@@ -102,7 +91,6 @@ function UIController.new(params: {
 	local self = setmetatable({
 		weaponState = params.weaponState,
 		state = params.state,
-		events = params.events,
 		ammoUI = ammoUI,
 		ammoCounter = ammoCounter,
 		ammoPoolUI = ammoPoolUI,
@@ -112,7 +100,6 @@ function UIController.new(params: {
 		attachmentFrame = attachmentFrame,
 		aimSens = aimSens,
 		ubglAmmo = nil,
-		effectManager = params.effectManager,
 	} :: self, UIController)
 
 	Charm.subscribe(self.state.equippedTool, function(tool)
@@ -122,40 +109,7 @@ function UIController.new(params: {
 		self:SyncAiming(aiming)
 	end)
 
-	self.events.BulletHit:Connect(function(...)
-		self:OnBulletHit(...)
-	end)
-
 	return self
-end
-
-function UIController.OnBulletHit(self: UIController, wepStats: Types.WeaponStats, bulletOrigin: Vector3, raycastResult: RaycastResult)
-	if not raycastResult.Instance or not Access.config.hitmarkers then
-		return
-	end
-	local zone = DamageLogic.getZone(raycastResult.Instance.Name)
-	if zone == DamageLogic.Zones.None then
-		return
-	end
-
-	local hitmarkerRegion = "Default"
-	if zone == DamageLogic.Zones.Head then
-		hitmarkerRegion = "Headshot"
-	end
-	local distance = (bulletOrigin - raycastResult.Position).Magnitude
-	local hitmarkerInstance = HitmarkerTypes[hitmarkerRegion]()
-	local estimatedDamage = DamageLogic.getDamage(wepStats.damage, raycastResult.Instance.Name, distance, wepStats.range)
-
-	local screenPoint = game.Workspace.CurrentCamera:WorldToViewportPoint(raycastResult.Position)
-	hitmarkerInstance.Position(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
-
-	self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position)
-	self.effectManager:PushDamage(estimatedDamage)
-
-	-- play the hitmarker sound
-	local soundList = assets.Sounds.Hitmarkers[hitmarkerRegion]:GetChildren() :: { Sound }
-	local sound = soundList[math.random(#soundList)]
-	SoundService:PlayLocalSound(sound) 
 end
 
 function UIController.SyncAiming(self: UIController, aiming: boolean)

@@ -200,15 +200,13 @@ local effectManager = EffectManager.new(
 local uiController = UIController.new({
 	state = characterState,
 	weaponState = weaponState,
-	events = events,
-	effectManager = effectManager,
 })
 local effectController = EffectController.new({
 	state = characterState,
 	weaponState = weaponState,
 	effectManager = effectManager,
 })
-effectController:Wire():Wire()
+effectController:Wire(events)
 
 local function OnScrollIntent(scrollAmount, holdForZoom)
 	if characterState.aiming() then
@@ -319,6 +317,8 @@ humanoid.Died:Connect(function()
 	effectController:Destroy()
 	effectManager:Destroy()
 end)
+
+
 
 runService.RenderStepped:Connect(function(dt:number)
 	if math.ceil(1 / dt) < 5 then -- Skip the render stepped function if FPS is lower than 5 to avoid stuttering issues
