@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Access = require("@game/ReplicatedStorage/Class_Framework/Access")
 local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
+local ClassAPI = require("./ClassAPI")
 local ServerRuntime = require("./ServerRuntime")
 
 if Access.Config.DebugMode then
@@ -52,4 +53,6 @@ local runtime = ServerRuntime.new({
 	configByFactionId = getFactionConfigs(Access.Assets.FactionConfigs),
 	shouldSync = true,
 })
+
+ClassAPI.Init(runtime)
 runtime:Start()

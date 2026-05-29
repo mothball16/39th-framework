@@ -40,6 +40,16 @@ function ItemEquipper.GetProvider(self: ItemEquipper, itemArgs: any): Types.Clas
 	return itemProvider
 end
 
+function ItemEquipper.RegisterProvider(self: ItemEquipper, provider: Types.ClassItemProvider)
+	assert(provider.ID, "item provider must have an ID")
+
+	if self.itemProviders[provider.ID] then
+		warn(`replacing existing item provider for type {provider.ID}`)
+	end
+
+	self.itemProviders[provider.ID] = provider
+end
+
 function ItemEquipper.AssignClassItems(self: ItemEquipper, player: Player, classId: string)
 	local classConfig = self.classes[classId]
 	if not classConfig then
