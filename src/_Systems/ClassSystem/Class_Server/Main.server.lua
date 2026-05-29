@@ -5,18 +5,17 @@ local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
 local ClassAPI = require("./ClassAPI")
 local ServerRuntime = require("./ServerRuntime")
 
-if Access.Config.DebugMode then
+if Access.Config.DebugMode and game:GetService("RunService"):IsStudio() then
 	local startTick = tick()
-	if not game:GetService("RunService"):IsStudio() then
-        return
-    end
 
-    local DevPackages = ReplicatedStorage:WaitForChild("DevPackages")
-    local TestEZ = require(DevPackages:WaitForChild("TestEZ"))
+	local DevPackages = ReplicatedStorage:WaitForChild("DevPackages")
+	local TestEZ = require(DevPackages:WaitForChild("TestEZ"))
 
-    TestEZ.TestBootstrap:run({ ReplicatedStorage.Class_Framework.Tests }, TestEZ.Reporters.TextReporterQuiet)
+	TestEZ.TestBootstrap:run({ ReplicatedStorage.Class_Framework.Tests }, TestEZ.Reporters.TextReporterQuiet)
 
-    warn(`class system test suite took {tick() - startTick} seconds`)
+	warn(`class system test suite took {tick() - startTick} seconds`)
+    
+
 end
 
 --#region [ helpers ]
