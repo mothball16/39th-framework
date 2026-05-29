@@ -6,6 +6,7 @@ local ClassAPI = require("./ClassAPI")
 local ServerRuntime = require("./ServerRuntime")
 
 if Access.Config.DebugMode then
+	local startTick = tick()
 	if not game:GetService("RunService"):IsStudio() then
         return
     end
@@ -14,6 +15,8 @@ if Access.Config.DebugMode then
     local TestEZ = require(DevPackages:WaitForChild("TestEZ"))
 
     TestEZ.TestBootstrap:run({ ReplicatedStorage.Class_Framework.Tests }, TestEZ.Reporters.TextReporterQuiet)
+
+    warn(`class system test suite took {tick() - startTick} seconds`)
 end
 
 --#region [ helpers ]

@@ -4,11 +4,12 @@ local Maid = require("@game/ReplicatedStorage/Packages/maid")
 
 local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
 local Events = require("@game/ReplicatedStorage/Class_Framework/Core/Events").GetNamespace()
+local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
 local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
 local StateActions = require("@game/ReplicatedStorage/Class_Framework/StateActions")
 
 local ItemEquipper = require("./ItemEquipper")
-local SelectionHandler = require("./SelectionHandler")
+local SelectionService = require("./SelectionService")
 local ServerSyncer = require("./ServerSyncer")
 
 local ServerRuntime = {}
@@ -18,7 +19,7 @@ type self = {
 	state: State.State,
 	configByFactionId: { [string]: Types.FactionConfig },
 	itemEquipper: ItemEquipper.ItemEquipper,
-	selectionHandler: SelectionHandler.SelectionHandler,
+	selectionService: SelectionService.SelectionService,
 	maid: Maid.Maid,
 }
 export type ServerRuntime = typeof(setmetatable({} :: self, ServerRuntime))
@@ -37,7 +38,7 @@ function ServerRuntime.new(args: {
 		state = state,
 		configByFactionId = args.configByFactionId,
 		itemEquipper = ItemEquipper.new(args.itemProviders, args.configByClassId),
-		selectionHandler = SelectionHandler.new(state, args.access.Config),
+		selectionService = SelectionService.new(state, args.access.Config),
 		maid = Maid.new(),
 	} :: self, ServerRuntime)
 
@@ -70,10 +71,22 @@ function ServerRuntime.Start(self: ServerRuntime)
 
 			self.itemEquipper:AssignClassItems(player, classId)
 		end
-		self.selectionHandler:HandleTeamChange(player, player.Team)
+
+		local function shouldAutoAssignAfterTeamChange(): boolean
+			return self.access.Config.AfterTeamChangeBehavior ~= Enums.AfterTeamChangeBehavior.None
+		end
+
+		local function handleTeamChange(player: Player)
+			self.selectionService:HandleTeamChange(player, player.Team, self.itemEquipper)
+			if shouldAutoAssignAfterTeamChange() then
+				safeAssignClassItems(player)
+			end
+		end
+
+		handleTeamChange(player)
 
 		player:GetPropertyChangedSignal("Team"):Connect(function()
-			self.selectionHandler:HandleTeamChange(player, player.Team)
+			handleTeamChange(player)
 		end)
 
 		player.CharacterAdded:Connect(function(character)
@@ -90,15 +103,15 @@ function ServerRuntime.Start(self: ServerRuntime)
 	end)
 
 	Events.packets.RequestFaction.listen(function(data, player)
-		self.selectionHandler:HandleFactionRequest(player, data)
+		self.selectionService:HandleFactionRequest(player, data)
 	end)
 
 	Events.packets.RequestGroupClass.listen(function(data, player)
-		self.selectionHandler:HandleGroupClassRequest(player, data, self.itemEquipper)
+		self.selectionService:HandleGroupClassRequest(player, data, self.itemEquipper)
 	end)
 	
 	Events.packets.RequestClassApply.listen(function(data, player)
-		self.selectionHandler:HandleClassApplyRequest(player, data, self.itemEquipper)
+		self.selectionService:HandleClassApplyRequest(player, data, self.itemEquipper)
 	end)
 end
 

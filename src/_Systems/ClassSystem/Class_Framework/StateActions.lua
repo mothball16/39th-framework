@@ -24,6 +24,11 @@ function StateActions.CreateFaction(state: State.State, config: Types.FactionCon
 		-- resolve default group for future use
 		for groupKey, groupConfig in pairs(config.Groups) do
 			if groupConfig.Default then
+				if groupConfig.Limit ~= math.huge then
+					warn(`faction {config.ID} group {groupKey} should have no limit - it is a default group`)
+					groupConfig.Limit = math.huge
+					continue
+				end
 				nextState[config.ID].DefaultGroupKey = groupKey
 			end
 		end
@@ -108,7 +113,6 @@ function StateActions.RemovePlayerGroupClass(state: State.State, userId: string)
 end
 
 function StateActions.SetPlayerToDefaultGroupClass(state: State.State, userId: string, factionId: string)
-	print(`player {userId} has faction {factionId}`)
 	local factionConfig = state.configByFactionId()[factionId]
 	if not factionConfig then
 		return
