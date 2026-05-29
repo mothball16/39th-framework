@@ -18,7 +18,7 @@ return function(props: {
 	manualButton: boolean,
 	isOpen: Vide.Source<boolean>,
 	setSelectorOpen: ((open: boolean) -> ()) -> (),
-	requestGroupClass: ((groupKey: string, classId: string) -> ()),
+	requestGroupClass: ((group: string, class: string) -> ()),
 	requestClassApply: ((enable: boolean) -> ())?,
 	applyClassMode: string?,
 })

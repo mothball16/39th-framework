@@ -28,9 +28,9 @@ return function(target: Instance)
 				print("Story setSelectorOpen", open)
 				selectorOpen(open)
 			end,
-			requestGroupClass = function(groupKey, classId)
-				StateActions.SetPlayerGroupClass(state, playerKey, groupKey, classId)
-				print("Story request (change group/class):", groupKey, classId)
+			requestGroupClass = function(group, class)
+				StateActions.SetPlayerGroupClass(state, playerKey, group, class)
+				print("Story request (change group/class):", group, class)
 			end,
 			requestClassApply = function(enable)
 				print("Story request (apply class):", enable)

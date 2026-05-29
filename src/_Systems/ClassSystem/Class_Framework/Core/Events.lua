@@ -18,8 +18,8 @@ function Events.GetNamespace()
          packets = {
             RequestGroupClass = ByteNetMax.definePacket({
                value = ByteNetMax.struct({
-                  groupKey = ByteNetMax.string,
-                  classId = ByteNetMax.string,
+                  group = ByteNetMax.string,
+                  class = ByteNetMax.string,
                }),
             }),
             RequestFaction = ByteNetMax.definePacket({

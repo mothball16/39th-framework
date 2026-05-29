@@ -58,10 +58,10 @@ function ClientRuntime.Start(self: ClientRuntime)
 				setSelectorOpen = function(open: boolean)
 					self.selectorOpen(open)
 				end,
-				requestGroupClass = function(groupKey: string, classId: string)
+				requestGroupClass = function(group: string, class: string)
 					Events.packets.RequestGroupClass.send({
-						groupKey = groupKey,
-						classId = classId,
+						group = group,
+						class = class,
 					})
 				end,
 				requestClassApply = function(enable: boolean)
