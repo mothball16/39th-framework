@@ -481,8 +481,7 @@ function WeaponController.Equip(self: WeaponController, newChild)
 		self.weaponState.RecoilUp.d = ws.PunchDamper
 	end
 
-
-
+	self.weaponState.RecoilFactor = ws and ws.MinRecoilFactor or 1
 	-- fallbacks
 	if ws and (not ws.operationType or type(ws.operationType) == "string") then
 		ws.operationType = 1
@@ -779,6 +778,10 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 				self.weaponState.RecoilCF, finalRecoilPunch, self.weaponState.RecoilFactor,vP,hP,dP)
 		end
 
+		local recoilPower = self.weaponState.RecoilFactor
+		vr *= recoilPower
+		hr *= recoilPower
+
 		self.weaponState.RecoilPos.t = self.weaponState.RecoilCF.Position
 		self.weaponState.RecoilDir.t = self.weaponState.RecoilCF.LookVector
 		self.weaponState.RecoilUp.t = self.weaponState.RecoilCF.UpVector
@@ -831,6 +834,9 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 		if not self.state.firstPerson() and not config.thirdPersonFiring then return end
 
 		local currentStats = self:GetCurrentWepStats()
+		self.weaponState.RecoilFactor = math.clamp(self.weaponState.RecoilFactor + ws.RecoilStepAmount,
+			ws.MinRecoilFactor, ws.MaxRecoilFactor)
+
 		self.events.FireAnimRequested:Fire()
 		self:PerformRecoil(currentStats)
 
@@ -918,10 +924,6 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 		if currentStats.projectile ~= "Bullet" then
 			self:SetProjectileTransparency(self.weaponState.gunModel(), 1)
 		end
-
-		-- spread and recoil step
-		self.weaponState.RecoilFactor = math.clamp(self.weaponState.RecoilFactor + ws.RecoilStepAmount,
-			ws.MinRecoilFactor, ws.MaxRecoilFactor)
 
 		local spreadStep = ws.SpreadStepAmount
 		local minSpread = ws.MinSpread

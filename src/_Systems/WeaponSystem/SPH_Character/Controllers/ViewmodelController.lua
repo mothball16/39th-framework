@@ -313,12 +313,12 @@ function ViewmodelController.UpdateViewmodelPosition(
 		0
 	)
 
-	local recoilImpact = CFrame.lookAt(
-		self.weaponState.RecoilPos.p,
-		self.weaponState.RecoilDir.p,
-		self.weaponState.RecoilUp.p
-	)
-	animBase.CFrame *= recoilImpact
+	local recoilPos = self.weaponState.RecoilPos.p
+	local recoilLook = self.weaponState.RecoilDir.p
+	local recoilUp = self.weaponState.RecoilUp.p
+	if recoilLook.Magnitude > 1e-6 then
+		animBase.CFrame *= CFrame.lookAt(recoilPos, recoilPos + recoilLook, recoilUp)
+	end
 
 	if not self.weaponState.viewmodelVisible() then
 		animBase.CFrame *= STORAGE_CFRAME
