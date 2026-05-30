@@ -2,8 +2,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Framework = ReplicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
 local assets = Access.assets
-local Events = require(Framework.Network.Events)
-local P = Events.GetNamespace().packets
+local NetworkEvents = require(Framework.Network.NetworkEvents)
+local P = NetworkEvents.packets
 
 local lasers = {}
 

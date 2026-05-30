@@ -11,8 +11,8 @@ local assets = Access.assets
 local config = Access.config
 local hitFX = require(Framework.Ballistics.HitFX)
 local WeaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
-local Events = require(Framework.Network.Events)
-local P = Events.GetNamespace().packets
+local NetworkEvents = require(Framework.Network.NetworkEvents)
+local P = NetworkEvents.packets
 
 local sphWorkspace = workspace:WaitForChild("SPH_Workspace")
 local bulletContainer = sphWorkspace:WaitForChild("Projectiles")

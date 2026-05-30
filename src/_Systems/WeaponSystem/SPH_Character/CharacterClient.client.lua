@@ -21,9 +21,9 @@ if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
 camera.CameraType = Enum.CameraType.Custom
 if camera:FindFirstChild("WeaponRig") then camera.WeaponRig:Destroy() end
 
-local events = require(script.Parent.Controllers.Events).new()
-local NetEvents = require(Framework.Network.Events)
-local P = NetEvents.GetNamespace().packets
+local localEvents = require(script.Parent.Controllers.LocalEvents).new()
+local NetworkEvents = require(Framework.Network.NetworkEvents)
+local P = NetworkEvents.packets
 
 local viewMod = require(Framework.Weapons.ViewMod)
 local bulletHandler = require(Framework.Ballistics.BulletHandler)
@@ -138,7 +138,7 @@ local animationController = AnimationController.new({
 	animationsFolder = animations,
 	weaponState = weaponState,
 	state = characterState,
-	events = events,
+	events = localEvents,
 })
 
 local movementController = MovementController.new({
@@ -168,7 +168,7 @@ local weaponController = WeaponController.new({
 	thirdPersonRig = weaponRig,
 	weaponState = weaponState,
 	state = characterState,
-	events = events,
+	events = localEvents,
 })
 
 local viewmodelController = ViewmodelController.new({
@@ -205,7 +205,7 @@ local effectController = EffectController.new({
 	state = characterState,
 	weaponState = weaponState,
 	effectManager = effectManager,
-}):Wire(events)
+}):Wire(localEvents)
 
 local function OnScrollIntent(scrollAmount, holdForZoom)
 	if characterState.aiming() then

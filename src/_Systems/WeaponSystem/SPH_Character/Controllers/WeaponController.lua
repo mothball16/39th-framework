@@ -12,8 +12,8 @@ local Enums = require(Framework.Core.Enums)
 local bulletHandler = require(Framework.Ballistics.BulletHandler)
 local shellEjection = require(Framework.Weapons.ShellEjection)
 local weldMod = require(Framework.Weapons.WeldMod)
-local NetEvents = require(Framework.Network.Events)
-local Events = require(script.Parent.Events)
+local NetworkEvents = require(Framework.Network.NetworkEvents)
+local LocalEvents = require(script.Parent.LocalEvents)
 local weaponPrefsClient = require(Framework.Weapons.WeaponPrefsClient)
 local weaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
 local holosightMod = require(Framework.Weapons.Mods.Holosight)
@@ -33,7 +33,7 @@ WeaponController.__index = WeaponController
 type self = {
 	state: CharacterStateModule.CharacterState,
 	weaponState: WeaponStateModule.WeaponState,
-	events: Events.Events,
+	events: LocalEvents.LocalEvents,
 
 	holdingM1: boolean,
 	cycled: boolean,
@@ -58,8 +58,7 @@ type self = {
 
 export type WeaponController = typeof(setmetatable({} :: self, WeaponController))
 
-local net = NetEvents.GetNamespace()
-local P = net.packets
+local P = NetworkEvents.packets
 
 local function findChildModelWithMainPartChild(gun, partName)
 	if not gun then
@@ -98,7 +97,7 @@ function WeaponController.new(params: {
 	thirdPersonRig: Model,
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
-	events: Events.Events,
+	events: LocalEvents.LocalEvents,
 }): WeaponController
 	local self = setmetatable({
 		state = params.state,

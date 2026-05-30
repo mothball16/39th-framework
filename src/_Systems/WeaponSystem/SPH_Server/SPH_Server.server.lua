@@ -32,7 +32,7 @@ require(Utility.TestRunner)(Framework.Tests)
 
 local WeaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
 local weldMod = require(Framework.Weapons.WeldMod)
-local Events = require(Framework.Network.Events)
+local NetworkEvents = require(Framework.Network.NetworkEvents)
 local NetUtil = require(Framework.Network.NetUtil)
 local viewMod = require(Framework.Weapons.ViewMod)
 local explosionMod = require(Framework.Effects.ExplosionFX)
@@ -57,7 +57,7 @@ explosionRayParams.IgnoreWater = true
 local explosionOverlapParams = OverlapParams.new()
 explosionOverlapParams.MaxParts = 500
 
-local net = Events.GetNamespace()
+local net = NetworkEvents
 
 local naughtyList = {}
 game:GetService("SoundService").RespectFilteringEnabled = true

@@ -1,7 +1,7 @@
 local Signal = require("@game/ReplicatedStorage/Packages/signal")
 local Types = require("@game/ReplicatedStorage/SPH_Framework/Core/ConfigurationTypes")
-local Events = {}
-Events.__index = Events
+local LocalEvents = {}
+LocalEvents.__index = LocalEvents
 
 type self = {
 	BulletHit: Signal.Signal<Types.WeaponStats, Vector3, RaycastResult>,
@@ -20,9 +20,9 @@ type self = {
 	AnimationStopped: Signal.Signal<string, AnimationTrack, string>,
 }
 
-export type Events = typeof(setmetatable({} :: self, Events))
+export type LocalEvents = typeof(setmetatable({} :: self, LocalEvents))
 
-function Events.new(): Events
+function LocalEvents.new(): LocalEvents
 	return setmetatable({
 		BulletHit = Signal.new(),
 		
@@ -38,7 +38,7 @@ function Events.new(): Events
 		ReloadActionRequested = Signal.new(),
 		KeyframeReached = Signal.new(),
 		AnimationStopped = Signal.new(),
-	} :: self, Events)
+	} :: self, LocalEvents)
 end
 
-return Events
+return LocalEvents

@@ -11,8 +11,8 @@ local bulletHandler = require(Framework.Ballistics.BulletHandler)
 local weaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
 --local gunsmithHandler = require(ReplicatedStorage:WaitForChild("DD_GunsmithHandler"))
 
-local Events = require(Framework.Network.Events)
-local P = Events.GetNamespace().packets
+local NetworkEvents = require(Framework.Network.NetworkEvents)
+local P = NetworkEvents.packets
 
 local WeaponReplicationController = {}
 

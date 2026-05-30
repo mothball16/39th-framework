@@ -11,8 +11,8 @@ if config.fallDamage then
 	local humanoidRootPart:BasePart = character:WaitForChild("HumanoidRootPart")
 	local prevHeight = humanoidRootPart.Position.Y
 	
-	local Events = require(Framework.Network.Events)
-	local P = Events.GetNamespace().packets
+	local NetworkEvents = require(Framework.Network.NetworkEvents)
+	local P = NetworkEvents.packets
 	local fallDamageActive = true
 
 	humanoid.Died:Connect(function()

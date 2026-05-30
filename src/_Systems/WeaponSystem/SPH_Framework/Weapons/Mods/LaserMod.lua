@@ -13,8 +13,8 @@ local Access = require(Framework.Access)
 local assets = Access.assets
 local Enums = require(Framework.Core.Enums)
 local config = Access.config
-local Events = require(Framework.Network.Events)
-local P = Events.GetNamespace().packets
+local NetworkEvents = require(Framework.Network.NetworkEvents)
+local P = NetworkEvents.packets
 local weaponPrefsClient = require(Framework.Weapons.WeaponPrefsClient)
 
 local Intents = Enums.Intents

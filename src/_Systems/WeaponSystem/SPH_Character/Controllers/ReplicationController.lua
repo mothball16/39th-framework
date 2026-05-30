@@ -7,8 +7,8 @@ local Access = require(Framework.Access)
 local CharacterStateModule = require(Framework.State.CharacterState)
 
 local config = Access.config
-local Events = require(Framework.Network.Events)
-local P = Events.GetNamespace().packets
+local NetworkEvents = require(Framework.Network.NetworkEvents)
+local P = NetworkEvents.packets
 
 local ReplicationController = {}
 ReplicationController.__index = ReplicationController

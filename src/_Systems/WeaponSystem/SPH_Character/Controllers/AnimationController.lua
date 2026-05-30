@@ -13,7 +13,7 @@ local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
 local config = Access.config
 local Enums = require(Framework.Core.Enums)
-local Events = require(script.Parent.Events)
+local LocalEvents = require(script.Parent.LocalEvents)
 
 -- Default loop/priority when playing a weapon anim by config key (e.g. "reload", "idle").
 local ANIM_DEFAULTS = {
@@ -47,7 +47,7 @@ type self = {
 	holdAnimKey: string?,
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
-	events: Events.Events,
+	events: LocalEvents.LocalEvents,
 }
 
 export type AnimationController = typeof(setmetatable({} :: self, AnimationController))
@@ -224,7 +224,7 @@ function AnimationController.new(params: {
 	animationsFolder: Folder,
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
-	events: Events.Events,
+	events: LocalEvents.LocalEvents,
 }): AnimationController
 	local self = setmetatable({
 		loadedAnims = {},

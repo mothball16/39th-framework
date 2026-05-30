@@ -16,9 +16,9 @@ local Access = require("@game/ReplicatedStorage/SPH_Framework/Access")
 local Types = require("@game/ReplicatedStorage/SPH_Framework/Core/ConfigurationTypes")
 local DamageLogic = require("@game/ReplicatedStorage/SPH_Framework/Combat/DamageLogic")
 local HitmarkerTypes = require("@game/ReplicatedStorage/SPH_Framework/UI/Configs/HitmarkerTypes")
-local NetworkEvents = require("@game/ReplicatedStorage/SPH_Framework/Network/Events")
-local P = NetworkEvents.GetNamespace().packets
-local EventsModule = require(script.Parent.Events)
+local NetworkEvents = require("@game/ReplicatedStorage/SPH_Framework/Network/NetworkEvents")
+local P = NetworkEvents.packets
+local LocalEvents = require(script.Parent.LocalEvents)
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 
@@ -102,7 +102,7 @@ function EffectController.new(params: {
 	return self
 end
 
-function EffectController.Wire(self: EffectController, events: EventsModule.Events)
+function EffectController.Wire(self: EffectController, events: LocalEvents.LocalEvents)
 
 	self.maid:GiveTask(events.BulletHit:Connect(function(...)
 		self:OnBulletHit(...)
