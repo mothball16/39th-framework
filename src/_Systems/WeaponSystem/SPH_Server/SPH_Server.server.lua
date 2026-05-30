@@ -43,8 +43,6 @@ local attachmentPlacer = require(Framework.Weapons.AttachmentPlacer)
 local warnPrefix = "【 SPEARHEAD 】 "
 print(warnPrefix .. "Loading Server " .. config.version)
 
-local dd_settings = replicatedStorage:FindFirstChild("DD_Settings") and require(replicatedStorage.DD_Settings) or nil
-
 local dtsInstall = replicatedStorage:FindFirstChild("DTS_Assets")
 local atmod
 if dtsInstall then
@@ -506,13 +504,18 @@ local function initializePlayerLifecycle()
 			newChar:AddTag("SPH_Character")
 			
 			print(warnPrefix .. newPlayer.Name .. " spawned.")
+			local head = newChar:WaitForChild("Head", 20) :: Instance
 			local humanoid = newChar:WaitForChild("Humanoid", 20)
 			humanoid:WaitForChild("Animator", 20)
 			local newRig = makeCharacterRig(newChar)
-			humanoid.BreakJointsOnDeath = not config.ragdolls
-			if dd_settings then
-				humanoid.MaxHealth = dd_settings.maxHealth
+			if config.ragdolls then
+				humanoid.BreakJointsOnDeath = false
 			end
+
+			if config.fixHeadHitboxes then
+				head.Size = Vector3.new(1, 1, 1)
+			end
+
 			humanoid.Died:Connect(function()
 				if not newChar:FindFirstChild("HumanoidRootPart") then
 					return

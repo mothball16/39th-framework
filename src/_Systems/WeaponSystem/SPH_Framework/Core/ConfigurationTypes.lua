@@ -174,6 +174,8 @@ type KeybindBinding = {KeybindSlot | nil}
 	Keybind fields may be set to nil to disable that binding, or use a table (including `{ nil }`).
 ]]
 export type MainGameSettings = {
+	fixHeadHitboxes: boolean,
+	
 	thirdPersonFiring: boolean,
 	arcadeBullets: boolean,
 
