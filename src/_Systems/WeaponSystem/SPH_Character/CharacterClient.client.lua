@@ -44,6 +44,7 @@ local ViewmodelController = require(Controllers:WaitForChild("ViewmodelControlle
 local WeaponController = require(Controllers:WaitForChild("WeaponController"))
 local EffectManager = require(Framework.UI.Logic.EffectManager)
 local WeaponPrefs = require(Framework.Weapons.WeaponPrefsClient)
+local LaserMod = require(Framework.Weapons.Mods.LaserMod)
 
 bulletHandler.Initialize(player)
 
@@ -293,6 +294,15 @@ local inputController = InputController.new({
 	}
 })
 
+local laserMod = LaserMod.new({
+	state = characterState,
+	weaponState = weaponState,
+	Controllers = {
+		InputController = inputController,
+		WeaponController = weaponController,
+	},
+})
+
 inputController:BindCharacterInputs()
 inputController:BindGunInputs()
 
@@ -313,6 +323,7 @@ humanoid.Died:Connect(function()
 	end
 
 	if rig then rig:Destroy() end
+	laserMod.Destroy()
 	effectController:Destroy()
 	effectManager:Destroy()
 end)
@@ -331,6 +342,7 @@ runService.RenderStepped:Connect(function(dt:number)
 		viewmodelController:UpdateRender(dt)
 		viewmodelController:UpdateMovementSway(dt, movementController.tempWalkSpeed, characterState.vehicleSeated())
 		weaponController:UpdateRender(dt)
+		laserMod.UpdateRender(dt)
 		replicationController:UpdateRender(dt)
 	end
 

@@ -1300,6 +1300,9 @@ local function initializeInteraction()
 		if not player then
 			return
 		end
+		if not config.replicateAttachments then
+			return
+		end
 		local attachmentType = data.attachmentType
 		local toggle = data.enabled
 		local weaponModel = player.Character.WeaponRig.Weapon:FindFirstChildWhichIsA("Model")

@@ -216,6 +216,7 @@ export type MainGameSettings = {
 	proneSpeed: number,
 	movementLeaning: boolean,
 	replicateMovementLeaning: boolean,
+	replicateAttachments: boolean,
 	maxLeanAngle: number,
 	stanceChangeTime: number,
 	canLean: boolean,

@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Framework = ReplicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
+local config = Access.config
 local assets = Access.assets
 local NetworkEvents = require(Framework.Network.NetworkEvents)
 local P = NetworkEvents.packets
@@ -43,6 +44,9 @@ local function resolveLaserPoint(laserLike: Instance?): Attachment?
 end
 
 function AttachmentReplicationController.Initialize()
+	if not config.replicateAttachments then
+		return
+	end
 	P.ReplicateToggleAttachment.listen(function(data, _plr)
 		AttachmentReplicationController.OnToggleAttachment(data.attachment, data.enabled, data.character)
 	end)
@@ -92,6 +96,9 @@ function AttachmentReplicationController.OnToggleAttachment(attachment, toggle, 
 end
 
 function AttachmentReplicationController.UpdateRender(dt)
+	if not config.replicateAttachments then
+		return
+	end
 	debug.profilebegin("SPH.AttachmentReplication.UpdateRender")
 	for i = #lasers, 1, -1 do
 		local laserObject = lasers[i]

@@ -47,11 +47,19 @@ local function getLaserAttachment(model)
 	return nil
 end
 
+local function getThirdPersonGunModel()
+	local wc = LaserMod.WeaponController
+	if wc and wc.GetThirdPersonGunModel then
+		return wc:GetThirdPersonGunModel()
+	end
+	return nil
+end
+
 function LaserMod.GetLaserPoint()
 	if State.firstPerson() then
 		return getLaserAttachment(weaponState.gunModel())
 	end
-	return getLaserAttachment(LaserMod.GetThirdPersonGunModel())
+	return getLaserAttachment(getThirdPersonGunModel())
 end
 
 function LaserMod.UpdateAttachmentsVisibility()
@@ -69,7 +77,7 @@ function LaserMod.UpdateAttachmentsVisibility()
 		LaserMod.laserBeamFP.Enabled = isFirstPerson
 		LaserMod.laserBeamTP.Enabled = not isFirstPerson
 		LaserMod.laserBeamFP.Attachment0 = getLaserAttachment(weaponState.gunModel())
-		LaserMod.laserBeamTP.Attachment0 = getLaserAttachment(LaserMod.GetThirdPersonGunModel())
+		LaserMod.laserBeamTP.Attachment0 = getLaserAttachment(getThirdPersonGunModel())
 	else
 		LaserMod.laserBeamFP.Enabled = false
 		LaserMod.laserBeamTP.Enabled = false
@@ -175,7 +183,11 @@ function LaserMod.new(params)
 		end
 	end)
 
-	InputController:SetIntentCallback(Intents.TOGGLE_LASER, LaserMod.OnToggleLaserIntent)
+	if InputController then
+		InputController:SetIntentCallback(Intents.TOGGLE_LASER, LaserMod.OnToggleLaserIntent)
+	end
+
+	return LaserMod
 end
 
 local function numLerp(a, b, t)
@@ -187,11 +199,25 @@ function LaserMod.UpdateRender(dt)
 	if not LaserMod.laserDotPoint then return end
 
 	local laserPoint = LaserMod.GetLaserPoint()
-	if not laserPoint then return end
+	if not laserPoint then
+		LaserMod.laserDotImage.Visible = false
+		LaserMod.laserBeamFP.Enabled = false
+		LaserMod.laserBeamTP.Enabled = false
+		return
+	end
 
 	local laserRayParams = RaycastParams.new()
 	laserRayParams.FilterType = Enum.RaycastFilterType.Exclude
-	laserRayParams.FilterDescendantsInstances = {weaponState.gunModel(), State.Parts.Character}
+	local ignoreList = { State.Parts.Character }
+	local fpGun = weaponState.gunModel()
+	if fpGun then
+		table.insert(ignoreList, fpGun)
+	end
+	local tpGun = getThirdPersonGunModel()
+	if tpGun then
+		table.insert(ignoreList, tpGun)
+	end
+	laserRayParams.FilterDescendantsInstances = ignoreList
 	laserRayParams.RespectCanCollide = true
 	local dist
 	local rayResult = workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * MAX_DIST, laserRayParams)
@@ -213,6 +239,20 @@ function LaserMod.UpdateRender(dt)
 		local dotSize = numLerp(MAX_DOT_SIZE, MIN_DOT_SIZE, normalizedDist ^ DOT_SIZE_LERP_EXPONENT)
 		LaserMod.laserDotImage.Size = UDim2.fromOffset(dotSize, dotSize)
 	end
+end
+
+function LaserMod.Destroy()
+	if LaserMod.laserDotPoint then
+		LaserMod.laserDotPoint:Destroy()
+		LaserMod.laserDotPoint = nil
+	end
+	if LaserMod.laserDotGui then
+		LaserMod.laserDotGui:Destroy()
+		LaserMod.laserDotGui = nil
+	end
+	LaserMod.laserDotImage = nil
+	LaserMod.laserBeamFP = nil
+	LaserMod.laserBeamTP = nil
 end
 
 return LaserMod
