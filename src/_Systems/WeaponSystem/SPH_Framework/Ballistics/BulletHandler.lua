@@ -160,6 +160,7 @@ local function ReportSuppressionVictims(cast, lastPoint: Vector3, direction: Vec
 				target = entry.target,
 				factor = entry.factor,
 				level = cast.UserData.wepStats.suppressionLevel,
+				limit = cast.UserData.wepStats.suppressionLimit,
 			})
 		else
 			entry.dirty = false

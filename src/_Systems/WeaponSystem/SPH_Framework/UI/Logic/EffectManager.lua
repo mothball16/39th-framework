@@ -79,9 +79,13 @@ function EffectManager.PushDamage(self: EffectManager, damage: number)
     self._lastDamageUpdate = tick()
 end
 
-function EffectManager.PushSuppression(self: EffectManager, level: number, factor: number)
+function EffectManager.PushSuppression(self: EffectManager, level: number, factor: number, limit: number | nil)
 	local amount = level * factor
-	self._suppressionSource(math.clamp(self._suppressionSource() + amount, 0, 1))
+    local current = self._suppressionSource()
+    -- this prevents a suppression limit from lowering the suppression level
+    local maxSuppression = math.max(limit or 1, current)
+    
+	self._suppressionSource(math.clamp(current + amount, 0, maxSuppression))
 end
 
 function EffectManager.Destroy(self: EffectManager)

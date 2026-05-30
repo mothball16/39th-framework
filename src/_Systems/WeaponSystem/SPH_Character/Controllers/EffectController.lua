@@ -120,7 +120,7 @@ function EffectController.OnReportSuppression(self: EffectController, data: Netw
 		return
 	end
 	self._lastSuppressionTick = tick()
-	self.effectManager:PushSuppression(data.level, data.factor)
+	self.effectManager:PushSuppression(data.level, data.factor, data.limit)
 end
 
 function EffectController.OnBulletHit(self: EffectController, wepStats: Types.WeaponStats, bulletOrigin: Vector3, raycastResult: RaycastResult)

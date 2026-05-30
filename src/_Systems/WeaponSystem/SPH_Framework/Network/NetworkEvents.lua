@@ -92,6 +92,7 @@ local namespace = ByteNetMax.defineNamespace("SPH_Framework", function()
 					target = B.inst,
 					level = B.float32,
 					factor = B.float32,
+					limit = B.float32,
 				}),
 				reliabilityType = "reliable",
 			}),
@@ -99,6 +100,7 @@ local namespace = ByteNetMax.defineNamespace("SPH_Framework", function()
 				value = B.struct({
 					level = B.float32,
 					factor = B.float32,
+					limit = B.float32,
 				}),
 				reliabilityType = "reliable",
 			}),
