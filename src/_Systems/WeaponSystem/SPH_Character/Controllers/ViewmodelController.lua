@@ -377,20 +377,6 @@ function ViewmodelController.UpdateMovementSway(
 		animBase.CFrame = animBase.CFrame:ToWorldSpace(
 			CFrame.new(updatedMoveSway.Y, updatedMoveSway.X, 0) * CFrame.Angles(updatedMoveSway.Y * 0.3, 0, updatedMoveSway.Y * 0.8)
 		)
-
-		if
-			config.cameraMovement
-			and self.state.firstPerson()
-			and not humanoid.Sit
-			and not vehicleSeated
-			and camera.CameraType == Enum.CameraType.Custom
-		then
-			camera.CFrame *= CFrame.Angles(
-				math.rad(updatedMoveSway.X / config.cameraBobDampening),
-				math.rad(updatedMoveSway.Y / config.cameraBobDampening),
-				0
-			)
-		end
 	end
 end
 

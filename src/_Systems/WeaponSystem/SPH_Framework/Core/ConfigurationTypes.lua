@@ -93,6 +93,7 @@ export type WeaponStats = {
 
 	suppressionLevel: number,
 	suppressionDistance: number,
+	suppressionLimit: number,
 
 	holster: boolean,
 	holsterPart: string,
@@ -290,8 +291,7 @@ export type MainGameSettings = {
 	bobSpeed: number,
 	bobDampening: number,
 	aimBobDampening: number,
-	cameraMovement: boolean,
-	cameraBobDampening: number,
+
 	cameraTilting: boolean,
 	cameraLimitInSeats: boolean,
 	hipfireMove: boolean,
