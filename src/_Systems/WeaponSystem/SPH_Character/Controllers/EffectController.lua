@@ -17,9 +17,9 @@ local Types = require("@game/ReplicatedStorage/SPH_Framework/Core/ConfigurationT
 local DamageLogic = require("@game/ReplicatedStorage/SPH_Framework/Combat/DamageLogic")
 local HitmarkerTypes = require("@game/ReplicatedStorage/SPH_Framework/UI/Configs/HitmarkerTypes")
 local NetworkEvents = require("@game/ReplicatedStorage/SPH_Framework/Network/NetworkEvents")
+local NetworkSchemas = require("@game/ReplicatedStorage/SPH_Framework/Network/NetworkSchemas")
 local P = NetworkEvents.packets
-local LocalEvents = require(script.Parent.LocalEvents)
-local Players = game:GetService("Players")
+local LocalEvents = require("./LocalEvents")
 local Player = Players.LocalPlayer
 
 local EffectController = {}
@@ -115,8 +115,7 @@ function EffectController.Wire(self: EffectController, events: LocalEvents.Local
 	return self
 end
 
-
-function EffectController.OnReportSuppression(self: EffectController, data: NetworkEvents.ReportSuppressionPayload)
+function EffectController.OnReportSuppression(self: EffectController, data: NetworkSchemas.ReportSuppressionPayload)
 	if tick() - self._lastSuppressionTick < Access.config.suppressionThrottle then
 		return
 	end
