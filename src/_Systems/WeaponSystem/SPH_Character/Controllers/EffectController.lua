@@ -1,5 +1,4 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
@@ -17,7 +16,12 @@ local Access = require("@game/ReplicatedStorage/SPH_Framework/Access")
 local Types = require("@game/ReplicatedStorage/SPH_Framework/Core/ConfigurationTypes")
 local DamageLogic = require("@game/ReplicatedStorage/SPH_Framework/Combat/DamageLogic")
 local HitmarkerTypes = require("@game/ReplicatedStorage/SPH_Framework/UI/Configs/HitmarkerTypes")
+local NetworkEvents = require("@game/ReplicatedStorage/SPH_Framework/Network/Events")
+local P = NetworkEvents.GetNamespace().packets
 local EventsModule = require(script.Parent.Events)
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+
 local EffectController = {}
 EffectController.__index = EffectController
 
@@ -36,7 +40,14 @@ type self = {
 
 export type EffectController = typeof(setmetatable({} :: self, EffectController))
 
-local WHIZ_SOUNDS = {"342190005", "342190012", "342190017", "342190024"}
+local WHIZ_SOUNDS = {
+"189916243",
+"189916269",
+"4927234432",
+"4927234734",
+"4927235094",
+"4927236859",
+"5303772965",}
 
 
 function EffectController.new(params: {
@@ -54,9 +65,23 @@ function EffectController.new(params: {
 		_lastAimPunchTick = tick(),
 	} :: self, EffectController)
 
-	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
-
 	self.panelPositionSource = Vide.source(self:GetForwardPanelPosition())
+	
+	self._colorCorrection = game.Lighting:FindFirstChild("SuppressionColorCorrection")
+
+	if not self._colorCorrection then
+		self._colorCorrection = Instance.new("ColorCorrectionEffect", game.Lighting)
+		self._colorCorrection.Name = "SuppressionColorCorrection"
+	end
+
+	self.maid:GiveTask(Charm.subscribe(self.state.suppressionFactor, function(value, oldValue)
+		self:SyncSuppressionFactor(value, oldValue)
+	end))
+
+	self.maid:GiveTask(Charm.effect(function()
+		self._colorCorrection.Saturation = -self.state.suppressionFactor() * 0.4
+	end))
+
 	self.maid:GiveTask(Vide.mount(function()
 		return create "ScreenGui" {
 			Name = "SPH_Effects",
@@ -72,64 +97,31 @@ function EffectController.new(params: {
 				suppressionLimit = Access.config.suppressionVignetteLimit,
 			}),
 		}
-	end, playerGui))
-
-	self._colorCorrection = game.Lighting:FindFirstChild("SuppressionColorCorrection")
-
-	if not self._colorCorrection then
-		self._colorCorrection = Instance.new("ColorCorrectionEffect", game.Lighting)
-		self._colorCorrection.Name = "SuppressionColorCorrection"
-	end
-
-	
-	self.maid:GiveTask(Charm.subscribe(self.state.suppressionFactor, function(value, oldValue)
-		self:SyncSuppressionFactor(value, oldValue)
-	end))
-
-	self.maid:GiveTask(Charm.effect(function()
-		self._colorCorrection.Saturation = -self.state.suppressionFactor() * 0.4
-	end))
+	end, Player.PlayerGui))
 
 	return self
 end
 
 function EffectController.Wire(self: EffectController, events: EventsModule.Events)
-	local net = require("@game/ReplicatedStorage/SPH_Framework/Network/Events").GetNamespace()
-	local P = net.packets
 
 	self.maid:GiveTask(events.BulletHit:Connect(function(...)
 		self:OnBulletHit(...)
 	end))
 
 	self.maid:GiveTask(P.ReportSuppression.listen(function(data, _serverPlayer)
-		if tick() - self._lastSuppressionTick < Access.config.suppressionThrottle then
-			return
-		end
-
-		-- TEMP: play a whiz sound (this should be replaced later)
-		local Som = Instance.new("Sound")
-		Som.Parent = Players.LocalPlayer.PlayerGui
-		Som.SoundId = "rbxassetid://" .. WHIZ_SOUNDS[math.random(1, 4)]
-		Som.Volume = 2
-		Som.PlayOnRemove = true
-		Som:Destroy()
-
-		if tick() - self._lastAimPunchTick > Access.config.suppressionAimPunchThrottle then
-			local tempBlur = Instance.new("BlurEffect", game.Lighting)
-			tempBlur.Size = 15 * data.factor
-			game.Debris:AddItem(tempBlur, 0.5)
-			TweenService:Create(tempBlur, TweenInfo.new(0.5), { Size = 0 }):Play()
-
-			self._lastAimPunchTick = tick()
-			self:ApplySuppressionAimPunch(data.factor)
-		end
-
-
-		self._lastSuppressionTick = tick()
-		self.effectManager:PushSuppression(data.level, data.factor)
+		self:OnReportSuppression(data)
 	end))
 
 	return self
+end
+
+
+function EffectController.OnReportSuppression(self: EffectController, data: NetworkEvents.ReportSuppressionPayload)
+	if tick() - self._lastSuppressionTick < Access.config.suppressionThrottle then
+		return
+	end
+	self._lastSuppressionTick = tick()
+	self.effectManager:PushSuppression(data.level, data.factor)
 end
 
 function EffectController.OnBulletHit(self: EffectController, wepStats: Types.WeaponStats, bulletOrigin: Vector3, raycastResult: RaycastResult)
@@ -176,10 +168,27 @@ end
 
 function EffectController.SyncSuppressionFactor(self: EffectController, value: number, oldValue: number)
 	local delta = value - oldValue
-	if delta > 0 then
+	if delta <= 0 then
+		return
+	end
 
-	else
+	-- TEMP: play a whiz sound (this should be replaced later)
+	local Som = Instance.new("Sound")
+	Som.Parent = SoundService
+	Som.SoundId = "rbxassetid://" .. WHIZ_SOUNDS[math.random(1, #WHIZ_SOUNDS)]
+	Som.Volume = 2
+	SoundService:PlayLocalSound(Som)
+	game.Debris:AddItem(Som, Som.TimeLength)
 
+
+	if tick() - self._lastAimPunchTick > Access.config.suppressionAimPunchThrottle then
+		local tempBlur = Instance.new("BlurEffect", game.Lighting)
+		tempBlur.Size = 15 * delta
+		game.Debris:AddItem(tempBlur, 0.5)
+		TweenService:Create(tempBlur, TweenInfo.new(0.5), { Size = 0 }):Play()
+
+		self._lastAimPunchTick = tick()
+		self:ApplySuppressionAimPunch(delta)
 	end
 end
 

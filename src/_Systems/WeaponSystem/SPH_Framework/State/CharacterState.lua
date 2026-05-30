@@ -8,6 +8,9 @@ local CharState = {}
 CharState.__index = CharState
 
 local function resolveParts(character: Model)
+	if not character then
+		return {}
+	end
 	local hrp = character:WaitForChild("HumanoidRootPart") :: BasePart
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	local isR6 = humanoid.RigType == Enum.HumanoidRigType.R6

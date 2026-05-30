@@ -205,8 +205,7 @@ local effectController = EffectController.new({
 	state = characterState,
 	weaponState = weaponState,
 	effectManager = effectManager,
-})
-effectController:Wire(events)
+}):Wire(events)
 
 local function OnScrollIntent(scrollAmount, holdForZoom)
 	if characterState.aiming() then

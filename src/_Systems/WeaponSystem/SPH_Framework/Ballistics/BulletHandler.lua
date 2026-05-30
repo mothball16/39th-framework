@@ -436,6 +436,12 @@ caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBul
 		-- this is a replicated bullet, we don't want to process it
 		return
 	end
+
+	-- report suppression victims for the hit
+	if config.suppressionEffects then
+		ReportSuppressionVictims(cast, raycastResult.Position, raycastResult.Normal, 1)
+	end
+
 	local hitPart = raycastResult.Instance
 	hitFX.HitEffect(raycastResult.Position,hitPart,raycastResult.Normal)
 
