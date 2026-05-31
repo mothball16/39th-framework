@@ -165,6 +165,10 @@ function EffectController.ApplySuppressionAimPunch(self: EffectController, facto
 	self.weaponState.CameraSpring.p = self.weaponState.CameraSpring.p + kick * 0.5
 end
 
+local function numLerp(a: number, b: number, t: number)
+    return a + (b - a) * math.clamp(t, 0, 1)
+end
+
 function EffectController.SyncSuppressionFactor(self: EffectController, value: number, oldValue: number)
 	local delta = value - oldValue
 	if delta <= 0 then
@@ -175,10 +179,9 @@ function EffectController.SyncSuppressionFactor(self: EffectController, value: n
 	local Som = Instance.new("Sound")
 	Som.Parent = SoundService
 	Som.SoundId = "rbxassetid://" .. WHIZ_SOUNDS[math.random(1, #WHIZ_SOUNDS)]
-	Som.Volume = 2
+	Som.Volume = numLerp(1, 2.5, math.clamp(delta * 4, 0, 1))
 	SoundService:PlayLocalSound(Som)
 	game.Debris:AddItem(Som, Som.TimeLength)
-
 
 	if tick() - self._lastAimPunchTick > Access.config.suppressionAimPunchThrottle then
 		local tempBlur = Instance.new("BlurEffect", game.Lighting)

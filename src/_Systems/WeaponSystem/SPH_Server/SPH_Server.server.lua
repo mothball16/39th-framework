@@ -1134,7 +1134,7 @@ local function initializeServerReplication()
 			return
 		end
 		P.ReportSuppression.sendToList(
-			{ level = data.level, factor = data.factor },
+			{ level = data.level, factor = data.factor, limit = data.limit },
 			{ target }
 		)
 	end)
