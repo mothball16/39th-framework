@@ -19,7 +19,7 @@ local HitmarkerTypes = require("@game/ReplicatedStorage/SPH_Framework/UI/Configs
 local NetworkEvents = require("@game/ReplicatedStorage/SPH_Framework/Network/NetworkEvents")
 local NetworkSchemas = require("@game/ReplicatedStorage/SPH_Framework/Network/NetworkSchemas")
 local P = NetworkEvents.packets
-local LocalEvents = require("./LocalEvents")
+local LocalEvents = require(script.Parent:WaitForChild("LocalEvents"))
 local Player = Players.LocalPlayer
 
 local EffectController = {}

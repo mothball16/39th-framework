@@ -21,18 +21,7 @@ if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
 camera.CameraType = Enum.CameraType.Custom
 if camera:FindFirstChild("WeaponRig") then camera.WeaponRig:Destroy() end
 
-local localEvents = require(script.Parent.Controllers.LocalEvents).new()
-local NetworkEvents = require(Framework.Network.NetworkEvents)
-local P = NetworkEvents.packets
-
-local viewMod = require(Framework.Weapons.ViewMod)
-local bulletHandler = require(Framework.Ballistics.BulletHandler)
-local Packages = replicatedStorage.Packages
-local Charm = require(Packages.Charm)
-
 local Controllers = script.Parent:WaitForChild("Controllers")
-local weaponState = require(Framework.State.WeaponState).new()
-
 local AnimationController = require(Controllers:WaitForChild("AnimationController"))
 local CameraController = require(Controllers:WaitForChild("CameraController"))
 local EffectController = require(Controllers:WaitForChild("EffectController"))
@@ -42,6 +31,17 @@ local ReplicationController = require(Controllers:WaitForChild("ReplicationContr
 local UIController = require(Controllers:WaitForChild("UIController"))
 local ViewmodelController = require(Controllers:WaitForChild("ViewmodelController"))
 local WeaponController = require(Controllers:WaitForChild("WeaponController"))
+local localEvents = require(Controllers:WaitForChild("LocalEvents")).new()
+
+local NetworkEvents = require(Framework.Network.NetworkEvents)
+local P = NetworkEvents.packets
+
+local viewMod = require(Framework.Weapons.ViewMod)
+local bulletHandler = require(Framework.Ballistics.BulletHandler)
+local Packages = replicatedStorage.Packages
+local Charm = require(Packages.Charm)
+
+local weaponState = require(Framework.State.WeaponState).new()
 local EffectManager = require(Framework.UI.Logic.EffectManager)
 local WeaponPrefs = require(Framework.Weapons.WeaponPrefsClient)
 local LaserMod = require(Framework.Weapons.Mods.LaserMod)

@@ -13,7 +13,7 @@ local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
 local config = Access.config
 local Enums = require(Framework.Core.Enums)
-local LocalEvents = require(script.Parent.LocalEvents)
+local LocalEvents = require(script.Parent:WaitForChild("LocalEvents"))
 
 -- Default loop/priority when playing a weapon anim by config key (e.g. "reload", "idle").
 local ANIM_DEFAULTS = {
