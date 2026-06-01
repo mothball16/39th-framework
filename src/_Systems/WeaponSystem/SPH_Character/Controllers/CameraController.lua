@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
+const Consts = require("@game/ReplicatedStorage/SPH_Framework/Core/Consts")
 local Charm = require(Packages.Charm)
 local TweenService = game:GetService("TweenService")
 
@@ -111,18 +112,22 @@ function CameraController.OnFreelookIntent(self: CameraController, inputState: E
 end
 
 function CameraController.UpdateFOV(self: CameraController, dt: number)
-	local camSensFactor = self.camera.FieldOfView / config.defaultFOV
-	if self.state.aiming() then
-		UserInputService.MouseDeltaSensitivity = WeaponPrefs.getGlobal("aimSens") * camSensFactor
-	else
-		UserInputService.MouseDeltaSensitivity = 1 * camSensFactor
+	if not player:GetAttribute(Consts.OVERRIDE_CAMERA_SENS) then
+		local camSensFactor = self.camera.FieldOfView / config.defaultFOV
+		if self.state.aiming() then
+			UserInputService.MouseDeltaSensitivity = WeaponPrefs.getGlobal("aimSens") * camSensFactor
+		else
+			UserInputService.MouseDeltaSensitivity = 1 * camSensFactor
+		end
 	end
 
-	self.camera.FieldOfView = lerpNumber(
-		self.camera.FieldOfView,
-		self.FOVTarget(),
-		self.weaponState.aimCamLerpFactor() * (dt * 60)
-	)
+	if not player:GetAttribute(Consts.OVERRIDE_CAMERA_ZOOM) then
+		self.camera.FieldOfView = lerpNumber(
+			self.camera.FieldOfView,
+			self.FOVTarget(),
+			self.weaponState.aimCamLerpFactor() * (dt * 60)
+		)
+	end
 end
 
 function CameraController.UpdateRender(self: CameraController, dt: number)

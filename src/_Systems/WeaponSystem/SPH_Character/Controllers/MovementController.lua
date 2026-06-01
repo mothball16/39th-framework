@@ -124,8 +124,29 @@ function MovementController.new(params: {
 		return speed
 	end)
 
+	-- reset lean when seated
+	Charm.effect(function()
+		if self.state.seat() then
+			self.state.lean(0)
+		end
+	end)
+
+	self.humanoid.Seated:Connect(function(seated, seatPart)
+		self:OnSeated(seated, seatPart)
+	end)
+
 	return self
 end
+
+function MovementController.OnSeated(self: MovementController, seated: boolean, seatPart: Seat)
+	if seated then
+		self.state.seat(seatPart)
+	else
+		self.state.seat(nil)
+	end
+end
+
+
 
 function MovementController.OnSprintIntent(self: MovementController, inputState: Enum.UserInputState, _)
 	local notCrawling = self.state.stance() < 2
@@ -139,7 +160,7 @@ end
 function MovementController.CanLean(self: MovementController): boolean
 	local notCrawling = self.state.stance() < 2
 	local notSprinting = not self.state.sprinting()
-	local notSitting = not self.humanoid.Sit
+	local notSitting = not self.state.seat()
 	return config.canLean and notCrawling and notSprinting and notSitting
 end
 

@@ -343,7 +343,6 @@ function ViewmodelController.UpdateMovementSway(
 	vehicleSeated: boolean
 )
 	local animBase = self.animBase
-	local camera = self.camera
 	local humanoid = self.humanoidRootPart.Parent.Humanoid
 
 	local tempDampening = config.bobDampening

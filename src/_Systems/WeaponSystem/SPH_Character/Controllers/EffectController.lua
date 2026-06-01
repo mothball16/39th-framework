@@ -8,6 +8,7 @@ local Maid = require("@game/ReplicatedStorage/Packages/maid")
 local create = Vide.create
 local useAtom = require("@game/ReplicatedStorage/Packages/vide-charm").useAtom
 
+local Consts = require("@game/ReplicatedStorage/SPH_Framework/Core/Consts")
 local CharacterStateModule = require("@game/ReplicatedStorage/SPH_Framework/State/CharacterState")
 local WeaponStateModule = require("@game/ReplicatedStorage/SPH_Framework/State/WeaponState")
 local EffectManager = require("@game/ReplicatedStorage/SPH_Framework/UI/Logic/EffectManager")
@@ -36,6 +37,7 @@ type self = {
 	_colorCorrection: ColorCorrectionEffect,
 	_lastSuppressionTick: number,
 	_lastAimPunchTick: number,
+	_canBeSuppressed: Charm.Selector<boolean>,
 }
 
 export type EffectController = typeof(setmetatable({} :: self, EffectController))
@@ -73,6 +75,14 @@ function EffectController.new(params: {
 		self._colorCorrection = Instance.new("ColorCorrectionEffect", game.Lighting)
 		self._colorCorrection.Name = "SuppressionColorCorrection"
 	end
+
+
+	self._canBeSuppressed = Charm.computed(function()
+		local seat = self.state.seat()
+		local seatIsImmune = seat and (seat:HasTag(Consts.SUPPRESS_IMMUNE_SEAT) or seat:IsA("VehicleSeat"))
+
+		return not seatIsImmune
+	end)
 
 	self.maid:GiveTask(Charm.subscribe(self.state.suppressionFactor, function(value, oldValue)
 		self:SyncSuppressionFactor(value, oldValue)
@@ -116,6 +126,10 @@ function EffectController.Wire(self: EffectController, events: LocalEvents.Local
 end
 
 function EffectController.OnReportSuppression(self: EffectController, data: NetworkSchemas.ReportSuppressionPayload)
+	if not self._canBeSuppressed() then
+		return
+	end
+
 	if tick() - self._lastSuppressionTick < Access.config.suppressionThrottle then
 		return
 	end
