@@ -7,10 +7,42 @@ local config = Access.config
 local CharState = {}
 CharState.__index = CharState
 
-local function resolveParts(character: Model)
-	if not character then
-		return {}
-	end
+export type CharacterParts = {
+	IsR6: boolean,
+	Humanoid: Humanoid,
+	RootJoint: Motor6D,
+	NeckJoint: Motor6D,
+	Character: Model,
+	HRP: BasePart,
+}
+
+type self = {
+	Parts: CharacterParts,
+
+	aimFOVTarget: Charm.Atom<number>,
+
+	aiming: Charm.Atom<boolean>,
+	equippedTool: Charm.Atom<Tool?>,
+	sprinting: Charm.Atom<boolean>,
+
+	firstPerson: Charm.Atom<boolean>,
+	dead: Charm.Atom<boolean>,
+	stance: Charm.Atom<number>,
+	lean: Charm.Atom<number>,
+	moving: Charm.Atom<boolean>,
+	suppressionFactor: Charm.Atom<number>,
+	seat: Charm.Atom<Seat?>,
+
+	freeLook: Charm.Atom<boolean>,
+	freeLookRotation: Charm.Atom<CFrame>,
+	freeLookOffset: Charm.Atom<CFrame>,
+
+	vehicleSeated: Charm.Selector<boolean>,
+}
+
+export type CharacterState = typeof(setmetatable({} :: self, CharState))
+
+local function resolveParts(character: Model): CharacterParts
 	local hrp = character:WaitForChild("HumanoidRootPart") :: BasePart
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid
 	local isR6 = humanoid.RigType == Enum.HumanoidRigType.R6
@@ -50,18 +82,21 @@ function CharState.new(character: Model): CharacterState
 		stance = Charm.atom(0),
 		lean = Charm.atom(0),
 		moving = Charm.atom(false),
-		vehicleSeated = Charm.atom(false),
+		seat = Charm.atom(nil),
 
 		suppressionFactor = Charm.atom(0),
 
 		freeLook = Charm.atom(false),
 		freeLookRotation = Charm.atom(CFrame.new()),
 		freeLookOffset = Charm.atom(CFrame.new()),
-	}, CharState)
+	} :: self, CharState)
+
+	self.vehicleSeated = Charm.computed(function()
+		local seat = self.seat()
+		return seat and seat:IsA("VehicleSeat")
+	end)
 
 	return self
 end
-
-export type CharacterState = typeof(CharState.new(...))
 
 return CharState

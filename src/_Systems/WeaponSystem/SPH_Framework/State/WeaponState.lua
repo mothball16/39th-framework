@@ -9,18 +9,63 @@ local SP = require(Framework.Weapons.Spring.Default)
 local legacySpring = require(Framework.Weapons.LegacySpring)
 local Maid = require(Packages.maid)
 
-
-
 local WepState = {}
 WepState.__index = WepState
 
+type Spring = typeof(legacySpring.new(Vector3.new()))
+
+type self = {
+	wepStats: Charm.Atom<Types.WeaponStats?>,
+	equipping: Charm.Atom<boolean>,
+	equipped: Charm.Atom<boolean>,
+
+	gunModel: Charm.Atom<Model?>,
+	gunAmmo: Instance?,
+	localAmmo: Charm.Atom<number>,
+	localUbglAmmo: Charm.Atom<number>,
+
+	aimSens: Charm.Atom<number>,
+	sightIndex: Charm.Atom<number>,
+	viewmodelVisible: Charm.Atom<boolean>,
+	reloading: Charm.Atom<boolean>,
+	chambering: Charm.Atom<boolean>,
+	aimHeld: Charm.Atom<boolean>,
+	blocked: Charm.Atom<boolean>,
+
+	laserEnabled: Charm.Atom<boolean>,
+	flashlightEnabled: Charm.Atom<boolean>,
+	bipodEnabled: Charm.Atom<boolean>,
+	fireMode: Charm.Atom<number>,
+	holdStance: Charm.Atom<number>,
+
+	maid: Maid.Maid,
+	CameraSpring: Spring,
+	RecoilPos: Spring,
+	RecoilDir: Spring,
+	RecoilUp: Spring,
+	RecoilCF: CFrame,
+	RecoilFactor: number,
+	Spread: number,
+
+	ubglActive: Charm.Selector<boolean>,
+	hasAmmoForMode: Charm.Selector<boolean>,
+	canManipulate: Charm.Selector<boolean>,
+	canTrackAimInput: Charm.Selector<boolean>,
+	adsMeshEnabledForActiveSight: Charm.Selector<boolean>,
+	hasAdsMeshLayers: Charm.Selector<boolean>,
+	aimLerpFactor: Charm.Selector<number>,
+	aimCamLerpFactor: Charm.Selector<number>,
+}
+
+export type WeaponState = typeof(setmetatable({} :: self, WepState))
+
 function WepState.new(): WeaponState
 	local self = setmetatable({
-		wepStats = Charm.atom(nil) :: Charm.Atom<Types.WeaponStats>,
+		wepStats = Charm.atom(nil),
 		equipping = Charm.atom(false),
 		equipped = Charm.atom(false),
 
-		gunModel = Charm.atom(nil) :: Charm.Atom<Model>,
+		gunModel = Charm.atom(nil),
 		gunAmmo = nil,
 		localAmmo = Charm.atom(0),
 		localUbglAmmo = Charm.atom(0),
@@ -39,7 +84,6 @@ function WepState.new(): WeaponState
 		fireMode = Charm.atom(0),
 		holdStance = Charm.atom(0),
 
-		-- non-atoms
 		maid = Maid.new(),
 		CameraSpring = legacySpring.new(Vector3.new()),
 		RecoilPos = legacySpring.new(Vector3.new()),
@@ -48,7 +92,7 @@ function WepState.new(): WeaponState
 		RecoilCF = CFrame.new(),
 		RecoilFactor = 0,
 		Spread = 0,
-	}, WepState)
+	} :: self, WepState)
 
 	self.ubglActive = Charm.computed(function()
 		local ws = self.wepStats()
@@ -112,8 +156,6 @@ function WepState.new(): WeaponState
 	end)
 	return self
 end
-
-export type WeaponState = typeof(WepState.new(...))
 
 function WepState:ADSMeshLayerEnabled(sightIndex: number): boolean
 	local stat = self.wepStats()
