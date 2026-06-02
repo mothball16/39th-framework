@@ -2,8 +2,8 @@
 utility module for performing state transformations
 ]]
 
-local Types = require("./Core/Types")
-local State = require("./Core/State")
+local Types = require("../Core/Types")
+local State = require("../Core/State")
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 
 local StateActions = {}
@@ -27,9 +27,13 @@ function StateActions.CreateFaction(state: State.State, config: Types.FactionCon
 				if groupConfig.Limit ~= math.huge then
 					warn(`faction {config.ID} group {groupKey} should have no limit - it is a default group`)
 					groupConfig.Limit = math.huge
-					continue
+				end
+				if groupConfig.Classes[1].AccessCheck then
+					warn(`the first class of default group {groupKey} of faction {config.ID} should not have an access check - the player can potentially resolve to no classes`)
+					groupConfig.Classes[1].AccessCheck = nil
 				end
 				nextState[config.ID].DefaultGroupKey = groupKey
+				break
 			end
 		end
 		return nextState
