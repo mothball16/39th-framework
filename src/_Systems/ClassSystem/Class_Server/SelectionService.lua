@@ -7,7 +7,7 @@ and delegates pure state mutations to StateActions
 local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
 local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
 local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
-local StateActions = require("@game/ReplicatedStorage/Class_Framework/StateActions")
+local StateActions = require("@game/ReplicatedStorage/Class_Framework/Logic/StateActions")
 
 local ItemEquipper = require("./ItemEquipper")
 local SelectionService = {}
@@ -122,6 +122,7 @@ function SelectionService.HandleTeamChange(
 	team: Team,
 	itemEquipper: ItemEquipper.ItemEquipper
 )
+	-- check if the player is even on a team to begin with
 	if not team then
 		return
 	end

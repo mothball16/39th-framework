@@ -34,7 +34,10 @@ export type ClassDescriptor = {
     Id: string,
     Name: string?,
     Description: string?,
+    AccessCheck: AccessCheck?,
 }
+
+export type AccessCheck = (player: Player) -> boolean
 
 export type FactionConfig = {
     ID: string,

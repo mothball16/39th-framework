@@ -1,10 +1,6 @@
-local ClassAPI = require("@game/ServerScriptService/Class_Server/ClassAPI")
-
-if not ClassAPI.IsLoaded() then
-    ClassAPI.OnLoaded:Wait()
-end
+local runtime = require("@game/ServerScriptService/Class_Server/RuntimeLocator").GetRuntime()
 
 for _, itemProvider in ipairs(script.Parent.ItemProviders:GetChildren()) do
     local provider = require(itemProvider)
-    ClassAPI.RegisterItemProvider(provider)
+    runtime:RegisterItemProvider(provider)
 end

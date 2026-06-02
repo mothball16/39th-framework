@@ -2,7 +2,7 @@ local Mocks = require("../Core/Mocks")
 local Item = require("../Core/Item")
 local Enums = require("../Core/Enums")
 local ServerRuntime = require("@game/ServerScriptService/Class_Server/ServerRuntime")
-local StateActions = require("../StateActions")
+local StateActions = require("../Logic/StateActions")
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
 
 return function()
@@ -95,42 +95,54 @@ return function()
 
 			runtime = ServerRuntime.new({
 				access = testAccess,
-				itemProviders = itemProviders,
-				configByClassId = configByClassId,
-				configByFactionId = configByFactionId,
 				shouldSync = false,
 			})
+
+			for _, itemProvider in pairs(itemProviders) do
+				runtime:RegisterItemProvider(itemProvider)
+			end
+
+			for _, classConfig in pairs(configByClassId) do
+				runtime:RegisterClass(classConfig)
+			end
+
+			for _, factionConfig in pairs(configByFactionId) do
+				runtime:RegisterFaction(factionConfig)
+			end
 		end)
 
 		afterEach(function()
 			runtime:Destroy()
 		end)
 
-		it("should register provided faction configs into state", function()
-			local registeredFactions = runtime.state.configByFactionId()
-			expect(registeredFactions.alpha).to.equal(configByFactionId.alpha)
-			expect(registeredFactions.bravo).to.equal(configByFactionId.bravo)
-		end)
 
-		it("should assign the default class when a player is set to a faction", function()
-			StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
-			expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
-			expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
-
-			StateActions.SetPlayerGroupClass(runtime.state, playerOne.UserId, "Rifleman", "RiflemanB")
-
-			StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "bravo")
-			expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
-			expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
-		end)
-
-		it("should remove all assignments when a player is unassigned from a faction", function()
-			StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
-			StateActions.RemovePlayerFaction(runtime.state, playerOne.UserId)
-
-			expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
-			expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal(nil)
-			expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal(nil)
+		describe("StateActions", function()
+			it("should register provided faction configs into state", function()
+				local registeredFactions = runtime.state.configByFactionId()
+				expect(registeredFactions.alpha).to.equal(configByFactionId.alpha)
+				expect(registeredFactions.bravo).to.equal(configByFactionId.bravo)
+			end)
+	
+			it("should assign the default class when a player is set to a faction", function()
+				StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
+				expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
+				expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
+	
+				StateActions.SetPlayerGroupClass(runtime.state, playerOne.UserId, "Rifleman", "RiflemanB")
+	
+				StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "bravo")
+				expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
+				expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
+			end)
+	
+			it("should remove all assignments when a player is unassigned from a faction", function()
+				StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
+				StateActions.RemovePlayerFaction(runtime.state, playerOne.UserId)
+	
+				expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
+				expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal(nil)
+				expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal(nil)
+			end)
 		end)
 
 		describe("SelectionService", function()

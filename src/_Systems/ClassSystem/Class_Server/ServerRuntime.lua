@@ -6,7 +6,7 @@ local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
 local Events = require("@game/ReplicatedStorage/Class_Framework/Core/Events").GetNamespace()
 local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
 local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
-local StateActions = require("@game/ReplicatedStorage/Class_Framework/StateActions")
+local StateActions = require("@game/ReplicatedStorage/Class_Framework/Logic/StateActions")
 
 local ItemEquipper = require("./ItemEquipper")
 local SelectionService = require("./SelectionService")
@@ -17,50 +17,92 @@ ServerRuntime.__index = ServerRuntime
 
 type self = {
 	state: State.State,
-	configByFactionId: { [string]: Types.FactionConfig },
 	itemEquipper: ItemEquipper.ItemEquipper,
 	selectionService: SelectionService.SelectionService,
 	maid: Maid.Maid,
+
+	_configByFactionId: { [string]: Types.FactionConfig },
+	_configByClassId: { [string]: Types.Class },
+	_itemProviders: { [string]: Types.ClassItemProvider },
 }
 export type ServerRuntime = typeof(setmetatable({} :: self, ServerRuntime))
 
 function ServerRuntime.new(args: {
-	itemProviders: { [string]: Types.ClassItemProvider },
-	configByClassId: { [string]: Types.Class },
-	configByFactionId: { [string]: Types.FactionConfig },
 	access: Types.Access,
 	shouldSync: boolean,
 })
-	local state = State.new()
-
 	local self = setmetatable({
 		access = args.access,
-		state = state,
-		configByFactionId = args.configByFactionId,
-		itemEquipper = ItemEquipper.new(args.itemProviders, args.configByClassId),
-		selectionService = SelectionService.new(state, args.access.Config),
+		state = State.new(),
 		maid = Maid.new(),
+
+		_itemProviders = {},
+		_configByClassId = {},
+		_configByFactionId = {},
 	} :: self, ServerRuntime)
 
-	for _, factionConfig in pairs(self.configByFactionId) do
-		StateActions.CreateFaction(self.state, factionConfig)
-	end
+	self.itemEquipper = ItemEquipper.new(self._itemProviders, self._configByClassId)
+	self.selectionService = SelectionService.new(self.state, args.access.Config)
 
 	if args.shouldSync then
 		self.maid:GiveTask(ServerSyncer.new({
-			configByFactionId = state.configByFactionId,
-			playerByFactionId = state.playerByFactionId,
-			playerByGroupKey = state.playerByGroupKey,
-			playerByClassId = state.playerByClassId,
-			groupCountByFaction = state.groupCountByFaction,
+			configByFactionId = self.state.configByFactionId,
+			playerByFactionId = self.state.playerByFactionId,
+			playerByGroupKey = self.state.playerByGroupKey,
+			playerByClassId = self.state.playerByClassId,
+			groupCountByFaction = self.state.groupCountByFaction,
 		}, Events))
 	end
 
 	return self
 end
 
--- wires up everything. don't call for tests
+function ServerRuntime.RegisterFaction(self: ServerRuntime, factionConfig: Types.FactionConfig)
+	assert(factionConfig.ID, "faction must have an ID")
 
+	if self._configByFactionId[factionConfig.ID] then
+		warn(`replacing existing faction for ID {factionConfig.ID}`)
+	end
+
+	self._configByFactionId[factionConfig.ID] = factionConfig
+	StateActions.CreateFaction(self.state, factionConfig)
+end
+
+function ServerRuntime.UnregisterFaction(self: ServerRuntime, factionId: string)
+	StateActions.RemoveFaction(self.state, factionId)
+end
+
+function ServerRuntime.RegisterClass(self: ServerRuntime, classConfig: Types.Class)
+	assert(classConfig.ID, "class must have an ID")
+
+	if self._configByClassId[classConfig.ID] then
+		warn(`replacing existing class for ID {classConfig.ID}`)
+	end
+
+	self._configByClassId[classConfig.ID] = classConfig
+end
+
+function ServerRuntime.UnregisterClass(self: ServerRuntime, classId: string)
+	self._configByClassId[classId] = nil
+end
+
+function ServerRuntime.RegisterItemProvider(self: ServerRuntime, provider: Types.ClassItemProvider)
+	assert(provider.ID, "item provider must have an ID")
+
+	if self._itemProviders[provider.ID] then
+		warn(`replacing existing item provider for type {provider.ID}`)
+	end
+
+	self._itemProviders[provider.ID] = provider
+end
+
+function ServerRuntime.UnregisterItemProvider(self: ServerRuntime, providerId: string)
+	self._itemProviders[providerId] = nil
+end
+
+
+
+-- wires up everything. don't call for tests
 function ServerRuntime.Start(self: ServerRuntime)
 	Players.PlayerAdded:Connect(function(player)
 		local function safeAssignClassItems(player: Player)

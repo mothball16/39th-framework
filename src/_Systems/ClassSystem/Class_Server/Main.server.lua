@@ -2,7 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Access = require("@game/ReplicatedStorage/Class_Framework/Access")
 local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
-local ClassAPI = require("./ClassAPI")
+local RuntimeLocator = require("./RuntimeLocator")
 local ServerRuntime = require("./ServerRuntime")
 
 if Access.Config.DebugMode and game:GetService("RunService"):IsStudio() then
@@ -50,11 +50,24 @@ end
 
 local runtime = ServerRuntime.new({
 	access = Access,
-	itemProviders = getItemProviders(ReplicatedStorage.Class_Framework.ItemProviders),
-	configByClassId = getClassConfigs(Access.Assets.ClassConfigs),
-	configByFactionId = getFactionConfigs(Access.Assets.FactionConfigs),
 	shouldSync = true,
 })
 
-ClassAPI.Init(runtime)
+local itemProviders = getItemProviders(ReplicatedStorage.Class_Framework.ItemProviders)
+for _, itemProvider in pairs(itemProviders) do
+	runtime:RegisterItemProvider(itemProvider)
+end
+
+local classConfigs = getClassConfigs(Access.Assets.ClassConfigs)
+for _, classConfig in pairs(classConfigs) do
+	runtime:RegisterClass(classConfig)
+end
+
+local factionConfigs = getFactionConfigs(Access.Assets.FactionConfigs)
+for _, factionConfig in pairs(factionConfigs) do
+	runtime:RegisterFaction(factionConfig)
+end
+
+-- initialize the runtime so that external systems can access it
+RuntimeLocator.LoadRuntime(runtime)
 runtime:Start()

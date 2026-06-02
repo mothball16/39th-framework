@@ -8,18 +8,18 @@ ItemEquipper.__index = ItemEquipper
 logic class for setting up and providing items of all loaded itemtypes to players/characters
 ]]
 type self = {
-	maid: Maid.Maid,
-	itemProviders: { [string]: Types.ClassItemProvider },
-	classes: { [string]: Types.Class },
+	_maid: Maid.Maid,
+	_itemProviders: { [string]: Types.ClassItemProvider },
+	_classes: { [string]: Types.Class },
 }
 export type ItemEquipper = typeof(setmetatable({} :: self, ItemEquipper))
 
 
 function ItemEquipper.new(itemProviders: { [string]: Types.ClassItemProvider }, classes: { [string]: Types.Class }): ItemEquipper
 	local self = setmetatable({
-		maid = Maid.new(),
-		itemProviders = itemProviders,
-		classes = classes,
+		_itemProviders = itemProviders,
+		_maid = Maid.new(),
+		_classes = classes,
 	} :: self, ItemEquipper)
 
 	return self
@@ -32,7 +32,7 @@ function ItemEquipper.GetProvider(self: ItemEquipper, itemArgs: any): Types.Clas
 		return nil
 	end
 
-	local itemProvider = self.itemProviders[itemType]
+	local itemProvider = self._itemProviders[itemType]
 	if not itemProvider then
 		warn(`item provider not found for item type {itemType}`)
 		return nil
@@ -40,18 +40,8 @@ function ItemEquipper.GetProvider(self: ItemEquipper, itemArgs: any): Types.Clas
 	return itemProvider
 end
 
-function ItemEquipper.RegisterProvider(self: ItemEquipper, provider: Types.ClassItemProvider)
-	assert(provider.ID, "item provider must have an ID")
-
-	if self.itemProviders[provider.ID] then
-		warn(`replacing existing item provider for type {provider.ID}`)
-	end
-
-	self.itemProviders[provider.ID] = provider
-end
-
 function ItemEquipper.AssignClassItems(self: ItemEquipper, player: Player, classId: string)
-	local classConfig = self.classes[classId]
+	local classConfig = self._classes[classId]
 	if not classConfig then
 		warn(`class config not found for class {classId}`)
 		return
@@ -68,7 +58,7 @@ function ItemEquipper.AssignClassItems(self: ItemEquipper, player: Player, class
 end
 
 function ItemEquipper.UnassignClassItems(self: ItemEquipper, player: Player, classId: string)
-	local classConfig = self.classes[classId]
+	local classConfig = self._classes[classId]
 	if not classConfig then
 		warn(`class config not found for class {classId}`)
 		return
@@ -80,6 +70,10 @@ function ItemEquipper.UnassignClassItems(self: ItemEquipper, player: Player, cla
 			itemProvider.Unassign(player, itemArgs)
 		end
 	end
+end
+
+function ItemEquipper:Destroy()
+	self._maid:DoCleaning()
 end
 
 return ItemEquipper

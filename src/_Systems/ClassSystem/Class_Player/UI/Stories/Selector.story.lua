@@ -6,7 +6,7 @@ local useAtom = VideCharm.useAtom
 local SelectorUI = require("../Roots/SelectorUI")
 local Mocks = require("@game/ReplicatedStorage/Class_Framework/Core/Mocks")
 local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
-local StateActions = require("@game/ReplicatedStorage/Class_Framework/StateActions")
+local StateActions = require("@game/ReplicatedStorage/Class_Framework/Logic/StateActions")
 local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
 
 return function(target: Instance)
