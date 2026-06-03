@@ -22,10 +22,8 @@ local RecoilModule = require(Framework.Weapons.Recoil.Default)
 
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
-local Player = game.Players.LocalPlayer
 
 local STORAGE_CFRAME = CFrame.new(1000000, 0, 0)
-local defaultCameraMode = Player.CameraMode
 
 local WeaponController = {}
 WeaponController.__index = WeaponController
@@ -952,7 +950,7 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 end
 
 function WeaponController.UpdateRender(self: WeaponController, dt)
-	local adjust = dt * 60
+	local adjust = math.min(dt * 60, 2)
 	if not self.state.equippedTool() or self.camera.CameraType ~= Enum.CameraType.Custom then return end
 	local ws = self.weaponState.wepStats()
 	if not ws then
