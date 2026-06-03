@@ -21,6 +21,6 @@ return function(state: State.State)
     end)
 
     Players.PlayerRemoving:Connect(function(player)
-        Server.removeSignalsFromClient(player)
+        Server.removeClient(player)
     end)
 end
