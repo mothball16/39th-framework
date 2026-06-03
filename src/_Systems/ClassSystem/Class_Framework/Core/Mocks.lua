@@ -2,9 +2,7 @@ local Types = require("./Types")
 local Item = require("./Item")
 local Mocks = {}
 
-
-
-function Mocks.Player(playerId: string)
+function Mocks.Player(playerId: number)
     return {
         UserId = playerId,
     }
@@ -21,7 +19,7 @@ function Mocks.ClassConfig(classId: string)
     }
 end
 
-function Mocks.FactionConfig(factionId: string)
+function Mocks.FactionConfig(factionId: string): Types.FactionConfig
     return {
         ID = factionId,
         Name = "United States Marine Corps",
@@ -37,9 +35,17 @@ function Mocks.FactionConfig(factionId: string)
                         Id = "RiflemanB",
                         Name = "Rifleman Alt",
                         Description = "Rifleman dos\n\n\n",
-                    }
+                    },
+                    {
+                        Id = "RiflemanZ",
+                        Name = "Rifleman Super Hacker",
+                        Description = "Rifleman Super Hacker\n\n\n",
+                        AccessCheck = function(player: Player)
+                            return false
+                        end
+                    },
                 },
-                Limit = 10,
+                Limit = math.huge,
                 Default = true,
             },
             Engineer = {
