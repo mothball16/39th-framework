@@ -110,5 +110,18 @@ return function()
             expect(state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
             expect(state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
         end)
+
+        it("should deny SetPlayerGroupClass when the requested group slot is full", function()
+            local playerTwo = Mocks.Player(2)
+            StateActions.SetPlayerFaction(state, playerTwo.UserId, factionAlpha.ID)
+
+            StateActions.SetPlayerGroupClass(state, playerOne.UserId, "Marksman", "MarksmanA")
+            local success = StateActions.SetPlayerGroupClass(state, playerTwo.UserId, "Marksman", "MarksmanA")
+
+            expect(success).to.equal(false)
+            expect(state.playerByGroupKey()[playerOne.UserId]).to.equal("Marksman")
+            expect(state.playerByGroupKey()[playerTwo.UserId]).to.equal("Rifleman")
+            expect(state.groupCountByFaction()[factionAlpha.ID]["Marksman"]).to.equal(1)
+        end)
 	end)
 end

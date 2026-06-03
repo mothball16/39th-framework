@@ -101,18 +101,22 @@ function StateActions.SetPlayerGroupClass(state: State.State, userId: string, gr
 		groupKey = nil
 		classId = nil
 	else
+
 		local playerFactionId = state.playerByFactionId()[userId]
 		local factionConfig = state.configByFactionId()[playerFactionId]
+		local currentGroupKey = state.playerByGroupKey()[userId]
+		local currentClassId = state.playerByClassId()[userId]
+
+		if currentGroupKey == groupKey and currentClassId == classId then
+			return true, `ignored: group key {groupKey} and class id {classId} are the same as the previous`
+		end
+
 		if not playerFactionId then
 			return false, `denied: player {userId} is not assigned to a faction`
 		end
 
 		if not factionConfig then
 			return false, `denied: faction {playerFactionId} is not a valid faction`
-		end
-	
-		if state.playerByGroupKey()[userId] == groupKey and state.playerByClassId()[userId] == classId then
-			return true, `ignored: group key {groupKey} and class id {classId} are the same as the previous`
 		end
 	
 		if not factionConfig.Groups[groupKey] then
@@ -133,6 +137,15 @@ function StateActions.SetPlayerGroupClass(state: State.State, userId: string, gr
 
 		if foundConfig.AccessCheck and not foundConfig.AccessCheck(userId) then
 			return false, `denied: player {userId} fails the access check for class {classId}`
+		end
+
+		if currentGroupKey ~= groupKey then
+			local groupConfig = factionConfig.Groups[groupKey]
+			local factionCounts = state.groupCountByFaction()[playerFactionId]
+			local groupCount = if factionCounts then factionCounts[groupKey] or 0 else 0
+			if groupCount >= groupConfig.Limit then
+				return false, `denied: group key {groupKey} is full for faction {playerFactionId}`
+			end
 		end
 	end
 
