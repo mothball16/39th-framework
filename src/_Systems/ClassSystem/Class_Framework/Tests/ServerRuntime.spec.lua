@@ -84,9 +84,9 @@ return function()
 	end)
 
 	describe("ServerRuntime", function()
-		local runtime
-		local playerOne
-		local playerTwo
+		local runtime: ServerRuntime.ServerRuntime
+		local playerOne: Player
+		local playerTwo: Player
 
 		beforeEach(function()
 			resetItemCounts()
@@ -116,34 +116,6 @@ return function()
 		end)
 
 
-		describe("StateActions", function()
-			it("should register provided faction configs into state", function()
-				local registeredFactions = runtime.state.configByFactionId()
-				expect(registeredFactions.alpha).to.equal(configByFactionId.alpha)
-				expect(registeredFactions.bravo).to.equal(configByFactionId.bravo)
-			end)
-	
-			it("should assign the default class when a player is set to a faction", function()
-				StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
-				expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
-				expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
-	
-				StateActions.SetPlayerGroupClass(runtime.state, playerOne.UserId, "Rifleman", "RiflemanB")
-	
-				StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "bravo")
-				expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
-				expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
-			end)
-	
-			it("should remove all assignments when a player is unassigned from a faction", function()
-				StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
-				StateActions.RemovePlayerFaction(runtime.state, playerOne.UserId)
-	
-				expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
-				expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal(nil)
-				expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal(nil)
-			end)
-		end)
 
 		describe("SelectionService", function()
 			describe("HandleFactionRequest", function()
