@@ -10,7 +10,6 @@ local StateActions = require("@game/ReplicatedStorage/Class_Framework/Logic/Stat
 
 local ItemEquipper = require("./ItemEquipper")
 local SelectionService = require("./SelectionService")
-local ServerSyncer = require("./ServerSyncer")
 
 local ServerRuntime = {}
 ServerRuntime.__index = ServerRuntime
@@ -28,8 +27,7 @@ type self = {
 export type ServerRuntime = typeof(setmetatable({} :: self, ServerRuntime))
 
 function ServerRuntime.new(args: {
-	access: Types.Access,
-	shouldSync: boolean,
+	access: Types.Access
 })
 	local self = setmetatable({
 		access = args.access,
@@ -43,16 +41,6 @@ function ServerRuntime.new(args: {
 
 	self.itemEquipper = ItemEquipper.new(self._itemProviders, self._configByClassId)
 	self.selectionService = SelectionService.new(self.state, args.access.Config)
-
-	if args.shouldSync then
-		self.maid:GiveTask(ServerSyncer.new({
-			configByFactionId = self.state.configByFactionId,
-			playerByFactionId = self.state.playerByFactionId,
-			playerByGroupKey = self.state.playerByGroupKey,
-			playerByClassId = self.state.playerByClassId,
-			groupCountByFaction = self.state.groupCountByFaction,
-		}, Events))
-	end
 
 	return self
 end

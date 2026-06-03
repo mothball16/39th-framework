@@ -10,7 +10,6 @@ local create = Vide.create
 local Events = require("@game/ReplicatedStorage/Class_Framework/Core/Events").GetNamespace()
 local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
 
-local ClientMirror = require("./ClientMirror")
 local SelectorUI = require("./UI/Roots/SelectorUI")
 local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
 
@@ -20,7 +19,6 @@ ClientRuntime.__index = ClientRuntime
 type self = {
 	state: State.State,
 	access: Types.Access,
-	mirror: any,
 	maid: Maid.Maid,
 	selectorOpen: Charm.Atom<boolean>,
 }
@@ -31,7 +29,6 @@ function ClientRuntime.new(access: Types.Access)
 	local self = setmetatable({
 		state = state,
 		access = access,
-		mirror = ClientMirror.new(state),
 		maid = Maid.new(),
 		selectorOpen =  Charm.atom(false),
 	} :: self, ClientRuntime)
@@ -40,7 +37,6 @@ function ClientRuntime.new(access: Types.Access)
 end
 
 -- wires up UI and lifecycle. don't call for tests
-
 function ClientRuntime.Start(self: ClientRuntime)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
@@ -75,7 +71,6 @@ function ClientRuntime.Start(self: ClientRuntime)
 	end, playerGui)
 
 	self.maid:GiveTask(unmountSelector)
-	self.maid:GiveTask(self.mirror)
 end
 
 function ClientRuntime.WireControllers(self: ClientRuntime, root: Instance)

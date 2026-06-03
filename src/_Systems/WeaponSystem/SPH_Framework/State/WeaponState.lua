@@ -47,14 +47,14 @@ type self = {
 	RecoilFactor: number,
 	Spread: number,
 
-	ubglActive: Charm.Selector<boolean>,
-	hasAmmoForMode: Charm.Selector<boolean>,
-	canManipulate: Charm.Selector<boolean>,
-	canTrackAimInput: Charm.Selector<boolean>,
-	adsMeshEnabledForActiveSight: Charm.Selector<boolean>,
-	hasAdsMeshLayers: Charm.Selector<boolean>,
-	aimLerpFactor: Charm.Selector<number>,
-	aimCamLerpFactor: Charm.Selector<number>,
+	ubglActive: Charm.Getter<boolean>,
+	hasAmmoForMode: Charm.Getter<boolean>,
+	canManipulate: Charm.Getter<boolean>,
+	canTrackAimInput: Charm.Getter<boolean>,
+	adsMeshEnabledForActiveSight: Charm.Getter<boolean>,
+	hasAdsMeshLayers: Charm.Getter<boolean>,
+	aimLerpFactor: Charm.Getter<number>,
+	aimCamLerpFactor: Charm.Getter<number>,
 }
 
 export type WeaponState = typeof(setmetatable({} :: self, WepState))

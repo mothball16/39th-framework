@@ -37,7 +37,7 @@ type self = {
 	_colorCorrection: ColorCorrectionEffect,
 	_lastSuppressionTick: number,
 	_lastAimPunchTick: number,
-	_canBeSuppressed: Charm.Selector<boolean>,
+	_canBeSuppressed: Charm.Getter<boolean>,
 }
 
 export type EffectController = typeof(setmetatable({} :: self, EffectController))

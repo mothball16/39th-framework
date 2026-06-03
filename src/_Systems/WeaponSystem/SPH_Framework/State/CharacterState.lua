@@ -37,7 +37,7 @@ type self = {
 	freeLookRotation: Charm.Atom<CFrame>,
 	freeLookOffset: Charm.Atom<CFrame>,
 
-	vehicleSeated: Charm.Selector<boolean>,
+	vehicleSeated: Charm.Getter<boolean>,
 }
 
 export type CharacterState = typeof(setmetatable({} :: self, CharState))

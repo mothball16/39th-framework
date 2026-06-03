@@ -2,8 +2,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Access = require("@game/ReplicatedStorage/Class_Framework/Access")
 local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
+
 local RuntimeLocator = require("./RuntimeLocator")
 local ServerRuntime = require("./ServerRuntime")
+local SetupStateSync = require("./SetupStateSync")
 
 if Access.Config.DebugMode and game:GetService("RunService"):IsStudio() then
 	local startTick = tick()
@@ -14,8 +16,6 @@ if Access.Config.DebugMode and game:GetService("RunService"):IsStudio() then
 	TestEZ.TestBootstrap:run({ ReplicatedStorage.Class_Framework.Tests }, TestEZ.Reporters.TextReporterQuiet)
 
 	warn(`class system test suite took {tick() - startTick} seconds`)
-    
-
 end
 
 --#region [ helpers ]
@@ -48,11 +48,13 @@ local function getClassConfigs(path)
 end
 --#endregion [ helpers ]
 
-local runtime = ServerRuntime.new({
-	access = Access,
-	shouldSync = true,
-})
+-- initialize the runtime
+local runtime = ServerRuntime.new({access = Access})
+RuntimeLocator.LoadRuntime(runtime)
+runtime:Start()
 
+
+-- register stuff
 local itemProviders = getItemProviders(ReplicatedStorage.Class_Framework.ItemProviders)
 for _, itemProvider in pairs(itemProviders) do
 	runtime:RegisterItemProvider(itemProvider)
@@ -68,6 +70,5 @@ for _, factionConfig in pairs(factionConfigs) do
 	runtime:RegisterFaction(factionConfig)
 end
 
--- initialize the runtime so that external systems can access it
-RuntimeLocator.LoadRuntime(runtime)
-runtime:Start()
+-- connect the server syncer
+SetupStateSync(runtime)
