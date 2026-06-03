@@ -37,7 +37,7 @@ export type ClassDescriptor = {
     AccessCheck: AccessCheck?,
 }
 
-export type AccessCheck = (player: Player) -> boolean
+export type AccessCheck = (userId: number) -> boolean
 
 export type FactionConfig = {
     ID: string,

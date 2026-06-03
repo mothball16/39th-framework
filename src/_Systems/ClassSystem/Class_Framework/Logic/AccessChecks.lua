@@ -3,6 +3,8 @@
 local AccessChecks = {}
 local GroupService = game:GetService("GroupService")
 local TeamService = game:GetService("Teams")
+local Players = game:GetService("Players")
+
 local Types = require("../Core/Types")
 
 type GroupInfo = {
@@ -32,9 +34,10 @@ function AccessChecks.InTeam(teams: {Team | string}): Types.AccessCheck
         end
     end
     
-    return function(player: Player)
+    return function(userId: number)
         for _, team in ipairs(teamInstances) do
-            if player.Team == team then
+            local player = Players:GetPlayerByUserId(userId)
+            if player and player.Team == team then
                 return true
             end
         end
@@ -78,7 +81,12 @@ local function getGroupInfo(player: Player, groupId: number): GroupInfo
 end
 
 function AccessChecks.InGroup(groupIds: {number})
-    return function(player: Player)
+    return function(userId: number)
+        local player = Players:GetPlayerByUserId(userId)
+        if not player then
+            return false
+        end
+
         for _, groupId in ipairs(groupIds) do
             local groupInfo = getGroupInfo(player, groupId)
             if groupInfo.isMember then
@@ -90,7 +98,12 @@ function AccessChecks.InGroup(groupIds: {number})
 end
 
 function AccessChecks.HasRoleInGroup(groupIds: {[number]: number}): Types.AccessCheck
-    return function(player: Player)
+    return function(userId: number)
+        local player = Players:GetPlayerByUserId(userId)
+        if not player then
+            return false
+        end
+
         for groupId, role in ipairs(groupIds) do
             local groupInfo = getGroupInfo(player, groupId)
             if table.find(groupInfo.roleIds, role) then
@@ -102,7 +115,12 @@ function AccessChecks.HasRoleInGroup(groupIds: {[number]: number}): Types.Access
 end
 
 function AccessChecks.AboveRankInGroup(groupIds: {[number]: number}): Types.AccessCheck
-    return function(player: Player)
+    return function(userId: number)
+        local player = Players:GetPlayerByUserId(userId)
+        if not player then
+            return false
+        end
+
         for groupId, rank in ipairs(groupIds) do
             local groupInfo = getGroupInfo(player, groupId)
             if groupInfo.rank >= rank then
