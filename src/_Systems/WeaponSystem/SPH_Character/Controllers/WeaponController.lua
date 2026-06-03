@@ -358,7 +358,7 @@ function WeaponController.ToggleADSMesh(self: WeaponController, toggle)
 
 	for _, child in ipairs(self.weaponState.gunModel():GetDescendants()) do
 		if child.Name == "REG" then
-			child.Transparency = toggle and 1 or 0
+			child.Transparency = toggle and (child:GetAttribute("TransparencyOverride") or 1) or 0
 		elseif child.Name == "ADS" then
 			child.Transparency = toggle and 0 or 1
 		end
