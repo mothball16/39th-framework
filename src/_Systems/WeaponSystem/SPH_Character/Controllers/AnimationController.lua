@@ -15,19 +15,21 @@ local config = Access.config
 local Enums = require(Framework.Core.Enums)
 local LocalEvents = require(script.Parent:WaitForChild("LocalEvents"))
 
--- Default loop/priority when playing a weapon anim by config key (e.g. "reload", "idle").
+-- Default loop/priority when playing a weapon anim by config key (e.g. reload, idle).
 local ANIM_DEFAULTS = {
-	idle = { priority = Enum.AnimationPriority.Idle, looped = true },
-	sprint = { priority = Enum.AnimationPriority.Action, looped = true },
-	patrol = { priority = Enum.AnimationPriority.Action, looped = true },
-	holdUp = { priority = Enum.AnimationPriority.Action, looped = true },
-	holdDown = { priority = Enum.AnimationPriority.Action, looped = true },
-	switch = { priority = Enum.AnimationPriority.Action2, looped = false },
-	reload = { priority = Enum.AnimationPriority.Action2, looped = false },
-	boltChamber = { priority = Enum.AnimationPriority.Action2, looped = false },
-	boltClose = { priority = Enum.AnimationPriority.Action2, looped = false },
-	equip = { priority = Enum.AnimationPriority.Action2, looped = false },
-	fire = { priority = Enum.AnimationPriority.Action2, looped = false },
+	[Enums.WeaponAnim.Idle.key] = { priority = Enum.AnimationPriority.Idle, looped = true },
+
+	[Enums.WeaponAnim.Sprint.key] = { priority = Enum.AnimationPriority.Action, looped = true },
+	[Enums.WeaponAnim.Patrol.key] = { priority = Enum.AnimationPriority.Action, looped = true },
+	[Enums.WeaponAnim.HoldUp.key] = { priority = Enum.AnimationPriority.Action, looped = true },
+	[Enums.WeaponAnim.HoldDown.key] = { priority = Enum.AnimationPriority.Action, looped = true },
+
+	[Enums.WeaponAnim.Switch.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
+	[Enums.WeaponAnim.Reload.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
+	[Enums.WeaponAnim.BoltChamber.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
+	[Enums.WeaponAnim.BoltClose.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
+	[Enums.WeaponAnim.Equip.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
+	[Enums.WeaponAnim.Fire.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
 }
 
 local AnimationController = {}
@@ -53,11 +55,19 @@ type self = {
 export type AnimationController = typeof(setmetatable({} :: self, AnimationController))
 
 -- ---------------------------------------------------------------------------
--- Play options: optional `propertyKey` picks ANIM_DEFAULTS; explicit fields in `parameters` win.
+-- Play options: optional `weaponAnim` picks ANIM_DEFAULTS; explicit fields in `parameters` win.
 -- ---------------------------------------------------------------------------
 
-local function resolvePlayParams(propertyKey: string?, parameters: { [string]: any }?)
-	local defaults = propertyKey and ANIM_DEFAULTS[propertyKey]
+local function resolveDefaultsKey(weaponAnim: { key: string?, tag: string, defaultsKey: string? }?)
+	if not weaponAnim then
+		return nil
+	end
+	return weaponAnim.defaultsKey or weaponAnim.key
+end
+
+local function resolvePlayParams(weaponAnim: { key: string?, tag: string, defaultsKey: string? }?, parameters: { [string]: any }?)
+	local defaultsKey = resolveDefaultsKey(weaponAnim)
+	local defaults = defaultsKey and ANIM_DEFAULTS[defaultsKey]
 	local p = parameters or {}
 	return {
 		looped = if p.looped ~= nil then p.looped elseif defaults then defaults.looped else false,
@@ -155,6 +165,9 @@ local function weaponAnimationName(wepStats, key: string): string?
 end
 
 local function resolveAnimationAsset(path: Instance, animName: string)
+	if not animName or animName == "" then
+		return nil
+	end
 	local split = string.find(animName, "/")
 	if split then
 		local folderName = animName:sub(1, split - 1)
@@ -192,12 +205,12 @@ local function getOrCreateTracks(self: AnimationController, animName: string, pl
 	tpTrack.Priority = playParams.priority
 
 	vmTrack.KeyframeReached:Connect(function(keyframeName)
-		local currentType = vmTrack:GetAttribute("AnimType") or "Unknown"
+		local currentType = vmTrack:GetAttribute("AnimType") or Enums.WeaponAnim.Unknown.tag
 		self.events.KeyframeReached:Fire(animName, keyframeName, vmTrack, currentType)
 	end)
 
 	vmTrack.Stopped:Connect(function()
-		local currentType = vmTrack:GetAttribute("AnimType") or "Unknown"
+		local currentType = vmTrack:GetAttribute("AnimType") or Enums.WeaponAnim.Unknown.tag
 		self.events.AnimationStopped:Fire(animName, vmTrack, currentType)
 	end)
 
@@ -282,8 +295,8 @@ function AnimationController.new(params: {
 	self.events.StopAllRequested:Connect(function()
 		self:StopAll()
 	end)
-	self.events.PlayAnimationRequested:Connect(function(animName, parameters, animType, propertyKey)
-		self:PlayAnimation(animName, parameters, animType, propertyKey)
+	self.events.PlayAnimationRequested:Connect(function(animName, parameters, weaponAnim)
+		self:PlayAnimation(animName, parameters, weaponAnim)
 	end)
 	self.events.StopAnimationRequested:Connect(function(animName, transTime)
 		self:StopAnimation(animName, transTime)
@@ -303,18 +316,18 @@ function AnimationController.SyncStance(self: AnimationController, stance)
 		fadeTrack(self,self.moveAnim, 0, config.stanceChangeTime)
 	end
 
-	if stance == 0 then
+	if stance == Enums.Stance.Standing then
 		self.moveAnim = nil
 		fadeTrack(self,self.crouchIdleAnim, 0, config.stanceChangeTime)
 		fadeTrack(self,self.proneIdleAnim, 0, config.stanceChangeTime)
-	elseif stance == 1 then
+	elseif stance == Enums.Stance.Crouching then
 		self.moveAnim = self.crouchMoveAnim
 		if self.state.moving() then
 			fadeTrack(self,self.moveAnim, 1, config.stanceChangeTime)
 		end
 		fadeTrack(self,self.proneIdleAnim, 0, config.stanceChangeTime)
 		fadeTrack(self,self.crouchIdleAnim, 1, config.stanceChangeTime)
-	elseif stance == 2 then
+	elseif stance == Enums.Stance.Crawling then
 		self.moveAnim = self.proneMoveAnim
 		fadeTrack(self,self.crouchIdleAnim, 0, config.stanceChangeTime)
 		fadeTrack(self,self.proneIdleAnim, 1, config.stanceChangeTime)
@@ -337,12 +350,12 @@ end
 
 function AnimationController.SyncSprinting(self: AnimationController, sprinting)
 	local stats = self.weaponState.wepStats()
-	local sprintName = weaponAnimationName(stats, "sprint")
+	local sprintName = weaponAnimationName(stats, Enums.WeaponAnim.Sprint.key)
 	if not sprintName then
 		return
 	end
 	if sprinting then
-		self:PlayAnimation(sprintName, { transSpeed = 0.5 }, "Sprint", "sprint")
+		self:PlayAnimation(sprintName, { transSpeed = 0.5 }, Enums.WeaponAnim.Sprint)
 	else
 		self:StopAnimation(sprintName, 0.5)
 	end
@@ -356,8 +369,13 @@ function AnimationController.StopAnimation(self: AnimationController, animName: 
 	end
 end
 
-function AnimationController.PlayAnimation(self: AnimationController, animName: string, parameters: {[string]: any}?, animType: string?, propertyKey: string?)
-	local merged = resolvePlayParams(propertyKey, parameters)
+function AnimationController.PlayAnimation(
+	self: AnimationController,
+	animName: string,
+	parameters: { [string]: any }?,
+	weaponAnim: { key: string?, tag: string, defaultsKey: string? }?
+)
+	local merged = resolvePlayParams(weaponAnim, parameters)
 	local tracks = getOrCreateTracks(self, animName, merged)
 
 	if not tracks then
@@ -365,7 +383,7 @@ function AnimationController.PlayAnimation(self: AnimationController, animName: 
 		return nil
 	end
 
-	local typeTag = animType or "Play"
+	local typeTag = (weaponAnim and weaponAnim.tag) or Enums.WeaponAnim.Play.tag
 	tracks.vm:SetAttribute("AnimType", typeTag)
 	tracks.tp:SetAttribute("AnimType", typeTag)
 
@@ -405,23 +423,23 @@ function AnimationController.SyncHoldStance(self: AnimationController, newStance
 	end
 
 	local animToPlay: string? = nil
-	local propertyKey: string? = nil
+	local weaponAnim = nil
 
 	if newStance == Enums.HoldStance.High then
-		animToPlay = weaponAnimationName(stats, "holdUp")
-		propertyKey = "holdUp"
+		weaponAnim = Enums.WeaponAnim.HoldUp
+		animToPlay = weaponAnimationName(stats, weaponAnim.key)
 	elseif newStance == Enums.HoldStance.Patrol then
-		animToPlay = weaponAnimationName(stats, "patrol")
-		propertyKey = "patrol"
+		weaponAnim = Enums.WeaponAnim.Patrol
+		animToPlay = weaponAnimationName(stats, weaponAnim.key)
 	elseif newStance == Enums.HoldStance.Low then
-		animToPlay = weaponAnimationName(stats, "holdDown")
-		propertyKey = "holdDown"
+		weaponAnim = Enums.WeaponAnim.HoldDown
+		animToPlay = weaponAnimationName(stats, weaponAnim.key)
 	end
 
-	if animToPlay then
+	if animToPlay and weaponAnim then
 		-- Hard-stop this clip first so a reused asset name after weapon swap always restarts cleanly.
 		self:StopAnimation(animToPlay, 0)
-		local started = self:PlayAnimation(animToPlay, { transSpeed = 0.3 }, "Hold", propertyKey)
+		local started = self:PlayAnimation(animToPlay, { transSpeed = 0.3 }, weaponAnim)
 		self.holdAnimKey = started and animToPlay or nil
 	else
 		-- No anim for this stance: bounce Ready ↔ Patrol when dropping from Ready to Low.
@@ -444,8 +462,8 @@ function AnimationController.WeaponEquip(self: AnimationController)
 	table.clear(self.loadedAnims)
 	preloadWeaponAnimations(self, ws)
 
-	local equipName = weaponAnimationName(ws, "equip")
-	local equipTrack = equipName and self:PlayAnimation(equipName, {}, "Equip", "equip")
+	local equipName = weaponAnimationName(ws, Enums.WeaponAnim.Equip.key)
+	local equipTrack = equipName and self:PlayAnimation(equipName, {}, Enums.WeaponAnim.Equip)
 	if equipTrack then
 		equipTrack.Stopped:Connect(function()
 			self.weaponState.equipping(false)
@@ -460,9 +478,9 @@ function AnimationController.WeaponIdle(self: AnimationController)
 	if not ws then
 		return
 	end
-	local idleName = weaponAnimationName(ws, "idle")
+	local idleName = weaponAnimationName(ws, Enums.WeaponAnim.Idle.key)
 	if idleName then
-		self:PlayAnimation(idleName, {}, "Idle", "idle")
+		self:PlayAnimation(idleName, {}, Enums.WeaponAnim.Idle)
 	end
 end
 
@@ -472,11 +490,11 @@ function AnimationController.SyncChambering(self: AnimationController, value)
 		return
 	end
 
-	local useChamber = self.state.equippedTool().BoltReady.Value or self.weaponState.fireMode() == 5
-	local animName = useChamber and weaponAnimationName(stats, "boltChamber") or weaponAnimationName(stats, "boltClose")
-	local chamberKey = if useChamber then "boltChamber" else "boltClose"
+	local useChamber = self.state.equippedTool().BoltReady.Value or self.weaponState.fireMode() == Enums.FireModes.Manual
+	local weaponAnim = if useChamber then Enums.WeaponAnim.BoltChamber else Enums.WeaponAnim.BoltClose
+	local animName = weaponAnimationName(stats, weaponAnim.key)
 
-	local playing = self:PlayAnimation(animName, { transSpeed = 0.05 }, "Chamber", chamberKey)
+	local playing = self:PlayAnimation(animName, { transSpeed = 0.05 }, weaponAnim)
 	if playing then
 		playing.Stopped:Once(function()
 			self.weaponState.chambering(false)
@@ -493,10 +511,10 @@ local function playUbglReload(self: AnimationController, animSpeed: number)
 	if not ws then
 		return
 	end
-	local ubglStats = ws.getStatsForMode(4)
-	local reloadAnim = weaponAnimationName(ubglStats, "reload") or weaponAnimationName(ws, "reload")
+	local ubglStats = ws.getStatsForMode(Enums.FireModes.UBGL)
+	local reloadAnim = weaponAnimationName(ubglStats, Enums.WeaponAnim.Reload.key) or weaponAnimationName(ws, Enums.WeaponAnim.Reload.key)
 	if reloadAnim then
-		self:PlayAnimation(reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
+		self:PlayAnimation(reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, Enums.WeaponAnim.Reload)
 	end
 end
 
@@ -510,10 +528,9 @@ local function playBoltOpenReloadSequence(self: AnimationController, lastGunMode
 	end
 
 	local boltOpenTrack = self:PlayAnimation(
-		stats.boltOpen,
+		stats.Animations.bol,
 		{ speed = animSpeed, priority = Enum.AnimationPriority.Action2, transSpeed = 0.17 },
-		"BoltOpen",
-		nil
+		Enums.WeaponAnim.BoltOpen
 	)
 	if not boltOpenTrack then
 		self.weaponState.reloading(false)
@@ -526,14 +543,14 @@ local function playBoltOpenReloadSequence(self: AnimationController, lastGunMode
 		end
 		local cap = stats.clipSize or stats.magazineCapacity
 		local canFullClip =
-			stats.magType == 3
+			stats.magType == Enums.MagType.Manual
 			and (gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value) >= cap
 			and gunAmmo.ArcadeAmmoPool.Value >= cap
 
 		if canFullClip then
-			local clipName = weaponAnimationName(stats, "clipReload")
+			local clipName = weaponAnimationName(stats, Enums.WeaponAnim.ClipReload.key)
 			if clipName then
-				self:PlayAnimation(clipName, { looped = true, speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
+				self:PlayAnimation(clipName, { looped = true, speed = animSpeed, transSpeed = 0.17 }, Enums.WeaponAnim.ClipReload)
 			end
 			return
 		end
@@ -541,13 +558,12 @@ local function playBoltOpenReloadSequence(self: AnimationController, lastGunMode
 		if lastGunModelName and self.weaponState.gunModel() and lastGunModelName ~= self.weaponState.gunModel().Name then
 			return
 		end
-		local reloadName = weaponAnimationName(stats, "reload")
+		local reloadName = weaponAnimationName(stats, Enums.WeaponAnim.Reload.key)
 		if reloadName then
 			self:PlayAnimation(
 				reloadName,
-				{ speed = animSpeed, transSpeed = 0.17, looped = stats.magType > 1 },
-				"Reload",
-				"reload"
+				{ speed = animSpeed, transSpeed = 0.17, looped = stats.magType > Enums.MagType.MagFed },
+				Enums.WeaponAnim.Reload
 			)
 		end
 	end)
@@ -561,26 +577,21 @@ function AnimationController.WeaponReload(self: AnimationController, lastGunMode
 	self.weaponState.reloading(true)
 	local animSpeed = ws.reloadSpeedModifier
 
-	if self.weaponState.fireMode() == 4 and ws.hasUBGL then
+	if self.weaponState.fireMode() == Enums.FireModes.UBGL and ws.hasUBGL then
 		playUbglReload(self, animSpeed)
 		return
 	end
 
 	local tool = self.state.equippedTool()
-	local gunAmmo = tool:FindFirstChild("Ammo")
 	local stats = ws
 
-	local needsBoltOpen = stats.operationType == 3
-		or (stats.operationType == 2 and gunAmmo and gunAmmo.MagAmmo.Value <= 0 and not tool.Chambered.Value)
-
-	if needsBoltOpen then
-		playBoltOpenReloadSequence(self, lastGunModelName, animSpeed)
+	local reloadName = weaponAnimationName(stats, Enums.WeaponAnim.Reload.key)
+	if reloadName then
+		self:PlayAnimation(reloadName, { speed = animSpeed, priority = Enum.AnimationPriority.Action3, transSpeed = 0.17 }, Enums.WeaponAnim.Reload)
 	else
-		local reloadName = weaponAnimationName(stats, "reload")
-		if reloadName then
-			self:PlayAnimation(reloadName, { speed = animSpeed, priority = Enum.AnimationPriority.Action3, transSpeed = 0.17 }, "Reload", "reload")
-		end
+		warn(`no reload anim for {tool.Name}`)
 	end
+	
 end
 
 function AnimationController.PlayBoltAction(self: AnimationController, boltReady)
@@ -588,9 +599,9 @@ function AnimationController.PlayBoltAction(self: AnimationController, boltReady
 	if not ws then
 		return
 	end
-	local animName = boltReady and weaponAnimationName(ws, "boltChamber") or weaponAnimationName(ws, "boltClose")
-	local boltKey = if boltReady then "boltChamber" else "boltClose"
-	self:PlayAnimation(animName, { transSpeed = 0.05 }, "BoltAction", boltKey)
+	local weaponAnim = if boltReady then Enums.WeaponAnim.BoltChamberAction else Enums.WeaponAnim.BoltCloseAction
+	local animName = weaponAnimationName(ws, weaponAnim.key)
+	self:PlayAnimation(animName, { transSpeed = 0.05 }, weaponAnim)
 end
 
 function AnimationController.PlayReloadAction(self: AnimationController, useClip)
@@ -599,25 +610,26 @@ function AnimationController.PlayReloadAction(self: AnimationController, useClip
 		return
 	end
 	local animSpeed = ws.reloadSpeedModifier
-	local animName = if useClip then weaponAnimationName(ws, "clipReload") else weaponAnimationName(ws, "reload")
+	local weaponAnim = if useClip then Enums.WeaponAnim.ClipReload else Enums.WeaponAnim.Reload
+	local animName = weaponAnimationName(ws, weaponAnim.key)
 	if animName then
-		self:PlayAnimation(animName, { looped = useClip, speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
+		self:PlayAnimation(animName, { looped = useClip, speed = animSpeed, transSpeed = 0.17 }, weaponAnim)
 	end
 end
 
 function AnimationController.PlayFireAnim(self: AnimationController)
 	local ws = self.weaponState.wepStats()
-	local fireName = weaponAnimationName(ws, "fire")
+	local fireName = weaponAnimationName(ws, Enums.WeaponAnim.Fire.key)
 	if fireName then
-		self:PlayAnimation(fireName, {}, "Fire", "fire")
+		self:PlayAnimation(fireName, {}, Enums.WeaponAnim.Fire)
 	end
 end
 
 function AnimationController.PlaySwitchFireModeAnim(self: AnimationController)
 	local ws = self.weaponState.wepStats()
-	local switchName = weaponAnimationName(ws, "switch")
+	local switchName = weaponAnimationName(ws, Enums.WeaponAnim.Switch.key)
 	if switchName then
-		self:PlayAnimation(switchName, { transSpeed = 0.2 }, "Switch", "switch")
+		self:PlayAnimation(switchName, { transSpeed = 0.2 }, Enums.WeaponAnim.Switch)
 	end
 end
 

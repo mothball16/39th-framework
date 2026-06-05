@@ -12,7 +12,7 @@ type self = {
 	ReloadRequested: Signal.Signal<string?>,
 	SwitchFireModeAnimRequested: Signal.Signal<>,
 	StopAllRequested: Signal.Signal<>,
-	PlayAnimationRequested: Signal.Signal<string, { [string]: any }?, string?, string?>,
+	PlayAnimationRequested: Signal.Signal<string, { [string]: any }?, { key: string?, tag: string, defaultsKey: string? }?>,
 	StopAnimationRequested: Signal.Signal<string, number>,
 	BoltActionRequested: Signal.Signal<boolean>,
 	ReloadActionRequested: Signal.Signal<boolean>,

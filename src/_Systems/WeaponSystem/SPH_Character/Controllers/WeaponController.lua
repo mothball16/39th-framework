@@ -543,7 +543,7 @@ function WeaponController.Equip(self: WeaponController, newChild)
 
 		if ws.ubgl.reloadAnim then
 			local animSpeed = ws.reloadSpeedModifier
-			self.events.PlayAnimationRequested:Fire(ws.ubgl.reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, "Reload", "reload")
+			self.events.PlayAnimationRequested:Fire(ws.ubgl.reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, Enums.WeaponAnim.Reload)
 		end
 	else
 		self.ubglAmmo = nil
@@ -608,10 +608,10 @@ function WeaponController.OnReloadIntent(self: WeaponController, inputState, inp
 				self.cancelReload = false
 				self.events.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
 			else
-				if (ws.operationType == 4 and self.state.equippedTool().Chambered.Value)
-					or (ws.operationType == 3 and self.weaponState.gunAmmo.MagAmmo.Value + 1 >= self.weaponState.gunAmmo.MagAmmo.MaxValue)
-					or (ws.operationType == 2 and self.weaponState.gunAmmo.MagAmmo.Value >= self.weaponState.gunAmmo.MagAmmo.MaxValue) then
-					return
+				if (ws.operationType == Enums.OperationType.NonReciprocating and self.state.equippedTool().Chambered.Value)
+					or (ws.operationType == Enums.OperationType.ManualCycleAlways and self.weaponState.gunAmmo.MagAmmo.Value + 1 >= self.weaponState.gunAmmo.MagAmmo.MaxValue)
+					or (ws.operationType == Enums.OperationType.OpenBoltOnEmpty and self.weaponState.gunAmmo.MagAmmo.Value >= self.weaponState.gunAmmo.MagAmmo.MaxValue) then
+						return
 				end
 				self.cancelReload = false
 				self.events.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
@@ -1073,7 +1073,7 @@ function WeaponController.OnKeyframeReached(self: WeaponController, animName, ke
 end
 
 function WeaponController.OnAnimationStopped(self: WeaponController, animName, newAnim, animType)
-	if animType == "Reload" then
+	if animType == Enums.WeaponAnim.Reload.tag then
 		self.weaponState.reloading(false)
 		if self.state.equippedTool() and self.state.equippedTool().Chambered.Value then
 			self:SetProjectileTransparency(self.weaponState.gunModel(), 0)

@@ -1,8 +1,8 @@
 return {
     Stance = {
-        STANDING = "STANDING",
-        CROUCHING = "CROUCHING",
-        CRAWLING = "CRAWLING",
+        Standing = 0,
+        Crouching = 1,
+        Crawling = 2,
     },
     Lean = {
         LEFT = "LEFT",
@@ -61,6 +61,27 @@ return {
         MagFed = 1,
         ClipFed = 2,
         Manual = 3,
+    },
+
+    -- key: weapon config Animations lookup; tag: event/attribute label; defaultsKey: ANIM_DEFAULTS fallback
+    WeaponAnim = {
+        Idle = { key = "idle", tag = "Idle" },
+        Sprint = { key = "sprint", tag = "Sprint" },
+        Patrol = { key = "patrol", tag = "Hold" },
+        HoldUp = { key = "holdUp", tag = "Hold" },
+        HoldDown = { key = "holdDown", tag = "Hold" },
+        Switch = { key = "switch", tag = "Switch" },
+        Reload = { key = "reload", tag = "Reload" },
+        ClipReload = { key = "clipReload", tag = "Reload", defaultsKey = "reload" },
+        BoltChamber = { key = "boltChamber", tag = "Chamber" },
+        BoltClose = { key = "boltClose", tag = "Chamber" },
+        BoltChamberAction = { key = "boltChamber", tag = "BoltAction", defaultsKey = "boltChamber" },
+        BoltCloseAction = { key = "boltClose", tag = "BoltAction", defaultsKey = "boltClose" },
+        Equip = { key = "equip", tag = "Equip" },
+        Fire = { key = "fire", tag = "Fire" },
+        BoltOpen = { tag = "BoltOpen" },
+        Play = { tag = "Play" },
+        Unknown = { tag = "Unknown" },
     },
 
 }
