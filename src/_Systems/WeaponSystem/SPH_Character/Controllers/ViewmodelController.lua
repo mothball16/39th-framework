@@ -38,6 +38,9 @@ type self = {
 	rollAngle: number,
 	strafeShift: number,
 	aimTarget: CFrame,
+
+	moveInstability: Charm.Getter<number>,
+	deltaInstability: Charm.Getter<Vector2>,
 }
 
 export type ViewmodelController = typeof(setmetatable({} :: self, ViewmodelController))
@@ -85,6 +88,27 @@ function ViewmodelController.new(params: {
 		strafeShift = 0,
 		aimTarget = CFrame.new(),
 	} :: self, ViewmodelController)
+
+	self.moveInstability = Charm.computed(function()
+		local ws = self.weaponState.wepStats()
+		local aiming = self.state.aiming()
+		if not ws then
+			return 1
+		end
+		
+		return if aiming then ws.MoveInstability * ws.AimedInstabilityMultiplier.move else ws.MoveInstability
+	end)
+
+	self.deltaInstability = Charm.computed(function()
+		local ws = self.weaponState.wepStats()
+		local aiming = self.state.aiming()
+		if not ws then
+			return Vector2.new(1, 1)
+		end
+		return if aiming 
+			then Vector2.new(ws.DeltaInstability.X * ws.AimedInstabilityMultiplier.delta, ws.DeltaInstability.Y * ws.AimedInstabilityMultiplier.delta) 
+			else ws.DeltaInstability
+	end)
 
 	Charm.subscribe(self.state.equippedTool, function(tool)
 		self:SyncEquippedTool(tool)
@@ -295,8 +319,8 @@ function ViewmodelController.UpdateViewmodelPosition(
 	animBase.CFrame *= CFrame.Angles(math.rad(self.hipRotation.Y), math.rad(self.hipRotation.X), 0)
 
 	self.swaySpring:shove(Vector3.new(
-		-mouseDelta.X * ws.DeltaInstability.X,
-		mouseDelta.Y * ws.DeltaInstability.Y,
+		-mouseDelta.X * self.deltaInstability().X,
+		mouseDelta.Y * self.deltaInstability().Y,
 		0
 	))
 	local updatedSway = self.swaySpring:update(dt)
@@ -357,6 +381,7 @@ function ViewmodelController.UpdateMovementSway(
 
 	local tempBobSpeed = config.bobSpeed * speedRatio
 	local velocityMag = self.humanoidRootPart.Velocity.Magnitude
+	local instabilityFactor = math.min(velocityMag, config.sprintSpeed)
 
 	if not humanoid.Sit and velocityMag > 0.1 then
 		local moveSway = Vector3.new(
@@ -364,10 +389,8 @@ function ViewmodelController.UpdateMovementSway(
 			getSineOffset(tempBobSpeed / 2),
 			getSineOffset(tempBobSpeed / 2)
 		)
-		local ws = self.weaponState.wepStats()
-		local moveInstability = (ws and ws.MoveInstability) or 1
 
-		self.moveSpring:shove(moveSway * moveInstability * velocityMag / (tempDampening * tempDampening) * dt * 60)
+		self.moveSpring:shove(moveSway * self.moveInstability() * instabilityFactor / (tempDampening * tempDampening) * dt * 60)
 	end
 
 	local updatedMoveSway = self.moveSpring:update(dt)

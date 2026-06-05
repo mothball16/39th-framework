@@ -52,6 +52,9 @@ export type WeaponStats = {
     -- weapon sway when moving while walking: between 0.5-0.75 for most stocked weapons
 	MoveInstability: number,
 
+	-- how much the instability is multiplied by when aiming
+	AimedInstabilityMultiplier: {delta: number, move: number},
+
     -- DTS config shit
 	weaponType: string,
     -- what projectile configuration to use
