@@ -22,6 +22,9 @@ table-util = "sleitnick/table-util@1.2.1"
 Net = "sleitnick/net@0.2.0"
 bytenet-max = "elitriare/bytenet-max@0.2.7"
 
+Lyra = "010devx101/lyra@0.6.3"
+t = "osyrisrblx/t@3.1.1"
+
 [dev-dependencies]
 TestEZ = "roblox/testez@0.4.1"
 ui-labs = "pepeeltoro41/ui-labs@2.4.2"
