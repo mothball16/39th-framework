@@ -1,6 +1,6 @@
 local Client = require("@game/ReplicatedStorage/Packages/charm-sync").client
-local LegacyEvents = require("@game/ReplicatedStorage/Class_Framework/Core/Events").GetLegacyEvents()
-local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
+local LegacyEvents = require("@game/ReplicatedStorage/Faction_Framework/Core/Events").GetLegacyEvents()
+local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
 
 return function(state: State.State)
     Client.addSignals({

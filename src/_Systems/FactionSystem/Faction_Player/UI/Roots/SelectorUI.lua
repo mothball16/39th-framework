@@ -1,6 +1,6 @@
-local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
-local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
-local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
+local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
+local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
+local Enums = require("@game/ReplicatedStorage/Faction_Framework/Core/Enums")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect
 

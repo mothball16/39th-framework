@@ -18,9 +18,9 @@
         "$path":"Utility"
       },
 
-      "Class_Framework": {
+      "Faction_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/_Systems/ClassSystem/Class_Framework"
+        "$path": "src/_Systems/FactionSystem/Faction_Framework"
       },
 
       "SPH_Framework": {
@@ -33,9 +33,9 @@
       "$ignoreUnknownInstances": true,
       "$path": "src/ServerScriptService",
 
-      "Class_Server": {
+      "Faction_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/_Systems/ClassSystem/Class_Server"
+        "$path": "src/_Systems/FactionSystem/Faction_Server"
       },
 
       "SPH_Server": {
@@ -69,9 +69,9 @@
         "$ignoreUnknownInstances": true,
         "$path": "src/StarterPlayer/StarterPlayerScripts",
 
-        "Class_Player": {
+        "Faction_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/_Systems/ClassSystem/Class_Player"
+          "$path": "src/_Systems/FactionSystem/Faction_Player"
         },
 
         "SPH_Player": {

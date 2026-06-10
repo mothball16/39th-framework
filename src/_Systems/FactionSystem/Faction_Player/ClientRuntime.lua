@@ -7,11 +7,11 @@ local VideCharm = require("@game/ReplicatedStorage/Packages/vide-charm")
 local useAtom = VideCharm.useAtom
 
 local create = Vide.create
-local Events = require("@game/ReplicatedStorage/Class_Framework/Core/Events").GetNamespace()
-local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
+local Events = require("@game/ReplicatedStorage/Faction_Framework/Core/Events").GetNamespace()
+local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
 
 local SelectorUI = require("./UI/Roots/SelectorUI")
-local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
+local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
 
 local ClientRuntime = {}
 ClientRuntime.__index = ClientRuntime

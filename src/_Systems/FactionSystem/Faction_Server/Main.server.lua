@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Access = require("@game/ReplicatedStorage/Class_Framework/Access")
-local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
+local Access = require("@game/ReplicatedStorage/Faction_Framework/Access")
+local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
 
 local RuntimeLocator = require("./RuntimeLocator")
 local ServerRuntime = require("./ServerRuntime")
@@ -13,7 +13,7 @@ if Access.Config.DebugMode and game:GetService("RunService"):IsStudio() then
 	local DevPackages = ReplicatedStorage:WaitForChild("DevPackages")
 	local TestEZ = require(DevPackages:WaitForChild("TestEZ"))
 
-	TestEZ.TestBootstrap:run({ ReplicatedStorage.Class_Framework.Tests }, TestEZ.Reporters.TextReporterQuiet)
+	TestEZ.TestBootstrap:run({ ReplicatedStorage.Faction_Framework.Tests }, TestEZ.Reporters.TextReporterQuiet)
 
 	warn(`class system test suite took {tick() - startTick} seconds`)
 end
@@ -55,7 +55,7 @@ runtime:Start()
 
 
 -- register stuff
-local itemProviders = getItemProviders(ReplicatedStorage.Class_Framework.ItemProviders)
+local itemProviders = getItemProviders(ReplicatedStorage.Faction_Framework.ItemProviders)
 for _, itemProvider in pairs(itemProviders) do
 	runtime:RegisterItemProvider(itemProvider)
 end

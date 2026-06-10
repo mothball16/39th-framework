@@ -5,7 +5,7 @@ this helps reduce the amount of boilerplate that has to be put up top in every s
 
 local CollectionService = game:GetService("CollectionService")
 local Types = require("./Core/Types")
-local TAG_NAME = "Class_Assets"
+local TAG_NAME = "Faction_Assets"
 
 local _assetPaths = CollectionService:GetTagged(TAG_NAME)
 local AssetPath = _assetPaths[1]

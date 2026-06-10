@@ -13,7 +13,7 @@ end
 
 
 function Events.GetNamespace()   
-   return ByteNetMax.defineNamespace("Class_Framework", function()
+   return ByteNetMax.defineNamespace("Faction_Framework", function()
       return {
          packets = {
             RequestGroupClass = ByteNetMax.definePacket({

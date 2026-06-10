@@ -4,10 +4,10 @@ validates request data, handles side effects (item assign/unassign),
 and delegates pure state mutations to StateActions
 ]]
 
-local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
-local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
-local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
-local StateActions = require("@game/ReplicatedStorage/Class_Framework/Logic/StateActions")
+local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
+local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
+local Enums = require("@game/ReplicatedStorage/Faction_Framework/Core/Enums")
+local StateActions = require("@game/ReplicatedStorage/Faction_Framework/Logic/StateActions")
 
 local ItemEquipper = require("./ItemEquipper")
 local SelectionService = {}

@@ -1,5 +1,5 @@
 local Item = require("../Core/Item")
-local ItemEquipper = require("@game/ServerScriptService/Class_Server/ItemEquipper")
+local ItemEquipper = require("@game/ServerScriptService/Faction_Server/ItemEquipper")
 local CallbackProvider = require("../ItemProviders/Callback")
 local MaxHealthProvider = require("../ItemProviders/MaxHealth")
 local SpeedProvider = require("../ItemProviders/Speed")

@@ -1,7 +1,7 @@
 local Mocks = require("../Core/Mocks")
 local Item = require("../Core/Item")
 local Enums = require("../Core/Enums")
-local ServerRuntime = require("@game/ServerScriptService/Class_Server/ServerRuntime")
+local ServerRuntime = require("@game/ServerScriptService/Faction_Server/ServerRuntime")
 local StateActions = require("../Logic/StateActions")
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
 

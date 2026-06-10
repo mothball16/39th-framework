@@ -6,10 +6,10 @@ local useAtom = VideCharm.useAtom
 local create = Vide.create
 
 local SelectorUI = require("../Roots/SelectorUI")
-local Mocks = require("@game/ReplicatedStorage/Class_Framework/Core/Mocks")
-local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
-local StateActions = require("@game/ReplicatedStorage/Class_Framework/Logic/StateActions")
-local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
+local Mocks = require("@game/ReplicatedStorage/Faction_Framework/Core/Mocks")
+local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
+local StateActions = require("@game/ReplicatedStorage/Faction_Framework/Logic/StateActions")
+local Enums = require("@game/ReplicatedStorage/Faction_Framework/Core/Enums")
 
 local controls = {}
 

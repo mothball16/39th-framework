@@ -1,5 +1,5 @@
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
-local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
+local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
 
 local ItemEquipper = {}
 ItemEquipper.__index = ItemEquipper

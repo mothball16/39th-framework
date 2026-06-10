@@ -1,6 +1,6 @@
 local Server = require("@game/ReplicatedStorage/Packages/charm-sync").server
-local LegacyEvents = require("@game/ReplicatedStorage/Class_Framework/Core/Events").GetLegacyEvents()
-local State = require("@game/ReplicatedStorage/Class_Framework/Core/State")
+local LegacyEvents = require("@game/ReplicatedStorage/Faction_Framework/Core/Events").GetLegacyEvents()
+local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
 local Players = game:GetService("Players")
 
 return function(state: State.State)

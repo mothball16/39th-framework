@@ -1,5 +1,5 @@
-local Types = require("@game/ReplicatedStorage/Class_Framework/Core/Types")
-local Enums = require("@game/ReplicatedStorage/Class_Framework/Core/Enums")
+local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
+local Enums = require("@game/ReplicatedStorage/Faction_Framework/Core/Enums")
 
 local RadioProvider: Types.ClassItemProvider<BuildArgs> = {
 	ID = "Mod_Radio",
