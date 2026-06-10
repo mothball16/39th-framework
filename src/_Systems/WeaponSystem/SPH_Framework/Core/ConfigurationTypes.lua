@@ -3,6 +3,9 @@ export type WeaponStats = {
 	VRecoil: {number},
     -- horizontal camera recoil: between 10-50 for most guns
 	HRecoil: {number},
+	-- tilt recoil: WIP
+	TRecoil: {number},
+
     -- camera recovery percentage: between 0 & 1
 	AimRecover: number,
 

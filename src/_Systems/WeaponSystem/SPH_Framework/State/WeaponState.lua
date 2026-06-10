@@ -7,6 +7,7 @@ local Enums = require(Framework.Core.Enums)
 local Types = require(Framework.Core.ConfigurationTypes)
 local SP = require(Framework.Weapons.Spring.Default)
 local legacySpring = require(Framework.Weapons.LegacySpring)
+local Ripple = require("@game/ReplicatedStorage/Packages/ripple")
 local Maid = require(Packages.maid)
 
 local WepState = {}
@@ -44,6 +45,8 @@ type self = {
 	RecoilDir: Spring,
 	RecoilUp: Spring,
 	RecoilCF: CFrame,
+	RecoilRot: Ripple.Spring,
+
 	RecoilFactor: number,
 	Spread: number,
 
@@ -89,6 +92,11 @@ function WepState.new(): WeaponState
 		RecoilPos = legacySpring.new(Vector3.new()),
 		RecoilDir = legacySpring.new(Vector3.new()),
 		RecoilUp = legacySpring.new(Vector3.new()),
+		RecoilRot = Ripple.createSpring(0, {
+			tension = 500,
+			mass = 2,
+			friction = 50,
+		}),
 		RecoilCF = CFrame.new(),
 		RecoilFactor = 0,
 		Spread = 0,
@@ -157,7 +165,7 @@ function WepState.new(): WeaponState
 	return self
 end
 
-function WepState:ADSMeshLayerEnabled(sightIndex: number): boolean
+function WepState.ADSMeshLayerEnabled(self: WeaponState, sightIndex: number): boolean
 	local stat = self.wepStats()
 	if not stat or not stat.ADSEnabled then
 		return false
@@ -165,7 +173,7 @@ function WepState:ADSMeshLayerEnabled(sightIndex: number): boolean
 	return stat.ADSEnabled[sightIndex] and true or false
 end
 
-function WepState:Reset()
+function WepState.Reset(self: WeaponState)
 	self.RecoilUp.s = SP.rs
 	self.RecoilUp.d = SP.rd
 	self.RecoilPos.s = SP.rs
@@ -174,6 +182,8 @@ function WepState:Reset()
 	self.RecoilDir.d = SP.rd
 	self.CameraSpring.s = SP.cs
 	self.CameraSpring.d = SP.cd
+	
+	self.RecoilRot:setPosition(0)
 	self.RecoilCF = CFrame.new()
 	self.RecoilFactor = 0
 	self.Spread = 0

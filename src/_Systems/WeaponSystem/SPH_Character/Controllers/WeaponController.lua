@@ -729,10 +729,18 @@ end
 
 local SP = require(Framework.Weapons.Spring.Default)
 
+local function numLerp(number: number, target: number, speed: number): number
+	return number + (target - number) * speed
+end
+
 function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 	coroutine.wrap(function()
 		local vr, hr, vP, hP, dP
 
+		-- tilt recoil
+		local tr = RANDF(wepStats.TRecoil[1], wepStats.TRecoil[2]) * 20 * (math.random() > 0.5 and 1 or -1)
+
+		
 		local VRecoil = RANDF(wepStats.VRecoil[1], wepStats.VRecoil[2])/1000
 		local HRecoil = RANDF(wepStats.HRecoil[1], wepStats.HRecoil[2])/1000
 		local finalRecoilPunch = wepStats.RecoilPunch
@@ -751,6 +759,7 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 
 
 		if self.state.aiming() then
+			tr /= numLerp(1,wepStats.AimRecoilReduction, 0.5)
 			vr /= wepStats.AimRecoilReduction
 			hr /= wepStats.AimRecoilReduction
 			vP /= wepStats.AimRotationalPunchReduction
@@ -760,6 +769,7 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 		end
 
 		if self.weaponState.bipodEnabled() then
+			tr /= 1.5
 			vr  = vr/3
 			hr = hr/3
 
@@ -774,6 +784,8 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 			self.weaponState.RecoilCF = RecoilModule.Recoil(
 				self.weaponState.RecoilCF, finalRecoilPunch, self.weaponState.RecoilFactor,vP,hP,dP)
 		end
+
+		self.weaponState.RecoilRot:impulse(tr * self.weaponState.RecoilFactor)
 
 		local recoilPower = self.weaponState.RecoilFactor
 		vr *= recoilPower
@@ -834,7 +846,7 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 		self.weaponState.RecoilFactor = math.clamp(self.weaponState.RecoilFactor + ws.RecoilStepAmount,
 			ws.MinRecoilFactor, ws.MaxRecoilFactor)
 
-		self.events.FireAnimRequested:Fire()
+		self.localEvents.FireAnimRequested:Fire()
 		self:PerformRecoil(currentStats)
 
 		self.bulletsCurrentlyFired += 1
@@ -958,6 +970,8 @@ function WeaponController.UpdateRender(self: WeaponController, dt)
 	end
 
 	--recoil logic
+	self.weaponState.RecoilRot:step(dt * 2.5)
+
 	self.weaponState.RecoilCF = self.weaponState.RecoilCF:Lerp(CFrame.new(),math.min(1, ws.PunchRecover * adjust))
 	self.weaponState.RecoilPos.t = self.weaponState.RecoilCF.Position
 	self.weaponState.RecoilDir.t = self.weaponState.RecoilCF.LookVector

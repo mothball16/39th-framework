@@ -344,6 +344,13 @@ function ViewmodelController.UpdateViewmodelPosition(
 		animBase.CFrame *= CFrame.lookAt(recoilPos, recoilPos + recoilLook, recoilUp)
 	end
 
+	if self.weaponState.RecoilRot:getPosition() > 1e-6 then
+		local aimPartCFrame = aimPart.CFrame
+		local roll = CFrame.Angles(0, 0, -math.rad(self.weaponState.RecoilRot:getPosition()))
+		local relativeCFrame = aimPartCFrame:Inverse() * animBase.CFrame
+		animBase.CFrame = aimPartCFrame * roll * relativeCFrame
+	end
+
 	if not self.weaponState.viewmodelVisible() then
 		animBase.CFrame *= STORAGE_CFRAME
 	end
