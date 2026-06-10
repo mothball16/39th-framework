@@ -206,7 +206,7 @@ local function getOrCreateTracks(self: AnimationController, animName: string, pl
 
 	vmTrack.KeyframeReached:Connect(function(keyframeName)
 		local currentType = vmTrack:GetAttribute("AnimType") or Enums.WeaponAnim.Unknown.tag
-		self.events.KeyframeReached:Fire(animName, keyframeName, vmTrack, currentType)
+		self.events.ReloadEventReached:Fire(animName, keyframeName, vmTrack, currentType)
 	end)
 
 	vmTrack.Stopped:Connect(function()

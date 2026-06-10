@@ -188,15 +188,16 @@ function ViewmodelController.UpdateViewmodelPosition(
 	offset: CFrame,
 	sightIndex: number
 )
+	local ws = self.weaponState.wepStats()
+	if not ws then
+		return
+	end
 	local animBase = self.animBase
 	local camera = self.camera
 	local humanoidRootPart = self.humanoidRootPart
 	local weaponRig = self.weaponRig
 	local rayParams = self.rayParams
-	local ws = self.weaponState.wepStats()
-	if not ws then
-		return
-	end
+	
 
 	animBase.CFrame = CFrame.new((camera.CFrame * offset).Position)
 

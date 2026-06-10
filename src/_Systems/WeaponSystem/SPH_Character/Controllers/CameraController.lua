@@ -69,13 +69,10 @@ function CameraController.new(params: {
 	end)
 
 	self.FOVTarget = Charm.computed(function()
-		local isSprinting = self.state.sprinting()
-		local isAiming = self.state.aiming()
-
-		if isAiming then
+		if self.state.aiming() then
 			return self.aimFOVTarget()
 		end
-		return config.defaultFOV * (if isSprinting then SPRINT_FOV_MULTIPLIER else 1)
+		return config.defaultFOV * (if self.state.sprinting() then SPRINT_FOV_MULTIPLIER else 1)
 	end)
 
 	self.zoomDistance = Charm.computed(function()
@@ -279,6 +276,7 @@ function CameraController.UpdateRender(self: CameraController, dt: number)
 	self.weaponState.CameraSpring.t = self.weaponState.CameraSpring.t - self.weaponState.CameraSpring.p
 	self.weaponState.CameraSpring.p = Vector3.new()
 
+	self.camera.CFrame *= CFrame.Angles(0, 0, math.rad(self.weaponState.RecoilRot:getPosition()))
 	self:UpdateFOV(dt)
 end
 

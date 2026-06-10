@@ -1,3 +1,10 @@
+--[[
+lowkey gave up on refactoring this
+good luck guys
+
+handles most of the weapon state manipulations
+]]
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local RunService = game:GetService("RunService")
@@ -13,7 +20,7 @@ local bulletHandler = require(Framework.Ballistics.BulletHandler)
 local shellEjection = require(Framework.Weapons.ShellEjection)
 local weldMod = require(Framework.Weapons.WeldMod)
 local NetworkEvents = require(Framework.Network.NetworkEvents)
-local LocalEvents = require(script.Parent.LocalEvents)
+local LocalEvents = require(script.Parent:WaitForChild("LocalEvents"))
 local weaponPrefsClient = require(Framework.Weapons.WeaponPrefsClient)
 local weaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
 local holosightMod = require(Framework.Weapons.Mods.Holosight)
@@ -31,7 +38,7 @@ WeaponController.__index = WeaponController
 type self = {
 	state: CharacterStateModule.CharacterState,
 	weaponState: WeaponStateModule.WeaponState,
-	events: LocalEvents.LocalEvents,
+	localEvents: LocalEvents.LocalEvents,
 
 	holdingM1: boolean,
 	cycled: boolean,
@@ -119,7 +126,7 @@ function WeaponController.new(params: {
 		viewmodelRig = params.viewmodelRig,
 		thirdPersonRig = params.thirdPersonRig,
 		holosightMod = holosightMod.new(params.weaponState),
-		events = params.events,
+		localEvents = params.events,
 	} :: self, WeaponController)
 
 	self.character.ChildAdded:Connect(function(child)
@@ -158,10 +165,10 @@ function WeaponController.new(params: {
 		self:SyncChambering(chambering)
 	end)
 
-	self.events.KeyframeReached:Connect(function(animName, keyframeName, newAnim, animType)
-		self:OnKeyframeReached(animName, keyframeName, newAnim, animType)
+	self.localEvents.ReloadEventReached:Connect(function(animName, keyframeName, newAnim, animType)
+		self:OnReloadEventReached(animName, keyframeName, newAnim, animType)
 	end)
-	self.events.AnimationStopped:Connect(function(animName, newAnim, animType)
+	self.localEvents.AnimationStopped:Connect(function(animName, newAnim, animType)
 		self:OnAnimationStopped(animName, newAnim, animType)
 	end)
 
@@ -437,7 +444,7 @@ function WeaponController.Unequip(self: WeaponController, tool)
 		self.weaponState:Reset()
 	end
 	UserInputService.MouseIconEnabled = true
-	self.events.StopAllRequested:Fire()
+	self.localEvents.StopAllRequested:Fire()
 
 
 
@@ -514,8 +521,8 @@ function WeaponController.Equip(self: WeaponController, newChild)
 
 	self.weaponState.maid:GiveTask(weldMod.BlankM6D(self.viewmodelRig.AnimBase, gun.Grip))
 
-	self.events.WeaponEquipRequested:Fire()
-	self.events.WeaponIdleRequested:Fire()
+	self.localEvents.WeaponEquipRequested:Fire()
+	self.localEvents.WeaponIdleRequested:Fire()
 
 	if not ws then return end
 	if ws.openBolt or not self.state.equippedTool().Chambered.Value then
@@ -543,7 +550,7 @@ function WeaponController.Equip(self: WeaponController, newChild)
 
 		if ws.ubgl.reloadAnim then
 			local animSpeed = ws.reloadSpeedModifier
-			self.events.PlayAnimationRequested:Fire(ws.ubgl.reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, Enums.WeaponAnim.Reload)
+			self.localEvents.PlayAnimationRequested:Fire(ws.ubgl.reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, Enums.WeaponAnim.Reload)
 		end
 	else
 		self.ubglAmmo = nil
@@ -596,7 +603,7 @@ function WeaponController.OnReloadIntent(self: WeaponController, inputState, inp
 		local ubglAmmoPool = self.state.equippedTool():FindFirstChild("UBGLAmmoPool")
 		if self.ubglAmmo and self.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
 			self.cancelReload = false
-			self.events.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
+			self.localEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
 		end
 	else
 		local ws = self.weaponState.wepStats()
@@ -606,7 +613,7 @@ function WeaponController.OnReloadIntent(self: WeaponController, inputState, inp
 		if ws.infiniteAmmo or self.weaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
 			if (ws.openBolt and self.weaponState.gunAmmo.MagAmmo.Value < self.weaponState.gunAmmo.MagAmmo.MaxValue) then
 				self.cancelReload = false
-				self.events.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
+				self.localEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
 			else
 				if (ws.operationType == Enums.OperationType.NonReciprocating and self.state.equippedTool().Chambered.Value)
 					or (ws.operationType == Enums.OperationType.ManualCycleAlways and self.weaponState.gunAmmo.MagAmmo.Value + 1 >= self.weaponState.gunAmmo.MagAmmo.MaxValue)
@@ -614,7 +621,7 @@ function WeaponController.OnReloadIntent(self: WeaponController, inputState, inp
 						return
 				end
 				self.cancelReload = false
-				self.events.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
+				self.localEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
 			end
 		end
 	end
@@ -652,7 +659,7 @@ end
 function WeaponController.OnSwitchFireModeIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
 	if inputState == inputBegan then
-		self.events.SwitchFireModeAnimRequested:Fire()
+		self.localEvents.SwitchFireModeAnimRequested:Fire()
 	end
 end
 
@@ -920,7 +927,7 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 
 			bulletHandler.FireBullet(self.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, bulletData, self.player, tracerColor, function(userData, raycastResult)
 				-- when bullet hits, this callback lets other controllers know about it
-				self.events.BulletHit:Fire(userData.wepStats, bulletOrigin, raycastResult)
+				self.localEvents.BulletHit:Fire(userData.wepStats, bulletOrigin, raycastResult)
 			end)
 		end
 
@@ -1008,7 +1015,7 @@ function WeaponController.UpdateRender(self: WeaponController, dt)
 	self.holosightMod:UpdateRender(dt)
 end
 
-function WeaponController.OnKeyframeReached(self: WeaponController, animName, keyframeName, newAnim, animType)
+function WeaponController.OnReloadEventReached(self: WeaponController, animName, keyframeName, newAnim, animType)
 	local ws = self.weaponState.wepStats()
 	if not ws then
 		return
@@ -1017,8 +1024,8 @@ function WeaponController.OnKeyframeReached(self: WeaponController, animName, ke
 	if keyframeName == "MagIn" then
 		if self.state.equippedTool() and (not self.state.equippedTool().Chambered.Value or ws.openBolt) and ws.autoChamber then
 			self.weaponState.reloading(true)
-			self.events.StopAnimationRequested:Fire(animName, 0.4)
-			self.events.BoltActionRequested:Fire(self.state.equippedTool().BoltReady.Value)
+			self.localEvents.StopAnimationRequested:Fire(animName, 0.4)
+			self.localEvents.BoltActionRequested:Fire(self.state.equippedTool().BoltReady.Value)
 		end
 		local bulletHandlerPart = ws.bulletHandler and self.weaponState.gunModel():FindFirstChild(ws.bulletHolder)
 		if bulletHandlerPart then
@@ -1027,16 +1034,16 @@ function WeaponController.OnKeyframeReached(self: WeaponController, animName, ke
 			end
 		end
 		P.Reload.send({ _ = 0 })
-		if ws.magType > 1 then newAnim.DidLoop:Once(function() self.events.StopAnimationRequested:Fire(animName) end) end
+		if ws.magType > 1 then newAnim.DidLoop:Once(function() self.localEvents.StopAnimationRequested:Fire(animName) end) end
 	elseif keyframeName == "ShellInsert" or keyframeName == "BulletInsert" then
 		if self.cancelReload then
 			self.cancelReload = false
 			newAnim.Looped = false
 			newAnim.Stopped:Once(function()
 				if not self.state.equippedTool() then return end
-				self.events.StopAnimationRequested:Fire(newAnim.Name)
+				self.localEvents.StopAnimationRequested:Fire(newAnim.Name)
 				if not self.state.equippedTool().BoltReady.Value or ws.openBolt then
-					self.events.BoltActionRequested:Fire(false)
+					self.localEvents.BoltActionRequested:Fire(false)
 				else
 					self.weaponState.reloading(false)
 				end
@@ -1044,9 +1051,9 @@ function WeaponController.OnKeyframeReached(self: WeaponController, animName, ke
 		elseif self.weaponState.gunAmmo.MagAmmo.Value + 1 >= self.weaponState.gunAmmo.MagAmmo.MaxValue or self.weaponState.gunAmmo.ArcadeAmmoPool.Value - 1 <= 0 then
 			newAnim.DidLoop:Once(function()
 				if not self.state.equippedTool() then return end
-				self.events.StopAnimationRequested:Fire(newAnim.Name)
+				self.localEvents.StopAnimationRequested:Fire(newAnim.Name)
 				if not self.state.equippedTool().BoltReady.Value or ws.operationType == 3 or ws.openBolt then
-					self.events.BoltActionRequested:Fire(false)
+					self.localEvents.BoltActionRequested:Fire(false)
 				else
 					self.weaponState.reloading(false)
 				end
@@ -1063,8 +1070,8 @@ function WeaponController.OnKeyframeReached(self: WeaponController, animName, ke
 		local ammoNeeded = self.weaponState.gunAmmo.MagAmmo.MaxValue - self.weaponState.gunAmmo.MagAmmo.Value
 		local clipSize = ws.clipSize or ws.magazineCapacity
 		if ammoNeeded > 0 then
-			self.events.StopAnimationRequested:Fire(newAnim.Name)
-			self.events.ReloadActionRequested:Fire(ammoNeeded >= clipSize)
+			self.localEvents.StopAnimationRequested:Fire(newAnim.Name)
+			self.localEvents.ReloadActionRequested:Fire(ammoNeeded >= clipSize)
 		end
 	elseif keyframeName == "ClipInsert" then
 		P.Reload.send({ _ = 0 })

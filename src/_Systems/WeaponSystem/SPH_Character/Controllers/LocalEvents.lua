@@ -1,29 +1,26 @@
+--!strict
 local Signal = require("@game/ReplicatedStorage/Packages/signal")
 local Types = require("@game/ReplicatedStorage/SPH_Framework/Core/ConfigurationTypes")
-local LocalEvents = {}
-LocalEvents.__index = LocalEvents
 
-type self = {
+export type LocalEvents = {
 	BulletHit: Signal.Signal<Types.WeaponStats, Vector3, RaycastResult>,
-
 	WeaponEquipRequested: Signal.Signal<>,
 	WeaponIdleRequested: Signal.Signal<>,
 	FireAnimRequested: Signal.Signal<>,
 	ReloadRequested: Signal.Signal<string?>,
 	SwitchFireModeAnimRequested: Signal.Signal<>,
 	StopAllRequested: Signal.Signal<>,
+
 	PlayAnimationRequested: Signal.Signal<string, { [string]: any }?, { key: string?, tag: string, defaultsKey: string? }?>,
 	StopAnimationRequested: Signal.Signal<string, number>,
 	BoltActionRequested: Signal.Signal<boolean>,
 	ReloadActionRequested: Signal.Signal<boolean>,
-	KeyframeReached: Signal.Signal<string, string, AnimationTrack, string>,
+	ReloadEventReached: Signal.Signal<string, string, AnimationTrack, string>,
 	AnimationStopped: Signal.Signal<string, AnimationTrack, string>,
 }
 
-export type LocalEvents = typeof(setmetatable({} :: self, LocalEvents))
-
-function LocalEvents.new(): LocalEvents
-	return setmetatable({
+return function(): LocalEvents
+	return {
 		BulletHit = Signal.new(),
 		
 		WeaponEquipRequested = Signal.new(),
@@ -36,9 +33,7 @@ function LocalEvents.new(): LocalEvents
 		StopAnimationRequested = Signal.new(),
 		BoltActionRequested = Signal.new(),
 		ReloadActionRequested = Signal.new(),
-		KeyframeReached = Signal.new(),
+		ReloadEventReached = Signal.new(),
 		AnimationStopped = Signal.new(),
-	} :: self, LocalEvents)
+	} :: LocalEvents
 end
-
-return LocalEvents

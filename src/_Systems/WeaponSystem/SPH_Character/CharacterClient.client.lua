@@ -31,7 +31,7 @@ local ReplicationController = require(Controllers:WaitForChild("ReplicationContr
 local UIController = require(Controllers:WaitForChild("UIController"))
 local ViewmodelController = require(Controllers:WaitForChild("ViewmodelController"))
 local WeaponController = require(Controllers:WaitForChild("WeaponController"))
-local localEvents = require(Controllers:WaitForChild("LocalEvents")).new()
+local localEvents = require(Controllers:WaitForChild("LocalEvents"))()
 
 local NetworkEvents = require(Framework.Network.NetworkEvents)
 local P = NetworkEvents.packets
