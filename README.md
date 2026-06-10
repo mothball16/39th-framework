@@ -1,6 +1,10 @@
 # 39th-framework
 * The spaghetti bowl holding together 39th ACR/WN games.
 
+### overview
+* **FactionSystem**: Native faction management framework. Currently supports classes & variants, with future implementation of buildings and spawners on the horizon.
+* **WeaponSystem**: Modification of Spearhead aiming for UX improvements, immersive gunplay, and overall optimization. Features a re-written client-side using reactivity to somewhat salvage the previous monolithic client script.
+
 ### prerequisites
 * [Aftman](https://github.com/LPGhatguy/aftman) for toolchain management
 * [Rojo](https://rojo.space/) for project synchronization
