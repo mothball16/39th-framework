@@ -49,7 +49,7 @@ function ClientRuntime.Start(self: ClientRuntime)
 			SelectorUI({
 				isOpen = useAtom(self.selectorOpen),
 				manualButton = self.access.Config.ShowManualButton,
-				playerKey = tostring(Players.LocalPlayer.UserId),
+				userId = Players.LocalPlayer.UserId,
 				state = self.state,
 				setSelectorOpen = function(open: boolean)
 					self.selectorOpen(open)

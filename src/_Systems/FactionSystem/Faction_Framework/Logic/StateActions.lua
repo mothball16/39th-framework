@@ -52,9 +52,9 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string): (bo
 
 	-- make a pass to get players within the removed factions
 	local affectedPlayers = {}
-	for playerKey, factionId in pairs(state.playerByFactionId()) do
+	for userId, factionId in pairs(state.playerByFactionId()) do
 		if factionId == idToRemove then
-			table.insert(affectedPlayers, playerKey)
+			table.insert(affectedPlayers, userId)
 		end
 	end
 
@@ -66,10 +66,10 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string): (bo
 	local nextplayerByFactionId = table.clone(state.playerByFactionId())
 	local nextplayerByGroupKey = table.clone(state.playerByGroupKey())
 	local nextplayerByClassId = table.clone(state.playerByClassId())
-	for _, playerKey in ipairs(affectedPlayers) do
-		nextplayerByFactionId[playerKey] = nil
-		nextplayerByGroupKey[playerKey] = nil
-		nextplayerByClassId[playerKey] = nil
+	for _, userId in ipairs(affectedPlayers) do
+		nextplayerByFactionId[userId] = nil
+		nextplayerByGroupKey[userId] = nil
+		nextplayerByClassId[userId] = nil
 	end
 
 	Charm.batch(function()
@@ -80,7 +80,7 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string): (bo
 	return true, nil
 end
 
-function StateActions.SetPlayerFaction(state: State.State, userId: string, factionId: string): (boolean, string?)
+function StateActions.SetPlayerFaction(state: State.State, userId: number, factionId: string): (boolean, string?)
 	if not state.configByFactionId()[factionId] then
 		return false, `denied: faction {factionId} is not a valid faction`
 	end
@@ -94,7 +94,7 @@ function StateActions.SetPlayerFaction(state: State.State, userId: string, facti
 	return success, msg
 end
 
-function StateActions.SetPlayerGroupClass(state: State.State, userId: string, groupKey: string?, classId: string?): (boolean, string?)
+function StateActions.SetPlayerGroupClass(state: State.State, userId: number, groupKey: string?, classId: string?): (boolean, string?)
 	-- either intentionally or accidentally empty, remove everything cause
 	-- it will brick the classes otherwise
 	if not groupKey or not classId then
@@ -156,18 +156,18 @@ function StateActions.SetPlayerGroupClass(state: State.State, userId: string, gr
 	return true, nil
 end
 
-function StateActions.RemovePlayerGroupClass(state: State.State, userId: string): (boolean, string?)
+function StateActions.RemovePlayerGroupClass(state: State.State, userId: number): (boolean, string?)
 	return StateActions.SetPlayerGroupClass(state, userId, nil, nil)
 end
 
 
-function StateActions.RemovePlayerFaction(state: State.State, userId: string): (boolean, string?)
+function StateActions.RemovePlayerFaction(state: State.State, userId: number): (boolean, string?)
 	_updateMapValue(state.playerByFactionId, userId, nil)
 	return StateActions.RemovePlayerGroupClass(state, userId)
 end
 
 
-function StateActions.SetPlayerToDefaultGroupClass(state: State.State, userId: string, factionId: string): (boolean, string?)
+function StateActions.SetPlayerToDefaultGroupClass(state: State.State, userId: number, factionId: string): (boolean, string?)
 	local factionConfig = state.configByFactionId()[factionId]
 	local msg = ""
 	if not factionConfig then

@@ -9,9 +9,9 @@ State.__index = State
 
 type self = {
 	configByFactionId: Charm.Atom<{ [string]: Types.FactionConfig }>,
-	playerByFactionId: Charm.Atom<{ [string]: string }>,
-	playerByGroupKey: Charm.Atom<{ [string]: string }>,
-	playerByClassId: Charm.Atom<{ [string]: string }>,
+	playerByFactionId: Charm.Atom<{ [number]: string }>,
+	playerByGroupKey: Charm.Atom<{ [number]: string }>,
+	playerByClassId: Charm.Atom<{ [number]: string }>,
 
 	groupCountByFaction: () -> { [string]: { [string]: number } },
 }
@@ -42,8 +42,8 @@ function State.new(): State
 			countsByFaction[factionId] = counts
 		end
 
-		for playerKey, factionId in pairs(playerByFactionId) do
-			local groupKey = playerByGroupKey[playerKey]
+		for userId, factionId in pairs(playerByFactionId) do
+			local groupKey = playerByGroupKey[userId]
 			if not groupKey then
 				continue
 			end

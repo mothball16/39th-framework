@@ -14,7 +14,7 @@ local PADDING_SCALE = 0.02
 
 return function(props: {
 	state: State.State,
-	playerKey: string,
+	userId: number,
 	manualButton: boolean,
 	isOpen: Vide.Source<boolean>,
 	setSelectorOpen: ((open: boolean) -> ()) -> (),
@@ -28,7 +28,7 @@ return function(props: {
 
 	-- my(...) represents the read-only slice of the state that is relevant to the current player
 	local myFactionId: () -> string = derive(function()
-		return state.playerByFactionId()[props.playerKey]
+		return state.playerByFactionId()[props.userId]
 	end)
 
 	local myFactionConfig: () -> Types.FactionConfig = derive(function()
@@ -40,7 +40,7 @@ return function(props: {
 	end)
 
 	local myGroupKey: () -> string = derive(function()
-		return state.playerByGroupKey()[props.playerKey]
+		return state.playerByGroupKey()[props.userId]
 	end)
 
 	-----------------------------------------------------------------
