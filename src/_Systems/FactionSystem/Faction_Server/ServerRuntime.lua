@@ -1,3 +1,4 @@
+--!strict
 local Players = game:GetService("Players")
 
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
@@ -7,7 +8,7 @@ local Events = require("@game/ReplicatedStorage/Faction_Framework/Core/Events").
 local Enums = require("@game/ReplicatedStorage/Faction_Framework/Core/Enums")
 local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
 local StateActions = require("@game/ReplicatedStorage/Faction_Framework/Logic/StateActions")
-
+local Utilities = require("@game/ReplicatedStorage/Faction_Framework/Logic/Utilities")
 local ItemEquipper = require("./ItemEquipper")
 local SelectionService = require("./SelectionService")
 
@@ -16,6 +17,9 @@ ServerRuntime.__index = ServerRuntime
 
 type self = {
 	state: State.State,
+	access: Types.Access,
+	report: typeof(Utilities.Report),
+
 	itemEquipper: ItemEquipper.ItemEquipper,
 	selectionService: SelectionService.SelectionService,
 	maid: Maid.Maid,
@@ -31,6 +35,8 @@ function ServerRuntime.new(args: {
 })
 	local self = setmetatable({
 		access = args.access,
+		report = args.access.Config.DebugMode and Utilities.Report or function() end,
+
 		state = State.new(),
 		maid = Maid.new(),
 
@@ -53,11 +59,11 @@ function ServerRuntime.RegisterFaction(self: ServerRuntime, factionConfig: Types
 	end
 
 	self._configByFactionId[factionConfig.ID] = factionConfig
-	StateActions.CreateFaction(self.state, factionConfig)
+	self.report(StateActions.CreateFaction(self.state, factionConfig))
 end
 
 function ServerRuntime.UnregisterFaction(self: ServerRuntime, factionId: string)
-	StateActions.RemoveFaction(self.state, factionId)
+	self.report(StateActions.RemoveFaction(self.state, factionId))
 end
 
 function ServerRuntime.RegisterClass(self: ServerRuntime, classConfig: Types.Class)
@@ -107,7 +113,7 @@ function ServerRuntime.Start(self: ServerRuntime)
 		end
 
 		local function handleTeamChange(player: Player)
-			self.selectionService:HandleTeamChange(player, player.Team, self.itemEquipper)
+			self.report(self.selectionService:HandleTeamChange(player, player.Team, self.itemEquipper))
 			if shouldAutoAssignAfterTeamChange() then
 				safeAssignClassItems(player)
 			end
@@ -129,19 +135,22 @@ function ServerRuntime.Start(self: ServerRuntime)
 	end)
 
 	Players.PlayerRemoving:Connect(function(player)
-		StateActions.RemovePlayerFaction(self.state, player.UserId)
+		self.report(StateActions.RemovePlayerFaction(self.state, player.UserId))
 	end)
 
 	Events.packets.RequestFaction.listen(function(data, player)
-		self.selectionService:HandleFactionRequest(player, data)
+		if not player then return end
+		self.report(self.selectionService:HandleFactionRequest(player, data))
 	end)
 
 	Events.packets.RequestGroupClass.listen(function(data, player)
-		self.selectionService:HandleGroupClassRequest(player, data, self.itemEquipper)
+		if not player then return end
+		self.report(self.selectionService:HandleGroupClassRequest(player, data, self.itemEquipper))
 	end)
 	
 	Events.packets.RequestClassApply.listen(function(data, player)
-		self.selectionService:HandleClassApplyRequest(player, data, self.itemEquipper)
+		if not player then return end
+		self.report(self.selectionService:HandleClassApplyRequest(player, data, self.itemEquipper))
 	end)
 end
 
