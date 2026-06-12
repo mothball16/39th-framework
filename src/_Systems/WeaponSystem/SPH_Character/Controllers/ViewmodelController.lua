@@ -91,6 +91,7 @@ function ViewmodelController.new(params: {
 
 	self.moveInstability = Charm.computed(function()
 		local ws = self.weaponState.wepStats()
+		
 		local aiming = self.state.aiming()
 		if not ws then
 			return 1
@@ -182,6 +183,14 @@ function ViewmodelController.ResetHipRotation(self: ViewmodelController)
 	self.hipRotation = Vector2.zero
 end
 
+function ViewmodelController.ApplyCFrameOffsetFrom(self: ViewmodelController, part: BasePart, offset: CFrame)
+	local animBase = self.animBase
+	local partCF = part.CFrame
+	local relativeCF = partCF:Inverse() * animBase.CFrame
+
+	animBase.CFrame = partCF * offset * relativeCF
+end
+
 function ViewmodelController.UpdateViewmodelPosition(
 	self: ViewmodelController,
 	dt: number,
@@ -221,6 +230,7 @@ function ViewmodelController.UpdateViewmodelPosition(
 
 	local gunModel = self.weaponState.gunModel()
 	local aimPart = gunModel:FindFirstChild("AimPart" .. sightIndex) or gunModel.AimPart
+	local grip = gunModel.Grip
 	self.aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
 
 	local lerpFactor = self.weaponState.aimLerpFactor()
@@ -342,14 +352,11 @@ function ViewmodelController.UpdateViewmodelPosition(
 	local recoilLook = self.weaponState.RecoilDir.p
 	local recoilUp = self.weaponState.RecoilUp.p
 	if recoilLook.Magnitude > 1e-6 then
-		animBase.CFrame *= CFrame.lookAt(recoilPos, recoilPos + recoilLook, recoilUp)
+		self:ApplyCFrameOffsetFrom(grip, CFrame.lookAt(recoilPos, recoilPos + recoilLook, recoilUp))
 	end
 
 	if self.weaponState.RecoilRot:getPosition() > 1e-6 then
-		local aimPartCFrame = aimPart.CFrame
-		local roll = CFrame.Angles(0, 0, -math.rad(self.weaponState.RecoilRot:getPosition()))
-		local relativeCFrame = aimPartCFrame:Inverse() * animBase.CFrame
-		animBase.CFrame = aimPartCFrame * roll * relativeCFrame
+		self:ApplyCFrameOffsetFrom(aimPart, CFrame.Angles(0, 0, -math.rad(self.weaponState.RecoilRot:getPosition())))
 	end
 
 	if not self.weaponState.viewmodelVisible() then
