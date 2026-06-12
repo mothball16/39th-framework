@@ -4,7 +4,12 @@
     {
       "label": "Update Wally & Sourcemap",
       "type": "shell",
-      "command": "Stop-Process -Id (Get-NetTCPConnection -LocalPort 34872).OwningProcess -ErrorAction SilentlyContinue;wally install; rojo sourcemap default.project.json --output sourcemap.json; wally-package-types --sourcemap sourcemap.json Packages/",
+      "windows": {
+        "command": "Stop-Process -Id (Get-NetTCPConnection -LocalPort 34872).OwningProcess -ErrorAction SilentlyContinue; wally install; rojo sourcemap default.project.json --output sourcemap.json; wally-package-types --sourcemap sourcemap.json Packages/"
+      },
+      "linux": {
+        "command": "fuser -k 34872/tcp 2>/dev/null; wally install && rojo sourcemap default.project.json --output sourcemap.json && wally-package-types --sourcemap sourcemap.json Packages/"
+      },
       "group": {
         "kind": "build",
         "isDefault": true
