@@ -35,7 +35,9 @@ function ServerRuntime.new(args: {
 })
 	local self = setmetatable({
 		access = args.access,
-		report = args.access.Config.DebugMode and Utilities.Report or function() end,
+		report = args.access.Config.DebugMode and Utilities.Report or function(result: boolean, message: string?, _action: string?)
+			return result, message
+		end,
 
 		state = State.new(),
 		maid = Maid.new(),
@@ -100,7 +102,7 @@ end
 function ServerRuntime.Start(self: ServerRuntime)
 	Players.PlayerAdded:Connect(function(player)
 		local function safeAssignClassItems(player: Player)
-			local classId = self.state.playerByClassId()[player.UserId]
+			local classId = self.state.playerByClassId()[Utilities.ToPlayerKey(player.UserId)]
 			if not classId then
 				return
 			end

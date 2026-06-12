@@ -8,6 +8,7 @@ local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
 local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
 local Enums = require("@game/ReplicatedStorage/Faction_Framework/Core/Enums")
 local StateActions = require("@game/ReplicatedStorage/Faction_Framework/Logic/StateActions")
+local Utilities = require("@game/ReplicatedStorage/Faction_Framework/Logic/Utilities")
 
 local ItemEquipper = require("./ItemEquipper")
 local SelectionService = {}
@@ -43,7 +44,7 @@ function SelectionService.HandleGroupClassRequest(self: SelectionService, player
 	group: string,
 	class: string,
 }, itemEquipper: ItemEquipper.ItemEquipper): (boolean, string?)
-	local prevClassId = self.state.playerByClassId()[player.UserId]
+	local prevClassId = self.state.playerByClassId()[Utilities.ToPlayerKey(player.UserId)]
 	local success, msg = StateActions.SetPlayerGroupClass(
 		self.state,
 		player.UserId,
@@ -55,7 +56,7 @@ function SelectionService.HandleGroupClassRequest(self: SelectionService, player
 		return false, msg
 	end
 
-	local nextClassId = self.state.playerByClassId()[player.UserId]
+	local nextClassId = self.state.playerByClassId()[Utilities.ToPlayerKey(player.UserId)]
 	if prevClassId and prevClassId ~= nextClassId then
 		itemEquipper:UnassignClassItems(player, prevClassId)
 	end
@@ -71,7 +72,7 @@ function SelectionService.HandleClassApplyRequest(self: SelectionService, player
 	enable: boolean
 }, itemEquipper: ItemEquipper.ItemEquipper
 ): (boolean, string?)
-	local classId = self.state.playerByClassId()[player.UserId]
+	local classId = self.state.playerByClassId()[Utilities.ToPlayerKey(player.UserId)]
 	if not classId then
 		return false, `denied: player {player.UserId} is not in a class`
 	end
@@ -109,11 +110,11 @@ function SelectionService.HandleTeamChange(
 		return false, `denied: faction {autoFactionAttribute} is not a valid faction`
 	end
 
-	if self.state.playerByFactionId()[player.UserId] == autoFactionAttribute then
+	if self.state.playerByFactionId()[Utilities.ToPlayerKey(player.UserId)] == autoFactionAttribute then
 		return true, `ignored: faction {autoFactionAttribute} is the same as the previous`
 	end
 
-	local prevClassId = self.state.playerByClassId()[player.UserId]
+	local prevClassId = self.state.playerByClassId()[Utilities.ToPlayerKey(player.UserId)]
 	local success, msg = StateActions.SetPlayerFaction(self.state, player.UserId, autoFactionAttribute)
 	if not success then
 		if msg then

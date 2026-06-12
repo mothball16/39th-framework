@@ -71,4 +71,4 @@ for _, factionConfig in pairs(factionConfigs) do
 end
 
 -- connect the server syncer
-SetupStateSync(runtime)
+SetupStateSync(runtime.state)

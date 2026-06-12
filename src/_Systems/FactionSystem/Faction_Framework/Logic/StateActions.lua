@@ -4,6 +4,7 @@ utility module for performing state transformations
 
 local Types = require("../Core/Types")
 local State = require("../Core/State")
+local Utilities = require("./Utilities")
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 
 local StateActions = {}
@@ -80,7 +81,9 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string): (bo
 	return true, nil
 end
 
-function StateActions.SetPlayerFaction(state: State.State, userId: number, factionId: string): (boolean, string?)
+function StateActions.SetPlayerFaction(state: State.State, userId: number | string, factionId: string): (boolean, string?)
+	userId = Utilities.ToPlayerKey(userId)
+
 	if not state.configByFactionId()[factionId] then
 		return false, `denied: faction {factionId} is not a valid faction`
 	end
@@ -94,7 +97,8 @@ function StateActions.SetPlayerFaction(state: State.State, userId: number, facti
 	return success, msg
 end
 
-function StateActions.SetPlayerGroupClass(state: State.State, userId: number, groupKey: string?, classId: string?): (boolean, string?)
+function StateActions.SetPlayerGroupClass(state: State.State, userId: number | string, groupKey: string?, classId: string?): (boolean, string?)
+	userId = Utilities.ToPlayerKey(userId)
 	-- either intentionally or accidentally empty, remove everything cause
 	-- it will brick the classes otherwise
 	if not groupKey or not classId then
@@ -135,7 +139,7 @@ function StateActions.SetPlayerGroupClass(state: State.State, userId: number, gr
 			return false, `denied: class id {classId} is not a valid class of group {groupKey} of faction {playerFactionId}`
 		end
 
-		if foundConfig.AccessCheck and not foundConfig.AccessCheck(userId) then
+		if foundConfig.AccessCheck and not foundConfig.AccessCheck(tonumber(userId) :: number) then
 			return false, `denied: player {userId} fails the access check for class {classId}`
 		end
 
@@ -156,18 +160,20 @@ function StateActions.SetPlayerGroupClass(state: State.State, userId: number, gr
 	return true, nil
 end
 
-function StateActions.RemovePlayerGroupClass(state: State.State, userId: number): (boolean, string?)
+function StateActions.RemovePlayerGroupClass(state: State.State, userId: number | string): (boolean, string?)
 	return StateActions.SetPlayerGroupClass(state, userId, nil, nil)
 end
 
 
-function StateActions.RemovePlayerFaction(state: State.State, userId: number): (boolean, string?)
+function StateActions.RemovePlayerFaction(state: State.State, userId: number | string): (boolean, string?)
+	userId = Utilities.ToPlayerKey(userId)
 	_updateMapValue(state.playerByFactionId, userId, nil)
 	return StateActions.RemovePlayerGroupClass(state, userId)
 end
 
 
-function StateActions.SetPlayerToDefaultGroupClass(state: State.State, userId: number, factionId: string): (boolean, string?)
+function StateActions.SetPlayerToDefaultGroupClass(state: State.State, userId: number | string, factionId: string): (boolean, string?)
+	userId = Utilities.ToPlayerKey(userId)
 	local factionConfig = state.configByFactionId()[factionId]
 	local msg = ""
 	if not factionConfig then

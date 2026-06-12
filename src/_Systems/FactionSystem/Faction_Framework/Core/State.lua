@@ -9,9 +9,9 @@ State.__index = State
 
 type self = {
 	configByFactionId: Charm.Atom<{ [string]: Types.FactionConfig }>,
-	playerByFactionId: Charm.Atom<{ [number]: string }>,
-	playerByGroupKey: Charm.Atom<{ [number]: string }>,
-	playerByClassId: Charm.Atom<{ [number]: string }>,
+	playerByFactionId: Charm.Atom<{ [string]: string }>,
+	playerByGroupKey: Charm.Atom<{ [string]: string }>,
+	playerByClassId: Charm.Atom<{ [string]: string }>,
 
 	groupCountByFaction: () -> { [string]: { [string]: number } },
 }

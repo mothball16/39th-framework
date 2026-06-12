@@ -3,6 +3,7 @@ local Item = require("../Core/Item")
 local Enums = require("../Core/Enums")
 local ServerRuntime = require("@game/ServerScriptService/Faction_Server/ServerRuntime")
 local StateActions = require("../Logic/StateActions")
+local Utilities = require("../Logic/Utilities")
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
 
 return function()
@@ -124,9 +125,9 @@ return function()
 						factionId = "alpha",
 					})
 
-					expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal("alpha")
-					expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
-					expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
+					expect(runtime.state.playerByFactionId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("alpha")
+					expect(runtime.state.playerByGroupKey()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("Rifleman")
+					expect(runtime.state.playerByClassId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("RiflemanA")
 				end)
 
 				it("should ignore faction requests for unknown factions", function()
@@ -134,9 +135,9 @@ return function()
 						factionId = "unknown",
 					})
 
-					expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
-					expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal(nil)
-					expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal(nil)
+					expect(runtime.state.playerByFactionId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal(nil)
+					expect(runtime.state.playerByGroupKey()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal(nil)
+					expect(runtime.state.playerByClassId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal(nil)
 				end)
 			end)
 
@@ -149,9 +150,9 @@ return function()
 						class = "RiflemanA",
 					}, runtime.itemEquipper)
 
-					expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal("alpha")
-					expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
-					expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
+					expect(runtime.state.playerByFactionId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("alpha")
+					expect(runtime.state.playerByGroupKey()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("Rifleman")
+					expect(runtime.state.playerByClassId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("RiflemanA")
 				end)
 
 				it("should not update state when the player is not in a faction", function()
@@ -160,9 +161,9 @@ return function()
 						class = "RiflemanA",
 					}, runtime.itemEquipper)
 
-					expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
-					expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal(nil)
-					expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal(nil)
+					expect(runtime.state.playerByFactionId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal(nil)
+					expect(runtime.state.playerByGroupKey()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal(nil)
+					expect(runtime.state.playerByClassId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal(nil)
 				end)
 
 				it("should unassign the previous class items before changing class", function()
@@ -176,7 +177,7 @@ return function()
 					}, runtime.itemEquipper)
 
 					expect(itemCounts.unassign).to.equal(1)
-					expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanB")
+					expect(runtime.state.playerByClassId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("RiflemanB")
 				end)
 
 				it("should not assign the class when the requested group slot is full", function()
@@ -192,8 +193,8 @@ return function()
 						class = "MarksmanA",
 					}, runtime.itemEquipper)
 
-					expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Marksman")
-					expect(runtime.state.playerByGroupKey()[playerTwo.UserId]).to.equal("Rifleman")
+					expect(runtime.state.playerByGroupKey()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("Marksman")
+					expect(runtime.state.playerByGroupKey()[Utilities.ToPlayerKey(playerTwo.UserId)]).to.equal("Rifleman")
 					expect(runtime.state.groupCountByFaction()["alpha"]["Marksman"]).to.equal(1)
 					expect(runtime.state.groupCountByFaction()["alpha"]["Rifleman"]).to.equal(1)
 				end)
@@ -203,9 +204,9 @@ return function()
 				it("should set faction from a team AutoFaction attribute", function()
 					runtime.selectionService:HandleTeamChange(playerOne, mockTeam("alpha"), runtime.itemEquipper)
 
-					expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal("alpha")
-					expect(runtime.state.playerByGroupKey()[playerOne.UserId]).to.equal("Rifleman")
-					expect(runtime.state.playerByClassId()[playerOne.UserId]).to.equal("RiflemanA")
+					expect(runtime.state.playerByFactionId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("alpha")
+					expect(runtime.state.playerByGroupKey()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("Rifleman")
+					expect(runtime.state.playerByClassId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("RiflemanA")
 				end)
 
 				it("should unassign class items when team change switches faction", function()
@@ -216,25 +217,25 @@ return function()
 					runtime.selectionService:HandleTeamChange(playerOne, mockTeam("bravo"), runtime.itemEquipper)
 
 					expect(itemCounts.unassign).to.equal(1)
-					expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal("bravo")
+					expect(runtime.state.playerByFactionId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("bravo")
 				end)
 
 				it("should ignore team change when team is nil", function()
 					runtime.selectionService:HandleTeamChange(playerOne, nil, runtime.itemEquipper)
 
-					expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
+					expect(runtime.state.playerByFactionId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal(nil)
 				end)
 
 				it("should ignore team change when team has no AutoFaction attribute", function()
 					runtime.selectionService:HandleTeamChange(playerOne, mockTeam(nil), runtime.itemEquipper)
 
-					expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
+					expect(runtime.state.playerByFactionId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal(nil)
 				end)
 
 				it("should ignore team change when AutoFaction points to an unknown faction", function()
 					runtime.selectionService:HandleTeamChange(playerOne, mockTeam("unknown"), runtime.itemEquipper)
 
-					expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal(nil)
+					expect(runtime.state.playerByFactionId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal(nil)
 				end)
 
 				it("should ignore team change when the player is already on that faction", function()
@@ -245,7 +246,7 @@ return function()
 					runtime.selectionService:HandleTeamChange(playerOne, mockTeam("alpha"), runtime.itemEquipper)
 
 					expect(itemCounts.unassign).to.equal(0)
-					expect(runtime.state.playerByFactionId()[playerOne.UserId]).to.equal("alpha")
+					expect(runtime.state.playerByFactionId()[Utilities.ToPlayerKey(playerOne.UserId)]).to.equal("alpha")
 				end)
 			end)
 
