@@ -17,7 +17,7 @@ local story = UILabs.CreateVideStory({
 	vide = Vide,
 	controls = controls,
 }, function(props)
-	local userId = 0
+	local userId = "0"
 	local factionId = "MarineCorps"
 	local state = State.new()
 	StateActions.CreateFaction(state, Mocks.FactionConfig(factionId))

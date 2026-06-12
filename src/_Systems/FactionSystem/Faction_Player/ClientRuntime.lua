@@ -9,6 +9,7 @@ local useAtom = VideCharm.useAtom
 local create = Vide.create
 local Events = require("@game/ReplicatedStorage/Faction_Framework/Core/Events").GetNamespace()
 local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
+local Utilities = require("@game/ReplicatedStorage/Faction_Framework/Logic/Utilities")
 
 local SelectorUI = require("./UI/Roots/SelectorUI")
 local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
@@ -49,7 +50,7 @@ function ClientRuntime.Start(self: ClientRuntime)
 			SelectorUI({
 				isOpen = useAtom(self.selectorOpen),
 				manualButton = self.access.Config.ShowManualButton,
-				userId = Players.LocalPlayer.UserId,
+				userId = Utilities.ToPlayerKey(Players.LocalPlayer.UserId),
 				state = self.state,
 				setSelectorOpen = function(open: boolean)
 					self.selectorOpen(open)

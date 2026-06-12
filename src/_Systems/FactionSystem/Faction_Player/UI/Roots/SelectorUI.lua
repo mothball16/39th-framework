@@ -8,13 +8,14 @@ local Theme = require("../Theme")
 local Card = require("../Components/Card")
 local MenuActionButton = require("../Components/MenuActionButton")
 local ClassSelector = require("../Components/ClassSelector")
+local usePlayerSlice = require("../Logic/usePlayerSlice")
 
 local ASPECT_RATIO = 1.5
 local PADDING_SCALE = 0.02
 
 return function(props: {
 	state: State.State,
-	userId: number,
+	userId: string,
 	manualButton: boolean,
 	isOpen: Vide.Source<boolean>,
 	setSelectorOpen: ((open: boolean) -> ()) -> (),
@@ -22,47 +23,17 @@ return function(props: {
 	requestClassApply: ((enable: boolean) -> ())?,
 	applyClassMode: string?,
 })
-	local state = props.state:AsVideSources()
+	local player = usePlayerSlice(props.state, props.userId)
 	local dirty = false
 	local classIndex = source(1)
 
-	-- my(...) represents the read-only slice of the state that is relevant to the current player
-	local myFactionId: () -> string = derive(function()
-		return state.playerByFactionId()[props.userId]
-	end)
-
-	local myFactionConfig: () -> Types.FactionConfig = derive(function()
-		return state.configByFactionId()[myFactionId()]
-	end)
-
-	local myGroupCounts: () -> { [string]: number } = derive(function()
-		return state.groupCountByFaction()[myFactionId()] or {}
-	end)
-
-	local myGroupKey: () -> string = derive(function()
-		return state.playerByGroupKey()[props.userId]
-	end)
-
-	-----------------------------------------------------------------
-
-	local myGroupConfig: () -> Types.GroupConfig = derive(function()
-		if not myFactionConfig() or not myGroupKey() then
-			return nil
-		end
-		return myFactionConfig().Groups[myGroupKey()]
-	end)
-
-	local myClasses: () -> { Types.ClassDescriptor } = derive(function()
-		return myGroupConfig() and myGroupConfig().Classes or {}
-	end)
-
 	effect(function()
-		myGroupKey()
+		player.groupKey()
 		classIndex(1)
 	end)
 
 	local mySelectedClass: () -> Types.ClassDescriptor? = derive(function()
-		local classes = myClasses()
+		local classes = player.classes()
 		if #classes == 0 then
 			return nil
 		end
@@ -70,7 +41,7 @@ return function(props: {
 	end)
 
 	local function cycleClass(offset: number)
-		local classes = myClasses()
+		local classes = player.classes()
 		if #classes <= 1 then
 			return
 		end
@@ -80,14 +51,15 @@ return function(props: {
 	end
 
 	-- map faction config groups to a table for indexes to iterate over
-	-- this runs only when myFactionConfig() changes so its not that expensive
+	-- this runs only when factionConfig() changes so its not that expensive
 	local groupEntries = derive(function()
 		local groups = {}
-		if not myFactionConfig() then
+		local factionConfig = player.factionConfig()
+		if not factionConfig then
 			return groups
 		end
 
-		for key, config in pairs(myFactionConfig().Groups) do
+		for key, config in pairs(factionConfig.Groups) do
 			local entry = table.clone(config)
 			entry.Key = key
 			table.insert(groups, entry)
@@ -105,17 +77,17 @@ return function(props: {
 				if #classes == 0 then
 					return ""
 				end
-				local index = if item().Key == myGroupKey() then classIndex() else 1
+				local index = if item().Key == player.groupKey() then classIndex() else 1
 				return classes[math.clamp(index, 1, #classes)].Id
 			end,
 			count = function()
-				return myGroupCounts()[item().Key] or 0
+				return player.groupCounts()[item().Key] or 0
 			end,
 			limit = function()
 				return item().Limit
 			end,
 			isSelected = function()
-				return myGroupKey() == item().Key
+				return player.groupKey() == item().Key
 			end,
 			
 			SelectClass = function()
@@ -123,7 +95,7 @@ return function(props: {
 				if #classes == 0 then
 					return
 				end
-				local index = if item().Key == myGroupKey() then classIndex() else 1
+				local index = if item().Key == player.groupKey() then classIndex() else 1
 				props.requestGroupClass(item().Key, classes[math.clamp(index, 1, #classes)].Id)
 			end,
 		})
@@ -137,10 +109,11 @@ return function(props: {
 			end
 		else
 			if dirty then
-				local classes = myClasses()
-				if #classes > 0 then
+				local classes = player.classes()
+				local groupKey = player.groupKey()
+				if #classes > 0 and groupKey then
 					local index = math.clamp(classIndex(), 1, #classes)
-					props.requestGroupClass(myGroupKey(), classes[index].Id)
+					props.requestGroupClass(groupKey, classes[index].Id)
 				end
 				dirty = false
 			end
@@ -283,7 +256,8 @@ return function(props: {
 					Size = UDim2.fromScale(1, 0.1),
 					BackgroundTransparency = 1,
 					Text = function()
-						return `{myFactionConfig() and myFactionConfig().Name or "<no faction>"}`
+						local factionConfig = player.factionConfig()
+						return `{factionConfig and factionConfig.Name or "<no faction>"}`
 					end,
 					TextColor3 = Theme.TextColor,
 					TextScaled = true,
@@ -331,11 +305,12 @@ return function(props: {
 						TextScaled = true,
 						FontFace = Theme.fontNormal,
 						Text = function()
-							if not myFactionConfig() then
+							local factionConfig = player.factionConfig()
+							if not factionConfig then
 								return "No group options available yet."
 							end
 							-- cool trick to check if the dictis empty
-							if not next(myFactionConfig().Groups) then
+							if not next(factionConfig.Groups) then
 								return "Faction has no groups configured."
 							end
 							return ""
@@ -377,7 +352,7 @@ return function(props: {
 									return "<no class selected...>"
 								end
 								local label = class.Name or class.Id
-								return `{label} ({classIndex()}/{#myClasses()})`
+								return `{label} ({classIndex()}/{#player.classes()})`
 							end,
 							LeftActivated = function()
 								cycleClass(-1)
