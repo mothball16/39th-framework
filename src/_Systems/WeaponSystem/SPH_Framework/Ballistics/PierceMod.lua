@@ -70,13 +70,8 @@ module.CanPierce = function(cast, rayResult:RaycastResult, segmentVelocity)
 		willPierce = true
 	end
 
-	if not willPierce and cast.UserData.Tool then -- Bullet pen and ricochet
-		local physicsModule
-		if typeof(cast.UserData.Tool) == "number" and cast.UserData.IgnoreModel.Base["FirePoint"..cast.UserData.Tool]:FindFirstChild("BulletPhysics") then
-			physicsModule = require(cast.UserData.IgnoreModel.Base["FirePoint"..cast.UserData.Tool]:FindFirstChild("BulletPhysics"))
-		elseif typeof(cast.UserData.Tool) == "Instance" then
-			physicsModule = WeaponStatLocator.getBulletPhysics(cast.UserData.Tool)
-		end
+	if not willPierce and typeof(cast.UserData.Tool) == "Instance" then -- Bullet pen and ricochet
+		local physicsModule = WeaponStatLocator.getBulletPhysics(cast.UserData.Tool)
 
 		if not physicsModule then
 			return false -- Bullet will never penetrate or ricochet without a physics module

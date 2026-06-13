@@ -62,6 +62,8 @@ export type WeaponStats = {
 	weaponType: string,
     -- what projectile configuration to use
 	projectile: string,
+    -- what bullet physics configuration to use for penetration/ricochet
+	bulletPhysics: string?,
 
     -- what sort of mag 
 	magType: number,

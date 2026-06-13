@@ -7,6 +7,19 @@ local Types = require("@game/ReplicatedStorage/SPH_Framework/Core/ConfigurationT
 
 local WeaponStatLocator = {}
 
+local function resolveConfigModule(configName, moduleName)
+	local folder = configs:FindFirstChild(configName)
+	local module = folder and folder:FindFirstChild(moduleName)
+	if module then
+		local tbl = require(module)
+		if not table.isfrozen(tbl) then
+			tbl = table.freeze(tbl)
+		end
+		return tbl
+	end
+	return nil
+end
+
 local function getConfig(tool, configName)
 	local attr = tool:GetAttribute("SPH_" .. configName)
 	if attr then
@@ -14,15 +27,10 @@ local function getConfig(tool, configName)
 			attr = tool.Name
 		end
 
-		local folder = configs:FindFirstChild(configName)
-		local module = folder and folder:FindFirstChild(attr)
-		if module then
-            local tbl = require(module)
-            if not table.isfrozen(tbl) then
-                tbl = table.freeze(tbl)
-            end
-            return tbl
-        end
+		local tbl = resolveConfigModule(configName, attr)
+		if tbl then
+			return tbl
+		end
 	end
 
 	warn(`no {configName} found for {tool.Name}`)
@@ -34,7 +42,16 @@ function WeaponStatLocator.getWeaponStats(tool): Types.WeaponStats?
 end
 
 function WeaponStatLocator.getBulletPhysics(tool)
-	return getConfig(tool, "BulletPhysics")
+	local wepStats = WeaponStatLocator.getWeaponStats(tool)
+	if not wepStats or not wepStats.bulletPhysics then
+		return nil
+	end
+
+	local physics = resolveConfigModule("BulletPhysics", wepStats.bulletPhysics)
+	if not physics then
+		warn(`no BulletPhysics found for {wepStats.bulletPhysics} ({tool.Name})`)
+	end
+	return physics
 end
 
 return WeaponStatLocator
