@@ -1,0 +1,51 @@
+{
+  "name": "weapons-only",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$ignoreUnknownInstances": true,
+      "Packages": {
+        "$path": "Packages"
+      },
+      "DevPackages": {
+        "$path": "DevPackages"
+      },
+      "Utility": {
+        "$path": "Utility"
+      },
+      "SPH_Framework": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/_Systems/WeaponSystem/SPH_Framework"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$ignoreUnknownInstances": true,
+      "SPH_Server": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/_Systems/WeaponSystem/SPH_Server"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$ignoreUnknownInstances": true,
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
+        "$ignoreUnknownInstances": true,
+        "SPH_Character": {
+          "$ignoreUnknownInstances": false,
+          "$path": "src/_Systems/WeaponSystem/SPH_Character"
+        }
+      },
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true,
+        "SPH_Player": {
+          "$ignoreUnknownInstances": false,
+          "$path": "src/_Systems/WeaponSystem/SPH_Player"
+        }
+      }
+    }
+  }
+}
