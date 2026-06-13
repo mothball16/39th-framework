@@ -6,6 +6,7 @@ handles most of the weapon state manipulations
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CollectionService = game:GetService("CollectionService")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -453,8 +454,8 @@ end
 
 function WeaponController.Equip(self: WeaponController, newChild)
 	if
-		not newChild:FindFirstChild("SPH_Weapon")
-		or (newChild:FindFirstChild("SPH_Weapon") and not assets.WeaponModels:FindFirstChild(newChild.Name))
+		not CollectionService:HasTag(newChild, "SPH_Weapon")
+		or not assets.WeaponModels:FindFirstChild(newChild.Name)
 		or self.state.dead()
 		or (self.humanoid.Sit and not self.state.vehicleSeated())
 	then
@@ -467,7 +468,7 @@ function WeaponController.Equip(self: WeaponController, newChild)
 	self.weaponState.equipping(true)
 
 	self.state.equippedTool(newChild)
-	self.weaponState.wepStats(weaponStatLocator.getWeaponStats(self.state.equippedTool().SPH_Weapon))
+	self.weaponState.wepStats(weaponStatLocator.getWeaponStats(self.state.equippedTool()))
 
 	self.cycled = true
 		P.SwitchWeapon.send({ tool = newChild })
@@ -921,7 +922,6 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 				bulletData = {
 					Tool = self.state.equippedTool(),
 					fireMode = fireMode,
-					SPH_Weapon = self.state.equippedTool().SPH_Weapon
 				}
 			end
 

@@ -1,5 +1,6 @@
 -- This script makes body parts and equipment visible in first person
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CollectionService = game:GetService("CollectionService")
 local Framework = ReplicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
 local config = Access.config
@@ -47,7 +48,7 @@ if config.firstPersonBody then
 		
 		-- Check if gun is equipped
 		gunEquipped = Character:FindFirstChildWhichIsA("Tool")
-		if gunEquipped and not gunEquipped:FindFirstChild("SPH_Weapon") then gunEquipped = nil end
+		if gunEquipped and not CollectionService:HasTag(gunEquipped, "SPH_Weapon") then gunEquipped = nil end
 		
 		--local armsEnabled = torso["Left Shoulder"].Enabled
 		local armsEnabled = not gunEquipped

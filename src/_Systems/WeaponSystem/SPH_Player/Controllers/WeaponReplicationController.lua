@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
+local CollectionService = game:GetService("CollectionService")
 
 local Framework = ReplicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
@@ -40,14 +41,14 @@ end
 function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: CFrame, tracer: boolean)
 	if not player.Character then return end
 	local tool = player.Character:FindFirstChildWhichIsA("Tool")
-	if tool and tool:FindFirstChild("SPH_Weapon") then
+	if tool and CollectionService:HasTag(tool, "SPH_Weapon") then
 		local rig = player.Character:FindFirstChild("WeaponRig")
 		if not rig then return end
 		
 		local gunModel = rig:FindFirstChild("Weapon") and rig.Weapon:FindFirstChildWhichIsA("Model")
 		if not gunModel then return end
 		
-		local wepStats = weaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+		local wepStats = weaponStatLocator.getWeaponStats(tool)
 		local gunAmmo = tool:FindFirstChild("Ammo")
 
 		local muCh = wepStats.muzzleChance
@@ -114,7 +115,7 @@ end
 
 function WeaponReplicationController.OnReplicateHit(tool: Tool, raycastResult: RaycastResult)
 	local hitPart = raycastResult.Instance
-	local bulletStats = tool:FindFirstChild("SPH_Weapon") and weaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+	local bulletStats = CollectionService:HasTag(tool, "SPH_Weapon") and weaponStatLocator.getWeaponStats(tool)
 	if hitPart and bulletStats and bulletStats.projectile == "Bullet" then
 		hitFX.HitEffect(raycastResult.Position, hitPart, raycastResult.Normal)
 	end
@@ -128,7 +129,7 @@ function WeaponReplicationController.OnReplicateBolt(player: Player, direction, 
 	local tool = player.Character:FindFirstChildWhichIsA("Tool")
 	if not tool or not gunModel then return end
 	
-	local wepStats = weaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+	local wepStats = weaponStatLocator.getWeaponStats(tool)
 	local boltData = {
 		fireMoveParts = wepStats.fireMoveParts,
 		fireRate = wepStats.fireRate,

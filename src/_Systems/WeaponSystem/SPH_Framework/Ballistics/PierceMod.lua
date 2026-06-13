@@ -10,6 +10,7 @@ local Access = require(Framework.Access)
 local Assets = Access.assets
 local Sounds = Assets:WaitForChild("Sounds")
 local RicoSound = Sounds:WaitForChild("Ricochet"):GetChildren()
+local WeaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
 
 local randomSeed = Random.new()
 
@@ -72,15 +73,13 @@ module.CanPierce = function(cast, rayResult:RaycastResult, segmentVelocity)
 	if not willPierce and cast.UserData.Tool then -- Bullet pen and ricochet
 		local physicsModule
 		if typeof(cast.UserData.Tool) == "number" and cast.UserData.IgnoreModel.Base["FirePoint"..cast.UserData.Tool]:FindFirstChild("BulletPhysics") then
-			physicsModule = cast.UserData.IgnoreModel.Base["FirePoint"..cast.UserData.Tool]:FindFirstChild("BulletPhysics")
-		elseif cast.UserData.Tool:FindFirstChild("SPH_Weapon") and cast.UserData.Tool.SPH_Weapon:FindFirstChild("BulletPhysics") then
-			physicsModule = cast.UserData.Tool.SPH_Weapon:FindFirstChild("BulletPhysics")
+			physicsModule = require(cast.UserData.IgnoreModel.Base["FirePoint"..cast.UserData.Tool]:FindFirstChild("BulletPhysics"))
+		elseif typeof(cast.UserData.Tool) == "Instance" then
+			physicsModule = WeaponStatLocator.getBulletPhysics(cast.UserData.Tool)
 		end
 
 		if not physicsModule then
 			return false -- Bullet will never penetrate or ricochet without a physics module
-		else
-			physicsModule = require(physicsModule)
 		end
 
 		local materialProperties = physicsModule.materialProperties[GetMaterialType(rayResult.Instance.Material)]

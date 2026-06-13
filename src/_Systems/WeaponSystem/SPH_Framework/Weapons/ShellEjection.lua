@@ -14,7 +14,7 @@ local shells = {}
 local module = {}
 
 module.ejectShell = function(player:Player,tool,gunModel)
-	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool)
 	if not tool or not gunModel or not gunModel:FindFirstChild("Grip") then return end
 	local origin:CFrame = gunModel.Grip:FindFirstChild("Chamber")
 	if not origin then

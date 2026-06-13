@@ -228,7 +228,7 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 		actualTool = tool.Tool
 	end
 
-	local wepStats = WeaponStatLocator.getWeaponStats(actualTool.SPH_Weapon)
+	local wepStats = WeaponStatLocator.getWeaponStats(actualTool)
 
 	-- If this is UBGL mode, get UBGL stats
 	if type(tool) == "table" and tool.fireMode == 4 and wepStats.hasUBGL then

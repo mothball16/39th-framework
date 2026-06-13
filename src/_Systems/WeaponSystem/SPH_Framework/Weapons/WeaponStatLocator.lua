@@ -7,11 +7,11 @@ local Types = require("@game/ReplicatedStorage/SPH_Framework/Core/ConfigurationT
 
 local WeaponStatLocator = {}
 
-local function getConfig(sphWeapon, configName)
-	local attr = sphWeapon:GetAttribute("SPH_" .. configName)
+local function getConfig(tool, configName)
+	local attr = tool:GetAttribute("SPH_" .. configName)
 	if attr then
 		if attr == "#name" then
-			attr = sphWeapon.Parent.Name
+			attr = tool.Name
 		end
 
 		local folder = configs:FindFirstChild(configName)
@@ -25,24 +25,16 @@ local function getConfig(sphWeapon, configName)
         end
 	end
 
-	local direct = sphWeapon:FindFirstChild(configName)
-	if direct then
-        warn(`using fallback config method for {sphWeapon.Parent.Name}. switch to storing configs in SPH_Assets.Configurations`)
-        return require(direct)
-    end
-
-
-
-	warn(`no {configName} found for {sphWeapon.Parent.Name}`)
+	warn(`no {configName} found for {tool.Name}`)
 	return nil
 end
 
-function WeaponStatLocator.getWeaponStats(sphWeapon): Types.WeaponStats
-	return getConfig(sphWeapon, "WeaponStats")
+function WeaponStatLocator.getWeaponStats(tool): Types.WeaponStats?
+	return getConfig(tool, "WeaponStats")
 end
 
-function WeaponStatLocator.getBulletPhysics(sphWeapon)
-	return getConfig(sphWeapon, "BulletPhysics")
+function WeaponStatLocator.getBulletPhysics(tool)
+	return getConfig(tool, "BulletPhysics")
 end
 
 return WeaponStatLocator

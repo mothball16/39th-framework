@@ -213,7 +213,7 @@ end
 
 local function holsterWeapon(player, holsterPart, tool, holsterCFrame)
 	local holsterModel
-	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool)
 	if not assets.WeaponModels.HolsterModels:FindFirstChild(tool.Name) then
 		holsterModel = assets.WeaponModels:FindFirstChild(tool.Name):Clone()
 		holsterModel.Name = "Holster_" .. tool.Name
@@ -256,7 +256,10 @@ local function holsterWeapon(player, holsterPart, tool, holsterCFrame)
 end
 
 local function checkHolster(player, tool)
-	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool)
+	if not wepStats then
+		return
+	end
 	if wepStats.holster then
 		local holsterPart = player.Character:FindFirstChild(wepStats.holsterPart)
 		if wepStats.holsterPart_R15 and player.Character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
@@ -276,7 +279,10 @@ local function equipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 	if tool.Parent == rig.Parent and assets.WeaponModels:FindFirstChild(tool.Name) then
 		local gun = assets.WeaponModels[tool.Name]:Clone()
 		weldMod.WeldModel(gun, gun.Grip, false)
-		local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+		local wepStats = WeaponStatLocator.getWeaponStats(tool)
+		if not wepStats then
+			return
+		end
 		for _, partName in ipairs(wepStats.rigParts) do
 			if gun:FindFirstChild(partName) then
 				gun.Grip["Grip_" .. partName]:Destroy()
@@ -327,9 +333,12 @@ local function equipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 end
 
 local function checkTool(player, tool)
-	if tool:FindFirstChild("SPH_Weapon") and assets.WeaponModels:FindFirstChild(tool.Name) then
+	if _collectionService:HasTag(tool, "SPH_Weapon") and assets.WeaponModels:FindFirstChild(tool.Name) then
+		local wepStats = WeaponStatLocator.getWeaponStats(tool)
+		if not wepStats then
+			return
+		end
 		checkHolster(player, tool)
-		local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
 		setupGun(tool, wepStats)
 	end
 end
@@ -414,7 +423,7 @@ local function spawnGun(tool, gunPosition, dropPlayer)
 		end
 	end
 	makePickUpAble(tool, dropModel, dropModel.Grip)
-	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool)
 	if wepStats and wepStats.Attachments then
 		for slot, item in wepStats.Attachments do
 			if typeof(item) == "string" then
@@ -564,7 +573,7 @@ local function initializePlayerLifecycle()
 				end
 				if config.dropOnDeath then
 					local equippedTool = newChar:FindFirstChildWhichIsA("Tool")
-					if equippedTool and equippedTool:FindFirstChild("SPH_Weapon") then
+					if equippedTool and _collectionService:HasTag(equippedTool, "SPH_Weapon") then
 						spawnGun(equippedTool, newChar.HumanoidRootPart.CFrame * dropCFrame, newPlayer)
 					end
 					for _, tool in ipairs(newPlayer.Backpack:GetChildren()) do
@@ -587,7 +596,7 @@ local function initializePlayerLifecycle()
 				checkTool(newPlayer, child)
 			end)
 			newPlayer.Backpack.ChildRemoved:Connect(function(child)
-				if child:FindFirstChild("SPH_Weapon") then
+				if _collectionService:HasTag(child, "SPH_Weapon") then
 					removeHolster(newPlayer, child.Name)
 				end
 			end)
@@ -630,7 +639,7 @@ local function initializePlayerLifecycle()
 		local character = player.Character
 		if config.dropOnLeave and character then
 			local equippedTool = character:FindFirstChildWhichIsA("Tool")
-			if equippedTool and equippedTool:FindFirstChild("SPH_Weapon") then
+			if equippedTool and _collectionService:HasTag(equippedTool, "SPH_Weapon") then
 				spawnGun(equippedTool, character.HumanoidRootPart.CFrame * dropCFrame, player)
 			end
 			for _, tool in ipairs(player.Backpack:GetChildren()) do
@@ -646,7 +655,7 @@ local function checkNaughtyList(playerID)
 end
 
 local function isGunLoaded(tool)
-	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool)
 	local gunAmmo = tool.Ammo
 	return not wepStats.openBolt and tool.Chambered.Value or wepStats.openBolt and gunAmmo.MagAmmo.Value > 0
 end
@@ -672,14 +681,14 @@ local function weaponStatsForBridgeTool(tool)
 		if tool.model then
 			return require(tool.model.Parent.TurretModule).guns[tool.index]
 		end
-		local stats = WeaponStatLocator.getWeaponStats(tool.Tool.SPH_Weapon)
+		local stats = WeaponStatLocator.getWeaponStats(tool.Tool)
 		if tool.fireMode == 4 and stats.hasUBGL then
 			stats = stats.getStatsForMode(4)
 		end
 		return stats
 	end
 	if tool:IsA("Tool") then
-		return WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+		return WeaponStatLocator.getWeaponStats(tool)
 	end
 	return nil
 end
@@ -801,7 +810,7 @@ local function playerFireHandler(player: Player, firePoint: CFrame)
 		warn(warnPrefix .. "PlayerFire Canceled: No tool was found.")
 		return
 	end
-	local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+	local wepStats = WeaponStatLocator.getWeaponStats(tool)
 	local gunAmmo = tool.Ammo
 	local magAmmo = gunAmmo.MagAmmo
 	local currentFireMode = tool.FireMode.Value
@@ -905,7 +914,7 @@ local function initializeAmmo()
 		if not tool then
 			return
 		end
-		local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+		local wepStats = WeaponStatLocator.getWeaponStats(tool)
 		local magAmmo = tool.Ammo.MagAmmo
 		local arcadeAmmoPool = tool.Ammo.ArcadeAmmoPool
 		local currentFireMode = tool.FireMode.Value
@@ -1008,8 +1017,8 @@ local function initializeAmmo()
 		end
 		local newFireMode = data.mode
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
-		if tool and tool:FindFirstChild("SPH_Weapon") then
-			local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+		if tool and _collectionService:HasTag(tool, "SPH_Weapon") then
+			local wepStats = WeaponStatLocator.getWeaponStats(tool)
 			if newFireMode == 4 and not wepStats.hasUBGL then
 				return
 			end
@@ -1143,7 +1152,7 @@ end
 local function initializeWeaponEquip()
 	if replicatedStorage:FindFirstChild("DD_GunsmithHandler") then
 		replicatedStorage.DD_GunsmithHandler.ApplyAttachments.OnServerEvent:Connect(function(_player, weapon: Tool, attachments)
-			local wepStats = WeaponStatLocator.getWeaponStats(weapon.SPH_Weapon)
+			local wepStats = WeaponStatLocator.getWeaponStats(weapon)
 			wepStats.Attachments = attachments
 		end)
 	end
@@ -1213,8 +1222,8 @@ local function initializeInteraction()
 				table.insert(tools, equippedTool)
 			end
 			for _, tool in ipairs(tools) do
-				if tool:FindFirstChild("SPH_Weapon") then
-					local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+				if _collectionService:HasTag(tool, "SPH_Weapon") then
+					local wepStats = WeaponStatLocator.getWeaponStats(tool)
 					local arcadeAmmoPool = tool.Ammo.ArcadeAmmoPool
 					if wepStats.infiniteAmmo then
 						continue
@@ -1288,7 +1297,7 @@ local function initializeInteraction()
 		if not config.gunDropping then
 			return
 		end
-		if tool and tool:FindFirstChild("SPH_Weapon") then
+		if tool and _collectionService:HasTag(tool, "SPH_Weapon") then
 			spawnGun(tool, player.Character.HumanoidRootPart.CFrame * dropCFrame, player)
 		else
 			return
@@ -1330,8 +1339,8 @@ local function initializeInteraction()
 		end
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
 		local wepStats
-		if tool and tool:FindFirstChild("SPH_Weapon") then
-			wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+		if tool and _collectionService:HasTag(tool, "SPH_Weapon") then
+			wepStats = WeaponStatLocator.getWeaponStats(tool)
 		end
 		if wepStats then
 			for _, child in ipairs(weaponModel:GetChildren()) do
@@ -1377,7 +1386,7 @@ local function initializeInteraction()
 				return
 			end
 			local weaponModel = player.Character.WeaponRig.Weapon:FindFirstChildWhichIsA("Model")
-			local wepStats = WeaponStatLocator.getWeaponStats(tool.SPH_Weapon)
+			local wepStats = WeaponStatLocator.getWeaponStats(tool)
 			local magPart: BasePart = wepStats.projectile ~= "Bullet" and weaponModel[wepStats.projectile] or weaponModel:FindFirstChild("Mag")
 			if magPart then
 				local P, U = net.packets, NetUtil
