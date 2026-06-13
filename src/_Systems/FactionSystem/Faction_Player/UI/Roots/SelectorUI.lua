@@ -5,10 +5,11 @@ local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect
 
 local Theme = require("../Theme")
-local Card = require("../Components/Card")
+local GroupCard = require("../Components/Card")
 local MenuActionButton = require("../Components/MenuActionButton")
 local ClassSelector = require("../Components/ClassSelector")
-local usePlayerSlice = require("../Logic/usePlayerSlice")
+local getPlayerSlice = require("../Logic/getPlayerSlice")
+local useClassSelector = require("../Logic/useClassSelector")
 
 local ASPECT_RATIO = 1.5
 local PADDING_SCALE = 0.02
@@ -23,80 +24,41 @@ return function(props: {
 	requestClassApply: ((enable: boolean) -> ())?,
 	applyClassMode: string?,
 })
-	local player = usePlayerSlice(props.state, props.userId)
-	local dirty = false
-	local classIndex = source(1)
+	local player = getPlayerSlice(props.state, props.userId)
+	local selector = useClassSelector(player.factionId, player.groupKey, player.classes)
 
-	effect(function()
-		player.groupKey()
-		classIndex(1)
-	end)
+	local cardRows = indexes(player.groupEntries, function(groupEntry, I)
+		local classesOfGroup = groupEntry().Classes
+		local isSelected = derive(function()
+			return groupEntry().Key == player.groupKey()
+		end)
 
-	local mySelectedClass: () -> Types.ClassDescriptor? = derive(function()
-		local classes = player.classes()
-		if #classes == 0 then
-			return nil
-		end
-		return classes[math.clamp(classIndex(), 1, #classes)]
-	end)
+		-- only use selected logic if the class is selected. otherwise, just use the first class
+		local classId = derive(function()
+			if #classesOfGroup == 0 then
+				error(`no classes found for group: {groupEntry().Key}`)
+			end
+			if isSelected() then
+				local selectedClass = selector.selectedClass()
+				return selectedClass and selectedClass.Id or nil
+			end
+			return classesOfGroup[1].Id
+		end)
+		
+		return GroupCard({
+			isSelected = isSelected,
 
-	local function cycleClass(offset: number)
-		local classes = player.classes()
-		if #classes <= 1 then
-			return
-		end
-		local nextIndex = ((classIndex() - 1 + offset) % #classes) + 1
-		classIndex(nextIndex)
-		dirty = true
-	end
-
-	-- map faction config groups to a table for indexes to iterate over
-	-- this runs only when factionConfig() changes so its not that expensive
-	local groupEntries = derive(function()
-		local groups = {}
-		local factionConfig = player.factionConfig()
-		if not factionConfig then
-			return groups
-		end
-
-		for key, config in pairs(factionConfig.Groups) do
-			local entry = table.clone(config)
-			entry.Key = key
-			table.insert(groups, entry)
-		end
-		return groups
-	end)
-
-	local cardRows = indexes(groupEntries, function(item, I)
-		return Card({
 			title = function()
-				return item().Key or "<no key?>"
-			end,
-			classId = function()
-				local classes = item().Classes
-				if #classes == 0 then
-					return ""
-				end
-				local index = if item().Key == player.groupKey() then classIndex() else 1
-				return classes[math.clamp(index, 1, #classes)].Id
+				return groupEntry().Key or "<no key?>"
 			end,
 			count = function()
-				return player.groupCounts()[item().Key] or 0
+				return player.groupCounts()[groupEntry().Key] or 0
 			end,
 			limit = function()
-				return item().Limit
+				return groupEntry().Limit
 			end,
-			isSelected = function()
-				return player.groupKey() == item().Key
-			end,
-			
 			SelectClass = function()
-				local classes = item().Classes
-				if #classes == 0 then
-					return
-				end
-				local index = if item().Key == player.groupKey() then classIndex() else 1
-				props.requestGroupClass(item().Key, classes[math.clamp(index, 1, #classes)].Id)
+				props.requestGroupClass(groupEntry().Key, classId())
 			end,
 		})
 	end)
@@ -108,14 +70,14 @@ return function(props: {
 				props.requestClassApply(false)
 			end
 		else
-			if dirty then
+			if selector.dirty() then
 				local classes = player.classes()
 				local groupKey = player.groupKey()
 				if #classes > 0 and groupKey then
-					local index = math.clamp(classIndex(), 1, #classes)
+					local index = math.clamp(selector.classIndex(), 1, #classes)
 					props.requestGroupClass(groupKey, classes[index].Id)
 				end
-				dirty = false
+				selector.dirty(false)
 			end
 
 			if shouldToggleClassApply and props.requestClassApply then
@@ -347,18 +309,18 @@ return function(props: {
 							titleHeight = 0.5,
 							size = UDim2.fromScale(1, 0.25),
 							ValueText = function()
-								local class = mySelectedClass()
+								local class = selector.selectedClass()
 								if not class then
 									return "<no class selected...>"
 								end
 								local label = class.Name or class.Id
-								return `{label} ({classIndex()}/{#player.classes()})`
+								return `{label} ({selector.classIndex()}/{#player.classes()})`
 							end,
 							LeftActivated = function()
-								cycleClass(-1)
+								selector.cycleClass(-1)
 							end,
 							RightActivated = function()
-								cycleClass(1)
+								selector.cycleClass(1)
 							end,
 						},
 						create "Frame" {
@@ -382,9 +344,9 @@ return function(props: {
 								TextXAlignment = Enum.TextXAlignment.Left,
 								TextYAlignment = Enum.TextYAlignment.Top,
 								Text = function()
-									return if mySelectedClass()
+									return if selector.selectedClass()
 										then (
-											mySelectedClass().Description
+											selector.selectedClass().Description
 											or "Lorem ipsum on the beat yo!\n\n\n(no description)"
 										)
 										else "<no class selected...>"

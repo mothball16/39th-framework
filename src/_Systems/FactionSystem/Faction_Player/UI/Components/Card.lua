@@ -15,7 +15,6 @@ local SELECT_HEIGHT = 0.4
 
 local function Card(props: {
 	title: () -> string,
-	classId: () -> string,
 	count: () -> number,
 	limit: () -> number,
 	

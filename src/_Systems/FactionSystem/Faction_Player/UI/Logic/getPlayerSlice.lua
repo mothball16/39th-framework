@@ -12,6 +12,7 @@ export type PlayerSlice = {
 	groupCounts: () -> { [string]: number },
 	groupKey: () -> string?,
 	groupConfig: () -> Types.GroupConfig?,
+	groupEntries: () -> { Types.GroupConfig },
 	classes: () -> { Types.ClassDescriptor },
 }
 
@@ -52,6 +53,23 @@ return function(state: State.State, userId: string): PlayerSlice
 		return config.Groups[key]
 	end)
 
+	-- map faction config groups to a table for indexes to iterate over
+	-- this runs only when factionConfig() changes so its not that expensive
+	local groupEntries = derive(function()
+		local groups = {}
+		local factionConfig = factionConfig()
+		if not factionConfig then
+			return groups
+		end
+
+		for key, config in pairs(factionConfig.Groups) do
+			local entry = table.clone(config)
+			entry.Key = key
+			table.insert(groups, entry)
+		end
+		return groups
+	end)
+
 	local classes = derive(function()
 		local config = groupConfig()
 		return if config then config.Classes else {}
@@ -63,6 +81,7 @@ return function(state: State.State, userId: string): PlayerSlice
 		groupCounts = groupCounts,
 		groupKey = groupKey,
 		groupConfig = groupConfig,
+		groupEntries = groupEntries,
 		classes = classes,
 	}
 end
