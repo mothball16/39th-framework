@@ -299,8 +299,8 @@ function ViewmodelController.UpdateViewmodelPosition(
 	end
 	self.rollAngle = lerpNumber(self.rollAngle, targetRollAngle, 0.07 * dt * 60)
 	self.strafeShift = lerpNumber(self.strafeShift, targetStrafeShift, 0.07 * dt * 60)
-	animBase.CFrame *= CFrame.Angles(0, math.rad(-self.strafeShift * config.maxStrafeShift), math.rad(self.rollAngle))
-
+	
+	self:ApplyCFrameOffsetFrom(grip, CFrame.Angles(0, math.rad(-self.strafeShift * config.maxStrafeShift), math.rad(self.rollAngle)))
 	local viewportSize = camera.ViewportSize
 	local mouseDelta = UserInputService:GetMouseDelta() / viewportSize
 
@@ -356,7 +356,7 @@ function ViewmodelController.UpdateViewmodelPosition(
 	end
 
 	if self.weaponState.RecoilRot:getPosition() > 1e-6 then
-		self:ApplyCFrameOffsetFrom(aimPart, CFrame.Angles(0, 0, -math.rad(self.weaponState.RecoilRot:getPosition())))
+		self:ApplyCFrameOffsetFrom(aimPart, CFrame.Angles(0, 0, -math.rad(self.weaponState.RecoilRot:getPosition() * 1.5)))
 	end
 
 	if not self.weaponState.viewmodelVisible() then
