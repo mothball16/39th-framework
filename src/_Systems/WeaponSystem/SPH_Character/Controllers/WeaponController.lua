@@ -462,19 +462,22 @@ function WeaponController.Equip(self: WeaponController, newChild)
 		return
 	end
 
+	local ws = weaponStatLocator.getWeaponStats(newChild)
+	if not ws then
+		return
+	end
+
 	UserInputService.MouseIconEnabled = false
 
 	self.weaponState:Reset()
 	self.weaponState.equipping(true)
 
 	self.state.equippedTool(newChild)
-	self.weaponState.wepStats(weaponStatLocator.getWeaponStats(self.state.equippedTool()))
+	self.weaponState.wepStats(ws)
 
 	self.cycled = true
 		P.SwitchWeapon.send({ tool = newChild })
 
-
-	local ws = self.weaponState.wepStats()
 	if ws and ws.PunchSpeed then
 		self.weaponState.RecoilPos.s = ws.PunchSpeed
 		self.weaponState.RecoilDir.s = ws.PunchSpeed
