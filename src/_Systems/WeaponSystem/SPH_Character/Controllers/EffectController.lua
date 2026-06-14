@@ -158,7 +158,10 @@ function EffectController.OnBulletHit(self: EffectController, wepStats: Types.We
 	hitmarkerInstance.Position(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
 
 	self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position)
-	self.effectManager:PushDamage(estimatedDamage)
+	
+	if Access.config.damageIndicators then
+		self.effectManager:PushDamage(estimatedDamage)
+	end
 
 	local soundList = Access.assets.Sounds.Hitmarkers[hitmarkerRegion]:GetChildren() :: { Sound }
 	local sound = soundList[math.random(#soundList)]
