@@ -92,7 +92,7 @@ local function weaponHasBipodClient(gun)
 end
 
 local function fireModeSupported(mode, wepStats)
-	if type(mode) ~= "number" or mode % 1 ~= 0 or mode < 0 or mode > 5 then
+	if type(mode) ~= "number" or mode % 1 ~= 0 or mode < 0 or mode > 5 or mode == 4 then
 		return false
 	end
 	local fs = wepStats and wepStats.fireSwitch

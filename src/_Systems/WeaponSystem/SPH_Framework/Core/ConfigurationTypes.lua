@@ -167,8 +167,6 @@ export type WeaponStats = {
 
 	-- Optional System Fields
 	Attachments: any?,
-	hasUBGL: boolean?,
-	ubgl: any?,
 	explosiveAmmo: boolean?,
 	explosionRadius: number?,
 	explosionEffect: string?,

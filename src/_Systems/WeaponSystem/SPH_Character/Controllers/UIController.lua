@@ -19,7 +19,7 @@ local WeaponStateModule = require(Framework.State.WeaponState)
 
 local WeaponPrefs = require(Framework.Weapons.WeaponPrefsClient)
 
-local FIRE_MODE_NAMES = { "[SAFE]", "[SEMI]", "[AUTO]", "[BURST]", "[UBGL]", "[MANUAL]" }
+local FIRE_MODE_NAMES = { "[SAFE]", "[SEMI]", "[AUTO]", "[BURST]", "[---]", "[MANUAL]" }
 
 local UIController = {}
 UIController.__index = UIController
@@ -35,7 +35,6 @@ type self = {
 	chambered: TextLabel,
 	attachmentFrame: Frame,
 	aimSens: TextLabel,
-	ubglAmmo: IntValue?,
 }
 
 export type UIController = typeof(setmetatable({} :: self, UIController))
@@ -99,7 +98,6 @@ function UIController.new(params: {
 		chambered = chambered,
 		attachmentFrame = attachmentFrame,
 		aimSens = aimSens,
-		ubglAmmo = nil,
 	} :: self, UIController)
 
 	Charm.subscribe(self.state.equippedTool, function(tool)
@@ -119,11 +117,6 @@ end
 function UIController.SyncEquippedTool(self: UIController, tool: Tool?)
 	if tool then
 		local ws = self.weaponState.wepStats()
-		if ws and ws.hasUBGL then
-			self.ubglAmmo = tool:FindFirstChild("UBGLAmmo")
-		else
-			self.ubglAmmo = nil
-		end
 
 		local wepModel = assets.WeaponModels:FindFirstChild(tool.Name)
 		if wepModel and wepModel.Grip:FindFirstChild("Flashlight") then
@@ -137,7 +130,6 @@ function UIController.SyncEquippedTool(self: UIController, tool: Tool?)
 			self.bulletType.Text = ws.ammoType
 		end
 	else
-		self.ubglAmmo = nil
 		self.attachmentFrame.Laser.Visible = false
 		self.attachmentFrame.Flashlight.Visible = false
 	end
@@ -155,58 +147,44 @@ function UIController.UpdateHeartbeat(self: UIController, _dt: number)
 		self.ammoUI.Visible = true
 
 		local fireModeVal = self.weaponState.fireMode()
+		local chamberedVal = tool:FindFirstChild("Chambered") and tool.Chambered.Value
 
-		if fireModeVal == 4 and wepStats.hasUBGL and self.ubglAmmo then
-			local ubglAmmoPool = tool:FindFirstChild("UBGLAmmoPool")
-			self.ammoCounter.Text = self.ubglAmmo.Value
-			self.ammoPoolUI.Text = "/" .. ubglAmmoPool.Value
-			self.bulletType.Text = wepStats.ubgl.ammoType
-			self.chambered.TextTransparency = 1
-			if self.ubglAmmo.Value > 0 then
-				self.ammoCounter.TextColor3 = Color3.new(1, 1, 1)
-			else
-				self.ammoCounter.TextColor3 = Color3.new(1, 0.1, 0.1)
-			end
+		if wepStats.operationType == 4 and chamberedVal then
+			local digits = splitNumber(magAmmo.Value + 1)
+			self.ammoCounter.Text = [[<font transparency="0.5">]] .. digits[1] .. [[</font>]] .. digits[2]
 		else
-			local chamberedVal = tool:FindFirstChild("Chambered") and tool.Chambered.Value
+			local digits = splitNumber(magAmmo.Value)
+			self.ammoCounter.Text = [[<font transparency="0.5">]] .. digits[1] .. [[</font>]] .. digits[2]
+		end
 
-			if wepStats.operationType == 4 and chamberedVal then
-				local digits = splitNumber(magAmmo.Value + 1)
-				self.ammoCounter.Text = [[<font transparency="0.5">]] .. digits[1] .. [[</font>]] .. digits[2]
+		self.ammoPoolUI.Text = "/"
+		if wepStats.infiniteAmmo then
+			self.ammoPoolUI.Text = self.ammoPoolUI.Text .. "INF"
+		else
+			local ammoPoolVal = self.weaponState.gunAmmo.ArcadeAmmoPool.Value
+			local digits = splitNumber(ammoPoolVal)
+			self.ammoPoolUI.Text = self.ammoPoolUI.Text
+				.. [[<font transparency="0.5">]]
+				.. digits[1]
+				.. [[</font>]]
+				.. digits[2]
+			if ammoPoolVal > 0 then
+				self.ammoPoolUI.TextColor3 = Color3.fromRGB(255, 255, 255)
 			else
-				local digits = splitNumber(magAmmo.Value)
-				self.ammoCounter.Text = [[<font transparency="0.5">]] .. digits[1] .. [[</font>]] .. digits[2]
+				self.ammoPoolUI.TextColor3 = Color3.new(1, 0, 0)
 			end
+		end
 
-			self.ammoPoolUI.Text = "/"
-			if wepStats.infiniteAmmo then
-				self.ammoPoolUI.Text = self.ammoPoolUI.Text .. "INF"
-			else
-				local ammoPoolVal = self.weaponState.gunAmmo.ArcadeAmmoPool.Value
-				local digits = splitNumber(ammoPoolVal)
-				self.ammoPoolUI.Text = self.ammoPoolUI.Text
-					.. [[<font transparency="0.5">]]
-					.. digits[1]
-					.. [[</font>]]
-					.. digits[2]
-				if ammoPoolVal > 0 then
-					self.ammoPoolUI.TextColor3 = Color3.fromRGB(255, 255, 255)
-				else
-					self.ammoPoolUI.TextColor3 = Color3.new(1, 0, 0)
-				end
+		if fireModeVal == 0 then
+			self.ammoCounter.TextColor3 = Color3.new(0.5, 0.5, 0.5)
+		elseif chamberedVal or (wepStats.openBolt and magAmmo.Value > 1) then
+			if wepStats.operationType < 4 then
+				self.chambered.TextTransparency = 0
 			end
-
-			if fireModeVal == 0 then
-				self.ammoCounter.TextColor3 = Color3.new(0.5, 0.5, 0.5)
-			elseif chamberedVal or (wepStats.openBolt and magAmmo.Value > 1) then
-				if wepStats.operationType < 4 then
-					self.chambered.TextTransparency = 0
-				end
-				self.ammoCounter.TextColor3 = Color3.fromRGB(255, 255, 255)
-			else
-				self.chambered.TextTransparency = 1
-				self.ammoCounter.TextColor3 = Color3.new(1, 0, 0)
-			end
+			self.ammoCounter.TextColor3 = Color3.fromRGB(255, 255, 255)
+		else
+			self.chambered.TextTransparency = 1
+			self.ammoCounter.TextColor3 = Color3.new(1, 0, 0)
 		end
 
 		self.fireMode.Text = FIRE_MODE_NAMES[fireModeVal + 1]

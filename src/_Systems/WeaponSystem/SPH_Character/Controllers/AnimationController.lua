@@ -505,19 +505,6 @@ function AnimationController.SyncChambering(self: AnimationController, value)
 	end
 end
 
--- UBGL (fire mode 4) uses the UBGL stat block for the reload clip name when present.
-local function playUbglReload(self: AnimationController, animSpeed: number)
-	local ws = self.weaponState.wepStats()
-	if not ws then
-		return
-	end
-	local ubglStats = ws.getStatsForMode(Enums.FireModes.UBGL)
-	local reloadAnim = weaponAnimationName(ubglStats, Enums.WeaponAnim.Reload.key) or weaponAnimationName(ws, Enums.WeaponAnim.Reload.key)
-	if reloadAnim then
-		self:PlayAnimation(reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, Enums.WeaponAnim.Reload)
-	end
-end
-
 -- Open bolt, then either clip loop or normal reload depending on ammo rules.
 local function playBoltOpenReloadSequence(self: AnimationController, lastGunModelName: string?, animSpeed: number)
 	local tool = self.state.equippedTool()
@@ -576,11 +563,6 @@ function AnimationController.WeaponReload(self: AnimationController, lastGunMode
 	end
 	self.weaponState.reloading(true)
 	local animSpeed = ws.reloadSpeedModifier
-
-	if self.weaponState.fireMode() == Enums.FireModes.UBGL and ws.hasUBGL then
-		playUbglReload(self, animSpeed)
-		return
-	end
 
 	local tool = self.state.equippedTool()
 	local stats = ws

@@ -23,7 +23,6 @@ type self = {
 	gunModel: Charm.Atom<Model?>,
 	gunAmmo: Instance?,
 	localAmmo: Charm.Atom<number>,
-	localUbglAmmo: Charm.Atom<number>,
 
 	aimSens: Charm.Atom<number>,
 	sightIndex: Charm.Atom<number>,
@@ -50,7 +49,6 @@ type self = {
 	RecoilFactor: number,
 	Spread: number,
 
-	ubglActive: Charm.Getter<boolean>,
 	hasAmmoForMode: Charm.Getter<boolean>,
 	canManipulate: Charm.Getter<boolean>,
 	canTrackAimInput: Charm.Getter<boolean>,
@@ -71,7 +69,6 @@ function WepState.new(): WeaponState
 		gunModel = Charm.atom(nil),
 		gunAmmo = nil,
 		localAmmo = Charm.atom(0),
-		localUbglAmmo = Charm.atom(0),
 
 		aimSens = Charm.atom(config.defaultAimSensitivity),
 		sightIndex = Charm.atom(1),
@@ -102,21 +99,8 @@ function WepState.new(): WeaponState
 		Spread = 0,
 	} :: self, WepState)
 
-	self.ubglActive = Charm.computed(function()
-		local ws = self.wepStats()
-		return ws ~= nil and ws.hasUBGL == true and self.fireMode() == Enums.FireModes.UBGL
-	end)
-
 	self.hasAmmoForMode = Charm.computed(function()
-		local ws = self.wepStats()
-		if not ws then
-			return false
-		end
-		if self.ubglActive() then
-			return self.localUbglAmmo() > 0
-		else
-			return self.localAmmo() > 0
-		end
+		return self.localAmmo() > 0
 	end)
 
 	self.canManipulate = Charm.computed(function()
@@ -194,7 +178,6 @@ function WepState.Reset(self: WeaponState)
 	self.equipped(false)
 
 	self.localAmmo(0)
-	self.localUbglAmmo(0)
 	self.aimSens(config.defaultAimSensitivity)
 	self.sightIndex(1)
 	self.viewmodelVisible(false)

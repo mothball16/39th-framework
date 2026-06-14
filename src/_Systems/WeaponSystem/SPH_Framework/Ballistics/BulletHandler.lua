@@ -186,22 +186,14 @@ local function ResetBullet(bulletPart)
 	end
 end
 
-local function PlaySFX(parent, playerFired, isUBGL)
+local function PlaySFX(parent, playerFired)
 	for _, child in ipairs(parent:GetChildren()) do
 		local shouldPlay = false
 		if child:IsA("Sound") then
-			if isUBGL then
-				-- UBGL mode: prefer UBGL sounds, fallback to Fire sounds, no Echo
-				if child.Name:match("^UBGL_") or child.Name == "Fire" then
-					shouldPlay = true
-				end
-			else
-				-- Regular mode: only play Fire and Echo sounds, no UBGL sounds
-				if child.Name == "Fire" then
-					shouldPlay = true
-				elseif child.Name == "Echo" and (config.firstPersonEcho or playerFired ~= player) then
-					shouldPlay = true
-				end
+			if child.Name == "Fire" then
+				shouldPlay = true
+			elseif child.Name == "Echo" and (config.firstPersonEcho or playerFired ~= player) then
+				shouldPlay = true
 			end
 		end
 
@@ -221,21 +213,7 @@ local function PlaySFX(parent, playerFired, isUBGL)
 end
 
 module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity, tool, playerFired, tracerColor, onHitCallback)
-	-- [UBGL START] - UBGL Tool Data Handling
-	-- Handle UBGL tool data structure
-	local actualTool = tool
-	if type(tool) == "table" and tool.Tool then
-		actualTool = tool.Tool
-	end
-
-	local wepStats = WeaponStatLocator.getWeaponStats(actualTool)
-
-	-- If this is UBGL mode, get UBGL stats
-	if type(tool) == "table" and tool.fireMode == 4 and wepStats.hasUBGL then
-		wepStats = wepStats.getStatsForMode(4)
-	end
-	-- [UBGL END] - UBGL Tool Data Handling
-
+	local wepStats = WeaponStatLocator.getWeaponStats(tool)
 
 	bulletBehavior.Acceleration = config.bulletAcceleration
 
@@ -246,19 +224,13 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 	newData.OnHitCallback = onHitCallback
 	newData.Player = playerFired
 	newData.TracerColor = tracerColor
-	newData.Tool = type(tool) == "table" and tool.Tool or tool
+	newData.Tool = tool
 	newData.IgnoreModel = rig
 	newData.Visible = false
 	newData.Origin = bulletOrigin
 	newData.CurrentlySuppressedTargets = {}
 	newData.AlreadySuppressedTargets = {}
 	newData.wepStats = wepStats
-	-- [UBGL START] - UBGL Fire Mode Data
-	-- Add fire mode information for bullet physics
-	if type(tool) == "table" and tool.fireMode then
-		newData.fireMode = tool.fireMode
-	end
-	-- [UBGL END] - UBGL Fire Mode Data
 
 	local bullet = newBullet.RayInfo.CosmeticBulletObject
 	if bullet and bullet.Transparency == 0 then
@@ -299,14 +271,14 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 	end
 end
 
-module.FireFX = function(playerFired:Player, gunModel, firePointName, muzzleChance, isUBGL)
+module.FireFX = function(playerFired:Player, gunModel, firePointName, muzzleChance)
 	local base = gunModel:FindFirstChild("Grip") or gunModel:FindFirstChild("Base") or gunModel:FindFirstChild("Main") -- DD_SPH Gunsmith: Added Main as an option for suppressors
 	local firePoint = base[firePointName]
 	local humanoidRootPart = playerFired.Character:FindFirstChild("HumanoidRootPart")
 
 	-- Sound effects
-	PlaySFX(base, playerFired, isUBGL or false)
-	PlaySFX(firePoint, playerFired, isUBGL or false)
+	PlaySFX(base, playerFired)
+	PlaySFX(firePoint, playerFired)
 
 	-- Limit range of other effects
 	if humanoidRootPart and player:DistanceFromCharacter(humanoidRootPart.Position) <= config.fireEffectDistance then
@@ -459,13 +431,6 @@ caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBul
 
 	-- Prepare tool data for server
 	local toolData = cast.UserData.Tool
-	if cast.UserData.fireMode then
-		-- Reconstruct UBGL data structure for server
-		toolData = {
-			Tool = cast.UserData.Tool,
-			fireMode = cast.UserData.fireMode
-		}
-	end
 	P.BulletHit.send({
 		toolData = toolData,
 		rayHit = fakeRayResult,

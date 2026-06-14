@@ -42,6 +42,7 @@ return {
         Semi = 1,
         Auto = 2,
         Burst = 3,
+        -- Deprecated slot; kept so saved fire-mode indices stay stable.
         UBGL = 4,
         Manual = 5
     },

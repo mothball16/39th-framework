@@ -173,23 +173,6 @@ local function setupGun(tool: Tool, wepStats)
 		magAmmo.Value = wepStats.magazineAmmo or magAmmo.MaxValue
 		local arcadeAmmoPool = Instance.new("DoubleConstrainedValue", ammoFolder)
 		arcadeAmmoPool.Name = "ArcadeAmmoPool"
-		arcadeAmmoPool.MaxValue = wepStats.maxAmmoPool
-		arcadeAmmoPool.Value = wepStats.startAmmoPool
-		if wepStats.hasUBGL then
-			local ubglAmmo = Instance.new("IntValue", tool)
-			ubglAmmo.Name = "UBGLAmmo"
-			local ubglAmmoPool = Instance.new("DoubleConstrainedValue", tool)
-			ubglAmmoPool.Name = "UBGLAmmoPool"
-			ubglAmmoPool.MaxValue = wepStats.ubgl.maxAmmoPool or 12
-			local totalStartAmmo = wepStats.ubgl.startAmmoPool or 6
-			if totalStartAmmo > 0 then
-				ubglAmmo.Value = 1
-				ubglAmmoPool.Value = totalStartAmmo - 1
-			else
-				ubglAmmo.Value = 0
-				ubglAmmoPool.Value = 0
-			end
-		end
 		if not wepStats.openBolt then
 			local chambered = Instance.new("BoolValue", tool)
 			chambered.Value = wepStats.startChambered
@@ -681,11 +664,7 @@ local function weaponStatsForBridgeTool(tool)
 		if tool.model then
 			return require(tool.model.Parent.TurretModule).guns[tool.index]
 		end
-		local stats = WeaponStatLocator.getWeaponStats(tool.Tool)
-		if tool.fireMode == 4 and stats.hasUBGL then
-			stats = stats.getStatsForMode(4)
-		end
-		return stats
+		return WeaponStatLocator.getWeaponStats(tool.Tool)
 	end
 	if tool:IsA("Tool") then
 		return WeaponStatLocator.getWeaponStats(tool)
@@ -814,14 +793,7 @@ local function playerFireHandler(player: Player, firePoint: CFrame)
 	local gunAmmo = tool.Ammo
 	local magAmmo = gunAmmo.MagAmmo
 	local currentFireMode = tool.FireMode.Value
-	if currentFireMode == 4 and wepStats.hasUBGL then
-		local ubglAmmo = tool:FindFirstChild("UBGLAmmo")
-		if not ubglAmmo or ubglAmmo.Value <= 0 then
-			return
-		end
-		ubglAmmo.Value = ubglAmmo.Value - 1
-		tool.BoltReady.Value = true
-	elseif currentFireMode == 5 then
+	if currentFireMode == 5 then
 		if not wepStats.openBolt then
 			tool.Chambered.Value = false
 		end
@@ -918,17 +890,7 @@ local function initializeAmmo()
 		local magAmmo = tool.Ammo.MagAmmo
 		local arcadeAmmoPool = tool.Ammo.ArcadeAmmoPool
 		local currentFireMode = tool.FireMode.Value
-		if currentFireMode == 4 and wepStats.hasUBGL then
-			local ubglAmmo = tool:FindFirstChild("UBGLAmmo")
-			local ubglAmmoPool = tool:FindFirstChild("UBGLAmmoPool")
-			if ubglAmmo and ubglAmmoPool then
-				if ubglAmmo.Value < 1 then
-					if ubglAmmoPool.Value > 0 then
-						ubglAmmo.Value = 1
-						ubglAmmoPool.Value = ubglAmmoPool.Value - 1
-					end
-				end
-			end
+		if currentFireMode == 4 then
 			return
 		end
 		if not wepStats.operationType or type(wepStats.operationType) == "string" then
@@ -1018,8 +980,7 @@ local function initializeAmmo()
 		local newFireMode = data.mode
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
 		if tool and _collectionService:HasTag(tool, "SPH_Weapon") then
-			local wepStats = WeaponStatLocator.getWeaponStats(tool)
-			if newFireMode == 4 and not wepStats.hasUBGL then
+			if newFireMode == 4 then
 				return
 			end
 			tool.FireMode.Value = newFireMode

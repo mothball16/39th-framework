@@ -49,7 +49,6 @@ type self = {
 	ejected: boolean,
 	cancelReload: boolean,
 	bulletsCurrentlyFired: number,
-	ubglAmmo: IntValue?,
 	sights: { Instance },
 	lastGunModel: Instance?,
 	player: Player,
@@ -116,7 +115,6 @@ function WeaponController.new(params: {
 		ejected = true,
 		cancelReload = false,
 		bulletsCurrentlyFired = 0,
-		ubglAmmo = nil,
 		sights = {},
 		lastGunModel = nil,
 		player = params.player,
@@ -284,21 +282,10 @@ end
 function WeaponController.PlayRepSound(self: WeaponController, soundName)
 	local ws = self.weaponState.wepStats()
 	if not self.state.dead() and ws then
-		local soundToPlay
 		local gm = self.weaponState.gunModel()
-		if self.weaponState.ubglActive() then
-			soundToPlay = gm.Grip:FindFirstChild("UBGL_" .. soundName)
-			if not soundToPlay then
-				soundToPlay = gm.Grip:FindFirstChild(soundName)
-				if soundName == "Fire" then
-					soundToPlay = findFireSoundInstance(gm) or soundToPlay
-				end
-			end
-		else
-			soundToPlay = gm.Grip:FindFirstChild(soundName)
-			if soundName == "Fire" then
-				soundToPlay = findFireSoundInstance(gm) or soundToPlay
-			end
+		local soundToPlay = gm.Grip:FindFirstChild(soundName)
+		if soundName == "Fire" then
+			soundToPlay = findFireSoundInstance(gm) or soundToPlay
 		end
 
 		if soundToPlay and self.state.equippedTool() then
@@ -315,29 +302,12 @@ function WeaponController.PlayRepSound(self: WeaponController, soundName)
 	end
 end
 
-function WeaponController.GetCurrentWepStats(self: WeaponController)
-	if self.weaponState.ubglActive() then
-		local ws = self.weaponState.wepStats()
-		return ws and ws.getStatsForMode(4)
-	else
-		return self.weaponState.wepStats()
-	end
-end
-
 function WeaponController.IsLoaded(self: WeaponController)
-	local currentStats = self:GetCurrentWepStats()
-	if self.weaponState.ubglActive() then
-		return self.ubglAmmo and self.ubglAmmo.Value > 0
-	else
-		return not currentStats.openBolt and self.state.equippedTool().Chambered.Value or currentStats.openBolt and self.weaponState.gunAmmo.MagAmmo.Value > 0
-	end
+	local currentStats = self.weaponState.wepStats()
+	return not currentStats.openBolt and self.state.equippedTool().Chambered.Value or currentStats.openBolt and self.weaponState.gunAmmo.MagAmmo.Value > 0
 end
 
 function WeaponController.GetMuzzlePoint(self: WeaponController, gunModel)
-	if self.weaponState.ubglActive() then
-		local ubglMuzzle = gunModel.Grip:FindFirstChild("UBGLMuzzle")
-		if ubglMuzzle then return ubglMuzzle end
-	end
 	return gunModel.Grip.Muzzle
 end
 
@@ -421,7 +391,7 @@ function WeaponController.SwitchFireMode(self: WeaponController)
 			mode = 0
 			break
 		end
-	until ws.fireSwitch[mode]
+	until ws.fireSwitch[mode] and mode ~= Enums.FireModes.UBGL
 	self.weaponState.fireMode(mode)
 end
 
@@ -535,36 +505,17 @@ function WeaponController.Equip(self: WeaponController, newChild)
 
 	self.weaponState.gunAmmo = self.state.equippedTool():WaitForChild("Ammo")
 	self.weaponState.localAmmo(self.weaponState.gunAmmo.MagAmmo.Value)
-	if ws.hasUBGL then
-		self.ubglAmmo = newChild:FindFirstChild("UBGLAmmo")
-		local ubglAmmoPool = newChild:FindFirstChild("UBGLAmmoPool")
-		if not self.ubglAmmo then
-			self.ubglAmmo = Instance.new("IntValue", newChild)
-			self.ubglAmmo.Name = "UBGLAmmo"
-			local totalStartAmmo = ws.ubgl.startAmmoPool or 6
-			self.ubglAmmo.Value = (totalStartAmmo > 0 and (not ubglAmmoPool or ubglAmmoPool.Value > 0)) and 1 or 0
-		end
-		if not ubglAmmoPool then
-			ubglAmmoPool = Instance.new("DoubleConstrainedValue", newChild)
-			ubglAmmoPool.Name = "UBGLAmmoPool"
-			ubglAmmoPool.MaxValue = ws.ubgl.maxAmmoPool or 12
-			local totalStartAmmo = ws.ubgl.startAmmoPool or 6
-			ubglAmmoPool.Value = totalStartAmmo > 0 and (totalStartAmmo - self.ubglAmmo.Value) or 0
-		end
-
-		if ws.ubgl.reloadAnim then
-			local animSpeed = ws.reloadSpeedModifier
-			self.localEvents.PlayAnimationRequested:Fire(ws.ubgl.reloadAnim, { speed = animSpeed, transSpeed = 0.17 }, Enums.WeaponAnim.Reload)
-		end
-	else
-		self.ubglAmmo = nil
-	end
 
 	if not self.state.equippedTool().BoltReady.Value then
 		self:MoveBolt(ws.boltDist, true)
 	end
 
-	self.weaponState.fireMode(self.state.equippedTool().FireMode.Value)
+	local equippedFireMode = self.state.equippedTool().FireMode.Value
+	if equippedFireMode == Enums.FireModes.UBGL then
+		equippedFireMode = ws.fireMode
+		self.state.equippedTool().FireMode.Value = equippedFireMode
+	end
+	self.weaponState.fireMode(equippedFireMode)
 	self.weaponState.holdStance(Enums.HoldStance.Ready)
 
 	self:_applyPersistedWeaponPrefs(newChild.Name)
@@ -603,33 +554,24 @@ function WeaponController.OnReloadIntent(self: WeaponController, inputState, inp
 	if inputState ~= inputBegan or not self.weaponState.canManipulate() or not self.cycled then return end
 	self.weaponState.holdStance(Enums.HoldStance.Ready)
 	self.state.aiming(false)
-	if self.weaponState.ubglActive() then
-		local ubglAmmoPool = self.state.equippedTool():FindFirstChild("UBGLAmmoPool")
-		if self.ubglAmmo and self.ubglAmmo.Value == 0 and ubglAmmoPool and ubglAmmoPool.Value > 0 then
+	local ws = self.weaponState.wepStats()
+	if not ws then
+		return
+	end
+	if ws.infiniteAmmo or self.weaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
+		if (ws.openBolt and self.weaponState.gunAmmo.MagAmmo.Value < self.weaponState.gunAmmo.MagAmmo.MaxValue) then
+			self.cancelReload = false
+			self.localEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
+		else
+			if (ws.operationType == Enums.OperationType.NonReciprocating and self.state.equippedTool().Chambered.Value)
+				or (ws.operationType == Enums.OperationType.ManualCycleAlways and self.weaponState.gunAmmo.MagAmmo.Value + 1 >= self.weaponState.gunAmmo.MagAmmo.MaxValue)
+				or (ws.operationType == Enums.OperationType.OpenBoltOnEmpty and self.weaponState.gunAmmo.MagAmmo.Value >= self.weaponState.gunAmmo.MagAmmo.MaxValue) then
+					return
+			end
 			self.cancelReload = false
 			self.localEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
 		end
-	else
-		local ws = self.weaponState.wepStats()
-		if not ws then
-			return
-		end
-		if ws.infiniteAmmo or self.weaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
-			if (ws.openBolt and self.weaponState.gunAmmo.MagAmmo.Value < self.weaponState.gunAmmo.MagAmmo.MaxValue) then
-				self.cancelReload = false
-				self.localEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
-			else
-				if (ws.operationType == Enums.OperationType.NonReciprocating and self.state.equippedTool().Chambered.Value)
-					or (ws.operationType == Enums.OperationType.ManualCycleAlways and self.weaponState.gunAmmo.MagAmmo.Value + 1 >= self.weaponState.gunAmmo.MagAmmo.MaxValue)
-					or (ws.operationType == Enums.OperationType.OpenBoltOnEmpty and self.weaponState.gunAmmo.MagAmmo.Value >= self.weaponState.gunAmmo.MagAmmo.MaxValue) then
-						return
-				end
-				self.cancelReload = false
-				self.localEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
-			end
-		end
 	end
-	
 end
 
 function WeaponController.OnChamberIntent(self: WeaponController, inputState, inputObject)
@@ -853,7 +795,7 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 	if canFireShot then
 		if not self.state.firstPerson() and not config.thirdPersonFiring then return end
 
-		local currentStats = self:GetCurrentWepStats()
+		local currentStats = ws
 		self.weaponState.RecoilFactor = math.clamp(self.weaponState.RecoilFactor + ws.RecoilStepAmount,
 			ws.MinRecoilFactor, ws.MaxRecoilFactor)
 
@@ -863,7 +805,7 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 		self.bulletsCurrentlyFired += 1
 		self.ejected = false
 
-		if fireMode == Enums.FireModes.Semi or fireMode == Enums.FireModes.Manual or fireMode == Enums.FireModes.UBGL or (fireMode == Enums.FireModes.Burst and self.bulletsCurrentlyFired >= currentStats.burstNumber) then
+		if fireMode == Enums.FireModes.Semi or fireMode == Enums.FireModes.Manual or (fireMode == Enums.FireModes.Burst and self.bulletsCurrentlyFired >= currentStats.burstNumber) then
 			self.canFire = false
 			self.holdingM1 = false
 		end
@@ -871,35 +813,31 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 		self.cycled = false
 		local curModel = self.weaponState.gunModel()
 
-		if fireMode ~= Enums.FireModes.Manual and fireMode ~= Enums.FireModes.UBGL then
+		if fireMode ~= Enums.FireModes.Manual then
 			self:EjectShell()
 		end
 
-		if fireMode ~= Enums.FireModes.UBGL then
-			local bulletHandlerPart = ws.bulletHandler and self.weaponState.gunModel():FindFirstChild(ws.bulletHolder)
-			if bulletHandlerPart then
-				local bulletNumber = self.weaponState.gunAmmo.MagAmmo.MaxValue - (self.weaponState.gunAmmo.MagAmmo.Value - 1)
-				local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
-				if tempBulletPart then tempBulletPart.Transparency = 1 end
-			end
+		local bulletHandlerPart = ws.bulletHandler and self.weaponState.gunModel():FindFirstChild(ws.bulletHolder)
+		if bulletHandlerPart then
+			local bulletNumber = self.weaponState.gunAmmo.MagAmmo.MaxValue - (self.weaponState.gunAmmo.MagAmmo.Value - 1)
+			local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
+			if tempBulletPart then tempBulletPart.Transparency = 1 end
 		end
 
 		local tempGunModel = self.weaponState.gunModel()
 		if not self.state.firstPerson() then tempGunModel = self:GetThirdPersonGunModel() end
 
-		local muzzleName = (fireMode == Enums.FireModes.UBGL) and "UBGLMuzzle" or "Muzzle"
+		local muzzleName = "Muzzle"
 		local muCh = ws.muzzleChance
 		local muzzleHost = findChildModelWithMainPartChild(tempGunModel, "Muzzle")
 		if muzzleHost then
 			tempGunModel = muzzleHost
 		end
 
-		bulletHandler.FireFX(self.player, tempGunModel, muzzleName, muCh, fireMode == Enums.FireModes.UBGL)
+		bulletHandler.FireFX(self.player, tempGunModel, muzzleName, muCh)
 		self:PlayRepSound("Fire")
 
-		if fireMode ~= Enums.FireModes.UBGL then
-			self:MoveBolt(currentStats.boltDist)
-		end
+		self:MoveBolt(currentStats.boltDist)
 
 		local shotCount = (currentStats.shotgun and currentStats.shotgunPellets) or 1
 		for _ = 1, shotCount do
@@ -916,19 +854,11 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 
 			local tracerColor = nil
 			local TrTi = currentStats.tracerTiming
-			if fireMode ~= Enums.FireModes.UBGL and currentStats.tracers and TrTi and self.weaponState.gunAmmo.MagAmmo.Value % TrTi == 0 then
+			if currentStats.tracers and TrTi and self.weaponState.gunAmmo.MagAmmo.Value % TrTi == 0 then
 				tracerColor = currentStats.tracerColor
 			end
 
-			local bulletData = self.state.equippedTool()
-			if fireMode == Enums.FireModes.UBGL then
-				bulletData = {
-					Tool = self.state.equippedTool(),
-					fireMode = fireMode,
-				}
-			end
-
-			bulletHandler.FireBullet(self.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, bulletData, self.player, tracerColor, function(userData, raycastResult)
+			bulletHandler.FireBullet(self.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, self.state.equippedTool(), self.player, tracerColor, function(userData, raycastResult)
 				-- when bullet hits, this callback lets other controllers know about it
 				self.localEvents.BulletHit:Fire(userData.wepStats, bulletOrigin, raycastResult)
 			end)
