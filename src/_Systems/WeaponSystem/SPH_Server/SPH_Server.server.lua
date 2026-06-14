@@ -173,6 +173,8 @@ local function setupGun(tool: Tool, wepStats)
 		magAmmo.Value = wepStats.magazineAmmo or magAmmo.MaxValue
 		local arcadeAmmoPool = Instance.new("DoubleConstrainedValue", ammoFolder)
 		arcadeAmmoPool.Name = "ArcadeAmmoPool"
+		arcadeAmmoPool.MaxValue = Access.config.infiniteReserve and math.huge or wepStats.maxAmmoPool
+		arcadeAmmoPool.Value = Access.config.infiniteReserve and math.huge or wepStats.startAmmoPool
 		if not wepStats.openBolt then
 			local chambered = Instance.new("BoolValue", tool)
 			chambered.Value = wepStats.startChambered

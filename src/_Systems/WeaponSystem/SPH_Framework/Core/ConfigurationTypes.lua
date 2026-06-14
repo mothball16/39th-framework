@@ -357,6 +357,7 @@ export type MainGameSettings = {
 
 	playerZoomDistance: number,
 
+	infiniteReserve: boolean,
 }
 
 return nil
