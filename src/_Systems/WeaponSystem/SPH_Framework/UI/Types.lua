@@ -6,6 +6,7 @@ export type HitmarkerProps = {
     smoothingOffset: number,
     image: string,
     size: UDim2,
+
     transparency: NumberSequence | number,
     scale: NumberSequence | number,
     color: ColorSequence | Color3,
@@ -13,6 +14,7 @@ export type HitmarkerProps = {
     lifetime: number,
     Position: Vide.source<UDim2>,
     TimeElapsed: Vide.source<number> | nil,
+
 }
 
 export type EffectViewProps = {

@@ -65,11 +65,12 @@ function EffectManager.new(suppressionSource: Vide.source<number>, suppressionRe
     return self
 end
 
-function EffectManager.PushHitmarker(self: EffectManager, props: Types.HitmarkerProps, anchorPoint: Vector3 | nil)
+function EffectManager.PushHitmarker(self: EffectManager, props: Types.HitmarkerProps, anchorPoint: Vector3 | nil, damage: number?)
     local state = table.clone(self.activeHitmarkers())
     table.insert(state, {
         props = props,
         anchorPoint = anchorPoint,
+        damage = damage or 0,
     })
     self.activeHitmarkers(state)
 end

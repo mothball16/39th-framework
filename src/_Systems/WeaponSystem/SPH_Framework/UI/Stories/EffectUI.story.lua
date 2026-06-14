@@ -34,7 +34,7 @@ local story = UILabs.CreateVideStory({
 		{
 			text = "Add Hitmarker",
 			onActivated = function()
-				effectManager:PushHitmarker(HitmarkerTypes[props.controls.Type()]())
+				effectManager:PushHitmarker(HitmarkerTypes[props.controls.Type()](), nil, 25)
 			end,
 		},
 		{
