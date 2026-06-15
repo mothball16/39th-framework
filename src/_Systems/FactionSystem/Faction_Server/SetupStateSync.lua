@@ -8,9 +8,7 @@ return function(state: State.State)
     LegacyEvents.RequestState.OnServerEvent:Connect(function(player)
         local signals = {
             configByFactionId = state.configByFactionId,
-            playerByFactionId = state.playerByFactionId,
-            playerByGroupKey = state.playerByGroupKey,
-            playerByClassId = state.playerByClassId,
+            playerAssignmentByUserId = state.playerAssignmentByUserId,
             groupCountByFaction = state.groupCountByFaction,
         }
         Server.addSignalsToClient(player, signals)

@@ -5,7 +5,6 @@ utility module for performing state transformations
 local Types = require("../Core/Types")
 local State = require("../Core/State")
 local Utilities = require("./Utilities")
-local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 
 local StateActions = {}
 
@@ -53,8 +52,8 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string): (bo
 
 	-- make a pass to get players within the removed factions
 	local affectedPlayers = {}
-	for userId, factionId in pairs(state.playerByFactionId()) do
-		if factionId == idToRemove then
+	for userId, assignment in pairs(state.playerAssignmentByUserId()) do
+		if assignment.FactionId == idToRemove then
 			table.insert(affectedPlayers, userId)
 		end
 	end
@@ -63,21 +62,12 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string): (bo
 		return true, `no players are affected by the removal of faction {idToRemove}`
 	end
 
-	-- is dirty, update reactively
-	local nextplayerByFactionId = table.clone(state.playerByFactionId())
-	local nextplayerByGroupKey = table.clone(state.playerByGroupKey())
-	local nextplayerByClassId = table.clone(state.playerByClassId())
+	local nextPlayerAssignmentByUserId = table.clone(state.playerAssignmentByUserId())
 	for _, userId in ipairs(affectedPlayers) do
-		nextplayerByFactionId[userId] = nil
-		nextplayerByGroupKey[userId] = nil
-		nextplayerByClassId[userId] = nil
+		nextPlayerAssignmentByUserId[userId] = nil
 	end
 
-	Charm.batch(function()
-		state.playerByFactionId(nextplayerByFactionId)
-		state.playerByGroupKey(nextplayerByGroupKey)
-		state.playerByClassId(nextplayerByClassId)
-	end)
+	state.playerAssignmentByUserId(nextPlayerAssignmentByUserId)
 	return true, nil
 end
 
@@ -88,20 +78,17 @@ function StateActions.SetPlayerFaction(state: State.State, userId: number | stri
 		return false, `denied: faction {factionId} is not a valid faction`
 	end
 
-	if state.playerByFactionId()[userId] == factionId then
+	local assignment = state.playerAssignmentByUserId()[userId]
+	if assignment and assignment.FactionId == factionId then
 		return true, `ignored: faction id {factionId} is the same as the previous`
 	end
 
-	local success, msg = false, ""
-	Charm.batch(function()
-		_updateMapValue(state.playerByFactionId, userId, factionId)
-		success, msg = StateActions.SetPlayerToDefaultGroupClass(state, userId, factionId)
-	end)
-	return success, msg
+	return StateActions.SetPlayerToDefaultGroupClass(state, userId, factionId)
 end
 
 function StateActions.SetPlayerGroupClass(state: State.State, userId: number | string, groupKey: string?, classId: string?): (boolean, string?)
 	userId = Utilities.ToPlayerKey(userId)
+	local assignment = state.playerAssignmentByUserId()[userId]
 	-- either intentionally or accidentally empty, remove everything cause
 	-- it will brick the classes otherwise
 	if not groupKey or not classId then
@@ -109,10 +96,10 @@ function StateActions.SetPlayerGroupClass(state: State.State, userId: number | s
 		classId = nil
 	else
 
-		local playerFactionId = state.playerByFactionId()[userId]
+		local playerFactionId = if assignment then assignment.FactionId else nil
 		local factionConfig = state.configByFactionId()[playerFactionId]
-		local currentGroupKey = state.playerByGroupKey()[userId]
-		local currentClassId = state.playerByClassId()[userId]
+		local currentGroupKey = if assignment then assignment.GroupKey else nil
+		local currentClassId = if assignment then assignment.ClassId else nil
 
 		if currentGroupKey == groupKey and currentClassId == classId then
 			return true, `ignored: group key {groupKey} and class id {classId} are the same as the previous`
@@ -156,10 +143,13 @@ function StateActions.SetPlayerGroupClass(state: State.State, userId: number | s
 		end
 	end
 
-	Charm.batch(function()
-		_updateMapValue(state.playerByGroupKey, userId, groupKey)
-		_updateMapValue(state.playerByClassId, userId, classId)
-	end)
+	if assignment then
+		_updateMapValue(state.playerAssignmentByUserId, userId, {
+			FactionId = assignment.FactionId,
+			GroupKey = groupKey,
+			ClassId = classId,
+		})
+	end
 	return true, nil
 end
 
@@ -170,8 +160,8 @@ end
 
 function StateActions.RemovePlayerFaction(state: State.State, userId: number | string): (boolean, string?)
 	userId = Utilities.ToPlayerKey(userId)
-	_updateMapValue(state.playerByFactionId, userId, nil)
-	return StateActions.RemovePlayerGroupClass(state, userId)
+	_updateMapValue(state.playerAssignmentByUserId, userId, nil)
+	return true, nil
 end
 
 
@@ -196,10 +186,11 @@ function StateActions.SetPlayerToDefaultGroupClass(state: State.State, userId: n
 		return false, `error: faction {factionId} has no class ids!`
 	end
 
-	Charm.batch(function()
-		_updateMapValue(state.playerByGroupKey, userId, defaultGroupKey)
-		_updateMapValue(state.playerByClassId, userId, classId)
-	end)
+	_updateMapValue(state.playerAssignmentByUserId, userId, {
+		FactionId = factionId,
+		GroupKey = defaultGroupKey,
+		ClassId = classId,
+	})
 	return true, msg
 end
 

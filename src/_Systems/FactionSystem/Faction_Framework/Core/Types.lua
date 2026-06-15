@@ -56,8 +56,8 @@ export type GroupConfig = {
 
 export type PlayerClassAssignment = {
     FactionId: string,
-    GroupKey: string,
-    ClassId: string,
+    GroupKey: string?,
+    ClassId: string?,
 }
 
 export type Class = {

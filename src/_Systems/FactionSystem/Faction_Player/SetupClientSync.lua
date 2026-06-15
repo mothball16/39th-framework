@@ -5,9 +5,7 @@ local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
 return function(state: State.State)
     Client.addSignals({
         configByFactionId = state.configByFactionId,
-        playerByFactionId = state.playerByFactionId,
-        playerByGroupKey = state.playerByGroupKey,
-        playerByClassId = state.playerByClassId,
+        playerAssignmentByUserId = state.playerAssignmentByUserId,
         groupCountByFaction = state.groupCountByFaction,
     })
 

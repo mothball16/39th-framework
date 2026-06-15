@@ -44,7 +44,9 @@ function SelectionService.HandleGroupClassRequest(self: SelectionService, player
 	group: string,
 	class: string,
 }, itemEquipper: ItemEquipper.ItemEquipper): (boolean, string?)
-	local prevClassId = self.state.playerByClassId()[Utilities.ToPlayerKey(player.UserId)]
+	local userKey = Utilities.ToPlayerKey(player.UserId)
+	local assignment = self.state.playerAssignmentByUserId()[userKey]
+	local prevClassId = if assignment then assignment.ClassId else nil
 	local success, msg = StateActions.SetPlayerGroupClass(
 		self.state,
 		player.UserId,
@@ -56,7 +58,8 @@ function SelectionService.HandleGroupClassRequest(self: SelectionService, player
 		return false, msg
 	end
 
-	local nextClassId = self.state.playerByClassId()[Utilities.ToPlayerKey(player.UserId)]
+	assignment = self.state.playerAssignmentByUserId()[userKey]
+	local nextClassId = if assignment then assignment.ClassId else nil
 	if prevClassId and prevClassId ~= nextClassId then
 		itemEquipper:UnassignClassItems(player, prevClassId)
 	end
@@ -72,7 +75,8 @@ function SelectionService.HandleClassApplyRequest(self: SelectionService, player
 	enable: boolean
 }, itemEquipper: ItemEquipper.ItemEquipper
 ): (boolean, string?)
-	local classId = self.state.playerByClassId()[Utilities.ToPlayerKey(player.UserId)]
+	local assignment = self.state.playerAssignmentByUserId()[Utilities.ToPlayerKey(player.UserId)]
+	local classId = if assignment then assignment.ClassId else nil
 	if not classId then
 		return false, `denied: player {player.UserId} is not in a class`
 	end
@@ -110,11 +114,13 @@ function SelectionService.HandleTeamChange(
 		return false, `denied: faction {autoFactionAttribute} is not a valid faction`
 	end
 
-	if self.state.playerByFactionId()[Utilities.ToPlayerKey(player.UserId)] == autoFactionAttribute then
+	local userKey = Utilities.ToPlayerKey(player.UserId)
+	local assignment = self.state.playerAssignmentByUserId()[userKey]
+	if assignment and assignment.FactionId == autoFactionAttribute then
 		return true, `ignored: faction {autoFactionAttribute} is the same as the previous`
 	end
 
-	local prevClassId = self.state.playerByClassId()[Utilities.ToPlayerKey(player.UserId)]
+	local prevClassId = if assignment then assignment.ClassId else nil
 	local success, msg = StateActions.SetPlayerFaction(self.state, player.UserId, autoFactionAttribute)
 	if not success then
 		if msg then

@@ -20,8 +20,13 @@ export type PlayerSlice = {
 return function(state: State.State, userId: string): PlayerSlice
 	local sources = state:AsVideSources()
 
+	local assignment = derive(function()
+		return sources.playerAssignmentByUserId()[userId]
+	end)
+
 	local factionId = derive(function()
-		return sources.playerByFactionId()[userId]
+		local currentAssignment = assignment()
+		return if currentAssignment then currentAssignment.FactionId else nil
 	end)
 
 	local factionConfig = derive(function()
@@ -41,7 +46,8 @@ return function(state: State.State, userId: string): PlayerSlice
 	end)
 
 	local groupKey = derive(function()
-		return sources.playerByGroupKey()[userId]
+		local currentAssignment = assignment()
+		return if currentAssignment then currentAssignment.GroupKey else nil
 	end)
 
 	local groupConfig = derive(function()

@@ -9,9 +9,7 @@ State.__index = State
 
 type self = {
 	configByFactionId: Charm.Atom<{ [string]: Types.FactionConfig }>,
-	playerByFactionId: Charm.Atom<{ [string]: string }>,
-	playerByGroupKey: Charm.Atom<{ [string]: string }>,
-	playerByClassId: Charm.Atom<{ [string]: string }>,
+	playerAssignmentByUserId: Charm.Atom<{ [string]: Types.PlayerClassAssignment }>,
 
 	groupCountByFaction: () -> { [string]: { [string]: number } },
 }
@@ -21,17 +19,14 @@ function State.new(): State
 	local self = setmetatable(
 		{
 			configByFactionId = Charm.atom({}),
-			playerByFactionId = Charm.atom({}),
-			playerByGroupKey = Charm.atom({}),
-			playerByClassId = Charm.atom({}),
+			playerAssignmentByUserId = Charm.atom({}),
 		} :: self,
 		State
 	)
 
 	self.groupCountByFaction = Charm.computed(function()
 		local configByFactionId = self.configByFactionId()
-		local playerByFactionId = self.playerByFactionId()
-		local playerByGroupKey = self.playerByGroupKey()
+		local playerAssignmentByUserId = self.playerAssignmentByUserId()
 		local countsByFaction = {}
 
 		for factionId, factionConfig in pairs(configByFactionId) do
@@ -42,8 +37,9 @@ function State.new(): State
 			countsByFaction[factionId] = counts
 		end
 
-		for userId, factionId in pairs(playerByFactionId) do
-			local groupKey = playerByGroupKey[userId]
+		for _, assignment in pairs(playerAssignmentByUserId) do
+			local factionId = assignment.FactionId
+			local groupKey = assignment.GroupKey
 			if not groupKey then
 				continue
 			end
@@ -65,9 +61,7 @@ end
 function State:AsVideSources()
 	return {
 		configByFactionId = useAtom(self.configByFactionId),
-		playerByFactionId = useAtom(self.playerByFactionId),
-		playerByGroupKey = useAtom(self.playerByGroupKey),
-		playerByClassId = useAtom(self.playerByClassId),
+		playerAssignmentByUserId = useAtom(self.playerAssignmentByUserId),
 		groupCountByFaction = useAtom(self.groupCountByFaction),
 	}
 end

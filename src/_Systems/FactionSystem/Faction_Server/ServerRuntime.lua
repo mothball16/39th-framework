@@ -102,7 +102,8 @@ end
 function ServerRuntime.Start(self: ServerRuntime)
 	Players.PlayerAdded:Connect(function(player)
 		local function safeAssignClassItems(player: Player)
-			local classId = self.state.playerByClassId()[Utilities.ToPlayerKey(player.UserId)]
+			local assignment = self.state.playerAssignmentByUserId()[Utilities.ToPlayerKey(player.UserId)]
+			local classId = if assignment then assignment.ClassId else nil
 			if not classId then
 				return
 			end
