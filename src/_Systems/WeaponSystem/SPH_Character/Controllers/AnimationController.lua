@@ -166,6 +166,7 @@ end
 
 local function resolveAnimationAsset(path: Instance, animName: string)
 	if not animName or animName == "" then
+		warn(`no anim name found. path: {path.Name}`)
 		return nil
 	end
 	local split = string.find(animName, "/")
@@ -193,6 +194,7 @@ local function getOrCreateTracks(self: AnimationController, animName: string, pl
 
 	local animAsset = resolveAnimationAsset(self.animationsFolder, animName)
 	if not animName or not animAsset then
+		warn(`no anim found for {animName}`)
 		return nil
 	end
 
