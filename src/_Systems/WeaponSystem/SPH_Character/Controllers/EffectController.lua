@@ -158,7 +158,7 @@ function EffectController.OnBulletHit(self: EffectController, wepStats: Types.We
 	hitmarkerInstance.Position(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
 	
 	-- do the hitmarker stuff
-	if Access.config.damageIndicators == "incremental"then
+	if Access.config.damageIndicators == "incremental" then
 		self.effectManager:PushDamage(estimatedDamage)
 	end
 
