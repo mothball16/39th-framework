@@ -2,6 +2,7 @@ local RunService = game:GetService("RunService")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
 local Types = require("../Types")
+local Consts = require("../Data/Consts")
 local EffectManager = {}
 EffectManager.__index = EffectManager
 
@@ -45,7 +46,7 @@ function EffectManager.new(suppressionSource: Vide.source<number>, suppressionRe
             end
 
             hitmarker.props.TimeElapsed(hitmarker.props.TimeElapsed() + dt)
-            if hitmarker.props.TimeElapsed() >= hitmarker.props.lifetime then
+            if hitmarker.props.TimeElapsed() >= math.max(hitmarker.props.lifetime, Consts.DAMAGE_FLASH_LIFETIME) then
                 state[i] = nil
                 indexesDirty = true
             end

@@ -342,7 +342,7 @@ export type MainGameSettings = {
 	version: string,
 
 	hitmarkers: boolean,
-	damageIndicators: boolean,
+	damageIndicators: "none" | "incremental" | "flash",
 
 	suppressionMinDistance: number,
 	suppressionVignetteLimit: number,

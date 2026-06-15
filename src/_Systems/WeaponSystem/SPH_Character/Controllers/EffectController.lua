@@ -156,11 +156,18 @@ function EffectController.OnBulletHit(self: EffectController, wepStats: Types.We
 
 	local screenPoint = workspace.CurrentCamera:WorldToViewportPoint(raycastResult.Position)
 	hitmarkerInstance.Position(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
-
-	self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position)
 	
-	if Access.config.damageIndicators then
+	-- do the hitmarker stuff
+	if Access.config.damageIndicators == "incremental"then
 		self.effectManager:PushDamage(estimatedDamage)
+	end
+
+	if Access.config.hitmarkers then
+		if Access.config.damageIndicators == "flash" then
+			self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position, estimatedDamage)
+		else
+			self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position)--, estimatedDamage)
+		end
 	end
 
 	local soundList = Access.assets.Sounds.Hitmarkers[hitmarkerRegion]:GetChildren() :: { Sound }
