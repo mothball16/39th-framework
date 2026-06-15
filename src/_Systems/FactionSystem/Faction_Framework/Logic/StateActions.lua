@@ -92,8 +92,11 @@ function StateActions.SetPlayerFaction(state: State.State, userId: number | stri
 		return true, `ignored: faction id {factionId} is the same as the previous`
 	end
 
-	_updateMapValue(state.playerByFactionId, userId, factionId)
-	local success, msg = StateActions.SetPlayerToDefaultGroupClass(state, userId, factionId)
+	local success, msg = false, ""
+	Charm.batch(function()
+		_updateMapValue(state.playerByFactionId, userId, factionId)
+		success, msg = StateActions.SetPlayerToDefaultGroupClass(state, userId, factionId)
+	end)
 	return success, msg
 end
 

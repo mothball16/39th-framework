@@ -123,6 +123,7 @@ function SelectionService.HandleTeamChange(
 		return false, msg
 	end
 
+	
 	if prevClassId then
 		itemEquipper:UnassignClassItems(player, prevClassId)
 	end

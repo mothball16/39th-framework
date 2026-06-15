@@ -36,7 +36,6 @@ return function(factionId: () -> string?, groupKey: () -> string?, classes: () -
         
 		local classes = classes()
 		if #classes == 0 then
-            warn("no classes found")
 			return nil
 		end
 		return classes[math.clamp(classIndex(), 1, #classes)]
