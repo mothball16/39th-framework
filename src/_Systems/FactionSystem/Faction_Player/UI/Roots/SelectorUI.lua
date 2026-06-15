@@ -28,21 +28,20 @@ return function(props: {
 	local selector = useClassSelector(player.factionId, player.groupKey, player.classes)
 
 	local cardRows = indexes(player.groupEntries, function(groupEntry, I)
-		local classesOfGroup = groupEntry().Classes
 		local isSelected = derive(function()
 			return groupEntry().Key == player.groupKey()
 		end)
 
 		-- only use selected logic if the class is selected. otherwise, just use the first class
 		local classId = derive(function()
-			if #classesOfGroup == 0 then
+			if #groupEntry().Classes == 0 then
 				error(`no classes found for group: {groupEntry().Key}`)
 			end
 			if isSelected() then
 				local selectedClass = selector.selectedClass()
 				return selectedClass and selectedClass.Id or nil
 			end
-			return classesOfGroup[1].Id
+			return groupEntry().Classes[1].Id
 		end)
 		
 		return GroupCard({

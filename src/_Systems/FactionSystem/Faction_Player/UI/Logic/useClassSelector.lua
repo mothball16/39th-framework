@@ -28,11 +28,15 @@ return function(factionId: () -> string?, groupKey: () -> string?, classes: () -
         dirty(true)
     end)
 
+    -- on load, faction/group/class might be missing, check to make sure they are all present
 	local selectedClass: () -> Types.ClassDescriptor? = derive(function()
-        print(factionId(), groupKey(), classIndex())
+        if not factionId() or not groupKey() or not classes() then
+            return nil
+        end
+        
 		local classes = classes()
 		if #classes == 0 then
-            print("no classes found")
+            warn("no classes found")
 			return nil
 		end
 		return classes[math.clamp(classIndex(), 1, #classes)]
