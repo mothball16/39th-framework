@@ -25,7 +25,7 @@
 
       "SPH_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/_Systems/WeaponSystem/SPH_Framework"
+        "$path": "src/Systems/WeaponSystem/SPH_Framework"
       }
     },
     "ServerScriptService": {
@@ -39,7 +39,7 @@
 
       "SPH_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/_Systems/WeaponSystem/SPH_Server"
+        "$path": "src/Systems/WeaponSystem/SPH_Server"
       }
     },
     "StarterPlayer": {
@@ -50,7 +50,7 @@
         "$ignoreUnknownInstances": true,
         "SPH_Character": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/_Systems/WeaponSystem/SPH_Character"
+          "$path": "src/Systems/WeaponSystem/SPH_Character"
         }
       },
       "StarterPlayerScripts": {
@@ -64,7 +64,7 @@
 
         "SPH_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/_Systems/WeaponSystem/SPH_Player"
+          "$path": "src/Systems/WeaponSystem/SPH_Player"
         }
       }
     }

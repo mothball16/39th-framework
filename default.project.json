@@ -28,12 +28,12 @@
 
       "Faction_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/_Systems/FactionSystem/Faction_Framework"
+        "$path": "src/Systems/FactionSystem/Faction_Framework"
       },
 
       "SPH_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/_Systems/WeaponSystem/SPH_Framework"
+        "$path": "src/Systems/WeaponSystem/SPH_Framework"
       }
     },
     "ServerScriptService": {
@@ -47,17 +47,17 @@
 
       "Faction_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/_Systems/FactionSystem/Faction_Server"
+        "$path": "src/Systems/FactionSystem/Faction_Server"
       },
 
       "SPH_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/_Systems/WeaponSystem/SPH_Server"
+        "$path": "src/Systems/WeaponSystem/SPH_Server"
       },
 
       "Class_RadioMod": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/_Systems/Class_RadioMod"
+        "$path": "src/Systems/Class_RadioMod"
       }
 
     },
@@ -72,7 +72,7 @@
 
         "SPH_Character": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/_Systems/WeaponSystem/SPH_Character"
+          "$path": "src/Systems/WeaponSystem/SPH_Character"
         }
       },
 
@@ -87,12 +87,12 @@
 
         "Faction_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/_Systems/FactionSystem/Faction_Player"
+          "$path": "src/Systems/FactionSystem/Faction_Player"
         },
 
         "SPH_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/_Systems/WeaponSystem/SPH_Player"
+          "$path": "src/Systems/WeaponSystem/SPH_Player"
         }
       }
 
