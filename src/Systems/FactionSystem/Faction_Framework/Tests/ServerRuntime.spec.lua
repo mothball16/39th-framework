@@ -195,8 +195,8 @@ return function()
 
 					expect(assignment(runtime, playerOne).GroupKey).to.equal("Marksman")
 					expect(assignment(runtime, playerTwo).GroupKey).to.equal("Rifleman")
-					expect(runtime.state.groupCountByFaction()["alpha"]["Marksman"]).to.equal(1)
-					expect(runtime.state.groupCountByFaction()["alpha"]["Rifleman"]).to.equal(1)
+					expect(runtime.state.getGroupCountByFaction()["alpha"]["Marksman"]).to.equal(1)
+					expect(runtime.state.getGroupCountByFaction()["alpha"]["Rifleman"]).to.equal(1)
 				end)
 			end)
 

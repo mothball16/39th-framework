@@ -123,7 +123,7 @@ return function()
             expect(success).to.equal(false)
             expect(assignment(playerOne).GroupKey).to.equal("Marksman")
             expect(assignment(playerTwo).GroupKey).to.equal("Rifleman")
-            expect(state.groupCountByFaction()[factionAlpha.ID]["Marksman"]).to.equal(1)
+            expect(state.getGroupCountByFaction()[factionAlpha.ID]["Marksman"]).to.equal(1)
         end)
 	end)
 end

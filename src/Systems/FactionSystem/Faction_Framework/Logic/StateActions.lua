@@ -135,7 +135,7 @@ function StateActions.SetPlayerGroupClass(state: State.State, userId: number | s
 
 		if currentGroupKey ~= groupKey then
 			local groupConfig = factionConfig.Groups[groupKey]
-			local factionCounts = state.groupCountByFaction()[playerFactionId]
+			local factionCounts = state.getGroupCountByFaction()[playerFactionId]
 			local groupCount = if factionCounts then factionCounts[groupKey] or 0 else 0
 			if groupCount >= groupConfig.Limit then
 				return false, `denied: group key {groupKey} is full for faction {playerFactionId}`

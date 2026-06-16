@@ -9,7 +9,6 @@ return function(state: State.State)
         local signals = {
             configByFactionId = state.configByFactionId,
             playerAssignmentByUserId = state.playerAssignmentByUserId,
-            groupCountByFaction = state.groupCountByFaction,
         }
         Server.addSignalsToClient(player, signals)
     end)

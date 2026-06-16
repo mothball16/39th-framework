@@ -42,7 +42,7 @@ return function(state: State.State, userId: string): PlayerSlice
 		if not id then
 			return {}
 		end
-		return sources.groupCountByFaction()[id] or {}
+		return sources.getGroupCountByFaction()[id] or {}
 	end)
 
 	local groupKey = derive(function()

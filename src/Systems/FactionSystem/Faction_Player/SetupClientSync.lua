@@ -6,7 +6,6 @@ return function(state: State.State)
     Client.addSignals({
         configByFactionId = state.configByFactionId,
         playerAssignmentByUserId = state.playerAssignmentByUserId,
-        groupCountByFaction = state.groupCountByFaction,
     })
 
     LegacyEvents.SyncState.OnClientEvent:Connect(function(updates)

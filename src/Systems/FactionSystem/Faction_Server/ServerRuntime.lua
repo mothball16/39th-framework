@@ -47,9 +47,10 @@ function ServerRuntime.new(args: {
 		_configByFactionId = {},
 	} :: self, ServerRuntime)
 
+
+
 	self.itemEquipper = ItemEquipper.new(self._itemProviders, self._configByClassId)
 	self.selectionService = SelectionService.new(self.state, args.access.Config)
-
 	return self
 end
 
