@@ -1,8 +1,8 @@
 --[[
 read-only slice of the state relevant to the provided userid
 ]]
-local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
-local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
+local Types = require("../Core/Types")
+local State = require("../Core/State")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local derive = Vide.derive
 

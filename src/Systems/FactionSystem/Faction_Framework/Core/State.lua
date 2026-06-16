@@ -1,6 +1,8 @@
 --!strict
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 local VideCharm = require("@game/ReplicatedStorage/Packages/vide-charm")
+local Maid = require("@game/ReplicatedStorage/Packages/maid")
+
 local useAtom = VideCharm.useAtom
 local useSignal = VideCharm.useSignalState
 
@@ -9,28 +11,32 @@ local Types = require("./Types")
 local State = {}
 State.__index = State
 
+type GroupCountByFaction = { [string]: { [string]: number } }
+
 type self = {
 	configByFactionId: Charm.Atom<{ [string]: Types.FactionConfig }>,
 	playerAssignmentByUserId: Charm.Atom<{ [string]: Types.PlayerClassAssignment }>,
-	groupCountByFaction: Charm.Getter<{ [string]: { [string]: number } }>,
+	getGroupCountByFaction: Charm.Getter<GroupCountByFaction>,
+
+	maid: Maid.Maid,
 }
 export type State = typeof(setmetatable({} :: self, State))
 
 function State.new(): State
-	local getGroupCountByFaction, setGroupCountByFaction = Charm.signal({} :: { [string]: { [string]: number } })
-	local self = setmetatable(
-		{
-			configByFactionId = Charm.atom({}),
-			playerAssignmentByUserId = Charm.atom({}),
+	local self = setmetatable({} :: self, State)
+	self.maid = Maid.new()
+	self.configByFactionId = Charm.atom({})
+	self.playerAssignmentByUserId = Charm.atom({})
+	self.getGroupCountByFaction = self:SetupGroupCounts()
+	return self
+end
 
-			-- don't sync
-			getGroupCountByFaction = getGroupCountByFaction,
-		} :: self,
-		State
-	)
+-- safely creates a getter for group counts. encapsulates logic for setting this signal within the effect scope
+function State.SetupGroupCounts(self: State): Charm.Getter<GroupCountByFaction>
+	local getGroupCountByFaction, setGroupCountByFaction = Charm.signal({} :: GroupCountByFaction)
 
-	Charm.effectScope(function()
-		-- create/destroy group counts whenever a faction config is added/removed
+	self.maid:GiveTask(Charm.effectScope(function()
+		--CREATE/DESTROY group counts whenever a faction config is added/removed
 		Charm.observe(self.configByFactionId, function(factionConfig: Types.FactionConfig, key: string)
 			setGroupCountByFaction(function(state)
 				state = table.clone(state)
@@ -50,7 +56,7 @@ function State.new(): State
 			end
 		end)
 
-		-- imperative logic for O(1) updates (this is a completely unnecessary micro-optimization loool)
+		-- imperative logic for O(1) UPDATE (this is a completely unnecessary micro-optimization loool)
 		Charm.observe(self.playerAssignmentByUserId, function(value: Types.PlayerClassAssignment, key: string)
 			local currentGroupKey = Charm.computed(function()
 				return self.playerAssignmentByUserId()[key].GroupKey
@@ -87,8 +93,6 @@ function State.new(): State
 					return state
 				end)
 
-				print("group count incremented", factionId, groupKey, count, groupCount + count)
-
 				-- return the undo: if this becomes invalid later, then we can assume the faction was removed
 				return function()
 					incrementGroupCount(factionId, groupKey, -count)
@@ -114,9 +118,44 @@ function State.new(): State
 				end
 			end
 		end)
-	end)
-	return self
+	end))
+	--[[
+	-- OLD (LESS COMPLICATED) LOGIC
+	-- will probably revert to this in the future - the above is for learning purposes
+	self.groupCountByFaction = Charm.computed(function()
+		local configByFactionId = self.configByFactionId()
+		local playerAssignmentByUserId = self.playerAssignmentByUserId()
+		local countsByFaction = {}
+
+		for factionId, factionConfig in pairs(configByFactionId) do
+			local counts = {}
+			for groupKey, _ in pairs(factionConfig.Groups) do
+				counts[groupKey] = 0
+			end
+			countsByFaction[factionId] = counts
+		end
+
+		for _, assignment in pairs(playerAssignmentByUserId) do
+			local factionId = assignment.FactionId
+			local groupKey = assignment.GroupKey
+			if not groupKey then
+				continue
+			end
+
+			local factionCounts = countsByFaction[factionId]
+			if factionCounts == nil then
+				factionCounts = {}
+				countsByFaction[factionId] = factionCounts
+			end
+			factionCounts[groupKey] = (factionCounts[groupKey] or 0) + 1
+		end
+
+		return countsByFaction
+	end)]]
+
+	return getGroupCountByFaction
 end
+
 
 function State:AsVideSources()
 	return {
@@ -127,7 +166,7 @@ function State:AsVideSources()
 end
 
 function State:Destroy()
-	-- i think atoms automatically cleanup?
+	self.maid:DoCleaning()
 end
 
 

@@ -8,8 +8,8 @@ local Theme = require("../Theme")
 local GroupCard = require("../Components/Card")
 local MenuActionButton = require("../Components/MenuActionButton")
 local ClassSelector = require("../Components/ClassSelector")
-local getPlayerSlice = require("../Logic/getPlayerSlice")
-local useClassSelector = require("../Logic/useClassSelector")
+local GetPlayerSlice = require("@game/ReplicatedStorage/Faction_Framework/Selectors/GetPlayerSlice")
+local UseClassSelector = require("@game/ReplicatedStorage/Faction_Framework/Composables/UseClassSelector")
 
 local ASPECT_RATIO = 1.5
 local PADDING_SCALE = 0.02
@@ -24,8 +24,8 @@ return function(props: {
 	requestClassApply: ((enable: boolean) -> ())?,
 	applyClassMode: string?,
 })
-	local player = getPlayerSlice(props.state, props.userId)
-	local selector = useClassSelector(player.factionId, player.groupKey, player.classes)
+	local player = GetPlayerSlice(props.state, props.userId)
+	local selector = UseClassSelector(player.factionId, player.groupKey, player.classes)
 
 	local cardRows = indexes(player.groupEntries, function(groupEntry, I)
 		local isSelected = derive(function()
