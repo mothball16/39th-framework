@@ -35,6 +35,8 @@ type self = {
 	maid: Maid.Maid,
 
 	_colorCorrection: ColorCorrectionEffect,
+	_blur: BlurEffect,
+	_blurTween: Tween?,
 	_lastSuppressionTick: number,
 	_lastAimPunchTick: number,
 	_canBeSuppressed: Charm.Getter<boolean>,
@@ -76,6 +78,12 @@ function EffectController.new(params: {
 		self._colorCorrection.Name = "SuppressionColorCorrection"
 	end
 
+	self._blur = game.Lighting:FindFirstChild("SuppressionBlur") :: BlurEffect?
+	if not self._blur then
+		self._blur = Instance.new("BlurEffect", game.Lighting)
+		self._blur.Name = "SuppressionBlur"
+		self._blur.Size = 0
+	end
 
 	self._canBeSuppressed = Charm.computed(function()
 		local seat = self.state.seat()
@@ -208,10 +216,13 @@ function EffectController.SyncSuppressionFactor(self: EffectController, value: n
 	game.Debris:AddItem(Som, Som.TimeLength)
 
 	if tick() - self._lastAimPunchTick > Access.config.suppressionAimPunchThrottle then
-		local tempBlur = Instance.new("BlurEffect", game.Lighting)
-		tempBlur.Size = 15 * delta
-		game.Debris:AddItem(tempBlur, 0.5)
-		TweenService:Create(tempBlur, TweenInfo.new(0.5), { Size = 0 }):Play()
+		if self._blurTween then
+			self._blurTween:Cancel()
+			self._blurTween = nil
+		end
+		self._blur.Size = 15 * delta
+		self._blurTween = TweenService:Create(self._blur, TweenInfo.new(0.5), { Size = 0 })
+		self._blurTween:Play()
 
 		self._lastAimPunchTick = tick()
 		self:ApplySuppressionAimPunch(delta)
@@ -239,6 +250,12 @@ end
 
 function EffectController.Destroy(self: EffectController)
 	print("destroying effect controller")
+	if self._blurTween then
+		self._blurTween:Cancel()
+	end
+	if self._blur then
+		self._blur.Size = 0
+	end
 	self.maid:DoCleaning()
 end
 
