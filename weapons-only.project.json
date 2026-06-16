@@ -6,14 +6,23 @@
       "$className": "ReplicatedStorage",
       "$ignoreUnknownInstances": true,
       "Packages": {
+        "$ignoreUnknownInstances": false,
         "$path": "Packages"
       },
       "DevPackages": {
+        "$ignoreUnknownInstances": false,
         "$path": "DevPackages"
       },
       "Utility": {
-        "$path": "Utility"
+        "$ignoreUnknownInstances": false,
+        "$path": "src/Utility"
       },
+
+      "Synced": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/General/Shared"
+      },
+
       "SPH_Framework": {
         "$ignoreUnknownInstances": false,
         "$path": "src/_Systems/WeaponSystem/SPH_Framework"
@@ -22,6 +31,12 @@
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "$ignoreUnknownInstances": true,
+      
+      "Synced": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/General/Server"
+      },
+
       "SPH_Server": {
         "$ignoreUnknownInstances": false,
         "$path": "src/_Systems/WeaponSystem/SPH_Server"
@@ -41,6 +56,12 @@
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "$ignoreUnknownInstances": true,
+
+        "Synced": {
+          "$ignoreUnknownInstances": false,
+          "$path": "src/General/Client"
+        },
+
         "SPH_Player": {
           "$ignoreUnknownInstances": false,
           "$path": "src/_Systems/WeaponSystem/SPH_Player"

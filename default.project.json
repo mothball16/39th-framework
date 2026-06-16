@@ -7,15 +7,23 @@
       "$ignoreUnknownInstances": true,
       "$path": "src/ReplicatedStorage",
       "Packages": {
+        "$ignoreUnknownInstances": false,
         "$path": "Packages"
       },
 
       "DevPackages": {
+        "$ignoreUnknownInstances": false,
         "$path": "DevPackages"
       },
 
       "Utility": {
-        "$path":"Utility"
+        "$ignoreUnknownInstances": false,
+        "$path":"src/Utility"
+      },
+
+      "Synced": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/General/Shared"
       },
 
       "Faction_Framework": {
@@ -31,7 +39,11 @@
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "$ignoreUnknownInstances": true,
-      "$path": "src/ServerScriptService",
+
+      "Synced": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/General/Server"
+      },
 
       "Faction_Server": {
         "$ignoreUnknownInstances": false,
@@ -53,10 +65,10 @@
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "$ignoreUnknownInstances": true,
+      
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
         "$ignoreUnknownInstances": true,
-        "$path": "src/StarterPlayer/StarterCharacterScripts",
 
         "SPH_Character": {
           "$ignoreUnknownInstances": false,
@@ -67,7 +79,11 @@
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "$ignoreUnknownInstances": true,
-        "$path": "src/StarterPlayer/StarterPlayerScripts",
+        
+        "Synced": {
+          "$ignoreUnknownInstances": false,
+          "$path": "src/General/Client"
+        },
 
         "Faction_Player": {
           "$ignoreUnknownInstances": false,
