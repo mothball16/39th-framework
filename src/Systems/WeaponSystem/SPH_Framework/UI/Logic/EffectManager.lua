@@ -31,8 +31,8 @@ function EffectManager.new(suppressionSource: Vide.source<number>, suppressionRe
         _lastDamageUpdate = tick(),
     } :: self, EffectManager)
     
-    -- hitmarker lifetime upd
-    self.maid:GiveTask(RunService.RenderStepped:Connect(function(dt)
+    -- ponytail: Heartbeat — timers/decay only; no camera-locked visuals here
+    self.maid:GiveTask(RunService.Heartbeat:Connect(function(dt)
         local state = self.activeHitmarkers()
         local indexesDirty = false
         for i, hitmarker in state do

@@ -29,7 +29,8 @@ if config.fallDamage then
 	local distance = -3.1
 	local fallingDist = 0
 	local airborne = false
-	runService.RenderStepped:Connect(function()
+	-- ponytail: Heartbeat — fall tracking is gameplay state, not pre-render visuals
+	runService.Heartbeat:Connect(function()
 		if dead then return end
 		if humanoid.Sit then
 			fallingDist = 0
