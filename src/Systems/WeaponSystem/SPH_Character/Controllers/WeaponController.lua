@@ -11,6 +11,7 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Debris = game:GetService("Debris")
+local SoundService = game:GetService("SoundService")
 local Charm = require(Packages.Charm)
 local Framework = ReplicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
@@ -164,8 +165,8 @@ function WeaponController.new(params: {
 		self:SyncChambering(chambering)
 	end)
 
-	self.localEvents.ReloadEventReached:Connect(function(animName, keyframeName, newAnim, animType)
-		self:OnReloadEventReached(animName, keyframeName, newAnim, animType)
+	self.localEvents.AnimationEventReached:Connect(function(animName, eventName, param, newAnim, animType)
+		self:OnAnimationEventReached(animName, eventName, param, newAnim, animType)
 	end)
 	self.localEvents.AnimationStopped:Connect(function(animName, newAnim, animType)
 		self:OnAnimationStopped(animName, newAnim, animType)
@@ -278,6 +279,21 @@ function WeaponController.SyncSightIndex(self: WeaponController, index)
 end
 
 
+
+function WeaponController.PlayLocalSound(self: WeaponController, soundName: string)
+	local gm = self.weaponState.gunModel()
+	if self.state.dead() or not gm or not self.state.equippedTool() then
+		return
+	end
+	local soundTemplate = gm.Grip:FindFirstChild(soundName)
+	if not soundTemplate or not soundTemplate:IsA("Sound") then
+		return
+	end
+	local sound = soundTemplate:Clone()
+	sound.Parent = SoundService
+	SoundService:PlayLocalSound(sound)
+	Debris:AddItem(sound, sound.TimeLength)
+end
 
 function WeaponController.PlayRepSound(self: WeaponController, soundName)
 	local ws = self.weaponState.wepStats()
@@ -948,13 +964,20 @@ function WeaponController.UpdateRender(self: WeaponController, dt)
 	self.holosightMod:UpdateRender(dt)
 end
 
-function WeaponController.OnReloadEventReached(self: WeaponController, animName, keyframeName, newAnim, animType)
+function WeaponController.OnAnimationEventReached(self: WeaponController, animName, eventName, param, newAnim, animType)
+	if eventName == "LocalSoundEvent" then
+		if param and param ~= "" then
+			self:PlayLocalSound(param)
+		end
+		return
+	end
+
 	local ws = self.weaponState.wepStats()
 	if not ws then
 		return
 	end
-	if self.weaponState.gunModel().Grip:FindFirstChild(keyframeName) then self:PlayRepSound(keyframeName) end
-	if keyframeName == "MagIn" then
+	if self.weaponState.gunModel().Grip:FindFirstChild(eventName) then self:PlayRepSound(eventName) end
+	if eventName == "MagIn" then
 		if self.state.equippedTool() and (not self.state.equippedTool().Chambered.Value or ws.openBolt) and ws.autoChamber then
 			self.weaponState.reloading(true)
 			self.localEvents.StopAnimationRequested:Fire(animName, 0.4)
@@ -968,7 +991,7 @@ function WeaponController.OnReloadEventReached(self: WeaponController, animName,
 		end
 		P.Reload.send({ _ = 0 })
 		if ws.magType > 1 then newAnim.DidLoop:Once(function() self.localEvents.StopAnimationRequested:Fire(animName) end) end
-	elseif keyframeName == "ShellInsert" or keyframeName == "BulletInsert" then
+	elseif eventName == "ShellInsert" or eventName == "BulletInsert" then
 		if self.cancelReload then
 			self.cancelReload = false
 			newAnim.Looped = false
@@ -999,28 +1022,28 @@ function WeaponController.OnReloadEventReached(self: WeaponController, animName,
 			if tempBulletPart then tempBulletPart.Transparency = 0 end
 		end
 		P.Reload.send({ _ = 0 })
-	elseif keyframeName == "ClipInsertEnd" then
+	elseif eventName == "ClipInsertEnd" then
 		local ammoNeeded = self.weaponState.gunAmmo.MagAmmo.MaxValue - self.weaponState.gunAmmo.MagAmmo.Value
 		local clipSize = ws.clipSize or ws.magazineCapacity
 		if ammoNeeded > 0 then
 			self.localEvents.StopAnimationRequested:Fire(newAnim.Name)
 			self.localEvents.ReloadActionRequested:Fire(ammoNeeded >= clipSize)
 		end
-	elseif keyframeName == "ClipInsert" then
+	elseif eventName == "ClipInsert" then
 		P.Reload.send({ _ = 0 })
-	elseif keyframeName == "SlideRelease" or keyframeName == "BoltClose" then
+	elseif eventName == "SlideRelease" or eventName == "BoltClose" then
 			P.PlayerChamber.send({ _ = 0 })
 		self.weaponState.reloading(false)
 		self:MoveBolt(CFrame.new(), true)
-	elseif keyframeName == "SlidePull" and self.state.equippedTool() and self.state.equippedTool().Chambered.Value then
+	elseif eventName == "SlidePull" and self.state.equippedTool() and self.state.equippedTool().Chambered.Value then
 		self:EjectShell()
-	elseif keyframeName == "Switch" and not self.weaponState.reloading() then
+	elseif eventName == "Switch" and not self.weaponState.reloading() then
 		self:SwitchFireMode()
-	elseif keyframeName == "MagGrab" then
+	elseif eventName == "MagGrab" then
 		self:SetProjectileTransparency(self.weaponState.gunModel(), 0)
 		self:SetProjectileTransparency(self:GetThirdPersonGunModel(), 0)
 		P.MagGrab.send({ _ = 0 })
-	elseif keyframeName == "BoltOpen" then
+	elseif eventName == "BoltOpen" then
 		P.RepBoltOpen.send({ _ = 0 })
 		if not self.ejected then self:EjectShell() end
 	end

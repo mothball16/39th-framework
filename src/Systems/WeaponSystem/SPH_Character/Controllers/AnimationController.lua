@@ -206,9 +206,17 @@ local function getOrCreateTracks(self: AnimationController, animName: string, pl
 	tpTrack.Looped = playParams.looped
 	tpTrack.Priority = playParams.priority
 
+	local function fireAnimationEventReached(track: AnimationTrack, eventName: string, param: string?)
+		local currentType = track:GetAttribute("AnimType") or Enums.WeaponAnim.Unknown.tag
+		self.events.AnimationEventReached:Fire(animName, eventName, param, track, currentType)
+	end
+
 	vmTrack.KeyframeReached:Connect(function(keyframeName)
-		local currentType = vmTrack:GetAttribute("AnimType") or Enums.WeaponAnim.Unknown.tag
-		self.events.ReloadEventReached:Fire(animName, keyframeName, vmTrack, currentType)
+		fireAnimationEventReached(vmTrack, keyframeName, nil)
+	end)
+
+	vmTrack:GetMarkerReachedSignal("LocalSoundEvent"):Connect(function(param)
+		fireAnimationEventReached(vmTrack, "LocalSoundEvent", param)
 	end)
 
 	vmTrack.Stopped:Connect(function()

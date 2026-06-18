@@ -15,7 +15,7 @@ export type LocalEvents = {
 	StopAnimationRequested: Signal.Signal<string, number>,
 	BoltActionRequested: Signal.Signal<boolean>,
 	ReloadActionRequested: Signal.Signal<boolean>,
-	ReloadEventReached: Signal.Signal<string, string, AnimationTrack, string>,
+	AnimationEventReached: Signal.Signal<string, string, string?, AnimationTrack, string>,
 	AnimationStopped: Signal.Signal<string, AnimationTrack, string>,
 }
 
@@ -33,7 +33,7 @@ return function(): LocalEvents
 		StopAnimationRequested = Signal.new(),
 		BoltActionRequested = Signal.new(),
 		ReloadActionRequested = Signal.new(),
-		ReloadEventReached = Signal.new(),
+		AnimationEventReached = Signal.new(),
 		AnimationStopped = Signal.new(),
 	} :: LocalEvents
 end
