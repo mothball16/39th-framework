@@ -167,7 +167,6 @@ export type WeaponStats = {
 	autoChamber: boolean,
 
 	-- Optional System Fields
-	Attachments: any?,
 	explosiveAmmo: boolean?,
 	explosionRadius: number?,
 	explosionEffect: string?,

@@ -210,24 +210,6 @@ local effectController = EffectController.new({
 
 local function OnScrollIntent(scrollAmount, holdForZoom)
 	if characterState.aiming() then
-		--[[
-		NOTE: This can be added at a future time
-
-		if holdForZoom then
-			-- Zoom
-			local newFOV = WeaponController.aimFOVTarget - scrollAmount * 3
-			-- DD_SPH Gunsmith: FOV adjusts with scope
-			local aimFovMinTarget = State.wepStats.aimFovMin
-			local aimFovMaxTarget = State.wepStats.aimFovMax or config.defaultFOV
-			local ws = weaponState.wepStats()
-			if ws and ws.aimFovMin then aimFovMinTarget = ws.aimFovMin end
-			if ws and ws.aimFovMax then aimFovMaxTarget = ws.aimFovMax end
-			WeaponController.aimFOVTarget = math.clamp(newFOV, aimFovMinTarget, aimFovMaxTarget)
-			-- </DD_SPH>
-		else
-
-		end]]
-
 		-- Sensitivity
 		local currentSens = WeaponPrefs.getGlobal("aimSens")
 		WeaponPrefs.setGlobal("aimSens", math.clamp(currentSens + (0.01 * scrollAmount), 0.01, 1))

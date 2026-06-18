@@ -10,7 +10,6 @@ local hitFX = require(Framework.Ballistics.HitFX)
 local shellEjection = require(Framework.Weapons.ShellEjection)
 local bulletHandler = require(Framework.Ballistics.BulletHandler)
 local weaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
---local gunsmithHandler = require(ReplicatedStorage:WaitForChild("DD_GunsmithHandler"))
 
 local NetworkEvents = require(Framework.Network.NetworkEvents)
 local P = NetworkEvents.packets
@@ -163,10 +162,5 @@ function WeaponReplicationController.OnReplicateMagGrab(magPart: BasePart)
 		end
 	end
 end
-
---[[
-function WeaponReplicationController.OnInitiateGunsmith(weaponTool, weaponModel)
-	gunsmithHandler.Init(weaponTool, weaponModel)
-end]]
 
 return WeaponReplicationController

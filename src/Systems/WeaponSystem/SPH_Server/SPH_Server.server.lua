@@ -39,7 +39,6 @@ local explosionMod = require(Framework.Effects.ExplosionFX)
 local ragdoll = require(Framework.Effects.RagdollMod)
 local HitContextTypes = require(Framework.Combat.HitContextTypes)
 local VictimFinder = require(Framework.Combat.VictimFinder)
-local attachmentPlacer = require(Framework.Weapons.AttachmentPlacer)
 local WeaponSoundSetup = require(Framework.Weapons.WeaponSoundSetup)
 local Types = require(Framework.Core.ConfigurationTypes)
 local warnPrefix = "【 SPEARHEAD 】 "
@@ -79,38 +78,6 @@ drops.Name = "Drops"
 local dropTable = {}
 local dropCFrame = CFrame.new(0, 1, -3)
 local bodyparts = { "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand" }
-
-local function setAttachment(weapon, attachmentSlot, weaponAttachment, parentPart)
-	local newAttachment = attachmentPlacer.place(assets, weldMod, weapon, attachmentSlot, weaponAttachment, parentPart)
-	if not newAttachment then
-		return
-	end
-	for _, part in ipairs(newAttachment:GetChildren()) do
-		if part.Name == "SightReticle" and part:FindFirstChild("SurfaceGui") then
-			part.SurfaceGui.Enabled = false
-		end
-	end
-end
-
-local function setRecursiveAttachments(weapon, attachmentSlot, weaponAttachment, parentPart)
-	if not weaponAttachment or weaponAttachment == "" then
-		return
-	end
-	if typeof(weaponAttachment) == "string" then
-		if not parentPart:FindFirstChild(attachmentSlot) then
-			warn("No slot found for " .. weaponAttachment)
-			return
-		end
-		setAttachment(weapon, attachmentSlot, weaponAttachment, parentPart)
-	elseif typeof(weaponAttachment) == "table" then
-		local subAttachment = weaponAttachment[1]
-		local subAttachmentNodes = weaponAttachment[2]
-		setAttachment(weapon, attachmentSlot, subAttachment, parentPart)
-		for item, name in pairs(subAttachmentNodes) do
-			setRecursiveAttachments(weapon, item, name, weapon[subAttachment])
-		end
-	end
-end
 
 local function enableMotors(char: Model)
 	for i = 1, #bodyparts do
@@ -223,21 +190,6 @@ local function holsterWeapon(player, holsterPart, tool, holsterCFrame)
 		holsterModel.Middle.Name = "Grip"
 		holsterModel.Grip.Transparency = 1
 	end
-	if wepStats.Attachments then
-		for slot, item in wepStats.Attachments do
-			if typeof(item) == "string" then
-				if not holsterModel:FindFirstChild(slot) then
-					warn("No slot found for " .. slot)
-					continue
-				end
-				setAttachment(holsterModel, slot, item, holsterModel)
-			elseif typeof(item) == "table" then
-				setRecursiveAttachments(holsterModel, slot, item, holsterModel)
-			else
-				warn("Node type" .. (slot ~= nil and typeof(slot) or "nil") .. "not recognized")
-			end
-		end
-	end
 	if tool:FindFirstChild("Chambered") and holsterModel and holsterModel:FindFirstChild(wepStats.projectile) and not tool.Chambered.Value then
 		local projectile = holsterModel:FindFirstChild(wepStats.projectile)
 		projectile:Destroy()
@@ -283,21 +235,6 @@ local function equipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 				local newMotor = weldMod.M6D(gun.Grip, gun[partName])
 				newMotor.Name = partName
 				newMotor.Parent = gun.Grip
-			end
-		end
-		if wepStats.Attachments then
-			for slot, item in wepStats.Attachments do
-				if typeof(item) == "string" then
-					if not gun:FindFirstChild(slot) then
-						warn("No slot found for " .. slot)
-						continue
-					end
-					setAttachment(gun, slot, item, gun)
-				elseif typeof(item) == "table" then
-					setRecursiveAttachments(gun, slot, item, gun)
-				else
-					warn("Node type" .. (slot ~= nil and typeof(slot) or "nil") .. "not recognized")
-				end
 			end
 		end
 		for _, part in ipairs(gun:GetDescendants()) do
@@ -417,22 +354,6 @@ local function spawnGun(tool, gunPosition, dropPlayer)
 		end
 	end
 	makePickUpAble(tool, dropModel, dropModel.Grip)
-	local wepStats = WeaponStatLocator.getWeaponStats(tool)
-	if wepStats and wepStats.Attachments then
-		for slot, item in wepStats.Attachments do
-			if typeof(item) == "string" then
-				if not dropModel:FindFirstChild(slot) then
-					warn("No slot found for " .. slot)
-					continue
-				end
-				setAttachment(dropModel, slot, item, dropModel)
-			elseif typeof(item) == "table" then
-				setRecursiveAttachments(dropModel, slot, item, dropModel)
-			else
-				warn("Node type" .. (slot ~= nil and typeof(slot) or "nil") .. "not recognized")
-			end
-		end
-	end
 	dropModel.Parent = drops
 	dropModel.Grip.Touched:Connect(function()
 		if dropModel.Grip.AssemblyLinearVelocity.Magnitude > 7 then
@@ -1117,12 +1038,6 @@ local function initializeServerReplication()
 end
 
 local function initializeWeaponEquip()
-	if replicatedStorage:FindFirstChild("DD_GunsmithHandler") then
-		replicatedStorage.DD_GunsmithHandler.ApplyAttachments.OnServerEvent:Connect(function(_player, weapon: Tool, attachments)
-			local wepStats = WeaponStatLocator.getWeaponStats(weapon)
-			wepStats.Attachments = attachments
-		end)
-	end
 	net.packets.SwitchWeapon.listen(function(data, player: Player?)
 		if not player then
 			return

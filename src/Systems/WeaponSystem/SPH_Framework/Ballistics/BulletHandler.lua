@@ -273,7 +273,7 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 end
 
 module.FireFX = function(playerFired:Player, gunModel, firePointName, muzzleChance)
-	local base = gunModel:FindFirstChild("Grip") or gunModel:FindFirstChild("Base") or gunModel:FindFirstChild("Main") -- DD_SPH Gunsmith: Added Main as an option for suppressors
+	local base = gunModel:FindFirstChild("Grip") or gunModel:FindFirstChild("Base") or gunModel:FindFirstChild("Main")
 	local firePoint = base[firePointName]
 	local humanoidRootPart = playerFired.Character:FindFirstChild("HumanoidRootPart")
 
