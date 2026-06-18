@@ -1,3 +1,4 @@
+export type SoundDistConfig = {[string]: {Min: number, Max: number}}
 export type WeaponStats = {
     -- vertical camera recoil: between 10-50 for most guns
 	VRecoil: {number},
@@ -170,6 +171,7 @@ export type WeaponStats = {
 	explosiveAmmo: boolean?,
 	explosionRadius: number?,
 	explosionEffect: string?,
+	soundDists: SoundDistConfig?
 }
 
 type KeybindSlot = Enum.KeyCode | Enum.UserInputType

@@ -948,6 +948,7 @@ function WeaponController.UpdateRender(self: WeaponController, dt)
 		--bipodModel = bipMount
 	end
 
+	
 	if bipodPart then
 		local bipodRayParams = RaycastParams.new()
 		bipodRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -964,6 +965,8 @@ function WeaponController.UpdateRender(self: WeaponController, dt)
 	self.holosightMod:UpdateRender(dt)
 end
 
+
+
 function WeaponController.OnAnimationEventReached(self: WeaponController, animName, eventName, param, newAnim, animType)
 	if eventName == "LocalSoundEvent" then
 		if param and param ~= "" then
@@ -972,11 +975,15 @@ function WeaponController.OnAnimationEventReached(self: WeaponController, animNa
 		return
 	end
 
+	-- TODO: wtf man refactor this shit
 	local ws = self.weaponState.wepStats()
 	if not ws then
 		return
 	end
-	if self.weaponState.gunModel().Grip:FindFirstChild(eventName) then self:PlayRepSound(eventName) end
+	if self.weaponState.gunModel().Grip:FindFirstChild(eventName) then
+		self:PlayRepSound(eventName)
+	end
+
 	if eventName == "MagIn" then
 		if self.state.equippedTool() and (not self.state.equippedTool().Chambered.Value or ws.openBolt) and ws.autoChamber then
 			self.weaponState.reloading(true)

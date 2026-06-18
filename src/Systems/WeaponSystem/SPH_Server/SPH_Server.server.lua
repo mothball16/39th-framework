@@ -40,6 +40,7 @@ local ragdoll = require(Framework.Effects.RagdollMod)
 local HitContextTypes = require(Framework.Combat.HitContextTypes)
 local VictimFinder = require(Framework.Combat.VictimFinder)
 local attachmentPlacer = require(Framework.Weapons.AttachmentPlacer)
+local Types = require(Framework.Core.ConfigurationTypes)
 local warnPrefix = "【 SPEARHEAD 】 "
 print(warnPrefix .. "Loading Server " .. config.version)
 
@@ -59,6 +60,7 @@ local net = NetworkEvents
 
 local naughtyList = {}
 game:GetService("SoundService").RespectFilteringEnabled = true
+require(script.Parent.CreateSoundGroups)()
 
 local mainFolder = Instance.new("Folder", workspace)
 mainFolder.Name = "SPH_Workspace"
@@ -162,8 +164,9 @@ local function removeHolster(player, toolName)
 	end
 end
 
-local function setupGun(tool: Tool, wepStats)
+local function setupTool(tool: Tool, wepStats: Types.WeaponStats)
 	tool.CanBeDropped = false
+
 	if not tool:FindFirstChild("Ammo") then
 		local ammoFolder = Instance.new("Folder", tool)
 		ammoFolder.Name = "Ammo"
@@ -260,14 +263,32 @@ local function checkHolster(player, tool)
 	end
 end
 
+
+local function setupGun(gun: Model, wepStats: Types.WeaponStats)
+	local grip = gun:WaitForChild("Grip")
+	if wepStats.soundDists then
+		for soundName, dist in wepStats.soundDists do
+			local sound = grip:FindFirstChild(soundName) :: Sound?
+			if sound then
+				sound.RollOffMinDistance = dist.Min
+				sound.RollOffMaxDistance = dist.Max
+			end
+		end
+	end
+end
+
 local function equipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 	if tool.Parent == rig.Parent and assets.WeaponModels:FindFirstChild(tool.Name) then
-		local gun = assets.WeaponModels[tool.Name]:Clone()
-		weldMod.WeldModel(gun, gun.Grip, false)
 		local wepStats = WeaponStatLocator.getWeaponStats(tool)
 		if not wepStats then
 			return
 		end
+
+		local gun = assets.WeaponModels[tool.Name]:Clone()
+		setupGun(gun, wepStats)
+		
+		weldMod.WeldModel(gun, gun.Grip, false)
+
 		for _, partName in ipairs(wepStats.rigParts) do
 			if gun:FindFirstChild(partName) then
 				gun.Grip["Grip_" .. partName]:Destroy()
@@ -311,7 +332,7 @@ local function equipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 			end
 		end
 		rig.BaseWeld.C0 = wepStats.serverOffset
-		setupGun(tool, wepStats)
+		setupTool(tool, wepStats)
 		return gun
 	end
 	return nil
@@ -324,7 +345,7 @@ local function checkTool(player, tool)
 			return
 		end
 		checkHolster(player, tool)
-		setupGun(tool, wepStats)
+		setupTool(tool, wepStats)
 	end
 end
 
