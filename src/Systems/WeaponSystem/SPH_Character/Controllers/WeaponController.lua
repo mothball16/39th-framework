@@ -456,14 +456,15 @@ function WeaponController.Equip(self: WeaponController, newChild)
 		P.SwitchWeapon.send({ tool = newChild })
 
 	if ws and ws.PunchSpeed then
-		self.weaponState.RecoilPos.s = ws.PunchSpeed
-		self.weaponState.RecoilDir.s = ws.PunchSpeed
-		self.weaponState.RecoilUp.s = ws.PunchSpeed
+		local punchFrequency = ws.PunchSpeed / (2 * math.pi)
+		self.weaponState.RecoilPos:configure({ frequency = punchFrequency })
+		self.weaponState.RecoilDir:configure({ frequency = punchFrequency })
+		self.weaponState.RecoilUp:configure({ frequency = punchFrequency })
 	end
 	if ws and ws.PunchDamper then
-		self.weaponState.RecoilPos.d = ws.PunchDamper
-		self.weaponState.RecoilDir.d = ws.PunchDamper
-		self.weaponState.RecoilUp.d = ws.PunchDamper
+		self.weaponState.RecoilPos:configure({ dampingRatio = ws.PunchDamper })
+		self.weaponState.RecoilDir:configure({ dampingRatio = ws.PunchDamper })
+		self.weaponState.RecoilUp:configure({ dampingRatio = ws.PunchDamper })
 	end
 
 	self.weaponState.RecoilFactor = ws and ws.MinRecoilFactor or 1
@@ -688,8 +689,6 @@ function RecoilCalc(Recoil,Dir,Default)
 	end
 end
 
-local SP = require(Framework.Weapons.Spring.Default)
-
 local function numLerp(number: number, target: number, speed: number): number
 	return number + (target - number) * speed
 end
@@ -752,15 +751,15 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 		vr *= recoilPower
 		hr *= recoilPower
 
-		self.weaponState.RecoilPos.t = self.weaponState.RecoilCF.Position
-		self.weaponState.RecoilDir.t = self.weaponState.RecoilCF.LookVector
-		self.weaponState.RecoilUp.t = self.weaponState.RecoilCF.UpVector
-		
-		self.weaponState.CameraSpring.t = self.weaponState.CameraSpring.t + Vector3.new(vr, hr, 0)
-		self.weaponState.CameraSpring.p = self.weaponState.CameraSpring.p + Vector3.new(vr, hr, 0) * 0.5
+		self.weaponState.RecoilPos:setGoal(self.weaponState.RecoilCF.Position)
+		self.weaponState.RecoilDir:setGoal(self.weaponState.RecoilCF.LookVector)
+		self.weaponState.RecoilUp:setGoal(self.weaponState.RecoilCF.UpVector)
+
+		local cameraKick = Vector3.new(vr, hr, 0)
+		self.weaponState.CameraSpring:setGoal(self.weaponState.CameraSpring:getGoal() + cameraKick)
+		self.weaponState.CameraSpring:setPosition(self.weaponState.CameraSpring:getPosition() + cameraKick * 0.5)
 		local duration = 0.25 --ServerConfig.AimRecoverDuration
-		task.wait(duration/5 * self.weaponState.CameraSpring.s / SP.cs)
-		--cwait(duration/5 * CameraSpring.s / SP.cs)
+		task.wait(duration / 5)
 		local t = 0
 		if wepStats.AimRecoverDuration then
 			duration = wepStats.AimRecoverDuration
@@ -768,8 +767,9 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 		while t <= duration do
 			local step = RunService.Heartbeat:Wait()
 			t = t + step
-			self.weaponState.CameraSpring.t = self.weaponState.CameraSpring.t - Vector3.new(vr, hr, 0) 
-				* wepStats.AimRecover * step / duration
+			self.weaponState.CameraSpring:setGoal(
+				self.weaponState.CameraSpring:getGoal() - Vector3.new(vr, hr, 0) * wepStats.AimRecover * step / duration
+			)
 		end
 	end)()
 	
@@ -920,9 +920,9 @@ function WeaponController.UpdateRender(self: WeaponController, dt)
 	self.weaponState.RecoilRot:step(dt * 2.5)
 
 	self.weaponState.RecoilCF = self.weaponState.RecoilCF:Lerp(CFrame.new(),math.min(1, ws.PunchRecover * adjust))
-	self.weaponState.RecoilPos.t = self.weaponState.RecoilCF.Position
-	self.weaponState.RecoilDir.t = self.weaponState.RecoilCF.LookVector
-	self.weaponState.RecoilUp.t = self.weaponState.RecoilCF.UpVector
+	self.weaponState.RecoilPos:setGoal(self.weaponState.RecoilCF.Position)
+	self.weaponState.RecoilDir:setGoal(self.weaponState.RecoilCF.LookVector)
+	self.weaponState.RecoilUp:setGoal(self.weaponState.RecoilCF.UpVector)
 	self.weaponState.RecoilFactor = math.clamp(self.weaponState.RecoilFactor - ws.RecoilRecoverPerSecond * dt,
 		ws.MinRecoilFactor, ws.MaxRecoilFactor)
 

@@ -267,14 +267,16 @@ function CameraController.UpdateRender(self: CameraController, dt: number)
 		end
 	end
 
+	self.weaponState.CameraSpring:step(dt)
+	local cameraSpringPos = self.weaponState.CameraSpring:getPosition()
 	self.camera.CFrame = self.camera.CFrame
 		* CFrame.Angles(
-			self.weaponState.CameraSpring.p.X,
-			self.weaponState.CameraSpring.p.Y,
-			self.weaponState.CameraSpring.p.Z
+			cameraSpringPos.X,
+			cameraSpringPos.Y,
+			cameraSpringPos.Z
 		)
-	self.weaponState.CameraSpring.t = self.weaponState.CameraSpring.t - self.weaponState.CameraSpring.p
-	self.weaponState.CameraSpring.p = Vector3.new()
+	self.weaponState.CameraSpring:setGoal(self.weaponState.CameraSpring:getGoal() - cameraSpringPos)
+	self.weaponState.CameraSpring:setPosition(Vector3.zero)
 
 	self.camera.CFrame *= CFrame.Angles(0, 0, math.rad(self.weaponState.RecoilRot:getPosition()))
 	self:UpdateFOV(dt)

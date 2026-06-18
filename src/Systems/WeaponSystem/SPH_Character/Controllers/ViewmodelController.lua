@@ -7,13 +7,13 @@ local Access = require(Framework.Access)
 local assets = Access.assets
 local config = Access.config
 local Enums = require(Framework.Core.Enums)
-local springMod = require(Framework.Weapons.SpringModule)
-local CharacterStateModule = require(Framework.State.CharacterState)
-local WeaponStateModule = require(Framework.State.WeaponState)
 local Ripple = require(Packages.ripple)
 local callbacks = require(assets.Mods)
+local CharacterStateModule = require(Framework.State.CharacterState)
+local WeaponStateModule = require(Framework.State.WeaponState)
 
 local STORAGE_CFRAME = CFrame.new(1000000, 0, 0)
+local SWAY_SPRING = { frequency = 1.625, dampingRatio = 0.39, start = false }
 
 local ViewmodelController = {}
 ViewmodelController.__index = ViewmodelController
@@ -31,8 +31,8 @@ type self = {
 	viewmodelRig: Model,
 	vmShirt: Shirt,
 	StopAnimation: (string, number) -> (),
-	swaySpring: typeof(springMod.new()),
-	moveSpring: typeof(springMod.new()),
+	swaySpring: Ripple.Spring<Vector3>,
+	moveSpring: Ripple.Spring<Vector3>,
 	pushbackOffset: number,
 	hipRotation: Ripple.Spring<Vector2>,
 	aimingOffset: CFrame,
@@ -80,8 +80,8 @@ function ViewmodelController.new(params: {
 		viewmodelRig = params.viewmodelRig,
 		vmShirt = params.vmShirt,
 		StopAnimation = params.StopAnimation,
-		swaySpring = springMod.new(),
-		moveSpring = springMod.new(),
+		swaySpring = Ripple.createSpring(Vector3.zero, SWAY_SPRING),
+		moveSpring = Ripple.createSpring(Vector3.zero, SWAY_SPRING),
 		pushbackOffset = 0,
 		hipRotation = Ripple.createSpring(Vector2.zero),
 		aimingOffset = CFrame.new(),
@@ -343,12 +343,13 @@ function ViewmodelController.UpdateViewmodelPosition(
 	end
 	animBase.CFrame *= CFrame.Angles(math.rad(self.hipRotation:getPosition().Y), math.rad(self.hipRotation:getPosition().X), 0)
 
-	self.swaySpring:shove(Vector3.new(
+	self.swaySpring:impulse(Vector3.new(
 		-mouseDelta.X * self.deltaInstability().X,
 		mouseDelta.Y * self.deltaInstability().Y,
 		0
 	))
-	local updatedSway = self.swaySpring:update(dt)
+	self.swaySpring:step(dt)
+	local updatedSway = self.swaySpring:getPosition()
 	animBase.CFrame *= CFrame.new(updatedSway.X, updatedSway.Y, 0)
 
 	local tickTime = tick() * 0.15
@@ -362,9 +363,12 @@ function ViewmodelController.UpdateViewmodelPosition(
 		0
 	)
 
-	local recoilPos = self.weaponState.RecoilPos.p
-	local recoilLook = self.weaponState.RecoilDir.p
-	local recoilUp = self.weaponState.RecoilUp.p
+	self.weaponState.RecoilPos:step(dt)
+	self.weaponState.RecoilDir:step(dt)
+	self.weaponState.RecoilUp:step(dt)
+	local recoilPos = self.weaponState.RecoilPos:getPosition()
+	local recoilLook = self.weaponState.RecoilDir:getPosition()
+	local recoilUp = self.weaponState.RecoilUp:getPosition()
 	if recoilLook.Magnitude > 1e-6 then
 		self:ApplyCFrameOffsetFrom(self.grip(), CFrame.lookAt(recoilPos, recoilPos + recoilLook, recoilUp))
 	end
@@ -423,10 +427,11 @@ function ViewmodelController.UpdateMovementSway(
 			getSineOffset(tempBobSpeed / 2)
 		)
 
-		self.moveSpring:shove(moveSway * self.moveInstability() * instabilityFactor / (tempDampening * tempDampening) * dt * 60)
+		self.moveSpring:impulse(moveSway * self.moveInstability() * instabilityFactor / (tempDampening * tempDampening) * dt * 60)
 	end
 
-	local updatedMoveSway = self.moveSpring:update(dt)
+	self.moveSpring:step(dt)
+	local updatedMoveSway = self.moveSpring:getPosition()
 
 	if updatedMoveSway.Magnitude > 0.001 then
 		animBase.CFrame = animBase.CFrame:ToWorldSpace(

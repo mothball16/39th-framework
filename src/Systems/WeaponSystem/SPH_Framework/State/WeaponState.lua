@@ -5,15 +5,14 @@ local Charm = require(Packages.Charm)
 local config = Access.config
 local Enums = require(Framework.Core.Enums)
 local Types = require(Framework.Core.ConfigurationTypes)
-local SP = require(Framework.Weapons.Spring.Default)
-local legacySpring = require(Framework.Weapons.LegacySpring)
-local Ripple = require("@game/ReplicatedStorage/Packages/ripple")
+local Ripple = require(Packages.ripple)
 local Maid = require(Packages.maid)
 
 local WepState = {}
 WepState.__index = WepState
 
-type Spring = typeof(legacySpring.new(Vector3.new()))
+local RECOIL_SPRING = { frequency = 48 / (2 * math.pi), dampingRatio = 0.36, start = false }
+local CAMERA_SPRING = { frequency = 64 / (2 * math.pi), dampingRatio = 1, start = false }
 
 type self = {
 	wepStats: Charm.Atom<Types.WeaponStats?>,
@@ -39,10 +38,10 @@ type self = {
 	holdStance: Charm.Atom<number>,
 
 	maid: Maid.Maid,
-	CameraSpring: Spring,
-	RecoilPos: Spring,
-	RecoilDir: Spring,
-	RecoilUp: Spring,
+	CameraSpring: Ripple.Spring<Vector3>,
+	RecoilPos: Ripple.Spring<Vector3>,
+	RecoilDir: Ripple.Spring<Vector3>,
+	RecoilUp: Ripple.Spring<Vector3>,
 	RecoilCF: CFrame,
 	RecoilRot: Ripple.Spring,
 
@@ -85,14 +84,15 @@ function WepState.new(): WeaponState
 		holdStance = Charm.atom(0),
 
 		maid = Maid.new(),
-		CameraSpring = legacySpring.new(Vector3.new()),
-		RecoilPos = legacySpring.new(Vector3.new()),
-		RecoilDir = legacySpring.new(Vector3.new()),
-		RecoilUp = legacySpring.new(Vector3.new()),
+		CameraSpring = Ripple.createSpring(Vector3.zero, CAMERA_SPRING),
+		RecoilPos = Ripple.createSpring(Vector3.zero, RECOIL_SPRING),
+		RecoilDir = Ripple.createSpring(Vector3.zero, RECOIL_SPRING),
+		RecoilUp = Ripple.createSpring(Vector3.zero, RECOIL_SPRING),
 		RecoilRot = Ripple.createSpring(0, {
 			tension = 500,
 			mass = 2,
 			friction = 50,
+			start = false,
 		}),
 		RecoilCF = CFrame.new(),
 		RecoilFactor = 0,
@@ -158,14 +158,10 @@ function WepState.ADSMeshLayerEnabled(self: WeaponState, sightIndex: number): bo
 end
 
 function WepState.Reset(self: WeaponState)
-	self.RecoilUp.s = SP.rs
-	self.RecoilUp.d = SP.rd
-	self.RecoilPos.s = SP.rs
-	self.RecoilPos.d = SP.rd
-	self.RecoilDir.s = SP.rs
-	self.RecoilDir.d = SP.rd
-	self.CameraSpring.s = SP.cs
-	self.CameraSpring.d = SP.cd
+	self.RecoilUp:configure(RECOIL_SPRING)
+	self.RecoilPos:configure(RECOIL_SPRING)
+	self.RecoilDir:configure(RECOIL_SPRING)
+	self.CameraSpring:configure(CAMERA_SPRING)
 	
 	self.RecoilRot:setPosition(0)
 	self.RecoilCF = CFrame.new()
