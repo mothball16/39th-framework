@@ -171,6 +171,8 @@ export type WeaponStats = {
 	explosiveAmmo: boolean?,
 	explosionRadius: number?,
 	explosionEffect: string?,
+	-- Slash-separated paths under SpearheadAssets.Sounds (e.g. "fire/ak"); applied in array order.
+	useSound: {string}?,
 	soundDists: SoundDistConfig?
 }
 

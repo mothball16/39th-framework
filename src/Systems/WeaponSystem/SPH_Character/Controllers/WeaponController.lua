@@ -21,6 +21,7 @@ local Enums = require(Framework.Core.Enums)
 local bulletHandler = require(Framework.Ballistics.BulletHandler)
 local shellEjection = require(Framework.Weapons.ShellEjection)
 local weldMod = require(Framework.Weapons.WeldMod)
+local WeaponSoundSetup = require(Framework.Weapons.WeaponSoundSetup)
 local NetworkEvents = require(Framework.Network.NetworkEvents)
 local LocalEvents = require(script.Parent:WaitForChild("LocalEvents"))
 local weaponPrefsClient = require(Framework.Weapons.WeaponPrefsClient)
@@ -81,13 +82,6 @@ local function findChildModelWithMainPartChild(gun, partName)
 	return nil
 end
 
-local function findFireSoundInstance(gun)
-	local mount = findChildModelWithMainPartChild(gun, "Fire")
-	if mount and mount.Main:FindFirstChild("Fire") then
-		return mount.Main.Fire
-	end
-	return nil
-end
 
 function WeaponController._applyPersistedWeaponPrefs(self: WeaponController, weaponName: string)
 	weaponPrefsClient.applyPersisted(weaponName, self.state, self.weaponState, self)
@@ -300,9 +294,6 @@ function WeaponController.PlayRepSound(self: WeaponController, soundName)
 	if not self.state.dead() and ws then
 		local gm = self.weaponState.gunModel()
 		local soundToPlay = gm.Grip:FindFirstChild(soundName)
-		if soundName == "Fire" then
-			soundToPlay = findFireSoundInstance(gm) or soundToPlay
-		end
 
 		if soundToPlay and self.state.equippedTool() then
 			if self.state.firstPerson() then
@@ -491,6 +482,7 @@ function WeaponController.Equip(self: WeaponController, newChild)
 
 	
 	local gun = assets.WeaponModels:FindFirstChild(newChild.Name):Clone()
+	WeaponSoundSetup.apply(gun, ws, assets.Sounds)
 	weldMod.WeldModel(gun, gun.Grip, false)
 
 	for _, partName in ipairs(ws.rigParts) do
@@ -851,7 +843,6 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 		end
 
 		bulletHandler.FireFX(self.player, tempGunModel, muzzleName, muCh)
-		self:PlayRepSound("Fire")
 
 		self:MoveBolt(currentStats.boltDist)
 

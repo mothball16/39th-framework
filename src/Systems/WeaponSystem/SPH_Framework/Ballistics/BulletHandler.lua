@@ -3,6 +3,7 @@ local module = {}
 local debugMode = false
 
 local debris = game:GetService("Debris")
+local soundService = game:GetService("SoundService")
 local tweenService = game:GetService("TweenService")
 local players = game:GetService("Players")
 local Framework = script:FindFirstAncestor("SPH_Framework")
