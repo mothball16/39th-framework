@@ -1,56 +1,54 @@
 --[[
 read-only slice of the state relevant to the provided userid
 ]]
+local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 local Types = require("../Core/Types")
 local State = require("../Core/State")
-local Vide = require("@game/ReplicatedStorage/Packages/Vide")
-local derive = Vide.derive
-
+local Utilities = require("../Logic/Utilities")
 export type PlayerSlice = {
-	factionId: () -> string?,
-	factionConfig: () -> Types.FactionConfig?,
-	groupCounts: () -> { [string]: number },
-	groupKey: () -> string?,
-	groupConfig: () -> Types.GroupConfig?,
-	groupEntries: () -> { Types.GroupConfig },
-	classes: () -> { Types.ClassDescriptor },
+	factionId: Charm.Getter<string?>,
+	factionConfig: Charm.Getter<Types.FactionConfig?>,
+	groupCounts: Charm.Getter<{ [string]: number }>,
+	groupKey: Charm.Getter<string?>,
+	groupConfig: Charm.Getter<Types.GroupConfig?>,
+	groupEntries: Charm.Getter<{ Types.GroupConfig }>,
+	classes: Charm.Getter<{ Types.ClassDescriptor }>,
 }
 
-
 return function(state: State.State, userId: string): PlayerSlice
-	local sources = state:AsVideSources()
-
-	local assignment = derive(function()
-		return sources.playerAssignmentByUserId()[userId]
+	local userKey = Utilities.ToPlayerKey(userId)
+	local assignment = Charm.computed(function()
+		return state.playerAssignmentByUserId()[userKey]
 	end)
 
-	local factionId = derive(function()
+	local factionId = Charm.computed(function()
 		local currentAssignment = assignment()
 		return if currentAssignment then currentAssignment.FactionId else nil
 	end)
 
-	local factionConfig = derive(function()
+	local factionConfig = Charm.computed(function()
 		local id = factionId()
 		if not id then
 			return nil
 		end
-		return sources.configByFactionId()[id]
+		return state.configByFactionId()[id]
 	end)
 
-	local groupCounts = derive(function()
+	local groupCounts = Charm.computed(function()
 		local id = factionId()
 		if not id then
 			return {}
 		end
-		return sources.getGroupCountByFaction()[id] or {}
+		return state.getGroupCountByFaction()[id] or {}
 	end)
 
-	local groupKey = derive(function()
+	local groupKey = Charm.computed(function()
 		local currentAssignment = assignment()
+		
 		return if currentAssignment then currentAssignment.GroupKey else nil
 	end)
 
-	local groupConfig = derive(function()
+	local groupConfig = Charm.computed(function()
 		local config = factionConfig()
 		local key = groupKey()
 		if not config or not key then
@@ -61,22 +59,22 @@ return function(state: State.State, userId: string): PlayerSlice
 
 	-- map faction config groups to a table for indexes to iterate over
 	-- this runs only when factionConfig() changes so its not that expensive
-	local groupEntries = derive(function()
+	local groupEntries = Charm.computed(function()
 		local groups = {}
-		local factionConfig = factionConfig()
-		if not factionConfig then
+		local config = factionConfig()
+		if not config then
 			return groups
 		end
 
-		for key, config in pairs(factionConfig.Groups) do
-			local entry = table.clone(config)
+		for key, group in pairs(config.Groups) do
+			local entry = table.clone(group)
 			entry.Key = key
 			table.insert(groups, entry)
 		end
 		return groups
 	end)
 
-	local classes = derive(function()
+	local classes = Charm.computed(function()
 		local config = groupConfig()
 		return if config then config.Classes else {}
 	end)

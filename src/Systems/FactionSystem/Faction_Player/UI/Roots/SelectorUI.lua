@@ -8,7 +8,7 @@ local Theme = require("../Theme")
 local GroupCard = require("../Components/Card")
 local MenuActionButton = require("../Components/MenuActionButton")
 local ClassSelector = require("../Components/ClassSelector")
-local GetPlayerSlice = require("@game/ReplicatedStorage/Faction_Framework/Selectors/GetPlayerSlice")
+local GetPlayerSlice = require("@game/ReplicatedStorage/Faction_Framework/Selectors/GetPlayerSliceVide")
 local UseClassSelector = require("@game/ReplicatedStorage/Faction_Framework/Composables/UseClassSelector")
 
 local ASPECT_RATIO = 1.5

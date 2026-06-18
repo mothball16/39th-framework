@@ -33,6 +33,7 @@ end
 
 -- safely creates a getter for group counts. encapsulates logic for setting this signal within the effect scope
 function State.SetupGroupCounts(self: State): Charm.Getter<GroupCountByFaction>
+	
 	local getGroupCountByFaction, setGroupCountByFaction = Charm.signal({} :: GroupCountByFaction)
 
 	self.maid:GiveTask(Charm.effectScope(function()
