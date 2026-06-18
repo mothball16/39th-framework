@@ -40,6 +40,7 @@ local ragdoll = require(Framework.Effects.RagdollMod)
 local HitContextTypes = require(Framework.Combat.HitContextTypes)
 local VictimFinder = require(Framework.Combat.VictimFinder)
 local attachmentPlacer = require(Framework.Weapons.AttachmentPlacer)
+local WeaponSoundSetup = require(Framework.Weapons.WeaponSoundSetup)
 local Types = require(Framework.Core.ConfigurationTypes)
 local warnPrefix = "【 SPEARHEAD 】 "
 print(warnPrefix .. "Loading Server " .. config.version)
@@ -264,19 +265,6 @@ local function checkHolster(player, tool)
 end
 
 
-local function setupGun(gun: Model, wepStats: Types.WeaponStats)
-	local grip = gun:WaitForChild("Grip")
-	if wepStats.soundDists then
-		for soundName, dist in wepStats.soundDists do
-			local sound = grip:FindFirstChild(soundName) :: Sound?
-			if sound then
-				sound.RollOffMinDistance = dist.Min
-				sound.RollOffMaxDistance = dist.Max
-			end
-		end
-	end
-end
-
 local function equipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 	if tool.Parent == rig.Parent and assets.WeaponModels:FindFirstChild(tool.Name) then
 		local wepStats = WeaponStatLocator.getWeaponStats(tool)
@@ -285,7 +273,7 @@ local function equipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 		end
 
 		local gun = assets.WeaponModels[tool.Name]:Clone()
-		setupGun(gun, wepStats)
+		WeaponSoundSetup.apply(gun, wepStats, assets.Sounds)
 		
 		weldMod.WeldModel(gun, gun.Grip, false)
 
