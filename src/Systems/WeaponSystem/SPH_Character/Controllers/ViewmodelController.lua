@@ -21,6 +21,7 @@ ViewmodelController.__index = ViewmodelController
 type self = {
 	state: CharacterStateModule.CharacterState,
 	weaponState: WeaponStateModule.WeaponState,
+	grip: BasePart?,
 	animBase: BasePart,
 	camera: Camera,
 	humanoidRootPart: BasePart,
@@ -89,6 +90,14 @@ function ViewmodelController.new(params: {
 		strafeShift = 0,
 		aimTarget = CFrame.new(),
 	} :: self, ViewmodelController)
+
+	self.grip = Charm.computed(function()
+		local gunModel = self.weaponState.gunModel()
+		if not gunModel then
+			return nil
+		end
+		return gunModel:WaitForChild("Grip")
+	end)
 
 	self.moveInstability = Charm.computed(function()
 		local ws = self.weaponState.wepStats()
@@ -232,7 +241,6 @@ function ViewmodelController.UpdateViewmodelPosition(
 
 	local gunModel = self.weaponState.gunModel()
 	local aimPart = gunModel:FindFirstChild("AimPart" .. sightIndex) or gunModel.AimPart
-	local grip = gunModel.Grip
 	self.aimTarget = aimPart.CFrame:ToObjectSpace(camera.CFrame)
 
 	local lerpFactor = self.weaponState.aimLerpFactor()
@@ -302,7 +310,7 @@ function ViewmodelController.UpdateViewmodelPosition(
 	self.rollAngle = lerpNumber(self.rollAngle, targetRollAngle, 0.07 * dt * 60)
 	self.strafeShift = lerpNumber(self.strafeShift, targetStrafeShift, 0.07 * dt * 60)
 	
-	self:ApplyCFrameOffsetFrom(grip, CFrame.Angles(0, math.rad(-self.strafeShift * config.maxStrafeShift), math.rad(self.rollAngle)))
+	self:ApplyCFrameOffsetFrom(self.grip(), CFrame.Angles(0, math.rad(-self.strafeShift * config.maxStrafeShift), math.rad(self.rollAngle)))
 	local viewportSize = camera.ViewportSize
 	local mouseDelta = UserInputService:GetMouseDelta() / viewportSize
 
@@ -358,7 +366,7 @@ function ViewmodelController.UpdateViewmodelPosition(
 	local recoilLook = self.weaponState.RecoilDir.p
 	local recoilUp = self.weaponState.RecoilUp.p
 	if recoilLook.Magnitude > 1e-6 then
-		self:ApplyCFrameOffsetFrom(grip, CFrame.lookAt(recoilPos, recoilPos + recoilLook, recoilUp))
+		self:ApplyCFrameOffsetFrom(self.grip(), CFrame.lookAt(recoilPos, recoilPos + recoilLook, recoilUp))
 	end
 
 	if self.weaponState.RecoilRot:getPosition() > 1e-6 then
