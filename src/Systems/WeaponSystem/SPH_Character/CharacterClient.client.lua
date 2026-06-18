@@ -353,6 +353,7 @@ runService.Heartbeat:Connect(function(dt:number)
 	weaponController:UpdateHeartbeat(dt)
 	uiController:UpdateHeartbeat(dt)
 	effectController:UpdateHeartbeat(dt)
+	viewmodelController:UpdateHeartbeat(dt)
 end)
 
 Charm.effect(function()

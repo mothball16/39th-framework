@@ -10,6 +10,7 @@ local Enums = require(Framework.Core.Enums)
 local springMod = require(Framework.Weapons.SpringModule)
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
+local Ripple = require(Packages.ripple)
 local callbacks = require(assets.Mods)
 
 local STORAGE_CFRAME = CFrame.new(1000000, 0, 0)
@@ -32,7 +33,7 @@ type self = {
 	swaySpring: typeof(springMod.new()),
 	moveSpring: typeof(springMod.new()),
 	pushbackOffset: number,
-	hipRotation: Vector2,
+	hipRotation: Ripple.Spring<Vector2>,
 	aimingOffset: CFrame,
 	proneViewmodelOffset: number,
 	rollAngle: number,
@@ -81,7 +82,7 @@ function ViewmodelController.new(params: {
 		swaySpring = springMod.new(),
 		moveSpring = springMod.new(),
 		pushbackOffset = 0,
-		hipRotation = Vector2.zero,
+		hipRotation = Ripple.createSpring(Vector2.zero),
 		aimingOffset = CFrame.new(),
 		proneViewmodelOffset = 0,
 		rollAngle = 0,
@@ -180,7 +181,8 @@ function ViewmodelController.RefreshViewmodel(self: ViewmodelController)
 end
 
 function ViewmodelController.ResetHipRotation(self: ViewmodelController)
-	self.hipRotation = Vector2.zero
+	self.hipRotation:setPosition(Vector2.zero)
+	self.hipRotation:setGoal(Vector2.zero)
 end
 
 function ViewmodelController.ApplyCFrameOffsetFrom(self: ViewmodelController, part: BasePart, offset: CFrame)
@@ -304,8 +306,11 @@ function ViewmodelController.UpdateViewmodelPosition(
 	local viewportSize = camera.ViewportSize
 	local mouseDelta = UserInputService:GetMouseDelta() / viewportSize
 
-	local tempHipRotation = self.hipRotation
-	if config.hipfireMove and (not self.state.aiming() or self.state.aiming() and config.offCenterAiming) then
+	local weaponAtReady = self.weaponState.holdStance() == Enums.HoldStance.Ready
+	local offCenterApplies = (config.hipfireMove and not self.state.aiming()) or (self.state.aiming() and config.offCenterAiming)
+	
+	if offCenterApplies and weaponAtReady then
+		local nextHipRotation = self.hipRotation:getPosition()
 		local maxX = config.hipfireMoveX
 		local maxY = config.hipfireMoveY
 		if self.state.aiming() then
@@ -313,21 +318,22 @@ function ViewmodelController.UpdateViewmodelPosition(
 			maxY /= 4
 		end
 		local xRotation = math.clamp(
-			tempHipRotation.X - mouseDelta.X * config.hipfireMoveSpeed * dt * 60,
+			nextHipRotation.X - mouseDelta.X * 500 * config.hipfireMoveSpeed * dt * 60,
 			-maxX,
 			maxX
 		)
 		local yRotation = math.clamp(
-			tempHipRotation.Y - mouseDelta.Y * config.hipfireMoveSpeed * dt * 60,
+			nextHipRotation.Y - mouseDelta.Y * 250 * config.hipfireMoveSpeed * dt * 60,
 			-maxY,
 			maxY
 		)
-		tempHipRotation = Vector2.new(xRotation, yRotation)
-		self.hipRotation = tempHipRotation
+		nextHipRotation = Vector2.new(xRotation, yRotation)
+		
+		self.hipRotation:setGoal(nextHipRotation)
 	else
-		self.hipRotation = self.hipRotation:Lerp(Vector2.zero, 0.3)
+		self.hipRotation:setGoal(Vector2.zero)
 	end
-	animBase.CFrame *= CFrame.Angles(math.rad(self.hipRotation.Y), math.rad(self.hipRotation.X), 0)
+	animBase.CFrame *= CFrame.Angles(math.rad(self.hipRotation:getPosition().Y), math.rad(self.hipRotation:getPosition().X), 0)
 
 	self.swaySpring:shove(Vector3.new(
 		-mouseDelta.X * self.deltaInstability().X,
@@ -362,6 +368,10 @@ function ViewmodelController.UpdateViewmodelPosition(
 	if not self.weaponState.viewmodelVisible() then
 		animBase.CFrame *= STORAGE_CFRAME
 	end
+end
+
+function ViewmodelController.UpdateHeartbeat(self: ViewmodelController, dt: number)
+	self.hipRotation:step(dt)
 end
 
 function ViewmodelController.UpdateRender(self: ViewmodelController, dt: number)
