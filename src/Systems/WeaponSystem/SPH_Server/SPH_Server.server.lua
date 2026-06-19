@@ -580,6 +580,11 @@ local function initializePlayerLifecycle()
 						end
 					end
 				end
+				local deathSounds = assets.Sounds.Death:GetChildren()
+				local newSound = deathSounds[math.random(#deathSounds)]:Clone()
+				newSound.Parent = hrp
+				newSound:Play()
+				debris:AddItem(newSound, newSound.TimeLength)
 			end)
 			newPlayer.Backpack.ChildAdded:Connect(function(child)
 				checkTool(newPlayer, child)
