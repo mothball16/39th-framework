@@ -193,8 +193,8 @@ function EffectController.ApplySuppressionAimPunch(self: EffectController, facto
 	local hr = (math.random() - 0.5) * 2 * punchScale / 1000
 
 	local kick = Vector3.new(vr, hr, 0)
-	self.weaponState.CameraSpring:setGoal(self.weaponState.CameraSpring:getGoal() + kick)
-	self.weaponState.CameraSpring:setPosition(self.weaponState.CameraSpring:getPosition() + kick * 0.5)
+	self.weaponState.CameraSpring.t = self.weaponState.CameraSpring.t + kick
+	self.weaponState.CameraSpring.p = self.weaponState.CameraSpring.p + kick * 0.5
 end
 
 local function numLerp(a: number, b: number, t: number)
