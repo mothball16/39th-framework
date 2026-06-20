@@ -21,7 +21,7 @@ local Enums = require(Framework.Core.Enums)
 local bulletHandler = require(Framework.Ballistics.BulletHandler)
 local shellEjection = require(Framework.Weapons.ShellEjection)
 local weldMod = require(Framework.Weapons.WeldMod)
-local WeaponSoundSetup = require(Framework.Weapons.WeaponSoundSetup)
+local WeaponSetup = require(Framework.Weapons.WeaponSetup)
 local NetworkEvents = require(Framework.Network.NetworkEvents)
 local LocalEvents = require(script.Parent:WaitForChild("LocalEvents"))
 local weaponPrefsClient = require(Framework.Weapons.WeaponPrefsClient)
@@ -32,6 +32,7 @@ local RecoilModule = require(Framework.Weapons.Recoil.Default)
 
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
+local Types = require(Framework.Core.ConfigurationTypes)
 
 local STORAGE_CFRAME = CFrame.new(1000000, 0, 0)
 
@@ -424,8 +425,6 @@ function WeaponController.Unequip(self: WeaponController, tool)
 	UserInputService.MouseIconEnabled = true
 	self.localEvents.StopAllRequested:Fire()
 
-
-
 	self.sights = {}
 end
 
@@ -482,7 +481,7 @@ function WeaponController.Equip(self: WeaponController, newChild)
 
 	
 	local gun = assets.WeaponModels:FindFirstChild(newChild.Name):Clone()
-	WeaponSoundSetup.apply(gun, ws, assets.Sounds)
+	WeaponSetup.apply(gun, ws, assets.Sounds, assets.Effects)
 	weldMod.WeldModel(gun, gun.Grip, false)
 
 	for _, partName in ipairs(ws.rigParts) do
@@ -775,8 +774,103 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 	
 end
 
+function WeaponController.FireShot(self: WeaponController, ws: Types.WeaponStats, fireMode: number)
+	if not self.state.firstPerson() and not config.thirdPersonFiring then return end
 
+	local currentStats = ws
+	self.weaponState.RecoilFactor = math.clamp(self.weaponState.RecoilFactor + ws.RecoilStepAmount,
+		ws.MinRecoilFactor, ws.MaxRecoilFactor)
 
+	self.localEvents.FireAnimRequested:Fire()
+	self:PerformRecoil(currentStats)
+
+	self.bulletsCurrentlyFired += 1
+	self.ejected = false
+
+	if fireMode == Enums.FireModes.Semi
+	or fireMode == Enums.FireModes.Manual
+	or (fireMode == Enums.FireModes.Burst and self.bulletsCurrentlyFired >= currentStats.burstNumber) then
+		self.canFire = false
+		self.holdingM1 = false
+	end
+	
+	self.cycled = false
+	local curModel = self.weaponState.gunModel()
+
+	if fireMode ~= Enums.FireModes.Manual then
+		self:EjectShell()
+	end
+
+	local bulletHandlerPart = ws.bulletHandler and self.weaponState.gunModel():FindFirstChild(ws.bulletHolder)
+	if bulletHandlerPart then
+		local bulletNumber = self.weaponState.gunAmmo.MagAmmo.MaxValue - (self.weaponState.gunAmmo.MagAmmo.Value - 1)
+		local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
+		if tempBulletPart then tempBulletPart.Transparency = 1 end
+	end
+
+	local tempGunModel = self.weaponState.gunModel()
+	if not self.state.firstPerson() then tempGunModel = self:GetThirdPersonGunModel() end
+
+	local muzzleName = "Muzzle"
+	local muCh = ws.muzzleChance
+	local muzzleHost = findChildModelWithMainPartChild(tempGunModel, "Muzzle")
+	if muzzleHost then
+		tempGunModel = muzzleHost
+	end
+
+	bulletHandler.FireFX(self.player, tempGunModel, muzzleName, muCh)
+
+	self:MoveBolt(currentStats.boltDist)
+
+	local shotCount = (currentStats.shotgun and currentStats.shotgunPellets) or 1
+	for _ = 1, shotCount do
+		local bulletOrigin, bulletDirection
+	local tempSpread = self.weaponState.Spread * 100
+		local spreadCFrame = CFrame.Angles(math.rad(math.random(-tempSpread, tempSpread) / 100), math.rad(math.random(-tempSpread, tempSpread) / 100), 0)
+
+		local muzzlePoint = self:GetMuzzlePoint(self.state.firstPerson() and curModel or self:GetThirdPersonGunModel())
+		bulletOrigin = muzzlePoint.WorldCFrame.Position
+		bulletDirection = (muzzlePoint.WorldCFrame * spreadCFrame).LookVector
+
+		local muVe = currentStats.muzzleVelocity
+		local bulletVelocity = (bulletDirection * muVe * 3.5)
+
+		local tracerColor = nil
+		local TrTi = currentStats.tracerTiming
+		if currentStats.tracers and TrTi and self.weaponState.gunAmmo.MagAmmo.Value % TrTi == 0 then
+			tracerColor = currentStats.tracerColor
+		end
+
+		bulletHandler.FireBullet(self.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, self.state.equippedTool(), self.player, tracerColor, function(userData, raycastResult)
+			-- when bullet hits, this callback lets other controllers know about it
+			self.localEvents.BulletHit:Fire(userData.wepStats, bulletOrigin, raycastResult)
+		end)
+	end
+
+	local firePoint = self.state.firstPerson() and self:GetMuzzlePoint(curModel) or self:GetMuzzlePoint(self:GetThirdPersonGunModel())
+	P.PlayerFire.send({ firePoint = firePoint.WorldCFrame })
+
+	local cycleTime = currentStats.fireRate
+	if fireMode == Enums.FireModes.Burst and currentStats.burstFireRate then cycleTime = currentStats.burstFireRate end
+
+	if currentStats.projectile ~= "Bullet" then
+		self:SetProjectileTransparency(self.weaponState.gunModel(), 1)
+	end
+
+	local spreadStep = ws.SpreadStepAmount
+	local minSpread = ws.MinSpread
+	local maxSpread = ws.MaxSpread
+	self.weaponState.Spread = math.clamp(math.max(self.weaponState.Spread, minSpread) + spreadStep, minSpread, maxSpread)
+
+	task.wait(60 / cycleTime)
+	if not self.state.equippedTool() then return end
+
+	if currentStats.autoChamber and ws.fireMode == Enums.FireModes.Manual and not self.weaponState.reloading() then
+		self.weaponState.holdStance(Enums.HoldStance.Ready)
+		self.weaponState.chambering(true)
+	end
+	self.cycled = true
+end
 function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 	if not self.state.equippedTool() or self.state.dead() then return end
 	local ws = self.weaponState.wepStats()
@@ -801,99 +895,7 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 		and not self.weaponState.equipping()
 
 	if canFireShot then
-		if not self.state.firstPerson() and not config.thirdPersonFiring then return end
-
-		local currentStats = ws
-		self.weaponState.RecoilFactor = math.clamp(self.weaponState.RecoilFactor + ws.RecoilStepAmount,
-			ws.MinRecoilFactor, ws.MaxRecoilFactor)
-
-		self.localEvents.FireAnimRequested:Fire()
-		self:PerformRecoil(currentStats)
-
-		self.bulletsCurrentlyFired += 1
-		self.ejected = false
-
-		if fireMode == Enums.FireModes.Semi or fireMode == Enums.FireModes.Manual or (fireMode == Enums.FireModes.Burst and self.bulletsCurrentlyFired >= currentStats.burstNumber) then
-			self.canFire = false
-			self.holdingM1 = false
-		end
-		
-		self.cycled = false
-		local curModel = self.weaponState.gunModel()
-
-		if fireMode ~= Enums.FireModes.Manual then
-			self:EjectShell()
-		end
-
-		local bulletHandlerPart = ws.bulletHandler and self.weaponState.gunModel():FindFirstChild(ws.bulletHolder)
-		if bulletHandlerPart then
-			local bulletNumber = self.weaponState.gunAmmo.MagAmmo.MaxValue - (self.weaponState.gunAmmo.MagAmmo.Value - 1)
-			local tempBulletPart = bulletHandlerPart:FindFirstChild("Bullet"..bulletNumber)
-			if tempBulletPart then tempBulletPart.Transparency = 1 end
-		end
-
-		local tempGunModel = self.weaponState.gunModel()
-		if not self.state.firstPerson() then tempGunModel = self:GetThirdPersonGunModel() end
-
-		local muzzleName = "Muzzle"
-		local muCh = ws.muzzleChance
-		local muzzleHost = findChildModelWithMainPartChild(tempGunModel, "Muzzle")
-		if muzzleHost then
-			tempGunModel = muzzleHost
-		end
-
-		bulletHandler.FireFX(self.player, tempGunModel, muzzleName, muCh)
-
-		self:MoveBolt(currentStats.boltDist)
-
-		local shotCount = (currentStats.shotgun and currentStats.shotgunPellets) or 1
-		for _ = 1, shotCount do
-			local bulletOrigin, bulletDirection
-		local tempSpread = self.weaponState.Spread * 100
-			local spreadCFrame = CFrame.Angles(math.rad(math.random(-tempSpread, tempSpread) / 100), math.rad(math.random(-tempSpread, tempSpread) / 100), 0)
-
-			local muzzlePoint = self:GetMuzzlePoint(self.state.firstPerson() and curModel or self:GetThirdPersonGunModel())
-			bulletOrigin = muzzlePoint.WorldCFrame.Position
-			bulletDirection = (muzzlePoint.WorldCFrame * spreadCFrame).LookVector
-
-			local muVe = currentStats.muzzleVelocity
-			local bulletVelocity = (bulletDirection * muVe * 3.5)
-
-			local tracerColor = nil
-			local TrTi = currentStats.tracerTiming
-			if currentStats.tracers and TrTi and self.weaponState.gunAmmo.MagAmmo.Value % TrTi == 0 then
-				tracerColor = currentStats.tracerColor
-			end
-
-			bulletHandler.FireBullet(self.thirdPersonRig, bulletOrigin, bulletDirection, bulletVelocity, self.state.equippedTool(), self.player, tracerColor, function(userData, raycastResult)
-				-- when bullet hits, this callback lets other controllers know about it
-				self.localEvents.BulletHit:Fire(userData.wepStats, bulletOrigin, raycastResult)
-			end)
-		end
-
-		local firePoint = self.state.firstPerson() and self:GetMuzzlePoint(curModel) or self:GetMuzzlePoint(self:GetThirdPersonGunModel())
-		P.PlayerFire.send({ firePoint = firePoint.WorldCFrame })
-
-		local cycleTime = currentStats.fireRate
-		if fireMode == Enums.FireModes.Burst and currentStats.burstFireRate then cycleTime = currentStats.burstFireRate end
-
-		if currentStats.projectile ~= "Bullet" then
-			self:SetProjectileTransparency(self.weaponState.gunModel(), 1)
-		end
-
-		local spreadStep = ws.SpreadStepAmount
-		local minSpread = ws.MinSpread
-		local maxSpread = ws.MaxSpread
-		self.weaponState.Spread = math.clamp(math.max(self.weaponState.Spread, minSpread) + spreadStep, minSpread, maxSpread)
-
-		task.wait(60 / cycleTime)
-		if not self.state.equippedTool() then return end
-
-		if currentStats.autoChamber and fireMode == Enums.FireModes.Manual and not self.weaponState.reloading() then
-			self.weaponState.holdStance(Enums.HoldStance.Ready)
-			self.weaponState.chambering(true)
-		end
-		self.cycled = true
+		self:FireShot(ws, fireMode)
 	else
 		if not self:IsLoaded() then
 			if fireMode == Enums.FireModes.Manual and self.weaponState.gunAmmo.MagAmmo.Value > 0 then
