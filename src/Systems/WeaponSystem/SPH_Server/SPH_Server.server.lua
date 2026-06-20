@@ -39,7 +39,7 @@ local explosionMod = require(Framework.Effects.ExplosionFX)
 local ragdoll = require(Framework.Effects.RagdollMod)
 local HitContextTypes = require(Framework.Combat.HitContextTypes)
 local VictimFinder = require(Framework.Combat.VictimFinder)
-local WeaponSoundSetup = require(Framework.Weapons.WeaponSoundSetup)
+local WeaponSetup = require(Framework.Weapons.WeaponSetup)
 local Types = require(Framework.Core.ConfigurationTypes)
 local warnPrefix = "【 SPEARHEAD 】 "
 print(warnPrefix .. "Loading Server " .. config.version)
@@ -225,7 +225,7 @@ local function equipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 		end
 
 		local gun = assets.WeaponModels[tool.Name]:Clone()
-		WeaponSoundSetup.apply(gun, wepStats, assets.Sounds)
+		WeaponSetup.apply(gun, wepStats, assets.Sounds, assets.Effects)
 		
 		weldMod.WeldModel(gun, gun.Grip, false)
 

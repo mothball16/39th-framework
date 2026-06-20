@@ -21,7 +21,23 @@ local function applySoundFolder(grip: Instance, folder: Folder)
 	end
 end
 
-local function resolveSoundFolder(soundsRoot: Folder, path: string): Folder?
+local function applyFXFolder(grip: Instance, folder: Folder)
+	for _, fxTemplate in folder:GetChildren() do
+		if fxTemplate:IsA("Folder") then
+			local gripAttachment = grip:FindFirstChild(fxTemplate.Name)
+			if gripAttachment and gripAttachment:IsA("Attachment") then
+				gripAttachment:ClearAllChildren()
+				for _, fx in fxTemplate:GetChildren() do
+					fx:Clone().Parent = gripAttachment
+				end
+			else
+				warn(`[SPH] useFX failed to apply for {folder.Name} as no attachment found on grip for weapon {grip.Parent and grip.Parent.Name or "unknown"}`)
+			end
+		end
+	end
+end
+
+local function resolveFolder(soundsRoot: Folder, path: string): Folder?
 	local current: Instance = soundsRoot
 	for _, segment in string.split(path, "/") do
 		if segment == "" then
@@ -38,11 +54,22 @@ end
 
 local function applyUseSound(grip: Instance, soundsRoot: Folder, useSound: { string })
 	for _, path in useSound do
-		local folder = resolveSoundFolder(soundsRoot, path)
+		local folder = resolveFolder(soundsRoot, path)
 		if folder then
 			applySoundFolder(grip, folder)
 		else
 			warn(`[SPH] useSound folder not found: {path}`)
+		end
+	end
+end
+
+local function applyUseFX(grip: Instance, fxRoot: Folder, useFX: { string })
+	for _, path in useFX do
+		local folder = resolveFolder(fxRoot, path)
+		if folder then
+			applyFXFolder(grip, folder)
+		else
+			warn(`[SPH] useFX folder not found: {path}`)
 		end
 	end
 end
@@ -57,9 +84,9 @@ local function applySoundDists(grip: Instance, soundDists: Types.SoundDistConfig
 	end
 end
 
-local WeaponSoundSetup = {}
+local WeaponSetup = {}
 
-function WeaponSoundSetup.apply(gun: Model, wepStats: Types.WeaponStats, soundsRoot: Folder)
+function WeaponSetup.apply(gun: Model, wepStats: Types.WeaponStats, soundsRoot: Folder, fxRoot: Folder)
 	local grip = gun:FindFirstChild("Grip")
 	if not grip then
 		return
@@ -68,9 +95,12 @@ function WeaponSoundSetup.apply(gun: Model, wepStats: Types.WeaponStats, soundsR
 	if wepStats.useSound then
 		applyUseSound(grip, soundsRoot, wepStats.useSound)
 	end
+	if wepStats.useFX then
+		applyUseFX(grip, fxRoot, wepStats.useFX)
+	end
 	if wepStats.soundDists then
 		applySoundDists(grip, wepStats.soundDists)
 	end
 end
 
-return WeaponSoundSetup
+return WeaponSetup
