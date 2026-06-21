@@ -179,8 +179,9 @@ function WeaponController.UpdateAttachmentsVisibility(self: WeaponController)
 	
 	local function updateLight(model, enabled)
 		if not model then return end
-		if model.Grip:FindFirstChild("Flashlight") then
-			local light = model.Grip.Flashlight:FindFirstChildWhichIsA("Light")
+		local grip = model:FindFirstChild("Grip")
+		if grip and grip:FindFirstChild("Flashlight") then
+			local light = grip.Flashlight:FindFirstChildWhichIsA("Light")
 			if light then light.Enabled = enabled end
 		end
 		for _, child in ipairs(model:GetChildren()) do
@@ -506,18 +507,18 @@ function WeaponController.Equip(self: WeaponController, newChild)
 	self.localEvents.WeaponIdleRequested:Fire()
 
 	if not ws then return end
-	if ws.openBolt or not self.state.equippedTool().Chambered.Value then
+	if ws.openBolt or not self.state.equippedTool():WaitForChild("Chambered").Value then
 		self:SetProjectileTransparency(self.weaponState.gunModel(), 1)
 	end
 
 	self.weaponState.gunAmmo = self.state.equippedTool():WaitForChild("Ammo")
 	self.weaponState.localAmmo(self.weaponState.gunAmmo.MagAmmo.Value)
 
-	if not self.state.equippedTool().BoltReady.Value then
+	if not self.state.equippedTool():WaitForChild("BoltReady").Value then
 		self:MoveBolt(ws.boltDist, true)
 	end
 
-	local equippedFireMode = self.state.equippedTool().FireMode.Value
+	local equippedFireMode = self.state.equippedTool():WaitForChild("FireMode").Value
 	if equippedFireMode == Enums.FireModes.UBGL then
 		equippedFireMode = ws.fireMode
 		self.state.equippedTool().FireMode.Value = equippedFireMode
