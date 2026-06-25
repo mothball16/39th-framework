@@ -386,7 +386,12 @@ function ViewmodelController.UpdateViewmodelPosition(
 		0
 	))
 	local updatedSway = self.swaySpring:update(dt)
+
+	
 	animBase.CFrame *= CFrame.new(updatedSway.X, updatedSway.Y, 0)
+
+	-- inconsistent based on screensize.
+	-- self:ApplyCFrameOffsetFrom(aimPart, CFrame.Angles(-updatedSway.Y * 0.25, updatedSway.X * 0.5, 0))
 
 	local tickTime = tick() * 0.15
 	local tempDist = config.breathingDist
