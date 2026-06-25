@@ -103,7 +103,8 @@ local function ReportSuppressionVictims(cast, lastPoint: Vector3, direction: Vec
 	for _, part in nearbyParts do
 		local targetPlayer = players:GetPlayerFromCharacter(part:FindFirstAncestorOfClass("Model"))
 		if not targetPlayer 
-		or cast.UserData.AlreadySuppressedTargets[targetPlayer.UserId] then
+		or cast.UserData.AlreadySuppressedTargets[targetPlayer.UserId] 
+		or targetPlayer.Team == cast.UserData.Player.Team then -- in the future: inject the check so that faction based ignore can be used
 			continue
 		end
 
@@ -188,7 +189,9 @@ local function ResetBullet(bulletPart)
 end
 
 local function PlaySFX(parent, playerFired)
+	
 	for _, child in ipairs(parent:GetChildren()) do
+
 		local shouldPlay = false
 		if child:IsA("Sound") then
 			if child.Name == "Fire" then
