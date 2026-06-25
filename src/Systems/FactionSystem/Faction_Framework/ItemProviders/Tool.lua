@@ -1,7 +1,7 @@
 local Access = require("../Access")
 local Types = require("../Core/Types")
 local Enums = require("../Core/Enums")
-local ToolProvider: Types.ClassItemProvider<BuildArgs> = {
+local ToolProvider: Types.VariantItemProvider<BuildArgs> = {
     ID = "Tool",
     AssignType = Enums.AssignType.PerCharacter,
 }

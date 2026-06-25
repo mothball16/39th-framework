@@ -16,10 +16,10 @@ function Events.GetNamespace()
    return ByteNetMax.defineNamespace("Faction_Framework", function()
       return {
          packets = {
-            RequestGroupClass = ByteNetMax.definePacket({
+            RequestClassVariant = ByteNetMax.definePacket({
                value = ByteNetMax.struct({
-                  group = ByteNetMax.string,
                   class = ByteNetMax.string,
+                  variant = ByteNetMax.string,
                }),
             }),
             RequestFaction = ByteNetMax.definePacket({
@@ -27,7 +27,7 @@ function Events.GetNamespace()
                   factionId = ByteNetMax.string,
                }),
             }),
-            RequestClassApply = ByteNetMax.definePacket({
+            RequestVariantApply = ByteNetMax.definePacket({
                value = ByteNetMax.struct({
                   enable = ByteNetMax.bool,
                }),
@@ -39,20 +39,3 @@ function Events.GetNamespace()
 end
 
 return Events
-
-
-
-
-
--- local Net = require(Packages.Net)
-
--- local Events = {
---    RequestState = Net:RemoteEvent("RequestState"),
---    SyncState = Net:RemoteEvent("SyncState"),
---    RequestGroupClass = Net:RemoteEvent("RequestGroupClass"),
---    RequestFaction = Net:RemoteEvent("RequestFaction"),
---    RequestClassApply = Net:RemoteEvent("RequestClassApply"),
--- }
--- export type Events = typeof(Events)
-
--- return Events

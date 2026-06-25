@@ -9,23 +9,23 @@ logic class for setting up and providing items of all loaded itemtypes to player
 ]]
 type self = {
 	_maid: Maid.Maid,
-	_itemProviders: { [string]: Types.ClassItemProvider },
-	_classes: { [string]: Types.Class },
+	_itemProviders: { [string]: Types.VariantItemProvider },
+	_variants: { [string]: Types.Variant },
 }
 export type ItemEquipper = typeof(setmetatable({} :: self, ItemEquipper))
 
 
-function ItemEquipper.new(itemProviders: { [string]: Types.ClassItemProvider }, classes: { [string]: Types.Class }): ItemEquipper
+function ItemEquipper.new(itemProviders: { [string]: Types.VariantItemProvider }, variants: { [string]: Types.Variant }): ItemEquipper
 	local self = setmetatable({
 		_itemProviders = itemProviders,
 		_maid = Maid.new(),
-		_classes = classes,
+		_variants = variants,
 	} :: self, ItemEquipper)
 
 	return self
 end
 
-function ItemEquipper.GetProvider(self: ItemEquipper, itemArgs: any): Types.ClassItemProvider
+function ItemEquipper.GetProvider(self: ItemEquipper, itemArgs: any): Types.VariantItemProvider
 	local itemType = itemArgs.type or itemArgs.itemType or itemArgs.ItemType or itemArgs.Type
 	if not itemType then
 		warn(`type not found for item args {itemArgs}`)
@@ -40,16 +40,16 @@ function ItemEquipper.GetProvider(self: ItemEquipper, itemArgs: any): Types.Clas
 	return itemProvider
 end
 
-function ItemEquipper.AssignClassItems(self: ItemEquipper, player: Player, classId: string)
-	local classConfig = self._classes[classId]
-	if not classConfig then
-		warn(`class config not found for class {classId}`)
+function ItemEquipper.AssignVariantItems(self: ItemEquipper, player: Player, variantId: string)
+	local variantConfig = self._variants[variantId]
+	if not variantConfig then
+		warn(`variant config not found for variant {variantId}`)
 		return
 	end
 
-	self:UnassignClassItems(player, classId)
+	self:UnassignVariantItems(player, variantId)
 
-	for _, itemArgs in ipairs(classConfig.Items) do
+	for _, itemArgs in ipairs(variantConfig.Items) do
 		local itemProvider = self:GetProvider(itemArgs)
 		if itemProvider then
 			itemProvider.Assign(player, itemArgs)
@@ -57,14 +57,14 @@ function ItemEquipper.AssignClassItems(self: ItemEquipper, player: Player, class
 	end
 end
 
-function ItemEquipper.UnassignClassItems(self: ItemEquipper, player: Player, classId: string)
-	local classConfig = self._classes[classId]
-	if not classConfig then
-		warn(`class config not found for class {classId}`)
+function ItemEquipper.UnassignVariantItems(self: ItemEquipper, player: Player, variantId: string)
+	local variantConfig = self._variants[variantId]
+	if not variantConfig then
+		warn(`variant config not found for variant {variantId}`)
 		return
 	end
 
-	for _, itemArgs in ipairs(classConfig.Items) do
+	for _, itemArgs in ipairs(variantConfig.Items) do
 		local itemProvider = self:GetProvider(itemArgs)
 		if itemProvider then
 			itemProvider.Unassign(player, itemArgs)

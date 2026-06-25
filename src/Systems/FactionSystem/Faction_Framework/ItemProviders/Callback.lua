@@ -1,7 +1,7 @@
 local Types = require("../Core/Types")
 local Enums = require("../Core/Enums")
 
-local CallbackProvider: Types.ClassItemProvider<BuildArgs> = {
+local CallbackProvider: Types.VariantItemProvider<BuildArgs> = {
 	ID = "Callback",
 	AssignType = Enums.AssignType.PerPlayer,
 }

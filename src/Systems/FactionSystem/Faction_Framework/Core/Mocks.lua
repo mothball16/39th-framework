@@ -8,12 +8,12 @@ function Mocks.Player(playerId: number)
     }
 end
 
-function Mocks.ClassConfig(classId: string)
+function Mocks.VariantConfig(variantId: string)
     return {
-        ID = classId,
+        ID = variantId,
         Items = {
             Item.test({
-                name = `{classId}_Test`,
+                name = `{variantId}_Test`,
             }),
         }
     }
@@ -23,9 +23,9 @@ function Mocks.FactionConfig(factionId: string): Types.FactionConfig
     return {
         ID = factionId,
         Name = "United States Marine Corps",
-        Groups = {
+        Classes = {
             Rifleman = {
-                Classes = {
+                Variants = {
                     {
                         Id = "RiflemanA",
                         Name = "Rifleman",
@@ -49,7 +49,7 @@ function Mocks.FactionConfig(factionId: string): Types.FactionConfig
                 Default = true,
             },
             Engineer = {
-                Classes = {
+                Variants = {
                     {
                         Id = "EngineerA",
                         Name = "Engineer",
@@ -60,7 +60,7 @@ function Mocks.FactionConfig(factionId: string): Types.FactionConfig
                 Default = false,
             },
             Marksman = {
-                Classes = {
+                Variants = {
                     {
                         Id = "MarksmanA",
                         Name = "Marksman",

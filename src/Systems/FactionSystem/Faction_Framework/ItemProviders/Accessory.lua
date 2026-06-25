@@ -4,7 +4,7 @@ local Enums = require("../Core/Enums")
 
 local ATTR_LIMB_NAME = "AccessoryLimbName"
 
-local AccessoryProvider: Types.ClassItemProvider<BuildArgs> = {
+local AccessoryProvider: Types.VariantItemProvider<BuildArgs> = {
     ID = "Accessory",
     AssignType = Enums.AssignType.PerCharacter,
 }

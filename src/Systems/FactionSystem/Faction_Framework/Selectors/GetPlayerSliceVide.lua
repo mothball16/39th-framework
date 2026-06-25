@@ -8,12 +8,12 @@ local useSignal = VideCharm.useSignalState
 export type PlayerSlice = {
 	factionId: () -> string?,
 	factionConfig: () -> Types.FactionConfig?,
-	groupCounts: () -> { [string]: number },
-	groupKey: () -> string?,
-	classId: () -> string?,
-	groupConfig: () -> Types.GroupConfig?,
-	groupEntries: () -> { Types.GroupConfig },
-	classes: () -> { Types.ClassDescriptor },
+	classCounts: () -> { [string]: number },
+	classKey: () -> string?,
+	variantId: () -> string?,
+	classConfig: () -> Types.ClassConfig?,
+	classEntries: () -> { Types.ClassConfig },
+	variants: () -> { Types.VariantDescriptor },
 }
 
 return function(state: State.State, userId: string): PlayerSlice
@@ -22,11 +22,11 @@ return function(state: State.State, userId: string): PlayerSlice
 	return {
 		factionId = useSignal(slice.factionId),
 		factionConfig = useSignal(slice.factionConfig),
-		groupCounts = useSignal(slice.groupCounts),
-		groupKey = useSignal(slice.groupKey),
-		classId = useSignal(slice.classId),
-		groupConfig = useSignal(slice.groupConfig),
-		groupEntries = useSignal(slice.groupEntries),
-		classes = useSignal(slice.classes),
+		classCounts = useSignal(slice.classCounts),
+		classKey = useSignal(slice.classKey),
+		variantId = useSignal(slice.variantId),
+		classConfig = useSignal(slice.classConfig),
+		classEntries = useSignal(slice.classEntries),
+		variants = useSignal(slice.variants),
 	}
 end

@@ -25,9 +25,9 @@ return function()
 		itemCounts.unassign = 0
 	end
 
-	local function callbackClass(classId: string)
+	local function callbackVariant(variantId: string)
 		return {
-			ID = classId,
+			ID = variantId,
 			Items = {
 				Item.callback({
 					onAssign = function()
@@ -45,12 +45,12 @@ return function()
 		Test = require("../ItemProviders/Test"),
 		Callback = require("../ItemProviders/Callback"),
 	}
-	local configByClassId = {
-		RiflemanA = callbackClass("RiflemanA"),
-		RiflemanB = callbackClass("RiflemanB"),
-		EngineerA = Mocks.ClassConfig("EngineerA"),
-		MarksmanA = Mocks.ClassConfig("MarksmanA"),
-		MarksmanB = Mocks.ClassConfig("MarksmanB"),
+	local configByVariantId = {
+		RiflemanA = callbackVariant("RiflemanA"),
+		RiflemanB = callbackVariant("RiflemanB"),
+		EngineerA = Mocks.VariantConfig("EngineerA"),
+		MarksmanA = Mocks.VariantConfig("MarksmanA"),
+		MarksmanB = Mocks.VariantConfig("MarksmanB"),
 	}
 	local configByFactionId = {
 		alpha = Mocks.FactionConfig("alpha"),
@@ -107,8 +107,8 @@ return function()
 				runtime:RegisterItemProvider(itemProvider)
 			end
 
-			for _, classConfig in pairs(configByClassId) do
-				runtime:RegisterClass(classConfig)
+			for _, variantConfig in pairs(configByVariantId) do
+				runtime:RegisterVariant(variantConfig)
 			end
 
 			for _, factionConfig in pairs(configByFactionId) do
@@ -130,8 +130,8 @@ return function()
 					})
 
 					expect(assignment(runtime, playerOne).FactionId).to.equal("alpha")
-					expect(assignment(runtime, playerOne).GroupKey).to.equal("Rifleman")
-					expect(assignment(runtime, playerOne).ClassId).to.equal("RiflemanA")
+					expect(assignment(runtime, playerOne).ClassKey).to.equal("Rifleman")
+					expect(assignment(runtime, playerOne).VariantId).to.equal("RiflemanA")
 				end)
 
 				it("should ignore faction requests for unknown factions", function()
@@ -143,60 +143,60 @@ return function()
 				end)
 			end)
 
-			describe("HandleGroupClassRequest", function()
-				it("should update state when a valid group class is requested", function()
+			describe("HandleClassVariantRequest", function()
+				it("should update state when a valid class variant is requested", function()
 					StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
 
-					runtime.selectionService:HandleGroupClassRequest(playerOne, {
-						group = "Rifleman",
-						class = "RiflemanA",
+					runtime.selectionService:HandleClassVariantRequest(playerOne, {
+						class = "Rifleman",
+						variant = "RiflemanA",
 					}, runtime.itemEquipper)
 
 					expect(assignment(runtime, playerOne).FactionId).to.equal("alpha")
-					expect(assignment(runtime, playerOne).GroupKey).to.equal("Rifleman")
-					expect(assignment(runtime, playerOne).ClassId).to.equal("RiflemanA")
+					expect(assignment(runtime, playerOne).ClassKey).to.equal("Rifleman")
+					expect(assignment(runtime, playerOne).VariantId).to.equal("RiflemanA")
 				end)
 
 				it("should not update state when the player is not in a faction", function()
-					runtime.selectionService:HandleGroupClassRequest(playerOne, {
-						group = "Rifleman",
-						class = "RiflemanA",
+					runtime.selectionService:HandleClassVariantRequest(playerOne, {
+						class = "Rifleman",
+						variant = "RiflemanA",
 					}, runtime.itemEquipper)
 
 					expect(assignment(runtime, playerOne)).to.equal(nil)
 				end)
 
-				it("should unassign the previous class items before changing class", function()
+				it("should unassign the previous variant items before changing variant", function()
 					StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
-					runtime.itemEquipper:AssignClassItems(playerOne, "RiflemanA")
+					runtime.itemEquipper:AssignVariantItems(playerOne, "RiflemanA")
 					resetItemCounts()
 
-					runtime.selectionService:HandleGroupClassRequest(playerOne, {
-						group = "Rifleman",
-						class = "RiflemanB",
+					runtime.selectionService:HandleClassVariantRequest(playerOne, {
+						class = "Rifleman",
+						variant = "RiflemanB",
 					}, runtime.itemEquipper)
 
 					expect(itemCounts.unassign).to.equal(1)
-					expect(assignment(runtime, playerOne).ClassId).to.equal("RiflemanB")
+					expect(assignment(runtime, playerOne).VariantId).to.equal("RiflemanB")
 				end)
 
-				it("should not assign the class when the requested group slot is full", function()
+				it("should not assign the variant when the requested class slot is full", function()
 					StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
 					StateActions.SetPlayerFaction(runtime.state, playerTwo.UserId, "alpha")
 
-					runtime.selectionService:HandleGroupClassRequest(playerOne, {
-						group = "Marksman",
-						class = "MarksmanA",
+					runtime.selectionService:HandleClassVariantRequest(playerOne, {
+						class = "Marksman",
+						variant = "MarksmanA",
 					}, runtime.itemEquipper)
-					runtime.selectionService:HandleGroupClassRequest(playerTwo, {
-						group = "Marksman",
-						class = "MarksmanA",
+					runtime.selectionService:HandleClassVariantRequest(playerTwo, {
+						class = "Marksman",
+						variant = "MarksmanA",
 					}, runtime.itemEquipper)
 
-					expect(assignment(runtime, playerOne).GroupKey).to.equal("Marksman")
-					expect(assignment(runtime, playerTwo).GroupKey).to.equal("Rifleman")
-					expect(runtime.state.getGroupCountByFaction()["alpha"]["Marksman"]).to.equal(1)
-					expect(runtime.state.getGroupCountByFaction()["alpha"]["Rifleman"]).to.equal(1)
+					expect(assignment(runtime, playerOne).ClassKey).to.equal("Marksman")
+					expect(assignment(runtime, playerTwo).ClassKey).to.equal("Rifleman")
+					expect(runtime.state.getClassCountByFaction()["alpha"]["Marksman"]).to.equal(1)
+					expect(runtime.state.getClassCountByFaction()["alpha"]["Rifleman"]).to.equal(1)
 				end)
 			end)
 
@@ -205,13 +205,13 @@ return function()
 					runtime.selectionService:HandleTeamChange(playerOne, mockTeam("alpha"), runtime.itemEquipper)
 
 					expect(assignment(runtime, playerOne).FactionId).to.equal("alpha")
-					expect(assignment(runtime, playerOne).GroupKey).to.equal("Rifleman")
-					expect(assignment(runtime, playerOne).ClassId).to.equal("RiflemanA")
+					expect(assignment(runtime, playerOne).ClassKey).to.equal("Rifleman")
+					expect(assignment(runtime, playerOne).VariantId).to.equal("RiflemanA")
 				end)
 
-				it("should unassign class items when team change switches faction", function()
+				it("should unassign variant items when team change switches faction", function()
 					StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
-					runtime.itemEquipper:AssignClassItems(playerOne, "RiflemanA")
+					runtime.itemEquipper:AssignVariantItems(playerOne, "RiflemanA")
 					resetItemCounts()
 
 					runtime.selectionService:HandleTeamChange(playerOne, mockTeam("bravo"), runtime.itemEquipper)
@@ -240,7 +240,7 @@ return function()
 
 				it("should ignore team change when the player is already on that faction", function()
 					StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
-					runtime.itemEquipper:AssignClassItems(playerOne, "RiflemanA")
+					runtime.itemEquipper:AssignVariantItems(playerOne, "RiflemanA")
 					resetItemCounts()
 
 					runtime.selectionService:HandleTeamChange(playerOne, mockTeam("alpha"), runtime.itemEquipper)
@@ -250,37 +250,37 @@ return function()
 				end)
 			end)
 
-			describe("HandleClassApplyRequest", function()
-				it("should assign class items when apply is enabled", function()
+			describe("HandleVariantApplyRequest", function()
+				it("should assign variant items when apply is enabled", function()
 					local player = createMockCharacterPlayer(1)
 
 					StateActions.SetPlayerFaction(runtime.state, player.UserId, "alpha")
 
-					runtime.selectionService:HandleClassApplyRequest(player, {
+					runtime.selectionService:HandleVariantApplyRequest(player, {
 						enable = true,
 					}, runtime.itemEquipper)
 
 					expect(itemCounts.assign).to.equal(1)
 				end)
 
-				it("should unassign class items when apply is disabled", function()
+				it("should unassign variant items when apply is disabled", function()
 					local player = createMockCharacterPlayer(1)
 
 					StateActions.SetPlayerFaction(runtime.state, player.UserId, "alpha")
-					runtime.itemEquipper:AssignClassItems(player, "RiflemanA")
+					runtime.itemEquipper:AssignVariantItems(player, "RiflemanA")
 					resetItemCounts()
 
-					runtime.selectionService:HandleClassApplyRequest(player, {
+					runtime.selectionService:HandleVariantApplyRequest(player, {
 						enable = false,
 					}, runtime.itemEquipper)
 
 					expect(itemCounts.unassign).to.equal(1)
 				end)
 
-				it("should ignore apply requests when the player has no class", function()
+				it("should ignore apply requests when the player has no variant", function()
 					local player = createMockCharacterPlayer(1)
 
-					runtime.selectionService:HandleClassApplyRequest(player, {
+					runtime.selectionService:HandleVariantApplyRequest(player, {
 						enable = true,
 					}, runtime.itemEquipper)
 
@@ -290,7 +290,7 @@ return function()
 				it("should ignore apply requests when the player has no character", function()
 					StateActions.SetPlayerFaction(runtime.state, playerOne.UserId, "alpha")
 
-					runtime.selectionService:HandleClassApplyRequest(playerOne, {
+					runtime.selectionService:HandleVariantApplyRequest(playerOne, {
 						enable = true,
 					}, runtime.itemEquipper)
 

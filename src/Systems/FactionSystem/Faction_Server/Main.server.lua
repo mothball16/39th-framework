@@ -15,14 +15,14 @@ if Access.Config.DebugMode and game:GetService("RunService"):IsStudio() then
 
 	TestEZ.TestBootstrap:run({ ReplicatedStorage.Faction_Framework.Tests }, TestEZ.Reporters.TextReporterQuiet)
 
-	warn(`class system test suite took {tick() - startTick} seconds`)
+	warn(`faction system test suite took {tick() - startTick} seconds`)
 end
 
 --#region [ helpers ]
 local function getItemProviders(path)
 	local itemProviders = {}
 	for _, itemProviderModule in ipairs(path:GetChildren()) do
-		local itemProvider = require(itemProviderModule) :: Types.ClassItemProvider
+		local itemProvider = require(itemProviderModule) :: Types.VariantItemProvider
 		itemProviders[itemProvider.ID] = itemProvider
 	end
 	return itemProviders
@@ -38,13 +38,13 @@ local function getFactionConfigs(path)
 	return factions
 end
 
-local function getClassConfigs(path)
-	local classes = {}
-	for _, classModule in ipairs(path:GetChildren()) do
-		local class = require(classModule) :: Types.Class
-		classes[class.ID] = class
+local function getVariantConfigs(path)
+	local variants = {}
+	for _, variantModule in ipairs(path:GetChildren()) do
+		local variant = require(variantModule) :: Types.Variant
+		variants[variant.ID] = variant
 	end
-	return classes
+	return variants
 end
 --#endregion [ helpers ]
 
@@ -60,9 +60,9 @@ for _, itemProvider in pairs(itemProviders) do
 	runtime:RegisterItemProvider(itemProvider)
 end
 
-local classConfigs = getClassConfigs(Access.Assets.ClassConfigs)
-for _, classConfig in pairs(classConfigs) do
-	runtime:RegisterClass(classConfig)
+local variantConfigs = getVariantConfigs(Access.Assets.VariantConfigs)
+for _, variantConfig in pairs(variantConfigs) do
+	runtime:RegisterVariant(variantConfig)
 end
 
 local factionConfigs = getFactionConfigs(Access.Assets.FactionConfigs)

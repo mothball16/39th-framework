@@ -1,17 +1,17 @@
 return {
-    ApplyClassMode = {
-        -- changes to class will cause class to be unapplied until interaction is complete
+    ApplyVariantMode = {
+        -- changes to variant will cause loadout to be unapplied until interaction is complete
         AfterInteraction = "AfterInteraction",
-        -- class will be applied immediately on assignment
+        -- variant loadout will be applied immediately on assignment
         Immediate = "Immediate",
-        -- classes will not be auto-applied, needs explicit call
+        -- variants will not be auto-applied, needs explicit call
         Explicit = "Explicit",
     },
 
     AfterTeamChangeBehavior = {
         -- nothing happens
         None = "None",
-        -- assign the class items immediately
+        -- assign the variant items immediately
         Assign = "Assign",
     },
 

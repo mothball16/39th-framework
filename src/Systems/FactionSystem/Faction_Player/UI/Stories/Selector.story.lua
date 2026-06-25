@@ -37,14 +37,14 @@ local story = UILabs.CreateVideStory({
 				print("Story setSelectorOpen", open)
 				selectorOpen(open)
 			end,
-			requestGroupClass = function(group, class)
-				StateActions.SetPlayerGroupClass(state, userId, group, class)
-				print("Story request (change group/class):", group, class)
+			requestClassVariant = function(classKey, variantId)
+				StateActions.SetPlayerClassVariant(state, userId, classKey, variantId)
+				print("Story request (change class/variant):", classKey, variantId)
 			end,
-			requestClassApply = function(enable)
-				print("Story request (apply class):", enable)
+			requestVariantApply = function(enable)
+				print("Story request (apply variant):", enable)
 			end,
-			applyClassMode = Enums.ApplyClassMode.Explicit,
+			applyVariantMode = Enums.ApplyVariantMode.Explicit,
 		}),
 	}
 end)

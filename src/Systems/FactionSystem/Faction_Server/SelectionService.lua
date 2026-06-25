@@ -40,18 +40,18 @@ function SelectionService.HandleFactionRequest(self: SelectionService, player: P
 	return success, msg
 end
 
-function SelectionService.HandleGroupClassRequest(self: SelectionService, player: Player, request: {
-	group: string,
+function SelectionService.HandleClassVariantRequest(self: SelectionService, player: Player, request: {
 	class: string,
+	variant: string,
 }, itemEquipper: ItemEquipper.ItemEquipper): (boolean, string?)
 	local userKey = Utilities.ToPlayerKey(player.UserId)
 	local assignment = self.state.playerAssignmentByUserId()[userKey]
-	local prevClassId = if assignment then assignment.ClassId else nil
-	local success, msg = StateActions.SetPlayerGroupClass(
+	local prevVariantId = if assignment then assignment.VariantId else nil
+	local success, msg = StateActions.SetPlayerClassVariant(
 		self.state,
 		player.UserId,
-		request.group,
-		request.class
+		request.class,
+		request.variant
 	)
 
 	if not success then
@@ -59,26 +59,26 @@ function SelectionService.HandleGroupClassRequest(self: SelectionService, player
 	end
 
 	assignment = self.state.playerAssignmentByUserId()[userKey]
-	local nextClassId = if assignment then assignment.ClassId else nil
-	if prevClassId and prevClassId ~= nextClassId then
-		itemEquipper:UnassignClassItems(player, prevClassId)
+	local nextVariantId = if assignment then assignment.VariantId else nil
+	if prevVariantId and prevVariantId ~= nextVariantId then
+		itemEquipper:UnassignVariantItems(player, prevVariantId)
 	end
 
-	if self.settings.ApplyClassMode == Enums.ApplyClassMode.Immediate then
-		self:HandleClassApplyRequest(player, { enable = true }, itemEquipper)
+	if self.settings.ApplyVariantMode == Enums.ApplyVariantMode.Immediate then
+		self:HandleVariantApplyRequest(player, { enable = true }, itemEquipper)
 	end
 
 	return true, msg
 end
 
-function SelectionService.HandleClassApplyRequest(self: SelectionService, player: Player, request: {
+function SelectionService.HandleVariantApplyRequest(self: SelectionService, player: Player, request: {
 	enable: boolean
 }, itemEquipper: ItemEquipper.ItemEquipper
 ): (boolean, string?)
 	local assignment = self.state.playerAssignmentByUserId()[Utilities.ToPlayerKey(player.UserId)]
-	local classId = if assignment then assignment.ClassId else nil
-	if not classId then
-		return false, `denied: player {player.UserId} is not in a class`
+	local variantId = if assignment then assignment.VariantId else nil
+	if not variantId then
+		return false, `denied: player {player.UserId} is not in a variant`
 	end
 
 	local character = player.Character
@@ -87,9 +87,9 @@ function SelectionService.HandleClassApplyRequest(self: SelectionService, player
 	end
 
 	if request.enable then
-		itemEquipper:AssignClassItems(player, classId)
+		itemEquipper:AssignVariantItems(player, variantId)
 	else
-		itemEquipper:UnassignClassItems(player, classId)
+		itemEquipper:UnassignVariantItems(player, variantId)
 	end
 
 	return true, nil
@@ -120,7 +120,7 @@ function SelectionService.HandleTeamChange(
 		return true, `ignored: faction {autoFactionAttribute} is the same as the previous`
 	end
 
-	local prevClassId = if assignment then assignment.ClassId else nil
+	local prevVariantId = if assignment then assignment.VariantId else nil
 	local success, msg = StateActions.SetPlayerFaction(self.state, player.UserId, autoFactionAttribute)
 	if not success then
 		if msg then
@@ -130,8 +130,8 @@ function SelectionService.HandleTeamChange(
 	end
 
 	
-	if prevClassId then
-		itemEquipper:UnassignClassItems(player, prevClassId)
+	if prevVariantId then
+		itemEquipper:UnassignVariantItems(player, prevVariantId)
 	end
 
 	return true, msg

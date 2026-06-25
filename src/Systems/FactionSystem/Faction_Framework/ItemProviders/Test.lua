@@ -1,6 +1,6 @@
 local Types = require("../Core/Types")
 local Enums = require("../Core/Enums")
-local TestProvider: Types.ClassItemProvider<BuildArgs> = {
+local TestProvider: Types.VariantItemProvider<BuildArgs> = {
     ID = "Test",
     AssignType = Enums.AssignType.PerCharacter,
 }

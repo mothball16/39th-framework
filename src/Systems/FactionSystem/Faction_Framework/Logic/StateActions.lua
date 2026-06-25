@@ -22,18 +22,18 @@ function StateActions.CreateFaction(state: State.State, config: Types.FactionCon
 		local nextState = table.clone(previous)
 		nextState[config.ID] = config
 
-		-- resolve default group for future use
-		for groupKey, groupConfig in pairs(config.Groups) do
-			if groupConfig.Default then
-				if groupConfig.Limit ~= math.huge then
-					msg ..= `warning: faction {config.ID} group {groupKey} should have no limit - it is a default group\n`
-					groupConfig.Limit = math.huge
+		-- resolve default class for future use
+		for classKey, classConfig in pairs(config.Classes) do
+			if classConfig.Default then
+				if classConfig.Limit ~= math.huge then
+					msg ..= `warning: faction {config.ID} class {classKey} should have no limit - it is a default class\n`
+					classConfig.Limit = math.huge
 				end
-				if groupConfig.Classes[1].AccessCheck then
-					msg ..= `warning: the first class of default group {groupKey} of faction {config.ID} should not have an access check - the player can potentially resolve to no classes\n`
-					groupConfig.Classes[1].AccessCheck = nil
+				if classConfig.Variants[1].AccessCheck then
+					msg ..= `warning: the first variant of default class {classKey} of faction {config.ID} should not have an access check - the player can potentially resolve to no variants\n`
+					classConfig.Variants[1].AccessCheck = nil
 				end
-				nextState[config.ID].DefaultGroupKey = groupKey
+				nextState[config.ID].DefaultClassKey = classKey
 				break
 			end
 		end
@@ -83,26 +83,26 @@ function StateActions.SetPlayerFaction(state: State.State, userId: number | stri
 		return true, `ignored: faction id {factionId} is the same as the previous`
 	end
 
-	return StateActions.SetPlayerToDefaultGroupClass(state, userId, factionId)
+	return StateActions.SetPlayerToDefaultClassVariant(state, userId, factionId)
 end
 
-function StateActions.SetPlayerGroupClass(state: State.State, userId: number | string, groupKey: string?, classId: string?): (boolean, string?)
+function StateActions.SetPlayerClassVariant(state: State.State, userId: number | string, classKey: string?, variantId: string?): (boolean, string?)
 	userId = Utilities.ToPlayerKey(userId)
 	local assignment = state.playerAssignmentByUserId()[userId]
 	-- either intentionally or accidentally empty, remove everything cause
-	-- it will brick the classes otherwise
-	if not groupKey or not classId then
-		groupKey = nil
-		classId = nil
+	-- it will brick the variants otherwise
+	if not classKey or not variantId then
+		classKey = nil
+		variantId = nil
 	else
 
 		local playerFactionId = if assignment then assignment.FactionId else nil
 		local factionConfig = state.configByFactionId()[playerFactionId]
-		local currentGroupKey = if assignment then assignment.GroupKey else nil
-		local currentClassId = if assignment then assignment.ClassId else nil
+		local currentClassKey = if assignment then assignment.ClassKey else nil
+		local currentVariantId = if assignment then assignment.VariantId else nil
 
-		if currentGroupKey == groupKey and currentClassId == classId then
-			return true, `ignored: group key {groupKey} and class id {classId} are the same as the previous`
+		if currentClassKey == classKey and currentVariantId == variantId then
+			return true, `ignored: class key {classKey} and variant id {variantId} are the same as the previous`
 		end
 
 		if not playerFactionId then
@@ -113,32 +113,32 @@ function StateActions.SetPlayerGroupClass(state: State.State, userId: number | s
 			return false, `denied: faction {playerFactionId} is not a valid faction`
 		end
 	
-		if not factionConfig.Groups[groupKey] then
-			return false, `denied: group key {groupKey} is not a valid group of faction {playerFactionId}`
+		if not factionConfig.Classes[classKey] then
+			return false, `denied: class key {classKey} is not a valid class of faction {playerFactionId}`
 		end
 
-		local foundConfig: Types.ClassDescriptor?
-		for _, classConfig in ipairs(factionConfig.Groups[groupKey].Classes) do
-			if classConfig.Id == classId then
-				foundConfig = classConfig
+		local foundConfig: Types.VariantDescriptor?
+		for _, variantConfig in ipairs(factionConfig.Classes[classKey].Variants) do
+			if variantConfig.Id == variantId then
+				foundConfig = variantConfig
 				break
 			end
 		end
 
 		if not foundConfig then
-			return false, `denied: class id {classId} is not a valid class of group {groupKey} of faction {playerFactionId}`
+			return false, `denied: variant id {variantId} is not a valid variant of class {classKey} of faction {playerFactionId}`
 		end
 
 		if foundConfig.AccessCheck and not foundConfig.AccessCheck(tonumber(userId) :: number) then
-			return false, `denied: player {userId} fails the access check for class {classId}`
+			return false, `denied: player {userId} fails the access check for variant {variantId}`
 		end
 
-		if currentGroupKey ~= groupKey then
-			local groupConfig = factionConfig.Groups[groupKey]
-			local factionCounts = state.getGroupCountByFaction()[playerFactionId]
-			local groupCount = if factionCounts then factionCounts[groupKey] or 0 else 0
-			if groupCount >= groupConfig.Limit then
-				return false, `denied: group key {groupKey} is full for faction {playerFactionId}`
+		if currentClassKey ~= classKey then
+			local classConfig = factionConfig.Classes[classKey]
+			local factionCounts = state.getClassCountByFaction()[playerFactionId]
+			local classCount = if factionCounts then factionCounts[classKey] or 0 else 0
+			if classCount >= classConfig.Limit then
+				return false, `denied: class key {classKey} is full for faction {playerFactionId}`
 			end
 		end
 	end
@@ -146,15 +146,15 @@ function StateActions.SetPlayerGroupClass(state: State.State, userId: number | s
 	if assignment then
 		_updateMapValue(state.playerAssignmentByUserId, userId, {
 			FactionId = assignment.FactionId,
-			GroupKey = groupKey,
-			ClassId = classId,
+			ClassKey = classKey,
+			VariantId = variantId,
 		})
 	end
 	return true, nil
 end
 
-function StateActions.RemovePlayerGroupClass(state: State.State, userId: number | string): (boolean, string?)
-	return StateActions.SetPlayerGroupClass(state, userId, nil, nil)
+function StateActions.RemovePlayerClassVariant(state: State.State, userId: number | string): (boolean, string?)
+	return StateActions.SetPlayerClassVariant(state, userId, nil, nil)
 end
 
 
@@ -165,7 +165,7 @@ function StateActions.RemovePlayerFaction(state: State.State, userId: number | s
 end
 
 
-function StateActions.SetPlayerToDefaultGroupClass(state: State.State, userId: number | string, factionId: string): (boolean, string?)
+function StateActions.SetPlayerToDefaultClassVariant(state: State.State, userId: number | string, factionId: string): (boolean, string?)
 	userId = Utilities.ToPlayerKey(userId)
 	local factionConfig = state.configByFactionId()[factionId]
 	local msg = ""
@@ -173,23 +173,23 @@ function StateActions.SetPlayerToDefaultGroupClass(state: State.State, userId: n
 		return false, `denied: faction {factionId} is not a valid faction`
 	end
 
-	local defaultGroupKey = factionConfig.DefaultGroupKey
-	if not defaultGroupKey then
-		msg ..= `faction {factionId} has no default group\n`
-		defaultGroupKey = next(factionConfig.Groups)
+	local defaultClassKey = factionConfig.DefaultClassKey
+	if not defaultClassKey then
+		msg ..= `faction {factionId} has no default class\n`
+		defaultClassKey = next(factionConfig.Classes)
 	end
 
-	local groupConfig = factionConfig.Groups[defaultGroupKey]
-	local classId = groupConfig.Classes[1].Id
+	local classConfig = factionConfig.Classes[defaultClassKey]
+	local variantId = classConfig.Variants[1].Id
 
-	if not classId then
-		return false, `error: faction {factionId} has no class ids!`
+	if not variantId then
+		return false, `error: faction {factionId} has no variant ids!`
 	end
 
 	_updateMapValue(state.playerAssignmentByUserId, userId, {
 		FactionId = factionId,
-		GroupKey = defaultGroupKey,
-		ClassId = classId,
+		ClassKey = defaultClassKey,
+		VariantId = variantId,
 	})
 	return true, msg
 end

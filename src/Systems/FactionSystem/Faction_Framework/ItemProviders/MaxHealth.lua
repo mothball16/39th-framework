@@ -3,7 +3,7 @@ local Enums = require("../Core/Enums")
 
 local ORIG_MAX_HEALTH_ATTR = "OriginalMaxHealth"
 
-local MaxHealthProvider: Types.ClassItemProvider<BuildArgs> = {
+local MaxHealthProvider: Types.VariantItemProvider<BuildArgs> = {
     ID = "MaxHealth",
     AssignType = Enums.AssignType.PerCharacter,
 }

@@ -55,18 +55,18 @@ function ClientRuntime.Start(self: ClientRuntime)
 				setSelectorOpen = function(open: boolean)
 					self.selectorOpen(open)
 				end,
-				requestGroupClass = function(group: string, class: string)
-					Events.packets.RequestGroupClass.send({
-						group = group,
-						class = class,
+				requestClassVariant = function(classKey: string, variantId: string)
+					Events.packets.RequestClassVariant.send({
+						class = classKey,
+						variant = variantId,
 					})
 				end,
-				requestClassApply = function(enable: boolean)
-					Events.packets.RequestClassApply.send({
+				requestVariantApply = function(enable: boolean)
+					Events.packets.RequestVariantApply.send({
 						enable = enable,
 					})
 				end,
-				applyClassMode = self.access.Config.ApplyClassMode,
+				applyVariantMode = self.access.Config.ApplyVariantMode,
 			}),
 		}
 	end, playerGui)

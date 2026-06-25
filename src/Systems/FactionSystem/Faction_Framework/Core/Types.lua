@@ -2,21 +2,21 @@ local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Types = {}
 
 
-export type ClassItemProvider<TBuild = any> = {
+export type VariantItemProvider<TBuild = any> = {
     -- identifier for item type within configurations
     ID: string,
     AssignType: string?,
     -- constructs config-friendly item args for this provider
     Build: (args: TBuild) -> ({ type: string } & TBuild),
-    -- runs when the class containing the item is assigned to a player
+    -- runs when the variant containing the item is assigned to a player
     Assign: (player: Player, args: { type: string } & TBuild) -> (),
-    -- runs when the class containing the item is unassigned from a player
+    -- runs when the variant containing the item is unassigned from a player
     Unassign: (player: Player, args: { type: string } & TBuild) -> (),
 }
 
 export type Settings = {
     ShowManualButton: boolean,
-    ApplyClassMode: string,
+    ApplyVariantMode: string,
     AfterTeamChangeBehavior: string,
     ItemTypePaths: {
         [string]: Folder,
@@ -30,7 +30,7 @@ export type Access = {
     Config: Settings,
 }
 
-export type ClassDescriptor = {
+export type VariantDescriptor = {
     Id: string,
     Name: string?,
     Description: string?,
@@ -42,25 +42,25 @@ export type AccessCheck = (userId: number) -> boolean
 export type FactionConfig = {
     ID: string,
     Name: string,
-    Groups: {
-        [string]: GroupConfig,
+    Classes: {
+        [string]: ClassConfig,
     },
-    DefaultGroupKey: string?,
+    DefaultClassKey: string?,
 }
 
-export type GroupConfig = {
-    Classes: {ClassDescriptor},
+export type ClassConfig = {
+    Variants: {VariantDescriptor},
     Limit: number,
     Default: boolean,
 }
 
-export type PlayerClassAssignment = {
+export type PlayerAssignment = {
     FactionId: string,
-    GroupKey: string?,
-    ClassId: string?,
+    ClassKey: string?,
+    VariantId: string?,
 }
 
-export type Class = {
+export type Variant = {
     ID: string,
     Items: {any}
 }

@@ -238,12 +238,12 @@ return function()
 	end)
 
 	describe("ItemEquipper integration", function()
-		it("should assign and unassign callback, maxHealth, and speed class items", function()
+		it("should assign and unassign callback, maxHealth, and speed variant items", function()
 			local assignCount = 0
 			local unassignCount = 0
 			local player, humanoid = createMockPlayer(1, maid)
 
-			local classConfig = {
+			local variantConfig = {
 				ID = "StatClass",
 				Items = {
 					Item.callback({
@@ -264,19 +264,19 @@ return function()
 				MaxHealth = MaxHealthProvider,
 				Speed = SpeedProvider,
 			}, {
-				StatClass = classConfig,
+				StatClass = variantConfig,
 			})
 
-			itemEquipper:AssignClassItems(player, "StatClass")
+			itemEquipper:AssignVariantItems(player, "StatClass")
 
 			expect(assignCount).to.equal(1)
 			expect(humanoid.MaxHealth).to.equal(150)
 			expect(humanoid.WalkSpeed).to.equal(24)
 
-			-- AssignClassItems unassigns existing items first, so reset before testing explicit unassign.
+			-- AssignVariantItems unassigns existing items first, so reset before testing explicit unassign.
 			unassignCount = 0
 
-			itemEquipper:UnassignClassItems(player, "StatClass")
+			itemEquipper:UnassignVariantItems(player, "StatClass")
 
 			expect(unassignCount).to.equal(1)
 			expect(humanoid.MaxHealth).to.equal(100)

@@ -4,11 +4,11 @@ local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local create, derive, indexes, effect = Vide.create, Vide.derive, Vide.indexes, Vide.effect
 local untrack = Vide.untrack
 local Theme = require("../Theme")
-local GroupCard = require("../Components/Card")
+local ClassCard = require("../Components/Card")
 local MenuActionButton = require("../Components/MenuActionButton")
-local ClassSelector = require("../Components/ClassSelector")
+local VariantSelector = require("../Components/VariantSelector")
 local GetPlayerSlice = require("@game/ReplicatedStorage/Faction_Framework/Selectors/GetPlayerSliceVide")
-local UseClassSelector = require("@game/ReplicatedStorage/Faction_Framework/Composables/UseClassSelector")
+local UseVariantSelector = require("@game/ReplicatedStorage/Faction_Framework/Composables/UseVariantSelector")
 
 local ASPECT_RATIO = 1.5
 local PADDING_SCALE = 0.02
@@ -19,61 +19,61 @@ return function(props: {
 	manualButton: boolean,
 	isOpen: Vide.Source<boolean>,
 	setSelectorOpen: ((open: boolean) -> ()) -> (),
-	requestGroupClass: ((group: string, class: string) -> ()),
-	requestClassApply: ((enable: boolean) -> ())?,
-	applyClassMode: string?,
+	requestClassVariant: ((classKey: string, variantId: string) -> ()),
+	requestVariantApply: ((enable: boolean) -> ())?,
+	applyVariantMode: string?,
 })
 	local player = GetPlayerSlice(props.state, props.userId)
-	local selector = UseClassSelector(player)
+	local selector = UseVariantSelector(player)
 
-	local cardRows = indexes(player.groupEntries, function(groupEntry)
+	local cardRows = indexes(player.classEntries, function(classEntry)
 		local isSelected = derive(function()
-			return groupEntry().Key == player.groupKey()
+			return classEntry().Key == player.classKey()
 		end)
 
-		return GroupCard({
+		return ClassCard({
 			isSelected = isSelected,
 
 			title = function()
-				return groupEntry().Key or "<no key?>"
+				return classEntry().Key or "<no key?>"
 			end,
 			count = function()
-				return player.groupCounts()[groupEntry().Key] or 0
+				return player.classCounts()[classEntry().Key] or 0
 			end,
 			limit = function()
-				return groupEntry().Limit
+				return classEntry().Limit
 			end,
 			SelectClass = function()
-				local classes = groupEntry().Classes
-				if #classes == 0 then
-					error(`no classes found for group: {groupEntry().Key}`)
+				local variants = classEntry().Variants
+				if #variants == 0 then
+					error(`no variants found for class: {classEntry().Key}`)
 				end
 				local id = if isSelected()
-					then (selector.selectedClass() or classes[1]).Id
-					else classes[1].Id
-				props.requestGroupClass(groupEntry().Key, id)
+					then (selector.selectedVariant() or variants[1]).Id
+					else variants[1].Id
+				props.requestClassVariant(classEntry().Key, id)
 			end,
 		})
 	end)
 
 	local _onOpenToggled = effect(function()
-		local shouldToggleClassApply = props.applyClassMode == Enums.ApplyClassMode.AfterInteraction
+		local shouldToggleVariantApply = props.applyVariantMode == Enums.ApplyVariantMode.AfterInteraction
 		if props.isOpen() then
-			if shouldToggleClassApply and props.requestClassApply then
-				props.requestClassApply(false)
+			if shouldToggleVariantApply and props.requestVariantApply then
+				props.requestVariantApply(false)
 			end
 		else
 			if untrack(selector.dirty) then
-				local selected = untrack(selector.selectedClass)
-				local groupKey = untrack(player.groupKey)
-				if selected and groupKey then
-					props.requestGroupClass(groupKey, selected.Id)
+				local selected = untrack(selector.selectedVariant)
+				local classKey = untrack(player.classKey)
+				if selected and classKey then
+					props.requestClassVariant(classKey, selected.Id)
 				end
 				selector.dirty(false)
 			end
 
-			if shouldToggleClassApply and props.requestClassApply then
-				props.requestClassApply(true)
+			if shouldToggleVariantApply and props.requestVariantApply then
+				props.requestVariantApply(true)
 			end
 		end
 	end)
@@ -261,11 +261,11 @@ return function(props: {
 						Text = function()
 							local factionConfig = player.factionConfig()
 							if not factionConfig then
-								return "No group options available yet."
+								return "No class options available yet."
 							end
 							-- cool trick to check if the dictis empty
-							if not next(factionConfig.Groups) then
-								return "Faction has no groups configured."
+							if not next(factionConfig.Classes) then
+								return "Faction has no classes configured."
 							end
 							return ""
 						end,
@@ -281,7 +281,7 @@ return function(props: {
 					BackgroundTransparency = 1,
 
 					create "Frame" {
-						Name = "ClassOptions",
+						Name = "VariantOptions",
 						LayoutOrder = 4,
 						Position = UDim2.fromScale(0, 0.05),
 						Size = UDim2.fromScale(1, 0.6),
@@ -296,28 +296,28 @@ return function(props: {
 							Padding = UDim.new(0.05, 0),
 						},
 
-						ClassSelector {
-							title = "Class",
+						VariantSelector {
+							title = "Variant",
 							titleHeight = 0.5,
 							size = UDim2.fromScale(1, 0.25),
 							ValueText = function()
-								local class = selector.selectedClass()
-								if not class then
-									return "<no class selected...>"
+								local variant = selector.selectedVariant()
+								if not variant then
+									return "<no variant selected...>"
 								end
-								local label = class.Name or class.Id
-								return `{label} ({selector.classIndex()}/{#player.classes()})`
+								local label = variant.Name or variant.Id
+								return `{label} ({selector.variantIndex()}/{#player.variants()})`
 							end,
 							LeftActivated = function()
-								selector.cycleClass(-1)
+								selector.cycleVariant(-1)
 							end,
 							RightActivated = function()
-								selector.cycleClass(1)
+								selector.cycleVariant(1)
 							end,
 						},
 						create "Frame" {
 							LayoutOrder = 5,
-							Name = "ClassDescription",
+							Name = "VariantDescription",
 							Position = UDim2.fromScale(0, 0.7),
 							Size = UDim2.fromScale(1, 0.4),
 							BackgroundTransparency = 0.9,
@@ -336,12 +336,12 @@ return function(props: {
 								TextXAlignment = Enum.TextXAlignment.Left,
 								TextYAlignment = Enum.TextYAlignment.Top,
 								Text = function()
-									return if selector.selectedClass()
+									return if selector.selectedVariant()
 										then (
-											selector.selectedClass().Description
+											selector.selectedVariant().Description
 											or "Lorem ipsum on the beat yo!\n\n\n(no description)"
 										)
-										else "<no class selected...>"
+										else "<no variant selected...>"
 								end,
 							},
 						},

@@ -10,7 +10,7 @@ local PROPERTY_BY_TYPE = {
     ShirtGraphic = "Graphic",
 }
 
-local UniformProvider: Types.ClassItemProvider<BuildArgs> = {
+local UniformProvider: Types.VariantItemProvider<BuildArgs> = {
     ID = "Uniform",
     AssignType = Enums.AssignType.PerCharacter,
 }

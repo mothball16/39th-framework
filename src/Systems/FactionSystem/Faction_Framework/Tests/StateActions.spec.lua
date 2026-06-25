@@ -32,33 +32,33 @@ return function()
             expect(state.configByFactionId()[factionAlpha.ID]).to.equal(nil)
         end)
 
-        it("should complain about default group limits", function()
-            factionAlpha.Groups.Rifleman.Limit = 10
+        it("should complain about default class limits", function()
+            factionAlpha.Classes.Rifleman.Limit = 10
             local success, msg = StateActions.CreateFaction(state, factionAlpha)
 
-            expect(factionAlpha.Groups.Rifleman.Limit).to.equal(math.huge)
+            expect(factionAlpha.Classes.Rifleman.Limit).to.equal(math.huge)
             expect(success).to.equal(true)
             expect(#msg > 0).to.equal(true)
         end)
 
-        it("should complain about default group access checks", function()
-            factionAlpha.Groups.Rifleman.Classes[1].AccessCheck = function(_) return false end
+        it("should complain about default class access checks", function()
+            factionAlpha.Classes.Rifleman.Variants[1].AccessCheck = function(_) return false end
             local success, msg = StateActions.CreateFaction(state, factionAlpha)
 
             expect(success).to.equal(true)
             expect(#msg > 0).to.equal(true)
         end)
 
-        it("should assign the default class when a player is set to a faction", function()
-            expect(assignment(playerOne).GroupKey).to.equal("Rifleman")
-            expect(assignment(playerOne).ClassId).to.equal("RiflemanA")
+        it("should assign the default variant when a player is set to a faction", function()
+            expect(assignment(playerOne).ClassKey).to.equal("Rifleman")
+            expect(assignment(playerOne).VariantId).to.equal("RiflemanA")
 
-            StateActions.SetPlayerGroupClass(state, playerOne.UserId, "Rifleman", "RiflemanB")
+            StateActions.SetPlayerClassVariant(state, playerOne.UserId, "Rifleman", "RiflemanB")
             local success = StateActions.SetPlayerFaction(state, playerOne.UserId, "bravo")
 
             expect(success).to.equal(true)
-            expect(assignment(playerOne).GroupKey).to.equal("Rifleman")
-            expect(assignment(playerOne).ClassId).to.equal("RiflemanA")
+            expect(assignment(playerOne).ClassKey).to.equal("Rifleman")
+            expect(assignment(playerOne).VariantId).to.equal("RiflemanA")
         end)
 
         it("should remove all assignments when a player is unassigned from a faction/removed from the game", function()
@@ -67,63 +67,63 @@ return function()
             expect(assignment(playerOne)).to.equal(nil)
         end)
 
-        it("should deny SetPlayerGroupClass when GroupKey is not a valid group of the faction", function()
-            local success = StateActions.SetPlayerGroupClass(
+        it("should deny SetPlayerClassVariant when ClassKey is not a valid class of the faction", function()
+            local success = StateActions.SetPlayerClassVariant(
                 state, playerOne.UserId,
                 "kanami_hate_club",
-                factionAlpha.Groups.Engineer.Classes[1].Id)
+                factionAlpha.Classes.Engineer.Variants[1].Id)
 
             expect(success).to.equal(false)
-            expect(assignment(playerOne).GroupKey)
-                .to.equal(factionAlpha.DefaultGroupKey)
-            expect(assignment(playerOne).ClassId)
-                .to.equal(factionAlpha.Groups[factionAlpha.DefaultGroupKey].Classes[1].Id)
+            expect(assignment(playerOne).ClassKey)
+                .to.equal(factionAlpha.DefaultClassKey)
+            expect(assignment(playerOne).VariantId)
+                .to.equal(factionAlpha.Classes[factionAlpha.DefaultClassKey].Variants[1].Id)
         end)
 
-        it("should deny SetPlayerGroupClass when ClassId is not a valid class of the group", function()
-            local success = StateActions.SetPlayerGroupClass(state, playerOne.UserId,
+        it("should deny SetPlayerClassVariant when VariantId is not a valid variant of the class", function()
+            local success = StateActions.SetPlayerClassVariant(state, playerOne.UserId,
                 "Engineer",
                 "super_hacker_5")
 
             expect(success).to.equal(false)
-            expect(assignment(playerOne).GroupKey)
-                .to.equal(factionAlpha.DefaultGroupKey)
-            expect(assignment(playerOne).ClassId)
-                .to.equal(factionAlpha.Groups[factionAlpha.DefaultGroupKey].Classes[1].Id)
+            expect(assignment(playerOne).ClassKey)
+                .to.equal(factionAlpha.DefaultClassKey)
+            expect(assignment(playerOne).VariantId)
+                .to.equal(factionAlpha.Classes[factionAlpha.DefaultClassKey].Variants[1].Id)
         end)
 
-        it("should deny SetPlayerGroupClass when the player is not assigned to a faction", function()
+        it("should deny SetPlayerClassVariant when the player is not assigned to a faction", function()
             StateActions.RemovePlayerFaction(state, playerOne.UserId)
-            local success = StateActions.SetPlayerGroupClass(
+            local success = StateActions.SetPlayerClassVariant(
                 state, playerOne.UserId,
-                factionAlpha.DefaultGroupKey,
-                factionAlpha.Groups[factionAlpha.DefaultGroupKey].Classes[1].Id)
+                factionAlpha.DefaultClassKey,
+                factionAlpha.Classes[factionAlpha.DefaultClassKey].Variants[1].Id)
 
             expect(success).to.equal(false)
             expect(assignment(playerOne)).to.equal(nil)
         end)
 
-        it("should deny SetPlayerGroupClass when the player fails the access check", function()
-            local success = StateActions.SetPlayerGroupClass(state, playerOne.UserId,
+        it("should deny SetPlayerClassVariant when the player fails the access check", function()
+            local success = StateActions.SetPlayerClassVariant(state, playerOne.UserId,
                 "Rifleman",
                 "RiflemanZ")
 
             expect(success).to.equal(false)
-            expect(assignment(playerOne).GroupKey).to.equal("Rifleman")
-            expect(assignment(playerOne).ClassId).to.equal("RiflemanA")
+            expect(assignment(playerOne).ClassKey).to.equal("Rifleman")
+            expect(assignment(playerOne).VariantId).to.equal("RiflemanA")
         end)
 
-        it("should deny SetPlayerGroupClass when the requested group slot is full", function()
+        it("should deny SetPlayerClassVariant when the requested class slot is full", function()
             local playerTwo = Mocks.Player(2)
             StateActions.SetPlayerFaction(state, playerTwo.UserId, factionAlpha.ID)
 
-            StateActions.SetPlayerGroupClass(state, playerOne.UserId, "Marksman", "MarksmanA")
-            local success = StateActions.SetPlayerGroupClass(state, playerTwo.UserId, "Marksman", "MarksmanA")
+            StateActions.SetPlayerClassVariant(state, playerOne.UserId, "Marksman", "MarksmanA")
+            local success = StateActions.SetPlayerClassVariant(state, playerTwo.UserId, "Marksman", "MarksmanA")
 
             expect(success).to.equal(false)
-            expect(assignment(playerOne).GroupKey).to.equal("Marksman")
-            expect(assignment(playerTwo).GroupKey).to.equal("Rifleman")
-            expect(state.getGroupCountByFaction()[factionAlpha.ID]["Marksman"]).to.equal(1)
+            expect(assignment(playerOne).ClassKey).to.equal("Marksman")
+            expect(assignment(playerTwo).ClassKey).to.equal("Rifleman")
+            expect(state.getClassCountByFaction()[factionAlpha.ID]["Marksman"]).to.equal(1)
         end)
 	end)
 end

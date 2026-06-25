@@ -8,12 +8,12 @@ local Utilities = require("../Logic/Utilities")
 export type PlayerSlice = {
 	factionId: Charm.Getter<string?>,
 	factionConfig: Charm.Getter<Types.FactionConfig?>,
-	groupCounts: Charm.Getter<{ [string]: number }>,
-	groupKey: Charm.Getter<string?>,
-	classId: Charm.Getter<string?>,
-	groupConfig: Charm.Getter<Types.GroupConfig?>,
-	groupEntries: Charm.Getter<{ Types.GroupConfig }>,
-	classes: Charm.Getter<{ Types.ClassDescriptor }>,
+	classCounts: Charm.Getter<{ [string]: number }>,
+	classKey: Charm.Getter<string?>,
+	variantId: Charm.Getter<string?>,
+	classConfig: Charm.Getter<Types.ClassConfig?>,
+	classEntries: Charm.Getter<{ Types.ClassConfig }>,
+	variants: Charm.Getter<{ Types.VariantDescriptor }>,
 }
 
 return function(state: State.State, userId: string): PlayerSlice
@@ -35,64 +35,64 @@ return function(state: State.State, userId: string): PlayerSlice
 		return state.configByFactionId()[id]
 	end)
 
-	local groupCounts = Charm.computed(function()
+	local classCounts = Charm.computed(function()
 		local id = factionId()
 		if not id then
 			return {}
 		end
-		return state.getGroupCountByFaction()[id] or {}
+		return state.getClassCountByFaction()[id] or {}
 	end)
 
-	local groupKey = Charm.computed(function()
+	local classKey = Charm.computed(function()
 		local currentAssignment = assignment()
 		
-		return if currentAssignment then currentAssignment.GroupKey else nil
+		return if currentAssignment then currentAssignment.ClassKey else nil
 	end)
 
-	local classId = Charm.computed(function()
+	local variantId = Charm.computed(function()
 		local currentAssignment = assignment()
-		return if currentAssignment then currentAssignment.ClassId else nil
+		return if currentAssignment then currentAssignment.VariantId else nil
 	end)
 
-	local groupConfig = Charm.computed(function()
+	local classConfig = Charm.computed(function()
 		local config = factionConfig()
-		local key = groupKey()
+		local key = classKey()
 		if not config or not key then
 			return nil
 		end
-		return config.Groups[key]
+		return config.Classes[key]
 	end)
 
-	-- map faction config groups to a table for indexes to iterate over
+	-- map faction config classes to a table for indexes to iterate over
 	-- this runs only when factionConfig() changes so its not that expensive
-	local groupEntries = Charm.computed(function()
-		local groups = {}
+	local classEntries = Charm.computed(function()
+		local classes = {}
 		local config = factionConfig()
 		if not config then
-			return groups
+			return classes
 		end
 
-		for key, group in pairs(config.Groups) do
-			local entry = table.clone(group)
+		for key, classEntry in pairs(config.Classes) do
+			local entry = table.clone(classEntry)
 			entry.Key = key
-			table.insert(groups, entry)
+			table.insert(classes, entry)
 		end
-		return groups
+		return classes
 	end)
 
-	local classes = Charm.computed(function()
-		local config = groupConfig()
-		return if config then config.Classes else {}
+	local variants = Charm.computed(function()
+		local config = classConfig()
+		return if config then config.Variants else {}
 	end)
 
 	return {
 		factionId = factionId,
 		factionConfig = factionConfig,
-		groupCounts = groupCounts,
-		groupKey = groupKey,
-		classId = classId,
-		groupConfig = groupConfig,
-		groupEntries = groupEntries,
-		classes = classes,
+		classCounts = classCounts,
+		classKey = classKey,
+		variantId = variantId,
+		classConfig = classConfig,
+		classEntries = classEntries,
+		variants = variants,
 	}
 end

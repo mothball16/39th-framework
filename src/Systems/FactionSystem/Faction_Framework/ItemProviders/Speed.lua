@@ -3,7 +3,7 @@ local Enums = require("../Core/Enums")
 
 local ORIG_WALK_SPEED_ATTR = "OriginalWalkSpeed"
 
-local SpeedProvider: Types.ClassItemProvider<BuildArgs> = {
+local SpeedProvider: Types.VariantItemProvider<BuildArgs> = {
     ID = "Speed",
     AssignType = Enums.AssignType.PerCharacter,
 }
