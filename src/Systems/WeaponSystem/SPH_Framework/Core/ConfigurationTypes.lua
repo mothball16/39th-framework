@@ -268,6 +268,7 @@ export type MainGameSettings = {
 	toggleAiming: boolean,
 
 	animDistance: number,
+	weaponManipDistance: number,
 	fireEffectDistance: number,
 	maxBulletDistance: number,
 	maxHitDistance: number,

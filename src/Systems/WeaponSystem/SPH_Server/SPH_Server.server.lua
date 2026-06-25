@@ -952,7 +952,7 @@ local function initializeAmmo()
 		local playerPosition = player.Character.HumanoidRootPart.Position
 		P.ReplicateBolt.sendToList(
 			{ shooter = player, direction = data.direction, magAmmo = data.magAmmo },
-			U.playersInRangeExcept(U.asBlacklist(player), playerPosition, config.fireEffectDistance)
+			U.playersInRangeExcept(U.asBlacklist(player), playerPosition, config.weaponManipDistance)
 		)
 	end)
 end
