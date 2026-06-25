@@ -1,6 +1,7 @@
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local Types = {}
 
+export type PlayerKey = string
 
 export type VariantItemProvider<TBuild = any> = {
     -- identifier for item type within configurations
