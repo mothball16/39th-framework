@@ -1,8 +1,10 @@
 local ClientRuntime = require("./ClientRuntime")
 local Access = require("@game/ReplicatedStorage/Faction_Framework/Access")
+local ClientRuntimeLocator = require("./ClientRuntimeLocator")
 local SetupClientSync = require("./SetupClientSync")
 
 local runtime = ClientRuntime.new(Access)
+ClientRuntimeLocator.LoadRuntime(runtime)
 SetupClientSync(runtime.state)
 runtime:WireControllers(script.Parent.Interaction)
 runtime:Start()

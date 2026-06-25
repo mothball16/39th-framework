@@ -3,7 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Access = require("@game/ReplicatedStorage/Faction_Framework/Access")
 local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
 
-local RuntimeLocator = require("./RuntimeLocator")
+local ServerRuntimeLocator = require("./ServerRuntimeLocator")
 local ServerRuntime = require("./ServerRuntime")
 local SetupStateSync = require("./SetupStateSync")
 
@@ -50,7 +50,7 @@ end
 
 -- initialize the runtime
 local runtime = ServerRuntime.new({access = Access})
-RuntimeLocator.LoadRuntime(runtime)
+ServerRuntimeLocator.LoadRuntime(runtime)
 runtime:Start()
 
 
