@@ -35,6 +35,7 @@ type self = {
 	moveSpring: typeof(springMod.new()),
 	pushbackOffset: number,
 	hipRotation: Ripple.Spring<Vector2>,
+	prevCameraLook: Vector3?,
 	aimingOffset: CFrame,
 	proneViewmodelOffset: number,
 	rollAngle: number,
@@ -53,6 +54,41 @@ end
 
 local function getSineOffset(addition: number): number
 	return math.sin(tick() * addition * 1.3) * 0.3
+end
+
+-- Signed yaw/pitch delta (degrees) between consecutive unit look vectors via dot/cross.
+local function getLookAngularDelta(prevLook: Vector3, currentLook: Vector3): Vector2
+
+	local prevFlat = Vector3.new(prevLook.X, 0, prevLook.Z)
+	local currFlat = Vector3.new(currentLook.X, 0, currentLook.Z)
+	local yawDelta = 0
+	if prevFlat.Magnitude > 1e-6 and currFlat.Magnitude > 1e-6 then
+		prevFlat = prevFlat.Unit
+		currFlat = currFlat.Unit
+		yawDelta = math.deg(math.atan2(prevFlat:Cross(currFlat).Y, prevFlat:Dot(currFlat)))
+	end
+
+	local refFlat = if currFlat.Magnitude > 1e-6 then currFlat else prevFlat
+	local pitchDelta = 0
+	if refFlat.Magnitude > 1e-6 then
+		local right = Vector3.yAxis:Cross(refFlat.Unit)
+		if right.Magnitude > 1e-6 then
+			right = right.Unit
+			local up = refFlat.Unit:Cross(right)
+			pitchDelta = math.deg(
+				math.asin(math.clamp(currentLook:Dot(up), -1, 1))
+					- math.asin(math.clamp(prevLook:Dot(up), -1, 1))
+			)
+		else
+			pitchDelta = math.deg(
+				math.asin(math.clamp(currentLook.Y, -1, 1))
+					- math.asin(math.clamp(prevLook.Y, -1, 1))
+			)
+		end
+	end
+
+	-- X = yaw (applied on Y axis), Y = pitch (applied on X axis)
+	return Vector2.new(yawDelta, pitchDelta)
 end
 
 function ViewmodelController.new(params: {
@@ -84,6 +120,7 @@ function ViewmodelController.new(params: {
 		moveSpring = springMod.new(),
 		pushbackOffset = 0,
 		hipRotation = Ripple.createSpring(Vector2.zero),
+		prevCameraLook = nil,
 		aimingOffset = CFrame.new(),
 		proneViewmodelOffset = 0,
 		rollAngle = 0,
@@ -192,6 +229,7 @@ end
 function ViewmodelController.ResetHipRotation(self: ViewmodelController)
 	self.hipRotation:setPosition(Vector2.zero)
 	self.hipRotation:setGoal(Vector2.zero)
+	self.prevCameraLook = nil
 end
 
 function ViewmodelController.ApplyCFrameOffsetFrom(self: ViewmodelController, part: BasePart, offset: CFrame)
@@ -313,34 +351,33 @@ function ViewmodelController.UpdateViewmodelPosition(
 	self:ApplyCFrameOffsetFrom(self.grip(), CFrame.Angles(0, math.rad(-self.strafeShift * config.maxStrafeShift), math.rad(self.rollAngle)))
 	local viewportSize = camera.ViewportSize
 	local mouseDelta = UserInputService:GetMouseDelta() / viewportSize
+	local currentLook = camera.CFrame.LookVector
 
 	local weaponAtReady = self.weaponState.holdStance() == Enums.HoldStance.Ready
 	local offCenterApplies = (config.hipfireMove and not self.state.aiming()) or (self.state.aiming() and config.offCenterAiming)
-	
+
 	if offCenterApplies and weaponAtReady then
-		local nextHipRotation = self.hipRotation:getPosition()
 		local maxX = config.hipfireMoveX
 		local maxY = config.hipfireMoveY
 		if self.state.aiming() then
 			maxX /= 4
 			maxY /= 4
 		end
-		local xRotation = math.clamp(
-			nextHipRotation.X - mouseDelta.X * 500 * config.hipfireMoveSpeed * dt * 60,
-			-maxX,
-			maxX
-		)
-		local yRotation = math.clamp(
-			nextHipRotation.Y - mouseDelta.Y * 250 * config.hipfireMoveSpeed * dt * 60,
-			-maxY,
-			maxY
-		)
-		nextHipRotation = Vector2.new(xRotation, yRotation)
+		local angularDelta = getLookAngularDelta(self.prevCameraLook or currentLook, currentLook)
+		-- ponytail: pitchScale matches prior mouseDelta yaw:pitch ratio (500:250)
+		local genScale = 0.05
+		local pitchScale = 0.5
+		local speed = config.hipfireMoveSpeed * genScale
 		
-		self.hipRotation:setGoal(nextHipRotation)
+		local curHipGoal = self.hipRotation:getGoal()
+		self.hipRotation:setGoal(Vector2.new(
+			math.clamp(curHipGoal.X + angularDelta.X * speed, -maxX, maxX),
+			math.clamp(curHipGoal.Y + angularDelta.Y * speed * pitchScale, -maxY, maxY)
+		))
 	else
 		self.hipRotation:setGoal(Vector2.zero)
 	end
+	self.prevCameraLook = currentLook
 	animBase.CFrame *= CFrame.Angles(math.rad(self.hipRotation:getPosition().Y), math.rad(self.hipRotation:getPosition().X), 0)
 
 	self.swaySpring:shove(Vector3.new(
