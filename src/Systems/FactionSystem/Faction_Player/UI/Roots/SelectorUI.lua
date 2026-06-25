@@ -1,8 +1,7 @@
-local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
 local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
 local Enums = require("@game/ReplicatedStorage/Faction_Framework/Core/Enums")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
-local create, source, derive, indexes, effect = Vide.create, Vide.source, Vide.derive, Vide.indexes, Vide.effect
+local create, derive, indexes, effect = Vide.create, Vide.derive, Vide.indexes, Vide.effect
 
 local Theme = require("../Theme")
 local GroupCard = require("../Components/Card")
@@ -25,25 +24,13 @@ return function(props: {
 	applyClassMode: string?,
 })
 	local player = GetPlayerSlice(props.state, props.userId)
-	local selector = UseClassSelector(player.factionId, player.groupKey, player.classes)
+	local selector = UseClassSelector(player)
 
-	local cardRows = indexes(player.groupEntries, function(groupEntry, I)
+	local cardRows = indexes(player.groupEntries, function(groupEntry)
 		local isSelected = derive(function()
 			return groupEntry().Key == player.groupKey()
 		end)
 
-		-- only use selected logic if the class is selected. otherwise, just use the first class
-		local classId = derive(function()
-			if #groupEntry().Classes == 0 then
-				error(`no classes found for group: {groupEntry().Key}`)
-			end
-			if isSelected() then
-				local selectedClass = selector.selectedClass()
-				return selectedClass and selectedClass.Id or nil
-			end
-			return groupEntry().Classes[1].Id
-		end)
-		
 		return GroupCard({
 			isSelected = isSelected,
 
@@ -57,7 +44,14 @@ return function(props: {
 				return groupEntry().Limit
 			end,
 			SelectClass = function()
-				props.requestGroupClass(groupEntry().Key, classId())
+				local classes = groupEntry().Classes
+				if #classes == 0 then
+					error(`no classes found for group: {groupEntry().Key}`)
+				end
+				local id = if isSelected()
+					then (selector.selectedClass() or classes[1]).Id
+					else classes[1].Id
+				props.requestGroupClass(groupEntry().Key, id)
 			end,
 		})
 	end)
@@ -70,11 +64,10 @@ return function(props: {
 			end
 		else
 			if selector.dirty() then
-				local classes = player.classes()
+				local selected = selector.selectedClass()
 				local groupKey = player.groupKey()
-				if #classes > 0 and groupKey then
-					local index = math.clamp(selector.classIndex(), 1, #classes)
-					props.requestGroupClass(groupKey, classes[index].Id)
+				if selected and groupKey then
+					props.requestGroupClass(groupKey, selected.Id)
 				end
 				selector.dirty(false)
 			end

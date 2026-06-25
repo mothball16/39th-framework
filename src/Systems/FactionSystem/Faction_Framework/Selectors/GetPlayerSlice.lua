@@ -10,6 +10,7 @@ export type PlayerSlice = {
 	factionConfig: Charm.Getter<Types.FactionConfig?>,
 	groupCounts: Charm.Getter<{ [string]: number }>,
 	groupKey: Charm.Getter<string?>,
+	classId: Charm.Getter<string?>,
 	groupConfig: Charm.Getter<Types.GroupConfig?>,
 	groupEntries: Charm.Getter<{ Types.GroupConfig }>,
 	classes: Charm.Getter<{ Types.ClassDescriptor }>,
@@ -48,6 +49,11 @@ return function(state: State.State, userId: string): PlayerSlice
 		return if currentAssignment then currentAssignment.GroupKey else nil
 	end)
 
+	local classId = Charm.computed(function()
+		local currentAssignment = assignment()
+		return if currentAssignment then currentAssignment.ClassId else nil
+	end)
+
 	local groupConfig = Charm.computed(function()
 		local config = factionConfig()
 		local key = groupKey()
@@ -84,6 +90,7 @@ return function(state: State.State, userId: string): PlayerSlice
 		factionConfig = factionConfig,
 		groupCounts = groupCounts,
 		groupKey = groupKey,
+		classId = classId,
 		groupConfig = groupConfig,
 		groupEntries = groupEntries,
 		classes = classes,
