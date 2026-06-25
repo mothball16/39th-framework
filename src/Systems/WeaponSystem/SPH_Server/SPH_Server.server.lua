@@ -22,6 +22,11 @@ physicsService:CollisionGroupSetCollidable("SuppressionTargets", "Players", fals
 physicsService:CollisionGroupSetCollidable("SuppressionTargets", "Guns", false)
 physicsService:CollisionGroupSetCollidable("SuppressionTargets", "Casings", false)
 physicsService:CollisionGroupSetCollidable("SuppressionTargets", "Default", false)
+
+game:GetService("SoundService").RespectFilteringEnabled = true
+require(script.Parent.CreateSoundGroups)()
+
+
 local Framework = replicatedStorage.SPH_Framework
 local Access = require(Framework.Access)
 local assets = Access.assets
@@ -59,8 +64,7 @@ explosionOverlapParams.MaxParts = 500
 local net = NetworkEvents
 
 local naughtyList = {}
-game:GetService("SoundService").RespectFilteringEnabled = true
-require(script.Parent.CreateSoundGroups)()
+
 
 local mainFolder = Instance.new("Folder", workspace)
 mainFolder.Name = "SPH_Workspace"
@@ -78,6 +82,15 @@ drops.Name = "Drops"
 local dropTable = {}
 local dropCFrame = CFrame.new(0, 1, -3)
 local bodyparts = { "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand" }
+
+local function removeDropModel(dropModel: Model): boolean
+	local index = table.find(dropTable, dropModel)
+	if not index then
+		return false
+	end
+	table.remove(dropTable, index)
+	return true
+end
 
 local function enableMotors(char: Model)
 	for i = 1, #bodyparts do
@@ -355,7 +368,8 @@ local function spawnGun(tool, gunPosition, dropPlayer)
 	end
 	makePickUpAble(tool, dropModel, dropModel.Grip)
 	dropModel.Parent = drops
-	dropModel.Grip.Touched:Connect(function()
+	local touchConnection
+	touchConnection = dropModel.Grip.Touched:Connect(function()
 		if dropModel.Grip.AssemblyLinearVelocity.Magnitude > 7 then
 			local dropSounds = assets.Sounds.GunDrop
 			local newSound = dropSounds["GunDrop" .. math.random(#dropSounds:GetChildren())]:Clone()
@@ -366,20 +380,29 @@ local function spawnGun(tool, gunPosition, dropPlayer)
 			newSound:Destroy()
 		end
 	end)
+	dropModel.Destroying:Once(function()
+		if touchConnection then
+			touchConnection:Disconnect()
+			touchConnection = nil
+		end
+		removeDropModel(dropModel)
+	end)
 	if dropPlayer then
 		dropModel.Grip:SetNetworkOwner(dropPlayer)
 	end
 	dropModel:SetPrimaryPartCFrame(gunPosition)
-	local position = #dropTable + 1
-	table.insert(dropTable, position, dropModel)
+	table.insert(dropTable, dropModel)
 	if #dropTable > config.maxDroppedGuns then
 		local objectToDestroy = dropTable[1]
-		table.remove(dropTable, 1)
-		objectToDestroy:Destroy()
+		removeDropModel(objectToDestroy)
+		if objectToDestroy.Parent then
+			objectToDestroy:Destroy()
+		end
 	end
 	task.delay(config.dropDespawnTime, function()
-		table.remove(dropTable, position)
-		dropModel:Destroy()
+		if removeDropModel(dropModel) and dropModel.Parent then
+			dropModel:Destroy()
+		end
 	end)
 	return dropModel
 end
@@ -409,6 +432,14 @@ local function initializePlayerLifecycle()
 				end
 			end)
 		end
+		local backpackAddedConnection = newPlayer.Backpack.ChildAdded:Connect(function(child)
+			checkTool(newPlayer, child)
+		end)
+		local backpackRemovedConnection = newPlayer.Backpack.ChildRemoved:Connect(function(child)
+			if _collectionService:HasTag(child, "SPH_Weapon") then
+				removeHolster(newPlayer, child.Name)
+			end
+		end)
 		local deaths
 		if config.leaderboard then
 			local leaderstats = newPlayer:FindFirstChild("leaderstats")
@@ -496,18 +527,10 @@ local function initializePlayerLifecycle()
 						if holsterModel and newBody then
 							makePickUpAble(tool, holsterModel, holsterModel.Grip)
 						else
-							spawnGun(tool, newBody.HumanoidRootPart.CFrame * dropCFrame, newPlayer)
+							spawnGun(tool, hrp.CFrame * dropCFrame, newPlayer)
 							task.wait()
 						end
 					end
-				end
-			end)
-			newPlayer.Backpack.ChildAdded:Connect(function(child)
-				checkTool(newPlayer, child)
-			end)
-			newPlayer.Backpack.ChildRemoved:Connect(function(child)
-				if _collectionService:HasTag(child, "SPH_Weapon") then
-					removeHolster(newPlayer, child.Name)
 				end
 			end)
 			for _, tool in ipairs(newPlayer.Backpack:GetChildren()) do
@@ -537,11 +560,20 @@ local function initializePlayerLifecycle()
 			rightFoot.RollOffMode = Enum.RollOffMode.InverseTapered
 			rightFoot.RollOffMaxDistance = 100
 			task.wait()
+			for _, existingGui in ipairs(newPlayer.PlayerGui:GetChildren()) do
+				if existingGui.Name == mainui.Name or (config.deathScreen and existingGui.Name == assets.HUD.DeathScreen.Name) then
+					existingGui:Destroy()
+				end
+			end
 			local newGui = mainui:Clone()
 			newGui.Parent = newPlayer.PlayerGui
 			if config.deathScreen then
 				assets.HUD.DeathScreen:Clone().Parent = newPlayer.PlayerGui
 			end
+		end)
+		newPlayer.Destroying:Once(function()
+			backpackAddedConnection:Disconnect()
+			backpackRemovedConnection:Disconnect()
 		end)
 	end)
 	players.PlayerRemoving:Connect(function(player)

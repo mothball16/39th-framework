@@ -125,7 +125,15 @@ function LaserMod.OnToggleLaserIntent(inputState, inputObject)
 	end
 end
 
+local function disposeSubscriptionScope()
+	if LaserMod.disposeSubscriptionScope then
+		LaserMod.disposeSubscriptionScope()
+		LaserMod.disposeSubscriptionScope = nil
+	end
+end
+
 function LaserMod.new(params)
+	disposeSubscriptionScope()
 	weaponState = params.weaponState
 	State = params.state
 	local controllers = params.Controllers or {}
@@ -174,13 +182,15 @@ function LaserMod.new(params)
 	LaserMod.laserBeamTP.Parent = LaserMod.laserDotPoint
 	LaserMod.laserBeamTP.Enabled = false
 
-	Charm.subscribe(weaponState.laserEnabled, LaserMod.OnLaserToggled)
-	Charm.subscribe(State.firstPerson, LaserMod.UpdateAttachmentsVisibility)
-	Charm.subscribe(weaponState.gunModel, function(gunModel)
-		if not gunModel then
-			LaserMod.laserDotGui.Enabled = false
-			LaserMod.UpdateAttachmentsVisibility()
-		end
+	LaserMod.disposeSubscriptionScope = Charm.effectScope(function()
+		Charm.subscribe(weaponState.laserEnabled, LaserMod.OnLaserToggled)
+		Charm.subscribe(State.firstPerson, LaserMod.UpdateAttachmentsVisibility)
+		Charm.subscribe(weaponState.gunModel, function(gunModel)
+			if not gunModel then
+				LaserMod.laserDotGui.Enabled = false
+				LaserMod.UpdateAttachmentsVisibility()
+			end
+		end)
 	end)
 
 	if InputController then
@@ -242,6 +252,7 @@ function LaserMod.UpdateRender(dt)
 end
 
 function LaserMod.Destroy()
+	disposeSubscriptionScope()
 	if LaserMod.laserDotPoint then
 		LaserMod.laserDotPoint:Destroy()
 		LaserMod.laserDotPoint = nil
