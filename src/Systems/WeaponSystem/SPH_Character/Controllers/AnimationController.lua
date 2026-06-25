@@ -25,7 +25,7 @@ local ANIM_DEFAULTS = {
 	[Enums.WeaponAnim.HoldDown.key] = { priority = Enum.AnimationPriority.Action, looped = true },
 
 	[Enums.WeaponAnim.Switch.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
-	[Enums.WeaponAnim.Reload.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
+	[Enums.WeaponAnim.Reload.key] = { priority = Enum.AnimationPriority.Action3, looped = false },
 	[Enums.WeaponAnim.BoltChamber.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
 	[Enums.WeaponAnim.BoltClose.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
 	[Enums.WeaponAnim.Equip.key] = { priority = Enum.AnimationPriority.Action2, looped = false },
