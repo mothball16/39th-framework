@@ -1,13 +1,7 @@
 --!strict
 
 local Types = require(script.Parent.Parent.Core.ConfigurationTypes)
-
-local function applyTemplateSound(target: Sound, template: Sound)
-	target.SoundId = template.SoundId
-	if template.SoundGroup then
-		target.SoundGroup = template.SoundGroup
-	end
-end
+local SoundGroups = require(script.Parent.Parent.Effects.GetSoundGroups)()
 
 local function applySoundFolder(grip: Instance, folder: Folder)
 	for _, child in folder:GetChildren() do
@@ -16,8 +10,10 @@ local function applySoundFolder(grip: Instance, folder: Folder)
 		end
 		local gripSound = grip:FindFirstChild(child.Name)
 		if gripSound and gripSound:IsA("Sound") then
-			applyTemplateSound(gripSound, child)
+			gripSound:Destroy()
 		end
+		
+		child:Clone().Parent = grip
 	end
 end
 
@@ -84,13 +80,28 @@ local function applySoundDists(grip: Instance, soundDists: Types.SoundDistConfig
 	end
 end
 
+local function rigEcho(grip: Instance)
+	local fire = grip:FindFirstChild("Fire") :: Sound?
+	if not fire then
+		print("no fire sound found on grip")
+		return
+	end
+	local echo = grip:FindFirstChild("Echo") :: Sound?
+	if echo then
+		-- manual override
+		echo.SoundGroup = SoundGroups.fireMain
+	else
+		-- just use the sfx to get an okay-ish echo
+		echo = fire:Clone()
+		echo.Name = "Echo"
+		echo.SoundGroup = SoundGroups.fireEcho
+	end
+end
+
 local WeaponSetup = {}
 
 function WeaponSetup.apply(gun: Model, wepStats: Types.WeaponStats, soundsRoot: Folder, fxRoot: Folder)
-	local grip = gun:FindFirstChild("Grip")
-	if not grip then
-		return
-	end
+	local grip = gun:WaitForChild("Grip")
 
 	if wepStats.useSound then
 		applyUseSound(grip, soundsRoot, wepStats.useSound)
@@ -98,6 +109,9 @@ function WeaponSetup.apply(gun: Model, wepStats: Types.WeaponStats, soundsRoot: 
 	if wepStats.useFX then
 		applyUseFX(grip, fxRoot, wepStats.useFX)
 	end
+
+	rigEcho(grip)
+
 	if wepStats.soundDists then
 		applySoundDists(grip, wepStats.soundDists)
 	end
