@@ -31,14 +31,6 @@ return function(playerSlice: GetPlayerSlice.PlayerSlice)
 		classIndex(index)
 	end)
 
-	-- set the dirty flag when anything changes, just to be safe
-	effect(function()
-		playerSlice.factionId()
-		playerSlice.groupKey()
-		classIndex()
-		dirty(true)
-	end)
-
 	-- on load, faction/group/class might be missing, check to make sure they are all present
 	local selectedClass: () -> Types.ClassDescriptor? = derive(function()
 		if not playerSlice.factionId() or not playerSlice.groupKey() or not playerSlice.classes() then
@@ -59,6 +51,7 @@ return function(playerSlice: GetPlayerSlice.PlayerSlice)
 		end
 		local nextIndex = ((classIndex() - 1 + offset) % #classes) + 1
 		classIndex(nextIndex)
+		dirty(true)
 	end
 
 	return {

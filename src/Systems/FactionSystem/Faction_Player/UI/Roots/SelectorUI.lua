@@ -2,7 +2,7 @@ local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
 local Enums = require("@game/ReplicatedStorage/Faction_Framework/Core/Enums")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local create, derive, indexes, effect = Vide.create, Vide.derive, Vide.indexes, Vide.effect
-
+local untrack = Vide.untrack
 local Theme = require("../Theme")
 local GroupCard = require("../Components/Card")
 local MenuActionButton = require("../Components/MenuActionButton")
@@ -63,9 +63,9 @@ return function(props: {
 				props.requestClassApply(false)
 			end
 		else
-			if selector.dirty() then
-				local selected = selector.selectedClass()
-				local groupKey = player.groupKey()
+			if untrack(selector.dirty) then
+				local selected = untrack(selector.selectedClass)
+				local groupKey = untrack(player.groupKey)
 				if selected and groupKey then
 					props.requestGroupClass(groupKey, selected.Id)
 				end
