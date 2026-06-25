@@ -39,33 +39,33 @@ function CreateEffect(Type,Attachment,HitPart)
 	local NewEffect = NewType:GetChildren()[math.random(1,#NewType:GetChildren())]:Clone()
 	local MaxTime = 3 -- Placeholder for max time of total effect
 	for _, Effect in pairs(NewEffect:GetChildren()) do
-		if not Effect:IsA("ParticleEmitter") then return end
-		
-		Effect.Parent = Attachment
-		Effect.Enabled = false
-		
-		if Type == "Sand" and HitPart then
-			local NewColor = HitPart.Color
-			local Add = 0.3
-			if HitPart.Material == Enum.Material.Fabric then
-				Add = -0.2 -- Darker
+		if Effect:IsA("ParticleEmitter") then
+			Effect.Parent = Attachment
+			Effect.Enabled = false
+			
+			if Type == "Sand" and HitPart then
+				local NewColor = HitPart.Color
+				local Add = 0.3
+				if HitPart.Material == Enum.Material.Fabric then
+					Add = -0.2 -- Darker
+				end
+				
+				NewColor = Color3.new(CheckColor(NewColor.R, Add),CheckColor(NewColor.G, Add),CheckColor(NewColor.B, Add)) -- Adjust new color
+				
+				Effect.Color = ColorSequence.new({ -- Set effect color
+					ColorSequenceKeypoint.new(0,NewColor),
+					ColorSequenceKeypoint.new(1,NewColor)
+				})
 			end
 			
-			NewColor = Color3.new(CheckColor(NewColor.R, Add),CheckColor(NewColor.G, Add),CheckColor(NewColor.B, Add)) -- Adjust new color
-			
-			Effect.Color = ColorSequence.new({ -- Set effect color
-				ColorSequenceKeypoint.new(0,NewColor),
-				ColorSequenceKeypoint.new(1,NewColor)
-			})
-		end
-		
-		if Effect.Rate > 10 then
-			Effect:Emit(Effect.Rate / 10) -- Calculate how many particles emit based on rate
-		else
-			Effect:Emit(1)
-		end
-		if Effect.Lifetime.Max > MaxTime then
-			MaxTime = Effect.Lifetime.Max
+			if Effect.Rate > 10 then
+				Effect:Emit(Effect.Rate / 10) -- Calculate how many particles emit based on rate
+			else
+				Effect:Emit(1)
+			end
+			if Effect.Lifetime.Max > MaxTime then
+				MaxTime = Effect.Lifetime.Max
+			end
 		end
 	end
 	local HitSound = Instance.new("Sound")
