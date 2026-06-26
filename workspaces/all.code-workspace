@@ -1,0 +1,21 @@
+{
+    "folders": [
+        {
+            "name": "Faction",
+            "path": "../src/Systems/FactionSystem"
+        },
+        {
+            "name": "Aware",
+            "path": "../src/Systems/AwareSystem"
+        },
+        {
+            "name": "Weapon",
+            "path": "../src/Systems/WeaponSystem"
+        },
+        {
+            "name": "Radio",
+            "path": "../src/Systems/RadioSystem"
+        }
+    ],
+    "settings": {}
+}

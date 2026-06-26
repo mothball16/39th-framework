@@ -1,5 +1,5 @@
 {
-  "name": "weapons-only",
+  "name": "weapon-system",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
@@ -7,39 +7,27 @@
       "$ignoreUnknownInstances": true,
       "Packages": {
         "$ignoreUnknownInstances": false,
-        "$path": "Packages"
+        "$path": "../../../Packages"
       },
       "DevPackages": {
         "$ignoreUnknownInstances": false,
-        "$path": "DevPackages"
+        "$path": "../../../DevPackages"
       },
       "Utility": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/Utility"
+        "$path": "../../../src/Utility"
       },
-
-      "Synced": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/General/Shared"
-      },
-
       "SPH_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/WeaponSystem/Framework"
+        "$path": "Framework"
       }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "$ignoreUnknownInstances": true,
-      
-      "Synced": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/General/Server"
-      },
-
       "SPH_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/WeaponSystem/Server"
+        "$path": "Server"
       }
     },
     "StarterPlayer": {
@@ -50,21 +38,15 @@
         "$ignoreUnknownInstances": true,
         "SPH_Character": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/WeaponSystem/Character"
+          "$path": "Character"
         }
       },
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "$ignoreUnknownInstances": true,
-
-        "Synced": {
-          "$ignoreUnknownInstances": false,
-          "$path": "src/General/Client"
-        },
-
         "SPH_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/WeaponSystem/Player"
+          "$path": "Player"
         }
       }
     }

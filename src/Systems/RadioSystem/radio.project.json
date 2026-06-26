@@ -1,0 +1,46 @@
+{
+  "name": "radio-system",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$ignoreUnknownInstances": true,
+      "Packages": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../Packages"
+      },
+      "DevPackages": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../DevPackages"
+      },
+      "Utility": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../src/Utility"
+      },
+      "Radio_Framework": {
+        "$ignoreUnknownInstances": false,
+        "$path": "Framework"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$ignoreUnknownInstances": true,
+      "Radio_Server": {
+        "$ignoreUnknownInstances": false,
+        "$path": "Server"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$ignoreUnknownInstances": true,
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true,
+        "Radio_Client": {
+          "$ignoreUnknownInstances": false,
+          "$path": "Client"
+        }
+      }
+    }
+  }
+}

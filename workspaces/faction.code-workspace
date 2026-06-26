@@ -1,0 +1,9 @@
+{
+    "folders": [
+        {
+            "name": "Faction System",
+            "path": "../src/Systems/FactionSystem"
+        }
+    ],
+    "settings": {}
+}

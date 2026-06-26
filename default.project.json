@@ -39,6 +39,11 @@
       "SPH_Framework": {
         "$ignoreUnknownInstances": false,
         "$path": "src/Systems/WeaponSystem/Framework"
+      },
+
+      "Radio_Framework": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/Systems/RadioSystem/Framework"
       }
     },
     "ServerScriptService": {
@@ -68,6 +73,11 @@
       "Aware_Server": {
         "$ignoreUnknownInstances": false,
         "$path": "src/Systems/AwareSystem/Server"
+      },
+
+      "Radio_Server": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/Systems/RadioSystem/Server"
       }
 
     },
@@ -108,6 +118,11 @@
         "Aware_Player": {
           "$ignoreUnknownInstances": false,
           "$path": "src/Systems/AwareSystem/Player"
+        },
+
+        "Radio_Client": {
+          "$ignoreUnknownInstances": false,
+          "$path": "src/Systems/RadioSystem/Client"
         }
       }
 
