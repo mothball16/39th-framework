@@ -19,7 +19,7 @@
       },
       "Aware_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "Aware_Framework"
+        "$path": "Framework"
       }
     },
     "ServerScriptService": {
@@ -27,7 +27,7 @@
       "$ignoreUnknownInstances": true,
       "Aware_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "Aware_Server"
+        "$path": "Server"
       }
     },
     "StarterPlayer": {
@@ -38,7 +38,7 @@
         "$ignoreUnknownInstances": true,
         "Aware_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "Aware_Player"
+          "$path": "Player"
         }
       }
     }

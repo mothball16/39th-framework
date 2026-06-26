@@ -28,17 +28,17 @@
 
       "Faction_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/FactionSystem/Faction_Framework"
+        "$path": "src/Systems/FactionSystem/Framework"
       },
 
       "Aware_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/AwareSystem/Aware_Framework"
+        "$path": "src/Systems/AwareSystem/Framework"
       },
 
       "SPH_Framework": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/WeaponSystem/SPH_Framework"
+        "$path": "src/Systems/WeaponSystem/Framework"
       }
     },
     "ServerScriptService": {
@@ -52,12 +52,12 @@
 
       "Faction_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/FactionSystem/Faction_Server"
+        "$path": "src/Systems/FactionSystem/Server"
       },
 
       "SPH_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/WeaponSystem/SPH_Server"
+        "$path": "src/Systems/WeaponSystem/Server"
       },
 
       "Class_RadioMod": {
@@ -67,7 +67,7 @@
 
       "Aware_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/AwareSystem/Aware_Server"
+        "$path": "src/Systems/AwareSystem/Server"
       }
 
     },
@@ -82,7 +82,7 @@
 
         "SPH_Character": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/WeaponSystem/SPH_Character"
+          "$path": "src/Systems/WeaponSystem/Character"
         }
       },
 
@@ -97,17 +97,17 @@
 
         "Faction_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/FactionSystem/Faction_Player"
+          "$path": "src/Systems/FactionSystem/Player"
         },
 
         "SPH_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/WeaponSystem/SPH_Player"
+          "$path": "src/Systems/WeaponSystem/Player"
         },
 
         "Aware_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/AwareSystem/Aware_Player"
+          "$path": "src/Systems/AwareSystem/Player"
         }
       }
 
