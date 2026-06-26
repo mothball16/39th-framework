@@ -1,0 +1,46 @@
+{
+  "name": "aware-system",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$ignoreUnknownInstances": true,
+      "Packages": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../Packages"
+      },
+      "DevPackages": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../DevPackages"
+      },
+      "Utility": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../src/Utility"
+      },
+      "Aware_Framework": {
+        "$ignoreUnknownInstances": false,
+        "$path": "Aware_Framework"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$ignoreUnknownInstances": true,
+      "Aware_Server": {
+        "$ignoreUnknownInstances": false,
+        "$path": "Aware_Server"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$ignoreUnknownInstances": true,
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true,
+        "Aware_Player": {
+          "$ignoreUnknownInstances": false,
+          "$path": "Aware_Player"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+    "folders": [
+        {
+            "name": "Aware System",
+            "path": "src/Systems/AwareSystem",
+        }
+    ],
+    "settings": {
+    }
+}
