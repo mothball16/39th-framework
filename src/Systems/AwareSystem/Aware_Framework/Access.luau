@@ -2,7 +2,6 @@ local CollectionService = game:GetService("CollectionService")
 local Types = require("./Core/Types")
 
 
-
 local function resolveSingleTaggedAsset(tagName: string): Instance
 	local asset = CollectionService:GetTagged(tagName)
 	if #asset == 0 then
@@ -19,9 +18,14 @@ local function resolveSingleTaggedAsset(tagName: string): Instance
 	return asset[1]
 end
 
-local access = table.freeze({
+export type Access = {
+	assets: Instance,
+	config: Types.GameSettings,
+}
+
+local access: Access = table.freeze({
 	assets = resolveSingleTaggedAsset("Aware_Assets"),
-	config = require(resolveSingleTaggedAsset("Aware_GameConfig")) :: Types.GameSettings,
+	config = require(resolveSingleTaggedAsset("Aware_GameConfig")),
 })
 
 return access

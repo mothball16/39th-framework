@@ -145,6 +145,13 @@ local remotes = ReplicatedStorage:WaitForChild("ZAP")
 local reliable = remotes:WaitForChild("PING_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected PING_RELIABLE to be a RemoteEvent")
 
+export type ReportPingPayload = ({
+	["position"]: (Vector3),
+	["name"]: (string),
+})
+export type RequestPingPayload = ({
+	["position"]: (Vector3),
+})
 
 local function SendEvents()
 	if outgoing_used ~= 0 then
@@ -176,7 +183,11 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 		local id = buffer.readu8(buff, read(1))
 		if id == 0 then -- ReportPing
 			local value
-			value = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
+			value = {  }
+			value["position"] = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
+			local len_1 = buffer.readu16(incoming_buff, read(2))
+			value["name"] = buffer.readstring(incoming_buff, read(len_1), len_1)
+			assert(utf8.len(value["name"]) ~= nil, "value is not valid utf-8")
 			if reliable_events[0][1] then
 				for _, cb in reliable_events[0] do
 					task.spawn(cb, value)
@@ -198,19 +209,24 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	SendEvents = SendEvents,
 	RequestPing = {
-		Fire = function(Position: (Vector3))
+		Fire = function(payload: ({
+			["position"]: (Vector3),
+		}))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.X)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Y)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Y)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Z)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Z)
 		end,
 	},
 	ReportPing = {
-		On = function(Callback: (Position: (Vector3)) -> ())
+		On = function(Callback: (payload: ({
+			["position"]: (Vector3),
+			["name"]: (string),
+		})) -> ())
 			table.insert(reliable_events[0], Callback)
 			for _, value in reliable_event_queue[0] do
 				task.spawn(Callback, value)

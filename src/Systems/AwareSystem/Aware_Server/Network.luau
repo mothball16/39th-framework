@@ -174,6 +174,13 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
+export type ReportPingPayload = ({
+	["position"]: (Vector3),
+	["name"]: (string),
+})
+export type RequestPingPayload = ({
+	["position"]: (Vector3),
+})
 
 local function SendEvents()
 	for player, outgoing in player_map do
@@ -204,7 +211,8 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 		local id = buffer.readu8(buff, read(1))
 		if id == 0 then -- RequestPing
 			local value
-			value = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
+			value = {  }
+			value["position"] = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
 			if reliable_events[0] then
 				task.spawn(reliable_events[0], player, value)
 			end
@@ -219,7 +227,9 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	SendEvents = SendEvents,
 	RequestPing = {
-		SetCallback = function(Callback: (Player: Player, Position: (Vector3)) -> ()): () -> ()
+		SetCallback = function(Callback: (Player: Player, payload: ({
+			["position"]: (Vector3),
+		})) -> ()): () -> ()
 			reliable_events[0] = Callback
 			return function()
 				reliable_events[0] = nil
@@ -227,28 +237,46 @@ local returns = {
 		end,
 	},
 	ReportPing = {
-		Fire = function(Player: Player, Position: (Vector3))
+		Fire = function(Player: Player, payload: ({
+			["position"]: (Vector3),
+			["name"]: (string),
+		}))
 			load_player(Player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.X)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Y)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Y)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Z)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Z)
+			local len_1 = #payload["name"]
+			assert(utf8.len(payload["name"]) ~= nil, "value is not valid utf-8")
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
+			alloc(len_1)
+			buffer.writestring(outgoing_buff, outgoing_apos, payload["name"], len_1)
 			player_map[Player] = save()
 		end,
-		FireAll = function(Position: (Vector3))
+		FireAll = function(payload: ({
+			["position"]: (Vector3),
+			["name"]: (string),
+		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.X)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Y)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Y)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Z)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Z)
+			local len_2 = #payload["name"]
+			assert(utf8.len(payload["name"]) ~= nil, "value is not valid utf-8")
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_2)
+			alloc(len_2)
+			buffer.writestring(outgoing_buff, outgoing_apos, payload["name"], len_2)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in Players:GetPlayers() do
 				load_player(player)
@@ -258,16 +286,25 @@ local returns = {
 				player_map[player] = save()
 			end
 		end,
-		FireExcept = function(Except: Player, Position: (Vector3))
+		FireExcept = function(Except: Player, payload: ({
+			["position"]: (Vector3),
+			["name"]: (string),
+		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.X)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Y)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Y)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Z)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Z)
+			local len_3 = #payload["name"]
+			assert(utf8.len(payload["name"]) ~= nil, "value is not valid utf-8")
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_3)
+			alloc(len_3)
+			buffer.writestring(outgoing_buff, outgoing_apos, payload["name"], len_3)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in Players:GetPlayers() do
 				if player ~= Except then
@@ -279,16 +316,25 @@ local returns = {
 				end
 			end
 		end,
-		FireList = function(List: { [unknown]: Player }, Position: (Vector3))
+		FireList = function(List: { [unknown]: Player }, payload: ({
+			["position"]: (Vector3),
+			["name"]: (string),
+		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.X)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Y)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Y)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Z)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Z)
+			local len_4 = #payload["name"]
+			assert(utf8.len(payload["name"]) ~= nil, "value is not valid utf-8")
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_4)
+			alloc(len_4)
+			buffer.writestring(outgoing_buff, outgoing_apos, payload["name"], len_4)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in List do
 				load_player(player)
@@ -298,16 +344,25 @@ local returns = {
 				player_map[player] = save()
 			end
 		end,
-		FireSet = function(Set: { [Player]: any }, Position: (Vector3))
+		FireSet = function(Set: { [Player]: any }, payload: ({
+			["position"]: (Vector3),
+			["name"]: (string),
+		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.X)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Y)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Y)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Position.Z)
+			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Z)
+			local len_5 = #payload["name"]
+			assert(utf8.len(payload["name"]) ~= nil, "value is not valid utf-8")
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_5)
+			alloc(len_5)
+			buffer.writestring(outgoing_buff, outgoing_apos, payload["name"], len_5)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for player in Set do
 				load_player(player)
