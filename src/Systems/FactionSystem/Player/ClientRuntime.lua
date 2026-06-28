@@ -25,7 +25,7 @@ type self = {
 }
 export type ClientRuntime = typeof(setmetatable({} :: self, ClientRuntime))
 
-function ClientRuntime.new(access: Types.Access)
+function ClientRuntime.new(access: Types.Access): ClientRuntime
 	local state = State.new()
 	local self = setmetatable({
 		state = state,
