@@ -134,8 +134,18 @@ if not RunService:IsRunning() then
 	local noop = function() end
 	return table.freeze({
 		SendEvents = noop,
+		RequestRemovePing = table.freeze({
+			SetCallback = noop
+		}),
 		RequestPing = table.freeze({
 			SetCallback = noop
+		}),
+		ReportRemovePing = table.freeze({
+			Fire = noop,
+			FireAll = noop,
+			FireExcept = noop,
+			FireList = noop,
+			FireSet = noop
 		}),
 		ReportPing = table.freeze({
 			Fire = noop,
@@ -174,12 +184,16 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
-export type ReportPingPayload = ({
-	["position"]: (Vector3),
-	["name"]: (string),
+export type ReportRemovePingPayload = ({
+	["owner"]: (Player),
 })
 export type RequestPingPayload = ({
 	["position"]: (Vector3),
+})
+export type ReportPingPayload = ({
+	["owner"]: (Player),
+	["position"]: (Vector3),
+	["name"]: (string),
 })
 
 local function SendEvents()
@@ -200,7 +214,7 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local reliable_events = table.create(1)
+local reliable_events = table.create(2)
 reliable.OnServerEvent:Connect(function(player, buff, inst)
 	incoming_buff = buff
 	incoming_inst = inst
@@ -209,7 +223,12 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 	local len = buffer.len(buff)
 	while incoming_read < len do
 		local id = buffer.readu8(buff, read(1))
-		if id == 0 then -- RequestPing
+		if id == 1 then -- RequestRemovePing
+			local value
+			if reliable_events[1] then
+				task.spawn(reliable_events[1], player, value)
+			end
+		elseif id == 0 then -- RequestPing
 			local value
 			value = {  }
 			value["position"] = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
@@ -226,6 +245,14 @@ table.freeze(polling_queues_unreliable)
 
 local returns = {
 	SendEvents = SendEvents,
+	RequestRemovePing = {
+		SetCallback = function(Callback: (Player: Player) -> ()): () -> ()
+			reliable_events[1] = Callback
+			return function()
+				reliable_events[1] = nil
+			end
+		end,
+	},
 	RequestPing = {
 		SetCallback = function(Callback: (Player: Player, payload: ({
 			["position"]: (Vector3),
@@ -236,14 +263,99 @@ local returns = {
 			end
 		end,
 	},
+	ReportRemovePing = {
+		Fire = function(Player: Player, payload: ({
+			["owner"]: (Player),
+		}))
+			load_player(Player)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			assert(payload["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			table.insert(outgoing_inst, payload["owner"])
+			player_map[Player] = save()
+		end,
+		FireAll = function(payload: ({
+			["owner"]: (Player),
+		}))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			assert(payload["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			table.insert(outgoing_inst, payload["owner"])
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+		end,
+		FireExcept = function(Except: Player, payload: ({
+			["owner"]: (Player),
+		}))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			assert(payload["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			table.insert(outgoing_inst, payload["owner"])
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				if player ~= Except then
+					load_player(player)
+					alloc(used)
+					buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+					table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+					player_map[player] = save()
+				end
+			end
+		end,
+		FireList = function(List: { [unknown]: Player }, payload: ({
+			["owner"]: (Player),
+		}))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			assert(payload["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			table.insert(outgoing_inst, payload["owner"])
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in List do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+		end,
+		FireSet = function(Set: { [Player]: any }, payload: ({
+			["owner"]: (Player),
+		}))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			assert(payload["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			table.insert(outgoing_inst, payload["owner"])
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for player in Set do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+		end,
+	},
 	ReportPing = {
 		Fire = function(Player: Player, payload: ({
+			["owner"]: (Player),
 			["position"]: (Vector3),
 			["name"]: (string),
 		}))
 			load_player(Player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			assert(payload["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			table.insert(outgoing_inst, payload["owner"])
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)
@@ -259,12 +371,15 @@ local returns = {
 			player_map[Player] = save()
 		end,
 		FireAll = function(payload: ({
+			["owner"]: (Player),
 			["position"]: (Vector3),
 			["name"]: (string),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			assert(payload["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			table.insert(outgoing_inst, payload["owner"])
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)
@@ -287,12 +402,15 @@ local returns = {
 			end
 		end,
 		FireExcept = function(Except: Player, payload: ({
+			["owner"]: (Player),
 			["position"]: (Vector3),
 			["name"]: (string),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			assert(payload["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			table.insert(outgoing_inst, payload["owner"])
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)
@@ -317,12 +435,15 @@ local returns = {
 			end
 		end,
 		FireList = function(List: { [unknown]: Player }, payload: ({
+			["owner"]: (Player),
 			["position"]: (Vector3),
 			["name"]: (string),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			assert(payload["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			table.insert(outgoing_inst, payload["owner"])
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)
@@ -345,12 +466,15 @@ local returns = {
 			end
 		end,
 		FireSet = function(Set: { [Player]: any }, payload: ({
+			["owner"]: (Player),
 			["position"]: (Vector3),
 			["name"]: (string),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
+			assert(payload["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			table.insert(outgoing_inst, payload["owner"])
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].X)
 			alloc(4)

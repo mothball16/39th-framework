@@ -1,6 +1,6 @@
-opt server_output = "./Aware_Server/Network.luau"
-opt client_output = "./Aware_Player/Network.luau"
-opt types_output = "./Aware_Framework/Core/NetworkTypes.luau"
+opt server_output = "./Server/Network.luau"
+opt client_output = "./Player/Network.luau"
+opt types_output = "./Framework/Core/NetworkTypes.luau"
 opt remote_scope = "PING"
 
 type RequestPingPayload = struct {
@@ -14,7 +14,15 @@ event RequestPing = {
 	data: (payload: RequestPingPayload),
 }
 
+event RequestRemovePing = {
+	from: Client,
+	type: Reliable,
+	call: SingleAsync,
+	data: (),
+}
+
 type ReportPingPayload = struct {
+	owner: Instance.Player,
 	position: Vector3, 
 	name: string.utf8,
 }
@@ -24,4 +32,15 @@ event ReportPing = {
 	type: Reliable,
 	call: ManyAsync,
 	data: (payload: ReportPingPayload),
+}
+
+type ReportRemovePingPayload = struct {
+	owner: Instance.Player,
+}
+
+event ReportRemovePing = {
+	from: Server,
+	type: Reliable,
+	call: ManyAsync,
+	data: (payload: ReportRemovePingPayload),
 }

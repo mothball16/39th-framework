@@ -1,6 +1,7 @@
 local NametagModule = {}
 
 function NametagModule.HookPlayer(player: Player)
+    
     local characterAdded = player.CharacterAdded:Connect(function(character)
         
     end)

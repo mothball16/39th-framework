@@ -132,8 +132,14 @@ if not RunService:IsRunning() then
 	local noop = function() end
 	return table.freeze({
 		SendEvents = noop,
+		RequestRemovePing = table.freeze({
+			Fire = noop
+		}),
 		RequestPing = table.freeze({
 			Fire = noop
+		}),
+		ReportRemovePing = table.freeze({
+			On = noop
 		}),
 		ReportPing = table.freeze({
 			On = noop
@@ -145,12 +151,16 @@ local remotes = ReplicatedStorage:WaitForChild("ZAP")
 local reliable = remotes:WaitForChild("PING_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected PING_RELIABLE to be a RemoteEvent")
 
-export type ReportPingPayload = ({
-	["position"]: (Vector3),
-	["name"]: (string),
+export type ReportRemovePingPayload = ({
+	["owner"]: (Player),
 })
 export type RequestPingPayload = ({
 	["position"]: (Vector3),
+})
+export type ReportPingPayload = ({
+	["owner"]: (Player),
+	["position"]: (Vector3),
+	["name"]: (string),
 })
 
 local function SendEvents()
@@ -169,8 +179,10 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local reliable_events = table.create(1)
-local reliable_event_queue: { [number]: { any } } = table.create(1)
+local reliable_events = table.create(2)
+local reliable_event_queue: { [number]: { any } } = table.create(2)
+reliable_events[1] = {}
+reliable_event_queue[1] = {}
 reliable_events[0] = {}
 reliable_event_queue[0] = {}
 reliable.OnClientEvent:Connect(function(buff, inst)
@@ -181,9 +193,30 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 	local len = buffer.len(buff)
 	while incoming_read < len do
 		local id = buffer.readu8(buff, read(1))
-		if id == 0 then -- ReportPing
+		if id == 1 then -- ReportRemovePing
 			local value
 			value = {  }
+			incoming_ipos = incoming_ipos + 1
+			value["owner"] = incoming_inst[incoming_ipos]
+			assert(value["owner"] ~= nil, "received instance is nil!")
+			assert(value["owner"]:IsA("Player"), "received instance is not of the Player class!")
+			if reliable_events[1][1] then
+				for _, cb in reliable_events[1] do
+					task.spawn(cb, value)
+				end
+			else
+				table.insert(reliable_event_queue[1], value)
+				if #reliable_event_queue[1] > 64 then
+					warn(`[ZAP] {#reliable_event_queue[1]} events in queue for ReportRemovePing. Did you forget to attach a listener?`)
+				end
+			end
+		elseif id == 0 then -- ReportPing
+			local value
+			value = {  }
+			incoming_ipos = incoming_ipos + 1
+			value["owner"] = incoming_inst[incoming_ipos]
+			assert(value["owner"] ~= nil, "received instance is nil!")
+			assert(value["owner"]:IsA("Player"), "received instance is not of the Player class!")
 			value["position"] = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
 			local len_1 = buffer.readu16(incoming_buff, read(2))
 			value["name"] = buffer.readstring(incoming_buff, read(len_1), len_1)
@@ -208,6 +241,12 @@ table.freeze(polling_queues_unreliable)
 
 local returns = {
 	SendEvents = SendEvents,
+	RequestRemovePing = {
+		Fire = function()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+		end,
+	},
 	RequestPing = {
 		Fire = function(payload: ({
 			["position"]: (Vector3),
@@ -222,8 +261,23 @@ local returns = {
 			buffer.writef32(outgoing_buff, outgoing_apos, payload["position"].Z)
 		end,
 	},
+	ReportRemovePing = {
+		On = function(Callback: (payload: ({
+			["owner"]: (Player),
+		})) -> ())
+			table.insert(reliable_events[1], Callback)
+			for _, value in reliable_event_queue[1] do
+				task.spawn(Callback, value)
+			end
+			reliable_event_queue[1] = {}
+			return function()
+				table.remove(reliable_events[1], table.find(reliable_events[1], Callback))
+			end
+		end,
+	},
 	ReportPing = {
 		On = function(Callback: (payload: ({
+			["owner"]: (Player),
 			["position"]: (Vector3),
 			["name"]: (string),
 		})) -> ())
