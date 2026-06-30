@@ -3,9 +3,9 @@ local Players = game:GetService("Players")
 
 local Access = require("@game/ReplicatedStorage/Aware_Framework/Access")
 local Config = Access.config
-local UserSettings = require("./UserSettings")
-local Network = require("./Network")
-local PingController = require("./PingController").new()
+local UserSettings = require("./Core/UserSettings")
+local Network = require("./Core/Network")
+local PingController = require("./Controllers/PingController")
 
 local localPlayer = Players.LocalPlayer
 local cam = workspace.CurrentCamera
@@ -38,16 +38,16 @@ end
 local function evaluatePing()
     local mouseLocation = UIS:GetMouseLocation()
     local screenHitPosition = findViewportHitPosition(mouseLocation.X, mouseLocation.Y, Config.PingMaxDistance)
-    local currentPing = PingController:GetPingTag(localPlayer)
+    local currentPing = PingController.GetPingTag(localPlayer)
 
-    if currentPing and pingWithinDeadzone(currentPing, mouseLocation) then
-        PingController:DeletePingTag(localPlayer)
+    if currentPing and currentPing.instance and pingWithinDeadzone(currentPing.instance, mouseLocation) then
+        PingController.DeletePingTag(localPlayer)
         Network.RequestRemovePing.Fire()
         return
     end
 
     -- create a new ping here
-    PingController:RegisterPingTag(localPlayer, screenHitPosition, {
+    PingController.RegisterPingTag(localPlayer, screenHitPosition, {
         imageId = Config.PingImageId,
         name = localPlayer.DisplayName,
         size = UserSettings.PingSize,
@@ -58,21 +58,22 @@ local function evaluatePing()
 end
 
 local function evaluateRemovePing()
-    local pings = PingController:GetPingTags()
+    local pings = PingController.GetPingTags()
     local mouseLocation = UIS:GetMouseLocation()
 
     -- check if we got any pings in the deadzone - if we do, then target that one for deletion and return early
-    for _, ping in pings do
-        if not pingWithinDeadzone(ping, mouseLocation) then continue end
-        PingController:DeletePingTag(ping.owner)
-        if ping.owner == localPlayer then
+    for owner, ping in pings do
+        if not pingWithinDeadzone(ping.instance, mouseLocation) then continue end
+        
+        PingController.DeletePingTag(owner)
+        if owner == localPlayer then
             Network.RequestRemovePing.Fire()
         end
         return
     end
 
     -- no selected ping to delete, just delete everything
-    PingController:DeleteAllPingTags()
+    PingController.DeleteAllPingTags()
     Network.RequestRemovePing.Fire()
 end
 
@@ -85,8 +86,12 @@ UIS.InputBegan:Connect(function(input, processed)
     end
 end)
 
+Players.PlayerRemoving:Connect(function(player)
+	PingController.DeletePingTag(player)
+end)
+
 Network.ReportPing.On(function(data)
-    PingController:RegisterPingTag(data.owner, data.position, {
+    PingController.RegisterPingTag(data.owner, data.position, {
         imageId = Config.PingImageId,
         name = data.name,
         size = UserSettings.PingSize,
@@ -94,5 +99,5 @@ Network.ReportPing.On(function(data)
 end)
 
 Network.ReportRemovePing.On(function(data)
-    PingController:DeletePingTag(data.owner)
+    PingController.DeletePingTag(data.owner)
 end)

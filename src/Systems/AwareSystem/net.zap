@@ -1,5 +1,5 @@
-opt server_output = "./Server/Network.luau"
-opt client_output = "./Player/Network.luau"
+opt server_output = "./Server/Net/Network.luau"
+opt client_output = "./Player/Core/Network.luau"
 opt types_output = "./Framework/Core/NetworkTypes.luau"
 opt remote_scope = "PING"
 

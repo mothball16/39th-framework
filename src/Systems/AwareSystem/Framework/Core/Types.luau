@@ -1,3 +1,5 @@
+--!strict
+local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 local Types = {}
 
 export type GetTeamValue = (player1: Player) -> string?
@@ -11,11 +13,30 @@ export type GameSettings = {
     PingImageId: string,
     -- max distance for pinging
     PingMaxDistance: number,
+    -- interval at which to update the team state
+    TeamUpdateInterval: number,
 }
 
+-- properties for the visual display of a ping tag
 export type PingTagProps = {
     imageId: string,
     name: string,
+}
+
+-- information stored within the state for a ping
+export type PingInfo = PingTagProps & {
+    position: Vector3,
+    owner: Player,
+}
+
+export type OwnedValues = {
+    Team: string?,
+    Pings: { [Player]: PingInfo },
+}
+
+export type State = {
+    valuesByPlayer: Charm.Atom<{ [Player]: OwnedValues }>,
+    valuesByTeam: Charm.Getter<{ [string]: OwnedValues }>,
 }
 
 return Types

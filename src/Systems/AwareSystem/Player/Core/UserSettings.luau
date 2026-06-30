@@ -1,4 +1,7 @@
 --!strict
+--[[
+temporarily hardcoded client-side settings, will be replaced with a config system later
+]]
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 local atom = Charm.atom
 export type UserSettings = {
