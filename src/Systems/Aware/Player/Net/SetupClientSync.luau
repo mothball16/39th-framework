@@ -1,9 +1,7 @@
 --!strict
 local Client = require("@game/ReplicatedStorage/Packages/charm-sync").client
-local Events = require("@game/StarterPlayer/StarterPlayerScripts/Systems/StateSync/Network")
+local toNamespace = require("@game/ReplicatedStorage/Systems/StateSync/Namespace").toNamespace
 
 return function<T>(state: T)
-	Client.addSignals(state)
-	
-	Events.RequestState.Fire()
+	Client.addSignals(toNamespace(state, "aware"))
 end
