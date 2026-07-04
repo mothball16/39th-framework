@@ -2,7 +2,7 @@
     "folders": [
         {
             "name": "Faction System",
-            "path": "../src/Systems/FactionSystem"
+            "path": "../src/Systems/Faction"
         }
     ],
     "settings": {}

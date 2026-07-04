@@ -2,7 +2,7 @@
     "folders": [
         {
             "name": "Radio System",
-            "path": "../src/Systems/RadioSystem"
+            "path": "../src/Systems/Radio"
         }
     ],
     "settings": {}

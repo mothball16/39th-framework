@@ -5,20 +5,20 @@ in retrospect - player attributes may be a smarter choice, consider rebuilding t
 
 local RunService = game:GetService("RunService")
 
-local Types = require("@game/ReplicatedStorage/Aware_Framework/Core/Types")
+local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 
-local FactionState = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
-local Utilities = require("@game/ReplicatedStorage/Faction_Framework/Logic/Utilities")
+local FactionState = require("@game/ReplicatedStorage/Systems/Faction/Core/State")
+local Utilities = require("@game/ReplicatedStorage/Systems/Faction/Logic/Utilities")
 
 local state: FactionState.State
 
 if RunService:IsServer() then
-	local runtime = require("@game/ServerScriptService/Faction_Server/ServerRuntimeLocator").GetRuntime()
+	local runtime = require("@game/ServerScriptService/Systems/Faction/ServerRuntimeLocator").GetRuntime()
 	state = runtime.state
 else
 	local player = game:GetService("Players").LocalPlayer
 	if not player then error("no localplayer found??") end
-	local runtimeLocator = require(player.PlayerScripts:WaitForChild("Faction_Player"):WaitForChild("ClientRuntimeLocator"))
+	local runtimeLocator = require(player.PlayerScripts:WaitForChild("Systems"):WaitForChild("Faction"):WaitForChild("ClientRuntimeLocator"))
 	local runtime = runtimeLocator.GetRuntime()
 	state = runtime.state
 end

@@ -1,0 +1,62 @@
+{
+  "name": "weapon",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$ignoreUnknownInstances": true,
+      "Packages": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../Packages"
+      },
+      "DevPackages": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../DevPackages"
+      },
+      "Utility": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../src/Utility"
+      },
+      "Systems": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": false,
+        "Weapon": {
+          "$path": "Framework"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Systems": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": false,
+        "Weapon": {
+          "$path": "Server"
+        }
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
+        "Systems": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": false,
+          "Weapon": {
+            "$path": "Character"
+          }
+        }
+      },
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Systems": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": false,
+          "Weapon": {
+            "$path": "Player"
+          }
+        }
+      }
+    }
+  }
+}

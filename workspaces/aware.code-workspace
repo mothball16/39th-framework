@@ -2,7 +2,7 @@
     "folders": [
         {
             "name": "Aware System",
-            "path": "../src/Systems/AwareSystem"
+            "path": "../src/Systems/Aware"
         }
     ],
     "settings": {}

@@ -2,7 +2,7 @@
     "folders": [
         {
             "name": "Weapon System",
-            "path": "../src/Systems/WeaponSystem"
+            "path": "../src/Systems/Weapon"
         }
     ],
     "settings": {}

@@ -10,138 +10,99 @@
         "$ignoreUnknownInstances": false,
         "$path": "Packages"
       },
-
       "DevPackages": {
         "$ignoreUnknownInstances": false,
         "$path": "DevPackages"
       },
-
       "Utility": {
         "$ignoreUnknownInstances": false,
-        "$path":"src/Utility"
+        "$path": "src/Utility"
       },
-
-      "Synced": {
+      "Systems": {
+        "$className": "Folder",
         "$ignoreUnknownInstances": false,
-        "$path": "src/General/Shared"
-      },
-
-      "Faction_Framework": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/FactionSystem/Framework"
-      },
-
-      "Aware_Framework": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/AwareSystem/Framework"
-      },
-
-      "Aware_FactionMod": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/Aware_FactionMod/Shared"
-      },
-
-      "SPH_Framework": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/WeaponSystem/Framework"
-      },
-
-      "Radio_Framework": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/RadioSystem/Framework"
+        "Faction": {
+          "$path": "src/Systems/Faction/Framework"
+        },
+        "Aware": {
+          "$path": "src/Systems/Aware/Framework"
+        },
+        "Aware_FactionMod": {
+          "$path": "src/Systems/Aware_FactionMod/Shared"
+        },
+        "Weapon": {
+          "$path": "src/Systems/Weapon/Framework"
+        },
+        "Radio": {
+          "$path": "src/Systems/Radio/Framework"
+        }
       }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$ignoreUnknownInstances": true,
-
-      "Synced": {
+      "Systems": {
+        "$className": "Folder",
         "$ignoreUnknownInstances": false,
-        "$path": "src/General/Server"
-      },
-
-      "Faction_Server": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/FactionSystem/Server"
-      },
-
-      "SPH_Server": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/WeaponSystem/Server"
-      },
-
-      "Aware_Server": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/AwareSystem/Server"
-      },
-
-      "Aware_FactionMod": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/Aware_FactionMod/Server"
-      },
-
-      "Radio_Server": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/RadioSystem/Server"
-      },
-
-      "StateSync_Server": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/StateSync/Server"
+        "Faction": {
+          "$path": "src/Systems/Faction/Server"
+        },
+        "Weapon": {
+          "$path": "src/Systems/Weapon/Server"
+        },
+        "Aware": {
+          "$path": "src/Systems/Aware/Server"
+        },
+        "Aware_FactionMod": {
+          "$path": "src/Systems/Aware_FactionMod/Server"
+        },
+        "Radio": {
+          "$path": "src/Systems/Radio/Server"
+        },
+        "General": {
+          "$path": "src/Systems/General/Server"
+        },
+        "StateSync": {
+          "$path": "src/Systems/StateSync/Server"
+        }
       }
-
     },
-
     "StarterPlayer": {
       "$className": "StarterPlayer",
-      "$ignoreUnknownInstances": true,
-      
       "StarterCharacterScripts": {
         "$className": "StarterCharacterScripts",
-        "$ignoreUnknownInstances": true,
-
-        "SPH_Character": {
+        "Systems": {
+          "$className": "Folder",
           "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/WeaponSystem/Character"
+          "Weapon": {
+            "$path": "src/Systems/Weapon/Character"
+          }
         }
       },
-
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "$ignoreUnknownInstances": true,
-        
-        "Synced": {
+        "Systems": {
+          "$className": "Folder",
           "$ignoreUnknownInstances": false,
-          "$path": "src/General/Client"
-        },
-
-        "Faction_Player": {
-          "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/FactionSystem/Player"
-        },
-
-        "SPH_Player": {
-          "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/WeaponSystem/Player"
-        },
-
-        "Aware_Player": {
-          "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/AwareSystem/Player"
-        },
-
-        "Radio_Client": {
-          "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/RadioSystem/Client"
-        },
-
-        "StateSync_Player": {
-          "$ignoreUnknownInstances": false,
-          "$path": "src/Systems/StateSync/Player"
+          "Faction": {
+            "$path": "src/Systems/Faction/Player"
+          },
+          "Weapon": {
+            "$path": "src/Systems/Weapon/Player"
+          },
+          "Aware": {
+            "$path": "src/Systems/Aware/Player"
+          },
+          "Radio": {
+            "$path": "src/Systems/Radio/Client"
+          },
+          "General": {
+            "$path": "src/Systems/General/Client"
+          },
+          "StateSync": {
+            "$path": "src/Systems/StateSync/Player"
+          }
         }
       }
-
-      
     }
   }
 }

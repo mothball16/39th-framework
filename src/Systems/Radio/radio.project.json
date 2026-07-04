@@ -1,0 +1,52 @@
+{
+  "name": "radio",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$ignoreUnknownInstances": true,
+      "Packages": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../Packages"
+      },
+      "DevPackages": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../DevPackages"
+      },
+      "Utility": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../src/Utility"
+      },
+      "Systems": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": false,
+        "Radio": {
+          "$path": "Framework"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Systems": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": false,
+        "Radio": {
+          "$path": "Server"
+        }
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Systems": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": false,
+          "Radio": {
+            "$path": "Client"
+          }
+        }
+      }
+    }
+  }
+}

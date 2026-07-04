@@ -20,21 +20,24 @@
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$ignoreUnknownInstances": true,
-      "StateSync_Server": {
+      "Systems": {
+        "$className": "Folder",
         "$ignoreUnknownInstances": false,
-        "$path": "Server"
+        "StateSync": {
+          "$path": "Server"
+        }
       }
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
-      "$ignoreUnknownInstances": true,
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "$ignoreUnknownInstances": true,
-        "StateSync_Player": {
+        "Systems": {
+          "$className": "Folder",
           "$ignoreUnknownInstances": false,
-          "$path": "Player"
+          "StateSync": {
+            "$path": "Player"
+          }
         }
       }
     }

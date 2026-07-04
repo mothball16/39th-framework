@@ -2,19 +2,19 @@
     "folders": [
         {
             "name": "Faction",
-            "path": "../src/Systems/FactionSystem"
+            "path": "../src/Systems/Faction"
         },
         {
             "name": "Aware",
-            "path": "../src/Systems/AwareSystem"
+            "path": "../src/Systems/Aware"
         },
         {
             "name": "Weapon",
-            "path": "../src/Systems/WeaponSystem"
+            "path": "../src/Systems/Weapon"
         },
         {
             "name": "Radio",
-            "path": "../src/Systems/RadioSystem"
+            "path": "../src/Systems/Radio"
         }
     ],
     "settings": {}

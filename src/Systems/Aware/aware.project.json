@@ -1,0 +1,58 @@
+{
+  "name": "aware",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$ignoreUnknownInstances": true,
+      "Packages": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../Packages"
+      },
+      "DevPackages": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../DevPackages"
+      },
+      "Utility": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../../../src/Utility"
+      },
+      "Systems": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": false,
+        "Aware": {
+          "$path": "Framework"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Systems": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": false,
+        "Aware": {
+          "$path": "Server"
+        },
+        "StateSync": {
+          "$path": "../StateSync/Server"
+        }
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Systems": {
+          "$className": "Folder",
+          "$ignoreUnknownInstances": false,
+          "Aware": {
+            "$path": "Player"
+          },
+          "StateSync": {
+            "$path": "../StateSync/Player"
+          }
+        }
+      }
+    }
+  }
+}
