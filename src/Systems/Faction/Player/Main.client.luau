@@ -1,3 +1,5 @@
+require("@game/ReplicatedStorage/Packages/Charm").flags.frozen = false
+
 local ClientRuntime = require("./ClientRuntime")
 local Access = require("@game/ReplicatedStorage/Systems/Faction/Access")
 local ClientRuntimeLocator = require("./ClientRuntimeLocator")

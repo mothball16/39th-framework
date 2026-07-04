@@ -35,6 +35,9 @@
         },
         "Radio": {
           "$path": "src/Systems/Radio/Framework"
+        },
+        "StateSync": {
+          "$path": "src/Systems/StateSync/Shared"
         }
       }
     },

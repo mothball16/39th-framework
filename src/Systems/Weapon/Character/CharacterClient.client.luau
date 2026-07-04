@@ -1,3 +1,5 @@
+require("@game/ReplicatedStorage/Packages/Charm").flags.frozen = false
+
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local runService = game:GetService("RunService")
 local userInputService = game:GetService("UserInputService")

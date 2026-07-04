@@ -31,11 +31,11 @@ export type PingInfo = PingTagProps & {
 
 export type OwnedValues = {
     Team: string?,
-    Pings: { [Player]: PingInfo },
+    Pings: { [string]: PingInfo },
 }
 
 export type State = {
-    valuesByPlayer: Charm.Atom<{ [Player]: OwnedValues }>,
+    valuesByPlayer: Charm.Atom<{ [string]: OwnedValues }>,
     valuesByTeam: Charm.Getter<{ [string]: OwnedValues }>,
 }
 

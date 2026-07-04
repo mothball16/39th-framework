@@ -12,4 +12,3 @@ end)
 Players.PlayerRemoving:Connect(function(player)
 	Server.removeClient(player)
 end)
-

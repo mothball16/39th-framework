@@ -1,3 +1,5 @@
+require("@game/ReplicatedStorage/Packages/Charm").flags.frozen = false
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Access = require("@game/ReplicatedStorage/Systems/Faction/Access")
@@ -5,7 +7,7 @@ local Types = require("@game/ReplicatedStorage/Systems/Faction/Core/Types")
 
 local ServerRuntimeLocator = require("./ServerRuntimeLocator")
 local ServerRuntime = require("./ServerRuntime")
-local SetupStateSync = require("./SetupStateSync")
+local ServerStateSync = require("./ServerStateSync")
 
 if Access.Config.DebugMode and game:GetService("RunService"):IsStudio() then
 	local startTick = tick()
@@ -70,4 +72,4 @@ for _, factionConfig in pairs(factionConfigs) do
 	runtime:RegisterFaction(factionConfig)
 end
 
-SetupStateSync(runtime.state)
+ServerStateSync(runtime.state)

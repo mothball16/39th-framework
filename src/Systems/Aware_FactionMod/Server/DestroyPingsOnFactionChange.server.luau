@@ -4,6 +4,8 @@ this script clears player pings upon a faction change
 this should honestly 99% be useless as factions typically change based off teams (already integrated),
 but it's here on the off-chance factions are used without a dependence on teams
 ]]
+require("@game/ReplicatedStorage/Packages/Charm").flags.frozen = false
+
 local ServerRuntimeLocator = require("@game/ServerScriptService/Systems/Faction/ServerRuntimeLocator")
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 local FactionTypes = require("@game/ReplicatedStorage/Systems/Faction/Core/Types")

@@ -1,4 +1,6 @@
 -- Monolithic server script (controller logic inlined).
+require("@game/ReplicatedStorage/Packages/Charm").flags.frozen = false
+
 local players = game:GetService("Players")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = replicatedStorage:WaitForChild("Utility")

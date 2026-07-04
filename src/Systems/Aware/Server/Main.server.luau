@@ -1,4 +1,6 @@
 --!strict
+require("@game/ReplicatedStorage/Packages/Charm").flags.frozen = false
+
 local Events = require("./Net/Network")
 
 local Access = require("@game/ReplicatedStorage/Systems/Aware/Access")
