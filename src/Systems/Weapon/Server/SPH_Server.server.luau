@@ -49,7 +49,6 @@ local VictimFinder = require(Framework.Combat.VictimFinder)
 local WeaponSetup = require(Framework.Weapons.WeaponSetup)
 local Types = require(Framework.Core.ConfigurationTypes)
 local warnPrefix = "【 SPEARHEAD 】 "
-print(warnPrefix .. "Loading Server " .. config.version)
 
 local dtsInstall = replicatedStorage:FindFirstChild("DTS_Assets")
 local atmod
@@ -411,7 +410,6 @@ end
 
 local function initializePlayerLifecycle()
 	players.PlayerAdded:Connect(function(newPlayer: Player)
-		print(warnPrefix .. newPlayer.Name .. " joined the server")
 		if config.serverBanList and table.find(naughtyList, newPlayer.UserId) then
 			newPlayer:Kick("Disconnected")
 			warn(warnPrefix .. newPlayer.Name .. " attempted to join a server they've been banned from")
@@ -459,8 +457,7 @@ local function initializePlayerLifecycle()
 		newPlayer.CharacterAdded:Connect(function(newChar: Model)
 			newChar.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 			newChar:AddTag("SPH_Character")
-			
-			print(warnPrefix .. newPlayer.Name .. " spawned.")
+
 			local head = newChar:WaitForChild("Head", 20) :: Instance
 			local humanoid = newChar:WaitForChild("Humanoid", 20)
 			humanoid:WaitForChild("Animator", 20)
@@ -579,7 +576,6 @@ local function initializePlayerLifecycle()
 		end)
 	end)
 	players.PlayerRemoving:Connect(function(player)
-		print(warnPrefix .. player.Name .. " left the server")
 		local character = player.Character
 		if config.dropOnLeave and character then
 			local equippedTool = character:FindFirstChildWhichIsA("Tool")
@@ -1318,5 +1314,3 @@ initializeCombat()
 initializeAmmo()
 initializeServerReplication()
 initializeInteraction()
-
-print(warnPrefix .. "Main Server loaded successfully!")

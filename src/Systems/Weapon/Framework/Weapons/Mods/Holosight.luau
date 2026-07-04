@@ -45,7 +45,6 @@ function HolosightMod:SyncActiveSights()
 	end)
 
 	return function()
-		print("disconnecting")
 		conn:Disconnect()
 		conn = nil
 	end

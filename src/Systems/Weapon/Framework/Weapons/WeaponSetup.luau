@@ -83,7 +83,6 @@ end
 local function rigEcho(grip: Instance)
 	local fire = grip:FindFirstChild("Fire") :: Sound?
 	if not fire then
-		print("no fire sound found on grip")
 		return
 	end
 	local echo = grip:FindFirstChild("Echo") :: Sound?

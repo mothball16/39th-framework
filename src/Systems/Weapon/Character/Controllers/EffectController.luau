@@ -249,7 +249,6 @@ function EffectController.UpdateHeartbeat(self: EffectController, _dt: number)
 end
 
 function EffectController.Destroy(self: EffectController)
-	print("destroying effect controller")
 	if self._blurTween then
 		self._blurTween:Cancel()
 	end

@@ -50,7 +50,6 @@ local LaserMod = require(Framework.Weapons.Mods.LaserMod)
 
 bulletHandler.Initialize(player)
 
-local warnPrefix = "【 SPEARHEAD 】 "
 humanoid.WalkSpeed = config.walkSpeed
 
 local sphWorkspace = workspace:WaitForChild("SPH_Workspace")
@@ -316,7 +315,6 @@ end)
 
 runService.RenderStepped:Connect(function(dt:number)
 	if math.ceil(1 / dt) < 5 then -- Skip the render stepped function if FPS is lower than 5 to avoid stuttering issues
-		print(warnPrefix.."RenderStepped skipped due to low framerate.")
 		return
 	end
 

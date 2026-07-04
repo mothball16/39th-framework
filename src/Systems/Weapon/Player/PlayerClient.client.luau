@@ -1,11 +1,4 @@
-local replicatedStorage = game:GetService("ReplicatedStorage")
 local runService = game:GetService("RunService")
-local Framework = replicatedStorage.Systems.Weapon
-local Access = require(Framework.Access)
-local config = Access.config
-
-local warnPrefix = "【 SPEARHEAD 】 "
-print(warnPrefix.."Loading Client "..config.version)
 
 local Controllers = script.Parent:WaitForChild("Controllers")
 local WeaponReplicationController = require(Controllers:WaitForChild("WeaponReplicationController"))
@@ -19,5 +12,3 @@ runService.RenderStepped:Connect(function(dt)
 	AttachmentReplicationController.UpdateRender(dt)
 	StanceReplicationController.UpdateRender(dt)
 end)
-
-print(warnPrefix.."Main Client loaded successfully!")
