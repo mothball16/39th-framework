@@ -184,9 +184,6 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
-export type ReportRemovePingPayload = ({
-	["owner"]: (Player),
-})
 export type RequestPingPayload = ({
 	["position"]: (Vector3),
 })
@@ -194,6 +191,9 @@ export type ReportPingPayload = ({
 	["owner"]: (Player),
 	["position"]: (Vector3),
 	["name"]: (string),
+})
+export type ReportRemovePingPayload = ({
+	["owner"]: (Player),
 })
 
 local function SendEvents()

@@ -4,7 +4,7 @@ local Players = game:GetService("Players")
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
 
 local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
-local Events = require("@game/ReplicatedStorage/Faction_Framework/Core/Events").GetNamespace()
+local Events = require("@game/ReplicatedStorage/Faction_Framework/Core/Events")
 local Enums = require("@game/ReplicatedStorage/Faction_Framework/Core/Enums")
 local Types = require("@game/ReplicatedStorage/Faction_Framework/Core/Types")
 local StateActions = require("@game/ReplicatedStorage/Faction_Framework/Logic/StateActions")

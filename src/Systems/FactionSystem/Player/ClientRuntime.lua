@@ -7,7 +7,7 @@ local VideCharm = require("@game/ReplicatedStorage/Packages/vide-charm")
 local useAtom = VideCharm.useAtom
 
 local create = Vide.create
-local Events = require("@game/ReplicatedStorage/Faction_Framework/Core/Events").GetNamespace()
+local Events = require("@game/ReplicatedStorage/Faction_Framework/Core/Events")
 local State = require("@game/ReplicatedStorage/Faction_Framework/Core/State")
 local Utilities = require("@game/ReplicatedStorage/Faction_Framework/Logic/Utilities")
 

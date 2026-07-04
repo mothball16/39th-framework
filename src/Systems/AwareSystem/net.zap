@@ -1,5 +1,5 @@
 opt server_output = "./Server/Net/Network.luau"
-opt client_output = "./Player/Core/Network.luau"
+opt client_output = "./Player/Net/Network.luau"
 opt types_output = "./Framework/Core/NetworkTypes.luau"
 opt remote_scope = "PING"
 
@@ -23,7 +23,7 @@ event RequestRemovePing = {
 
 type ReportPingPayload = struct {
 	owner: Instance.Player,
-	position: Vector3, 
+	position: Vector3,
 	name: string.utf8,
 }
 

@@ -15,7 +15,7 @@ export type CleanupFunction = () -> ()
 
 local PingController = {}
 
-local _ownedPings: {[Player]: {instance: Instance, cleanup: CleanupFunction}} = {}
+local _ownedPings: {[Player]: {instance: BasePart, cleanup: CleanupFunction}} = {}
 
 
 -- builds a ping tag without any state registration

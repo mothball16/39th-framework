@@ -1,5 +1,5 @@
 {
-  "name": "aware-system",
+  "name": "state-sync",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
@@ -16,22 +16,14 @@
       "Utility": {
         "$ignoreUnknownInstances": false,
         "$path": "../../../src/Utility"
-      },
-      "Aware_Framework": {
-        "$ignoreUnknownInstances": false,
-        "$path": "Framework"
       }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "$ignoreUnknownInstances": true,
-      "Aware_Server": {
-        "$ignoreUnknownInstances": false,
-        "$path": "Server"
-      },
       "StateSync_Server": {
         "$ignoreUnknownInstances": false,
-        "$path": "../StateSync/Server"
+        "$path": "Server"
       }
     },
     "StarterPlayer": {
@@ -40,13 +32,9 @@
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "$ignoreUnknownInstances": true,
-        "Aware_Player": {
-          "$ignoreUnknownInstances": false,
-          "$path": "Player"
-        },
         "StateSync_Player": {
           "$ignoreUnknownInstances": false,
-          "$path": "../StateSync/Player"
+          "$path": "Player"
         }
       }
     }

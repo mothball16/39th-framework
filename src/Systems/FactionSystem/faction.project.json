@@ -28,6 +28,10 @@
       "Faction_Server": {
         "$ignoreUnknownInstances": false,
         "$path": "Server"
+      },
+      "StateSync_Server": {
+        "$ignoreUnknownInstances": false,
+        "$path": "../StateSync/Server"
       }
     },
     "StarterPlayer": {
@@ -39,6 +43,10 @@
         "Faction_Player": {
           "$ignoreUnknownInstances": false,
           "$path": "Player"
+        },
+        "StateSync_Player": {
+          "$ignoreUnknownInstances": false,
+          "$path": "../StateSync/Player"
         }
       }
     }

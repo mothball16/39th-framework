@@ -3,7 +3,6 @@
 observes and updates the state of the 
 ]]
 local Types = require("@game/ReplicatedStorage/Aware_Framework/Core/Types")
-local ServerState = require("./ServerState")
 local Access = require("@game/ReplicatedStorage/Aware_Framework/Access")
 local Maid = require("@game/ReplicatedStorage/Packages/maid")
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
@@ -17,29 +16,28 @@ local function spawnDisconnectable(fn: () -> ())
     end
 end
 
-return function()
+return function(state: Types.State)
     local maid = Maid.new()
 
     maid:GiveTask(Players.PlayerAdded:Connect(function(player)
-        ServerState.valuesByPlayer()[player] = {
+        state.valuesByPlayer()[player] = {
             Team = Access.config.GetTeamValue(player),
             Pings = {} :: { [Player]: Types.PingInfo },
         }
-        trigger(ServerState.valuesByPlayer)
+        trigger(state.valuesByPlayer)
     end))
 
     maid:GiveTask(Players.PlayerRemoving:Connect(function(player)
-        ServerState.valuesByPlayer()[player] = nil
-        trigger(ServerState.valuesByPlayer)
+        state.valuesByPlayer()[player] = nil
+        trigger(state.valuesByPlayer)
     end))
 
     maid:GiveTask(spawnDisconnectable(function()
         -- polling loop to update teams per player
         while task.wait(Access.config.TeamUpdateInterval) do
             local dirty = false
-            for player, ownedValues in ServerState.valuesByPlayer() do
+            for player, ownedValues in state.valuesByPlayer() do
                 local team = Access.config.GetTeamValue(player)
-
                 if team ~= ownedValues.Team then
                     ownedValues.Team = team
                     dirty = true
@@ -47,7 +45,7 @@ return function()
             end
 
             if dirty then
-                trigger(ServerState.valuesByPlayer)
+                trigger(state.valuesByPlayer)
             end
         end
     end))

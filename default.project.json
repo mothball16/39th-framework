@@ -36,6 +36,11 @@
         "$path": "src/Systems/AwareSystem/Framework"
       },
 
+      "Aware_FactionMod": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/Systems/Aware_FactionMod/Shared"
+      },
+
       "SPH_Framework": {
         "$ignoreUnknownInstances": false,
         "$path": "src/Systems/WeaponSystem/Framework"
@@ -65,19 +70,24 @@
         "$path": "src/Systems/WeaponSystem/Server"
       },
 
-      "Class_RadioMod": {
-        "$ignoreUnknownInstances": false,
-        "$path": "src/Systems/Class_RadioMod"
-      },
-
       "Aware_Server": {
         "$ignoreUnknownInstances": false,
         "$path": "src/Systems/AwareSystem/Server"
       },
 
+      "Aware_FactionMod": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/Systems/Aware_FactionMod/Server"
+      },
+
       "Radio_Server": {
         "$ignoreUnknownInstances": false,
         "$path": "src/Systems/RadioSystem/Server"
+      },
+
+      "StateSync_Server": {
+        "$ignoreUnknownInstances": false,
+        "$path": "src/Systems/StateSync/Server"
       }
 
     },
@@ -123,6 +133,11 @@
         "Radio_Client": {
           "$ignoreUnknownInstances": false,
           "$path": "src/Systems/RadioSystem/Client"
+        },
+
+        "StateSync_Player": {
+          "$ignoreUnknownInstances": false,
+          "$path": "src/Systems/StateSync/Player"
         }
       }
 

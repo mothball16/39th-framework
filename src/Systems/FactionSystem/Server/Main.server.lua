@@ -70,5 +70,4 @@ for _, factionConfig in pairs(factionConfigs) do
 	runtime:RegisterFaction(factionConfig)
 end
 
--- connect the server syncer
 SetupStateSync(runtime.state)
