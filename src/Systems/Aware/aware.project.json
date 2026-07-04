@@ -19,21 +19,23 @@
       },
       "Systems": {
         "$className": "Folder",
-        "$ignoreUnknownInstances": false,
         "Aware": {
+          "$ignoreUnknownInstances": false,
           "$path": "Framework"
         }
       }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
+      "$ignoreUnknownInstances": true,
       "Systems": {
         "$className": "Folder",
-        "$ignoreUnknownInstances": false,
         "Aware": {
+          "$ignoreUnknownInstances": false,
           "$path": "Server"
         },
         "StateSync": {
+          "$ignoreUnknownInstances": false,
           "$path": "../StateSync/Server"
         }
       }
@@ -42,13 +44,15 @@
       "$className": "StarterPlayer",
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true,
         "Systems": {
           "$className": "Folder",
-          "$ignoreUnknownInstances": false,
           "Aware": {
+            "$ignoreUnknownInstances": false,
             "$path": "Player"
           },
           "StateSync": {
+            "$ignoreUnknownInstances": false,
             "$path": "../StateSync/Player"
           }
         }

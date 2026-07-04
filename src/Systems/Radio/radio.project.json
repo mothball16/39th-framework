@@ -19,18 +19,19 @@
       },
       "Systems": {
         "$className": "Folder",
-        "$ignoreUnknownInstances": false,
         "Radio": {
+          "$ignoreUnknownInstances": false,
           "$path": "Framework"
         }
       }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
+      "$ignoreUnknownInstances": true,
       "Systems": {
         "$className": "Folder",
-        "$ignoreUnknownInstances": false,
         "Radio": {
+          "$ignoreUnknownInstances": false,
           "$path": "Server"
         }
       }
@@ -39,10 +40,11 @@
       "$className": "StarterPlayer",
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true,
         "Systems": {
           "$className": "Folder",
-          "$ignoreUnknownInstances": false,
           "Radio": {
+            "$ignoreUnknownInstances": false,
             "$path": "Client"
           }
         }

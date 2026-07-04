@@ -20,10 +20,11 @@
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
+      "$ignoreUnknownInstances": true,
       "Systems": {
         "$className": "Folder",
-        "$ignoreUnknownInstances": false,
         "General": {
+          "$ignoreUnknownInstances": false,
           "$path": "Server"
         }
       }
@@ -32,10 +33,11 @@
       "$className": "StarterPlayer",
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true,
         "Systems": {
           "$className": "Folder",
-          "$ignoreUnknownInstances": false,
           "General": {
+            "$ignoreUnknownInstances": false,
             "$path": "Client"
           }
         }
