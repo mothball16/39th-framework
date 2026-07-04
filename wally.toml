@@ -7,10 +7,10 @@ realm = "shared"
 [dependencies]
 tag-observer = "mothball16/tag-observer@0.0.1"
 
-Charm = "littensy/charm@0.11.0-rc.5"
-charm-sync = "littensy/charm-sync@0.4.0-rc.7"
-deep-charm = "littensy/deep-charm@0.1.0-rc.1"
-vide-charm = "littensy/vide-charm@0.4.0-rc.5"
+Charm = "littensy/charm@0.11.0"
+charm-sync = "littensy/charm-sync@0.4.0"
+deep-charm = "littensy/deep-charm@0.1.0"
+vide-charm = "littensy/vide-charm@0.4.0"
 
 Vide = "centau/vide@0.4.0"
 vide-ripple = "littensy/vide-ripple@0.10.2"
