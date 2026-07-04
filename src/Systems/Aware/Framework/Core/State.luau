@@ -8,13 +8,16 @@ return function()
     } :: Types.State
     
     State.valuesByTeam = Charm.computed(function()
-        local newValues = {}
-        for player, values in State.valuesByPlayer() do
-            if not newValues[values.Team] then
-                newValues[values.Team] = {}
+        local newValues: { [string]: { [string]: Types.OwnedValues } } = {}
+        for playerKey, values in State.valuesByPlayer() do
+            local team = values.Team
+            if not team then continue end
+            if not newValues[team] then
+                newValues[team] = {}
             end
-            newValues[values.Team][player] = values
+            newValues[team][playerKey] = values
         end
+        return newValues
     end)
     
     return State
