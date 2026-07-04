@@ -1,16 +1,20 @@
 --!strict
+--[[
+evaluates ping targeting and sends create/remove requests to the server
+does not know or care about PingTagRenderer
+]]
 
 local cam = workspace.CurrentCamera
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 
-local PingController = require("./PingController")
 local Network = require("../Net/Network")
+local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 local Access = require("@game/ReplicatedStorage/Systems/Aware/Access")
 local Config = Access.config
 local UserSettings = require("../Core/UserSettings")
 
-local PingInputHandler = {}
+local PingRequester = {}
 
 local function findViewportHitPosition(x: number, y: number, cast: number): (Vector3, boolean)
 	local Ray = cam:ViewportPointToRay(x, y)
@@ -27,8 +31,8 @@ local function findViewportHitPosition(x: number, y: number, cast: number): (Vec
 	return Raycast ~= nil and Raycast.Position or Ray.Origin + Ray.Direction * cast,  Raycast ~= nil
 end
 
-local function isPingWithinDeadzone(ping: BasePart, mouseLocation: Vector2): boolean
-    local currentPingScreenPosition = cam:WorldToViewportPoint(ping.Position)
+local function posWithinDeadzone(position: Vector3, mouseLocation: Vector2): boolean
+    local currentPingScreenPosition = cam:WorldToViewportPoint(position)
     currentPingScreenPosition = Vector2.new(currentPingScreenPosition.X, currentPingScreenPosition.Y)
     local deadzone = if UserSettings.UseDeadzone() 
         then math.min(cam.ViewportSize.X, cam.ViewportSize.Y) * UserSettings.PingClearDeadzone() -- use viewport scale for deadzone
@@ -38,45 +42,27 @@ local function isPingWithinDeadzone(ping: BasePart, mouseLocation: Vector2): boo
     return distance < deadzone
 end
 
--- determines if a ping should be created or deleted, and then creates or deletes it accordingly
-function PingInputHandler.EvaluatePing(mouseLocation: Vector2)
+-- determines if a ping should be created or deleted, and then requests to create or delete it accordingly
+function PingRequester.EvaluatePing(currentPingPos: Vector3?, mouseLocation: Vector2)
     local screenHitPosition = findViewportHitPosition(mouseLocation.X, mouseLocation.Y, Config.PingMaxDistance)
-    local currentPing = PingController.GetPingTag(localPlayer)
 
-    if currentPing and currentPing.instance and isPingWithinDeadzone(currentPing.instance, mouseLocation) then
-        PingController.DeletePingTag(localPlayer)
+    if currentPingPos and posWithinDeadzone(currentPingPos, mouseLocation) then
         Network.RequestRemovePing.Fire()
         return
     end
 
-    -- create a new ping here
-    PingController.RegisterPingTag(localPlayer, screenHitPosition, {
-        imageId = Config.PingImageId,
-        name = localPlayer.DisplayName,
-        size = UserSettings.PingSize,
-    })
     Network.RequestPing.Fire({
         position = screenHitPosition,
     })
 end
 
-function PingInputHandler.EvaluateRemovePing(mouseLocation: Vector2)
-    local pings = PingController.GetPingTags()
-
+function PingRequester.EvaluateRemovePing(ownedPings: {[string]: Types.PingInfo}, mouseLocation: Vector2)
     -- check if we got any pings in the deadzone - if we do, then target that one for deletion and return early
-    for owner, ping in pings do
-        if not isPingWithinDeadzone(ping.instance, mouseLocation) then continue end
-        
-        PingController.DeletePingTag(owner)
-        if owner == localPlayer then
-            Network.RequestRemovePing.Fire()
-        end
+    for category, ping in ownedPings do
+        if not posWithinDeadzone(ping.position, mouseLocation) then continue end
+        Network.RequestRemovePing.Fire()
         return
     end
-
-    -- no selected ping to delete, just delete everything
-    PingController.DeleteAllPingTags()
-    Network.RequestRemovePing.Fire()
 end
 
-return PingInputHandler
+return PingRequester

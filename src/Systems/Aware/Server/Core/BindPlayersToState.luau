@@ -1,6 +1,6 @@
 --!strict
 --[[
-observes and updates the state of the 
+binds Players service lifecycle and team polling to server state updates
 ]]
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 local Access = require("@game/ReplicatedStorage/Systems/Aware/Access")

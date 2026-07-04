@@ -1,4 +1,9 @@
-local TableUtil = require("@game/ReplicatedStorage/Packages/table-util")
+--!strict
+--[[
+renders and tears down world-space ping tag instances
+client state should connect ping lifetime to this module
+]]
+
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 local useAtom = require("@game/ReplicatedStorage/Packages/vide-charm").useAtom
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
@@ -13,13 +18,13 @@ type PingInstanceProps = Types.PingTagProps & { size: Charm.Atom<UDim2> }
 
 export type CleanupFunction = () -> ()
 
-local PingController = {}
+local PingTagRenderer = {}
 
 local _ownedPings: {[Player]: {instance: BasePart, cleanup: CleanupFunction}} = {}
 
 
 -- builds a ping tag without any state registration
-function PingController.CreatePingTag(owner: Instance, position: Vector3, props: PingInstanceProps): (CleanupFunction, Instance)
+function PingTagRenderer.CreatePingTag(owner: Instance, position: Vector3, props: PingInstanceProps): (CleanupFunction, BasePart)
 	local container = Instance.new("Part")
 	container.Name = "PingContainer"
 	container.Parent = workspace
@@ -47,30 +52,26 @@ function PingController.CreatePingTag(owner: Instance, position: Vector3, props:
 	end, container
 end
 
-function PingController.GetPingTags()
-	return _ownedPings
-end
-
-function PingController.GetPingTag(owner: Player)
+function PingTagRenderer.GetPingTag(owner: Player)
 	return _ownedPings[owner]
 end
 
--- clears, builds and registers a ping tag with the controller
-function PingController.RegisterPingTag(owner: Player, position: Vector3, props: PingInstanceProps): Instance
-	PingController.DeletePingTag(owner)
+-- clears, builds and registers a ping tag
+function PingTagRenderer.RegisterPingTag(owner: Player, position: Vector3, props: PingInstanceProps): Instance
+	PingTagRenderer.DeletePingTag(owner)
 
-	local cleanup, instance = PingController.CreatePingTag(owner, position, props)
+	local cleanup, instance = PingTagRenderer.CreatePingTag(owner, position, props)
 	_ownedPings[owner] = {
         owner = owner,
 		instance = instance,
 		cleanup = cleanup,
 	}
 
-	return PingController.GetPingTag(owner)
+	return instance
 end
 
 -- deletes a ping tag from the owned ping list
-function PingController.DeletePingTag(owner: Player)
+function PingTagRenderer.DeletePingTag(owner: Player)
 	local data = _ownedPings[owner]
 	if data and data.cleanup then
 		data.cleanup()
@@ -78,10 +79,4 @@ function PingController.DeletePingTag(owner: Player)
 	_ownedPings[owner] = nil
 end
 
-function PingController.DeleteAllPingTags()
-	for owner, _ in _ownedPings do
-		PingController.DeletePingTag(owner)
-	end
-end
-
-return PingController
+return PingTagRenderer
