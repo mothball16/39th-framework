@@ -22,6 +22,10 @@
         "Faction": {
           "$ignoreUnknownInstances": false,
           "$path": "Framework"
+        },
+        "StateSync": {
+          "$ignoreUnknownInstances": false,
+          "$path": "../StateSync/Shared"
         }
       }
     },
