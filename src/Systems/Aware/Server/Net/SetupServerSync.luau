@@ -5,6 +5,8 @@ local toNamespace = require("@game/ReplicatedStorage/Systems/StateSync/Namespace
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 return function(state: Types.State)
 	Events.RequestState.On(function(player)
-		Server.addSignalsToClient(player, toNamespace(state :: {[string]: any}, "aware"))
+		Server.addSignalsToClient(player, toNamespace({
+			valuesByPlayer = state.valuesByPlayer,
+		}, "aware"))
 	end)
 end
