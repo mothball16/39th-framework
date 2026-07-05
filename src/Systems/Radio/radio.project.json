@@ -21,7 +21,7 @@
         "$className": "Folder",
         "Radio": {
           "$ignoreUnknownInstances": false,
-          "$path": "Framework"
+          "$path": "Shared"
         }
       }
     },

@@ -1,5 +1,5 @@
 opt server_output = "./Server/Network.luau"
-opt client_output = "./Player/Network.luau"
+opt client_output = "./Client/Network.luau"
 
 opt remote_scope = "SHARED_STATE"
 opt remote_folder = "SHARED_STATE"

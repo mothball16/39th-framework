@@ -38,7 +38,7 @@
           "$className": "Folder",
           "StateSync": {
             "$ignoreUnknownInstances": false,
-            "$path": "Player"
+            "$path": "Client"
           }
         }
       }

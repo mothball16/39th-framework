@@ -21,7 +21,7 @@
         "$className": "Folder",
         "Faction": {
           "$ignoreUnknownInstances": false,
-          "$path": "Framework"
+          "$path": "Shared"
         },
         "StateSync": {
           "$ignoreUnknownInstances": false,
@@ -53,11 +53,11 @@
           "$className": "Folder",
           "Faction": {
             "$ignoreUnknownInstances": false,
-            "$path": "Player"
+            "$path": "Client"
           },
           "StateSync": {
             "$ignoreUnknownInstances": false,
-            "$path": "../StateSync/Player"
+            "$path": "../StateSync/Client"
           }
         }
       }

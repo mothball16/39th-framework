@@ -22,19 +22,19 @@
         "$className": "Folder",
         "$ignoreUnknownInstances": false,
         "Faction": {
-          "$path": "src/Systems/Faction/Framework"
+          "$path": "src/Systems/Faction/Shared"
         },
         "Aware": {
-          "$path": "src/Systems/Aware/Framework"
+          "$path": "src/Systems/Aware/Shared"
         },
         "Aware_FactionMod": {
           "$path": "src/Systems/Aware_FactionMod/Shared"
         },
         "Weapon": {
-          "$path": "src/Systems/Weapon/Framework"
+          "$path": "src/Systems/Weapon/Shared"
         },
         "Radio": {
-          "$path": "src/Systems/Radio/Framework"
+          "$path": "src/Systems/Radio/Shared"
         },
         "StateSync": {
           "$path": "src/Systems/StateSync/Shared"
@@ -87,13 +87,13 @@
           "$className": "Folder",
           "$ignoreUnknownInstances": false,
           "Faction": {
-            "$path": "src/Systems/Faction/Player"
+            "$path": "src/Systems/Faction/Client"
           },
           "Weapon": {
-            "$path": "src/Systems/Weapon/Player"
+            "$path": "src/Systems/Weapon/Client"
           },
           "Aware": {
-            "$path": "src/Systems/Aware/Player"
+            "$path": "src/Systems/Aware/Client"
           },
           "Radio": {
             "$path": "src/Systems/Radio/Client"
@@ -102,7 +102,7 @@
             "$path": "src/Systems/General/Client"
           },
           "StateSync": {
-            "$path": "src/Systems/StateSync/Player"
+            "$path": "src/Systems/StateSync/Client"
           }
         }
       }

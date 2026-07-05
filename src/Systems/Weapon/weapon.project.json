@@ -21,7 +21,7 @@
         "$className": "Folder",
         "Weapon": {
           "$ignoreUnknownInstances": false,
-          "$path": "Framework"
+          "$path": "Shared"
         }
       }
     },
@@ -56,7 +56,7 @@
           "$className": "Folder",
           "Weapon": {
             "$ignoreUnknownInstances": false,
-            "$path": "Player"
+            "$path": "Client"
           }
         }
       }
