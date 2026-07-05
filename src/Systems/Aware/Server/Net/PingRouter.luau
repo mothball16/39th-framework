@@ -1,36 +1,46 @@
+--!strict
+local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 local NetworkTypes = require("@game/ReplicatedStorage/Systems/Aware/Core/NetworkTypes")
 local Access = require("@game/ReplicatedStorage/Systems/Aware/Access")
-local Players = game:GetService("Players")
-local Events = require("./Network")
+local PlayerKey = require("@game/ReplicatedStorage/Systems/Aware/Core/PlayerKey")
+local ServerState = require("../Core/ServerState")
+
+local MAIN_PING = "Main"
 
 local PingRouter = {}
 
-function PingRouter.ProcessRequestPing(player: Player, inbound: NetworkTypes.RequestPingPayload)
-    local team = Access.config.GetTeamValue(player)
-    for _, receiver in Players:GetPlayers() do
-        if Access.config.ReplicateToSelf and receiver == player then continue end
-        if Access.config.GetTeamValue(receiver) == team then
-            local outbound: NetworkTypes.ReportPingPayload = {
-                position = inbound.position,
-                owner = player,
-                name = player.DisplayName,
-            }
-            Events.ReportPing.Fire(receiver, outbound)
-        end
-    end
+local function updateMainPing(player: Player, ping: Types.PingInfo?)
+	local playerKey = PlayerKey.ToPlayerKey(player)
+	ServerState.valuesByPlayer(function(previous)
+		local owned = previous[playerKey]
+		if not owned then
+			error(`No state entry for player {playerKey}`)
+		end
+
+		local ownedValues = owned :: Types.OwnedValues
+		local pings = table.clone(ownedValues.Pings)
+		pings[MAIN_PING] = ping
+
+		local next = table.clone(previous)
+		next[playerKey] = {
+			Team = ownedValues.Team,
+			Pings = pings,
+		}
+		return next
+	end)
 end
 
+function PingRouter.ProcessRequestPing(player: Player, inbound: NetworkTypes.RequestPingPayload)
+	updateMainPing(player, {
+		imageId = Access.config.PingImageId,
+		name = player.DisplayName,
+		position = inbound.position,
+		owner = player,
+	})
+end
 
 function PingRouter.ProcessRequestRemovePing(player: Player)
-    local team = Access.config.GetTeamValue(player)
-    for _, receiver in Players:GetPlayers() do
-        if Access.config.ReplicateToSelf and receiver == player then continue end
-        if Access.config.GetTeamValue(receiver) == team then
-            Events.ReportRemovePing.Fire(receiver, {
-                owner = player,
-            })
-        end
-    end
+	updateMainPing(player, nil)
 end
 
 return PingRouter

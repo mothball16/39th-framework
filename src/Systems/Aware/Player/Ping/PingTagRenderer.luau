@@ -14,17 +14,14 @@ local mount = Vide.mount
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 local PingTag = require("../UI/Roots/PingTag")
 
-type PingInstanceProps = Types.PingTagProps & { size: Charm.Atom<UDim2> }
 
 export type CleanupFunction = () -> ()
 
 local PingTagRenderer = {}
 
-local _ownedPings: {[Player]: {instance: BasePart, cleanup: CleanupFunction}} = {}
-
 
 -- builds a ping tag without any state registration
-function PingTagRenderer.CreatePingTag(owner: Instance, position: Vector3, props: PingInstanceProps): (CleanupFunction, BasePart)
+function PingTagRenderer.CreatePingTag(owner: Instance, position: Vector3, props: Types.PingTagProps): (CleanupFunction, BasePart)
 	local container = Instance.new("Part")
 	container.Name = "PingContainer"
 	container.Parent = workspace
@@ -38,7 +35,7 @@ function PingTagRenderer.CreatePingTag(owner: Instance, position: Vector3, props
 	local unmount = mount(function()
 		return create "BillboardGui" {
 			AlwaysOnTop = true,
-			Size = useAtom(props.size),
+			Size = useAtom(Charm.atom(UDim2.fromOffset(40, 40))), -- TEMP
 			PingTag({
 				imageId = props.imageId,
 				name = props.name,
@@ -52,31 +49,5 @@ function PingTagRenderer.CreatePingTag(owner: Instance, position: Vector3, props
 	end, container
 end
 
-function PingTagRenderer.GetPingTag(owner: Player)
-	return _ownedPings[owner]
-end
-
--- clears, builds and registers a ping tag
-function PingTagRenderer.RegisterPingTag(owner: Player, position: Vector3, props: PingInstanceProps): Instance
-	PingTagRenderer.DeletePingTag(owner)
-
-	local cleanup, instance = PingTagRenderer.CreatePingTag(owner, position, props)
-	_ownedPings[owner] = {
-        owner = owner,
-		instance = instance,
-		cleanup = cleanup,
-	}
-
-	return instance
-end
-
--- deletes a ping tag from the owned ping list
-function PingTagRenderer.DeletePingTag(owner: Player)
-	local data = _ownedPings[owner]
-	if data and data.cleanup then
-		data.cleanup()
-	end
-	_ownedPings[owner] = nil
-end
 
 return PingTagRenderer

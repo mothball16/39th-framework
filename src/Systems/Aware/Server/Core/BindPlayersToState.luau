@@ -18,7 +18,7 @@ end
 return function(state: Types.State)
     local maid = Maid.new()
 
-    maid:GiveTask(Players.PlayerAdded:Connect(function(player)
+    local function bindPlayer(player: Player)
         state.valuesByPlayer(function(previous)
             local next = table.clone(previous)
             next[PlayerKey.ToPlayerKey(player)] = {
@@ -27,7 +27,12 @@ return function(state: Types.State)
             }
             return next
         end)
-    end))
+    end
+
+    maid:GiveTask(Players.PlayerAdded:Connect(bindPlayer))
+    for _, player in Players:GetPlayers() do
+        bindPlayer(player)
+    end
 
     maid:GiveTask(Players.PlayerRemoving:Connect(function(player)
         state.valuesByPlayer(function(previous)

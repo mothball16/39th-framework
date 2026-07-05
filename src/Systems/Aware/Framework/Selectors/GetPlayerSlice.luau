@@ -1,3 +1,4 @@
+--!strict
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 local PlayerKey = require("@game/ReplicatedStorage/Systems/Aware/Core/PlayerKey")
@@ -13,6 +14,11 @@ return function(player: Player, state: Types.State)
         return if playerValues then playerValues.Team else nil
     end)
 
+    -- the owned values for the player
+    local ownedValues = computed(function(): Types.OwnedValues
+        return state.valuesByPlayer()[playerKey]
+    end)
+
     -- stable list of owned values for the player's current team
     local teamValues = computed(function(): { [string]: Types.OwnedValues }
         local team = playerTeam()
@@ -22,6 +28,7 @@ return function(player: Player, state: Types.State)
     return {
         playerKey = playerKey,
         playerTeam = playerTeam,
+        ownedValues = ownedValues,
         teamValues = teamValues,
     }
 end
