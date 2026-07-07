@@ -75,6 +75,10 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 					return item().position
 				end)
 
+				local getName = derive(function(): string
+					return item().name
+				end)
+
 				local scaleValue, scaleSpring = VideRipple.useSpring(1)
 				local transValue, transSpring = VideRipple.useSpring(1)
 				effect(function()
@@ -112,7 +116,7 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 
 					PingTag({
 						imageId = item().imageId,
-						name = item().name,
+						name = getName,
 					}),
 				}
 			end),

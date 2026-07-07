@@ -3,6 +3,7 @@ local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 local Types = {}
 
 export type GetTeamValue = (player1: Player) -> string?
+export type ShortenName = (playerKey: string) -> string
 
 export type GameSettings = {
 	-- whether to replicate the ping to the player themselves - this is only for debugging
@@ -15,22 +16,27 @@ export type GameSettings = {
 	PingMaxDistance: number,
 	-- interval at which to update the team state
 	TeamUpdateInterval: number,
+	-- shorten display names for tags
+	ShortenName: ShortenName,
 }
 
 -- properties for the visual display of a ping tag
 export type PingTagProps = {
 	imageId: string,
-	name: string,
+	name: () -> string,
 }
 
 -- information stored within the state for a ping
-export type PingInfo = PingTagProps & {
+export type PingInfo = {
+	imageId: string,
+	name: string,
 	position: Vector3,
 	owner: Player,
 }
 
 export type OwnedValues = {
 	Team: string?,
+	NameTag: string,
 	Pings: { [string]: PingInfo },
 }
 

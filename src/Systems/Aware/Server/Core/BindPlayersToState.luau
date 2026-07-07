@@ -23,6 +23,7 @@ return function(state: Types.State)
 			local next = table.clone(previous)
 			next[PlayerKey.ToPlayerKey(player)] = {
 				Team = Access.config.GetTeamValue(player),
+				NameTag = Access.config.ShortenName(PlayerKey.ToPlayerKey(player)),
 				Pings = {} :: { [string]: Types.PingInfo },
 			}
 			return next
@@ -47,12 +48,27 @@ return function(state: Types.State)
 		while task.wait(Access.config.TeamUpdateInterval) do
 			local updates: { [string]: Types.OwnedValues } = {}
 			for playerKey, ownedValues in state.valuesByPlayer() do
-				local team = Access.config.GetTeamValue(PlayerKey.FromPlayerKey(playerKey))
-				if team ~= ownedValues.Team then
-					local entry = table.clone(ownedValues)
-					entry.Team = team
-					updates[playerKey] = entry
+				local player = PlayerKey.FromPlayerKey(playerKey)
+				if not player then
+					continue
 				end
+				
+				-- check diffs
+				local team = Access.config.GetTeamValue(player)
+				local diffTeam = team ~= ownedValues.Team
+				local nameTag = Access.config.ShortenName(playerKey)
+				local diffNameTag = nameTag ~= ownedValues.NameTag
+				
+				if not diffTeam and not diffNameTag then
+					continue
+				end
+
+				local entry = table.clone(ownedValues)
+
+				entry.Team = team
+				entry.NameTag = nameTag
+				
+				updates[playerKey] = entry
 			end
 
 			if next(updates) then

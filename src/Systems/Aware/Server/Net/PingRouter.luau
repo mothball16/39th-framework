@@ -9,21 +9,22 @@ local MAIN_PING = "Main"
 
 local PingRouter = {}
 
-local function updateMainPing(player: Player, ping: Types.PingInfo?)
+local function setMainPing(player: Player, makePing: ((owned: Types.OwnedValues) -> Types.PingInfo)?)
 	local playerKey = PlayerKey.ToPlayerKey(player)
 	ServerState.valuesByPlayer(function(previous)
 		local owned = previous[playerKey]
 		if not owned then
 			error(`No state entry for player {playerKey}`)
 		end
-
 		local ownedValues = owned :: Types.OwnedValues
+
 		local pings = table.clone(ownedValues.Pings)
-		pings[MAIN_PING] = ping
+		pings[MAIN_PING] = if makePing then makePing(ownedValues) else nil
 
 		local next = table.clone(previous)
 		next[playerKey] = {
 			Team = ownedValues.Team,
+			NameTag = ownedValues.NameTag,
 			Pings = pings,
 		}
 		return next
@@ -31,16 +32,18 @@ local function updateMainPing(player: Player, ping: Types.PingInfo?)
 end
 
 function PingRouter.ProcessRequestPing(player: Player, inbound: NetworkTypes.RequestPingPayload)
-	updateMainPing(player, {
-		imageId = Access.config.PingImageId,
-		name = player.DisplayName,
-		position = inbound.position,
-		owner = player,
-	})
+	setMainPing(player, function(owned)
+		return {
+			imageId = Access.config.PingImageId,
+			name = owned.NameTag,
+			position = inbound.position,
+			owner = player,
+		}
+	end)
 end
 
 function PingRouter.ProcessRequestRemovePing(player: Player)
-	updateMainPing(player, nil)
+	setMainPing(player, nil)
 end
 
 return PingRouter

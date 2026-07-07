@@ -1,12 +1,12 @@
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local create = Vide.create
-local ShortenName = require("../Logic/ShortenName")
 
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 
 return function(props: Types.PingTagProps)
-	local name = ShortenName(props.name)
-
+	Vide.effect(function()
+		print(props.name())
+	end)
 	return create "Frame" {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
@@ -23,7 +23,7 @@ return function(props: Types.PingTagProps)
 			Size = UDim2.fromScale(1, 0.25),
 			Position = UDim2.new(0, 0, 0.75, 0),
 			BackgroundTransparency = 1,
-			Text = name,
+			Text = props.name,
 			TextColor3 = Color3.new(1, 1, 1),
 			TextStrokeTransparency = 0.5,
 			TextScaled = true,

@@ -4,18 +4,19 @@ local source = Vide.source
 local create = Vide.create
 local derive = Vide.derive
 
-local ShortenName = require("../Logic/ShortenName")
+local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 
 return function(props: {
 	health: () -> number,
 	maxHealth: () -> number,
-	username: () -> string,
+	playerKey: () -> string,
+	shortenName: Types.ShortenName,
 })
 	local percent = derive(function()
 		return props.health() / props.maxHealth()
 	end)
 	local name = derive(function()
-		return `{ShortenName(props.username())} [{math.round(percent() * 100)}%]`
+		return `{props.shortenName(props.playerKey())} [{math.round(percent() * 100)}%]`
 	end)
 	return create "Frame" {
 		Size = UDim2.fromScale(1, 1),
