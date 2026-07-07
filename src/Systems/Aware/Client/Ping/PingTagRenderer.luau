@@ -3,12 +3,17 @@
 handles the positioning and state side effects of ping tags
 presentation is handled in the PingTag component
 ]]
+local SoundService = game:GetService("SoundService")
 
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 
 local useAtom = require("@game/ReplicatedStorage/Packages/vide-charm").useAtom
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local VideRipple = require("@game/ReplicatedStorage/Packages/vide-ripple")
+local Access = require("@game/ReplicatedStorage/Systems/Aware/Access")
+
+local fx = Access.assets:FindFirstChild("FX") :: Folder
+local pingSound = fx:FindFirstChild("PingSound") :: Sound
 
 local source = Vide.source
 local create = Vide.create
@@ -55,6 +60,7 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 			DisplayOrder = 10,
 
 			indexes(pings, function(item: () -> Types.PingInfo, key: string)
+
 				local state: PingRenderState = {
 					getPingInfo = item,
 					screenPosition = source(UDim2.new()),
@@ -72,6 +78,7 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 				local scaleValue, scaleSpring = VideRipple.useSpring(1)
 				local transValue, transSpring = VideRipple.useSpring(1)
 				effect(function()
+					SoundService:PlayLocalSound(pingSound)
 					getPingPosition()
 					transSpring:setPosition(1)
 					transSpring:setGoal(TRANSPARENCY_GOAL)
