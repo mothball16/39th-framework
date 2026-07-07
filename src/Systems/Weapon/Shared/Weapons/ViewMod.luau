@@ -12,7 +12,7 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 	local newRigType
 
 	if forceDefault then
-		local attachingHumanoid:Humanoid = attachTo.Parent:FindFirstChildWhichIsA("Humanoid")
+		local attachingHumanoid: Humanoid = attachTo.Parent:FindFirstChildWhichIsA("Humanoid")
 		newRigType = attachingHumanoid.RigType
 
 		if attachingHumanoid and attachingHumanoid.RigType ~= Enum.HumanoidRigType.R15 then
@@ -42,7 +42,7 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 	end
 
 	if not forceDefault and callbacks.viewmodelOverride then
-		local override = callbacks.viewmodelOverride(player,newRig)
+		local override = callbacks.viewmodelOverride(player, newRig)
 		if override and override:FindFirstChild("AnimBase") then
 			newRig = override
 		end
@@ -53,11 +53,10 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 	local base = newRig.AnimBase
 
 	if newRigType == Enum.HumanoidRigType.R6 then
-
 		local lArm = newRig["Left Arm"]
 		for _, part in ipairs(lArm:GetChildren()) do
 			if part:IsA("BasePart") then
-				weldMod.Weld(lArm,part)
+				weldMod.Weld(lArm, part)
 				part.CanCollide = false
 				part.CanQuery = false
 			end
@@ -66,16 +65,16 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 		local rArm = newRig["Right Arm"]
 		for _, part in ipairs(rArm:GetChildren()) do
 			if part:IsA("BasePart") then
-				weldMod.Weld(rArm,part)
+				weldMod.Weld(rArm, part)
 				part.CanCollide = false
 				part.CanQuery = false
 			end
 		end
 
-		local leftJoint = weldMod.M6D(newRig.AnimBase,lArm)
+		local leftJoint = weldMod.M6D(newRig.AnimBase, lArm)
 		leftJoint.Name = "LeftJoint"
 
-		local rightJoint = weldMod.M6D(newRig.AnimBase,rArm)
+		local rightJoint = weldMod.M6D(newRig.AnimBase, rArm)
 		rightJoint.Name = "RightJoint"
 
 		base.Transparency = 1
@@ -93,13 +92,15 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 		rArm.CanQuery = false
 		rArm.CanTouch = false
 		rArm.CastShadow = true
-
 	else
-		
 		--Arm models
 		local lUArm = newRig["LeftUpperArm"]
 		for _, part in ipairs(lUArm:GetChildren()) do
-			if part:IsA("BasePart") then weldMod.Weld(lUArm,part) ;part.CanCollide = false; part.CanQuery = false end
+			if part:IsA("BasePart") then
+				weldMod.Weld(lUArm, part)
+				part.CanCollide = false
+				part.CanQuery = false
+			end
 		end
 		lUArm.CanCollide = false
 		lUArm.CanQuery = false
@@ -108,7 +109,11 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 
 		local lLArm = newRig["LeftLowerArm"]
 		for _, part in ipairs(lLArm:GetChildren()) do
-			if part:IsA("BasePart") then weldMod.Weld(lLArm,part) ;part.CanCollide = false; part.CanQuery = false end
+			if part:IsA("BasePart") then
+				weldMod.Weld(lLArm, part)
+				part.CanCollide = false
+				part.CanQuery = false
+			end
 		end
 		lLArm.CanCollide = false
 		lLArm.CanQuery = false
@@ -117,7 +122,11 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 
 		local lhand = newRig["LeftHand"]
 		for _, part in ipairs(lhand:GetChildren()) do
-			if part:IsA("BasePart") then weldMod.Weld(lhand,part) ;part.CanCollide = false; part.CanQuery = false end
+			if part:IsA("BasePart") then
+				weldMod.Weld(lhand, part)
+				part.CanCollide = false
+				part.CanQuery = false
+			end
 		end
 		lhand.CanCollide = false
 		lhand.CanQuery = false
@@ -126,7 +135,11 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 
 		local rUArm = newRig["RightUpperArm"]
 		for _, part in ipairs(rUArm:GetChildren()) do
-			if part:IsA("BasePart") then weldMod.Weld(rUArm,part) ;part.CanCollide = false; part.CanQuery = false end
+			if part:IsA("BasePart") then
+				weldMod.Weld(rUArm, part)
+				part.CanCollide = false
+				part.CanQuery = false
+			end
 		end
 		rUArm.CanCollide = false
 		rUArm.CanQuery = false
@@ -135,7 +148,11 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 
 		local rLArm = newRig["RightLowerArm"]
 		for _, part in ipairs(rLArm:GetChildren()) do
-			if part:IsA("BasePart") then weldMod.Weld(rLArm,part) ;part.CanCollide = false; part.CanQuery = false end
+			if part:IsA("BasePart") then
+				weldMod.Weld(rLArm, part)
+				part.CanCollide = false
+				part.CanQuery = false
+			end
 		end
 		rLArm.CanCollide = false
 		rLArm.CanQuery = false
@@ -144,25 +161,29 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 
 		local rhand = newRig["RightHand"]
 		for _, part in ipairs(rhand:GetChildren()) do
-			if part:IsA("BasePart") then weldMod.Weld(rhand,part) ;part.CanCollide = false; part.CanQuery = false end
+			if part:IsA("BasePart") then
+				weldMod.Weld(rhand, part)
+				part.CanCollide = false
+				part.CanQuery = false
+			end
 		end
 		rhand.CanCollide = false
 		rhand.CanQuery = false
 		rhand.CanTouch = false
 		rhand.CastShadow = true
 		--Joints
-		local leftUJoint = weldMod.M6D(newRig.AnimBase,lUArm)
+		local leftUJoint = weldMod.M6D(newRig.AnimBase, lUArm)
 		leftUJoint.Name = "LeftUJoint"
-		local leftLJoint = weldMod.M6D(lUArm,lLArm)
+		local leftLJoint = weldMod.M6D(lUArm, lLArm)
 		leftLJoint.Name = "LeftLJoint"
-		local leftHJoint = weldMod.M6D(lLArm,lhand)
+		local leftHJoint = weldMod.M6D(lLArm, lhand)
 		leftHJoint.Name = "LeftHJoint"
 
-		local rightUJoint = weldMod.M6D(newRig.AnimBase,rUArm)
+		local rightUJoint = weldMod.M6D(newRig.AnimBase, rUArm)
 		rightUJoint.Name = "RightUJoint"
-		local rightLJoint = weldMod.M6D(rUArm,rLArm)
+		local rightLJoint = weldMod.M6D(rUArm, rLArm)
 		rightLJoint.Name = "RightLJoint"
-		local rightHJoint = weldMod.M6D(rLArm,rhand)
+		local rightHJoint = weldMod.M6D(rLArm, rhand)
 		rightHJoint.Name = "RightHJoint"
 
 		base.Transparency = 1
@@ -170,7 +191,6 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 		base.CanQuery = false
 		base.CanTouch = false
 		base.CastShadow = false
-		
 	end
 
 	--if not default then
@@ -179,12 +199,12 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 	--end
 
 	if attachTo then
-		local baseWeld = weldMod.BlankWeld(attachTo,newRig.AnimBase)
+		local baseWeld = weldMod.BlankWeld(attachTo, newRig.AnimBase)
 		baseWeld.Name = "BaseWeld"
 		baseWeld.Parent = newRig
 	end
 
-	local weaponFolder = Instance.new("Folder",newRig)
+	local weaponFolder = Instance.new("Folder", newRig)
 	weaponFolder.Name = "Weapon"
 
 	return newRig

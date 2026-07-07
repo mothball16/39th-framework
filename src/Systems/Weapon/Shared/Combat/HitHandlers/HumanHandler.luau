@@ -26,7 +26,9 @@ function M.EvaluateHit(context: HitContextTypes.HitContext)
 	end
 
 	local ray = context.raycastResult
-	local dist = (typeof(ray.Position) == "Vector3" and typeof(ray.Origin) == "Vector3") and (ray.Position - ray.Origin).Magnitude or nil
+	local dist = (typeof(ray.Position) == "Vector3" and typeof(ray.Origin) == "Vector3")
+			and (ray.Position - ray.Origin).Magnitude
+		or nil
 	local damage = DamageLogic.getDamage(context.wepStats.damage, context.hitPart.Name, dist, context.wepStats.range)
 
 	return {

@@ -5,21 +5,20 @@ local config = Access.config
 local assets = Access.assets
 
 -- Impact sounds
-local Glass = {"1565824613"; "1565825075";}
-local Metal = {"282954522"; "282954538"; "282954576"; "1565756607"; "1565756818";}
-local Grass = {"1565830611"; "1565831129"; "1565831468"; "1565832329";}
-local Wood = {"287772625"; "287772674"; "287772718"; "287772829"; "287772902";}
-local Concrete = {"287769261"; "287769348"; "287769415"; "287769483"; "287769538";}
-local Hits = {"363818432"; "363818488"; "363818567"; "363818611"; "363818653";}
-local Headshots = {"4459572527"; "4459573786";"3739364168";}
-
+local Glass = { "1565824613", "1565825075" }
+local Metal = { "282954522", "282954538", "282954576", "1565756607", "1565756818" }
+local Grass = { "1565830611", "1565831129", "1565831468", "1565832329" }
+local Wood = { "287772625", "287772674", "287772718", "287772829", "287772902" }
+local Concrete = { "287769261", "287769348", "287769415", "287769483", "287769538" }
+local Hits = { "363818432", "363818488", "363818567", "363818611", "363818653" }
+local Headshots = { "4459572527", "4459573786", "3739364168" }
 
 local Effects = assets:WaitForChild("Effects"):WaitForChild("HitFX")
 local bulletHoleDecals = assets:WaitForChild("Effects"):WaitForChild("BulletHoleDecals"):GetChildren()
 
 local Hitmarker = {}
 
-function CheckColor(Color,Add)
+function CheckColor(Color, Add)
 	Color = Color + Add
 	if Color > 1 then
 		Color = 1
@@ -29,35 +28,36 @@ function CheckColor(Color,Add)
 	return Color
 end
 
-function CreateEffect(Type,Attachment,HitPart)
+function CreateEffect(Type, Attachment, HitPart)
 	local NewType
 	if Effects:FindFirstChild(Type) then
 		NewType = Effects:FindFirstChild(Type)
 	else
 		NewType = Effects.Stone -- Default to Stone/Concrete
 	end
-	local NewEffect = NewType:GetChildren()[math.random(1,#NewType:GetChildren())]:Clone()
+	local NewEffect = NewType:GetChildren()[math.random(1, #NewType:GetChildren())]:Clone()
 	local MaxTime = 3 -- Placeholder for max time of total effect
 	for _, Effect in pairs(NewEffect:GetChildren()) do
 		if Effect:IsA("ParticleEmitter") then
 			Effect.Parent = Attachment
 			Effect.Enabled = false
-			
+
 			if Type == "Sand" and HitPart then
 				local NewColor = HitPart.Color
 				local Add = 0.3
 				if HitPart.Material == Enum.Material.Fabric then
 					Add = -0.2 -- Darker
 				end
-				
-				NewColor = Color3.new(CheckColor(NewColor.R, Add),CheckColor(NewColor.G, Add),CheckColor(NewColor.B, Add)) -- Adjust new color
-				
+
+				NewColor =
+					Color3.new(CheckColor(NewColor.R, Add), CheckColor(NewColor.G, Add), CheckColor(NewColor.B, Add)) -- Adjust new color
+
 				Effect.Color = ColorSequence.new({ -- Set effect color
-					ColorSequenceKeypoint.new(0,NewColor),
-					ColorSequenceKeypoint.new(1,NewColor)
+					ColorSequenceKeypoint.new(0, NewColor),
+					ColorSequenceKeypoint.new(1, NewColor),
 				})
 			end
-			
+
 			if Effect.Rate > 10 then
 				Effect:Emit(Effect.Rate / 10) -- Calculate how many particles emit based on rate
 			else
@@ -88,50 +88,50 @@ function CreateEffect(Type,Attachment,HitPart)
 		SoundType = Concrete -- Default to Stone/Concrete
 	end
 	HitSound.Parent = Attachment
-	HitSound.Volume = math.random(5,10)/10
+	HitSound.Volume = math.random(5, 10) / 10
 	HitSound.MaxDistance = 500
 	HitSound.EmitterSize = 10
-	HitSound.PlaybackSpeed = math.random(34, 50)/40
+	HitSound.PlaybackSpeed = math.random(34, 50) / 40
 	HitSound.SoundId = "rbxassetid://" .. SoundType[math.random(1, #SoundType)]
 	HitSound:Play()
-	if HitSound.TimeLength > MaxTime then MaxTime = HitSound.TimeLength end
-	Debris:AddItem(Attachment,MaxTime) -- Destroy attachment after all effects and sounds are done
+	if HitSound.TimeLength > MaxTime then
+		MaxTime = HitSound.TimeLength
+	end
+	Debris:AddItem(Attachment, MaxTime) -- Destroy attachment after all effects and sounds are done
 end
 
-
-function Hitmarker.HitEffect(Position,HitPart,Normal)
+function Hitmarker.HitEffect(Position, HitPart, Normal)
 	--print(HitPart)
 	local Material = HitPart.Material
 	local Attachment = Instance.new("Attachment")
 	Attachment.CFrame = CFrame.new(Position, Position + Normal)
 	Attachment.Parent = workspace.Terrain
 	if HitPart then
-		
 		local effectType = "Stone"
-		
+
 		if HitPart.Name == "Head" then
-			
 			effectType = "Headshot"
-			
-		elseif HitPart:IsA("BasePart") and (HitPart.Parent:FindFirstChild("Humanoid") or HitPart.Parent.Parent:FindFirstChild("Humanoid") or (HitPart.Parent.Parent.Parent and HitPart.Parent.Parent.Parent:FindFirstChild("Humanoid"))) then
-
+		elseif
+			HitPart:IsA("BasePart")
+			and (
+				HitPart.Parent:FindFirstChild("Humanoid")
+				or HitPart.Parent.Parent:FindFirstChild("Humanoid")
+				or (HitPart.Parent.Parent.Parent and HitPart.Parent.Parent.Parent:FindFirstChild("Humanoid"))
+			)
+		then
 			effectType = "Hit"
-
 		elseif HitPart.Parent:IsA("Accessory") then -- Didn't feel like putting this in the other one
-			
 			effectType = "Hit"
-			
 		elseif Material == Enum.Material.Wood or Material == Enum.Material.WoodPlanks then
-			
 			effectType = "Wood"
-			
+
 		--elseif Material == Enum.Material.Concrete -- Stone stuff
 		--	or Material == Enum.Material.Slate
 		--	or Material == Enum.Material.Brick
 		--	or Material == Enum.Material.Pebble
 		--	or Material == Enum.Material.Cobblestone
 		--	or Material == Enum.Material.Marble
-			
+
 		--	-- Terrain materials
 		--	or Material == Enum.Material.Basalt
 		--	or Material == Enum.Material.Asphalt
@@ -141,58 +141,53 @@ function Hitmarker.HitEffect(Position,HitPart,Normal)
 		--	or Material == Enum.Material.Sandstone
 		--	or Material == Enum.Material.Limestone
 		--	then
-			
+
 		--	CreateEffect("Stone",Attachment)
-			
-		elseif Material == Enum.Material.Metal -- Metals
+		elseif
+			Material == Enum.Material.Metal -- Metals
 			or Material == Enum.Material.CorrodedMetal
 			or Material == Enum.Material.DiamondPlate
 			or Material == Enum.Material.Neon
-			
 			-- Terrain materials
 			or Material == Enum.Material.Salt
-			then
-			
+		then
 			effectType = "Metal"
-			
-		elseif Material == Enum.Material.Grass -- Ground stuff
-			
+		elseif
+			Material == Enum.Material.Grass -- Ground stuff
 			-- Terrain materials
 			or Material == Enum.Material.Ground
 			or Material == Enum.Material.LeafyGrass
 			or Material == Enum.Material.Mud
 		then
-			
 			effectType = "Ground"
-			
-		elseif Material == Enum.Material.Sand -- Soft things
+		elseif
+			Material == Enum.Material.Sand -- Soft things
 			or Material == Enum.Material.Fabric
-			
 			-- Terrain materials
 			or Material == Enum.Material.Snow
-			then
-			
+		then
 			effectType = "Sand"
-			
-		elseif Material == Enum.Material.Foil -- Brittle things
+		elseif
+			Material == Enum.Material.Foil -- Brittle things
 			or Material == Enum.Material.Ice
 			or Material == Enum.Material.Glass
 			or Material == Enum.Material.ForceField
-			then
-			
+		then
 			effectType = "Glass"
-				
-		elseif HitPart.Name == "Glass"
-			then
+		elseif HitPart.Name == "Glass" then
 			effectType = "Glass"
 			HitPart:Destroy()
-			
 		end
-		
+
 		CreateEffect(effectType, Attachment, HitPart)
-		
+
 		if config.bulletHoles and HitPart.Transparency < 1 then
-			if config.glassShatter and (HitPart.Name == "Glass" or game.CollectionService:HasTag(HitPart, "BreakableGlass")) then return end
+			if
+				config.glassShatter
+				and (HitPart.Name == "Glass" or game.CollectionService:HasTag(HitPart, "BreakableGlass"))
+			then
+				return
+			end
 			local bulletHole = Instance.new("Part")
 			bulletHole.Size = Vector3.new(0.2, 0.2, 0)
 			bulletHole.Transparency = 1
@@ -201,7 +196,8 @@ function Hitmarker.HitEffect(Position,HitPart,Normal)
 			bulletHole.CanQuery = false
 			bulletHole.CanTouch = false
 			bulletHole.Name = "BulletHoleTemp"
-			bulletHole.CFrame = CFrame.new(Position, Position + Normal) * CFrame.Angles(0, 0, math.rad(math.random(360)))
+			bulletHole.CFrame = CFrame.new(Position, Position + Normal)
+				* CFrame.Angles(0, 0, math.rad(math.random(360)))
 
 			local bulletHoleDecal = bulletHoleDecals[math.random(#bulletHoleDecals)]:Clone()
 			bulletHoleDecal.Parent = bulletHole
@@ -211,7 +207,7 @@ function Hitmarker.HitEffect(Position,HitPart,Normal)
 			newWeld.Part0 = HitPart
 			newWeld.Part1 = bulletHole
 			newWeld.Parent = bulletHole
-				
+
 			bulletHole.Parent = workspace
 
 			Debris:AddItem(bulletHole, config.bulletHoleDespawnTime)

@@ -22,7 +22,9 @@ local function getLaserColor(laserLike: Instance): Color3
 end
 
 local function resolveLaserPoint(laserLike: Instance?): Attachment?
-	if not laserLike or not laserLike.Parent then return nil end
+	if not laserLike or not laserLike.Parent then
+		return nil
+	end
 	if laserLike:IsA("Attachment") then
 		return laserLike
 	end
@@ -53,10 +55,14 @@ function AttachmentReplicationController.Initialize()
 end
 
 function AttachmentReplicationController.OnToggleAttachment(attachment, toggle, character)
-	if not attachment then return end
+	if not attachment then
+		return
+	end
 	if attachment.Name == "Flashlight" then
 		local light = attachment:FindFirstChildWhichIsA("Light")
-		if light then light.Enabled = toggle end
+		if light then
+			light.Enabled = toggle
+		end
 	elseif attachment.Name == "Laser" then
 		if toggle then
 			local laserDot = Instance.new("Attachment", workspace.Terrain)
@@ -70,7 +76,7 @@ function AttachmentReplicationController.OnToggleAttachment(attachment, toggle, 
 			local newLaser = {
 				laserDot = laserDot,
 				attachment = attachment,
-				ignoreModel = character
+				ignoreModel = character,
 			}
 			table.insert(lasers, newLaser)
 		else
@@ -111,7 +117,8 @@ function AttachmentReplicationController.UpdateRender(dt)
 			end
 			laserRayParams.RespectCanCollide = true
 			local laserDotPoint = laserObject.laserDot
-			local rayResult = workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * 600, laserRayParams)
+			local rayResult =
+				workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * 600, laserRayParams)
 			if rayResult then
 				laserObject.laserDot.LaserDotUI.Enabled = true
 				laserDotPoint.WorldPosition = rayResult.Position

@@ -51,10 +51,9 @@ end
 --#endregion [ helpers ]
 
 -- initialize the runtime
-local runtime = ServerRuntime.new({access = Access})
+local runtime = ServerRuntime.new({ access = Access })
 ServerRuntimeLocator.LoadRuntime(runtime)
 runtime:Start()
-
 
 -- register stuff
 local itemProviders = getItemProviders(ReplicatedStorage.Systems.Faction.ItemProviders)

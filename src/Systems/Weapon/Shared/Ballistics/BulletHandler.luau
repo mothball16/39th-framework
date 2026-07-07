@@ -23,7 +23,7 @@ local pierceMod = require(Framework.Ballistics.PierceMod)
 local partCache = require(Framework.Ballistics.PartCache)
 
 local baseBullet = assets:WaitForChild("Projectiles"):WaitForChild("BulletHandlerBase")
-local bulletProvider = partCache.new(baseBullet:Clone(),config.maxBullets or 300,cacheContainer)
+local bulletProvider = partCache.new(baseBullet:Clone(), config.maxBullets or 300, cacheContainer)
 
 local fastCast = require(Framework.Ballistics.FastCast)
 local bulletBehavior
@@ -54,8 +54,8 @@ local player, character
 module.Initialize = function(newPlayer)
 	player = newPlayer
 	character = newPlayer.Character
-	rayParams.FilterDescendantsInstances = {character, workspace.CurrentCamera}
-	suppressionOverlapParams.FilterDescendantsInstances = {character}
+	rayParams.FilterDescendantsInstances = { character, workspace.CurrentCamera }
+	suppressionOverlapParams.FilterDescendantsInstances = { character }
 end
 
 local function segmentPointToPartDistance(segStart: Vector3, segDir: Vector3, t: number, part: BasePart): number
@@ -64,7 +64,12 @@ local function segmentPointToPartDistance(segStart: Vector3, segDir: Vector3, t:
 	return (segPoint - surfacePoint).Magnitude
 end
 
-local function closestDistanceSegmentToPart(segStart: Vector3, segDir: Vector3, segLength: number, part: BasePart): number
+local function closestDistanceSegmentToPart(
+	segStart: Vector3,
+	segDir: Vector3,
+	segLength: number,
+	part: BasePart
+): number
 	local minDist = math.huge
 
 	minDist = math.min(minDist, segmentPointToPartDistance(segStart, segDir, 0, part))
@@ -92,19 +97,17 @@ local function ReportSuppressionVictims(cast, lastPoint: Vector3, direction: Vec
 	end
 
 	local midPoint = lastPoint + segDir * (length * 0.5)
-	local segmentSize = Vector3.new(
-		suppressionRadius * 2,
-		suppressionRadius * 2,
-		length + suppressionRadius * 2
-	)
+	local segmentSize = Vector3.new(suppressionRadius * 2, suppressionRadius * 2, length + suppressionRadius * 2)
 	local segmentCFrame = CFrame.lookAt(midPoint, midPoint + segDir)
 	local nearbyParts = workspace:GetPartBoundsInBox(segmentCFrame, segmentSize, suppressionOverlapParams)
 
 	for _, part in nearbyParts do
 		local targetPlayer = players:GetPlayerFromCharacter(part:FindFirstAncestorOfClass("Model"))
-		if not targetPlayer 
-		or cast.UserData.AlreadySuppressedTargets[targetPlayer.UserId] 
-		or targetPlayer.Team == cast.UserData.Player.Team then -- in the future: inject the check so that faction based ignore can be used
+		if
+			not targetPlayer
+			or cast.UserData.AlreadySuppressedTargets[targetPlayer.UserId]
+			or targetPlayer.Team == cast.UserData.Player.Team
+		then -- in the future: inject the check so that faction based ignore can be used
 			continue
 		end
 
@@ -113,14 +116,12 @@ local function ReportSuppressionVictims(cast, lastPoint: Vector3, direction: Vec
 			continue
 		end
 
-		
 		local closestDistance = closestDistanceSegmentToPart(lastPoint, segDir, length, part)
 		if closestDistance > suppressionRadius then
 			continue
 		end
 
-
-		local proximityFactor = math.clamp(1 - closestDistance  / suppressionRadius, 0, 1)
+		local proximityFactor = math.clamp(1 - closestDistance / suppressionRadius, 0, 1)
 		if proximityFactor <= 0 then
 			continue
 		end
@@ -167,7 +168,6 @@ local function ReportSuppressionVictims(cast, lastPoint: Vector3, direction: Vec
 		else
 			entry.dirty = false
 		end
-
 	end
 end
 
@@ -189,9 +189,7 @@ local function ResetBullet(bulletPart)
 end
 
 local function PlaySFX(parent, playerFired)
-	
 	for _, child in ipairs(parent:GetChildren()) do
-
 		local shouldPlay = false
 		if child:IsA("Sound") then
 			if child.Name == "Fire" then
@@ -204,11 +202,11 @@ local function PlaySFX(parent, playerFired)
 		if shouldPlay then
 			if not child.Looped then
 				local newFire = child:Clone()
-				newFire.PlaybackSpeed += math.random(-10,10) / config.fireSoundVariation
-				newFire.Name = newFire.Name.."_Playing"
+				newFire.PlaybackSpeed += math.random(-10, 10) / config.fireSoundVariation
+				newFire.Name = newFire.Name .. "_Playing"
 				newFire.Parent = parent
 				newFire:Play()
-				debris:AddItem(newFire,newFire.TimeLength == 0 and 5 or newFire.TimeLength)
+				debris:AddItem(newFire, newFire.TimeLength == 0 and 5 or newFire.TimeLength)
 			else
 				child:Play()
 			end
@@ -216,14 +214,25 @@ local function PlaySFX(parent, playerFired)
 	end
 end
 
-module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity, tool, playerFired, tracerColor, onHitCallback)
+module.FireBullet = function(
+	rig,
+	bulletOrigin,
+	bulletDirection,
+	bulletVelocity,
+	tool,
+	playerFired,
+	tracerColor,
+	onHitCallback
+)
 	local wepStats = WeaponStatLocator.getWeaponStats(tool)
 
 	bulletBehavior.Acceleration = config.bulletAcceleration
 
-	if not wepStats.bulletDrop then bulletBehavior.Acceleration = Vector3.zero end
+	if not wepStats.bulletDrop then
+		bulletBehavior.Acceleration = Vector3.zero
+	end
 
-	local newBullet = caster:Fire(bulletOrigin,bulletDirection,bulletVelocity,bulletBehavior)
+	local newBullet = caster:Fire(bulletOrigin, bulletDirection, bulletVelocity, bulletBehavior)
 	local newData = {}
 	newData.OnHitCallback = onHitCallback
 	newData.Player = playerFired
@@ -256,8 +265,12 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 
 	if wepStats.serverOffset then
 		-- Third person recoil animation
-		rig.BaseWeld.C0 = wepStats.serverOffset * CFrame.new(0,0,0.17) * CFrame.Angles(math.rad(2),math.rad(math.random(-10,10) / 10),0)
-		tweenService:Create(rig.BaseWeld,TweenInfo.new(0.3,Enum.EasingStyle.Back),{C0 = wepStats.serverOffset}):Play()
+		rig.BaseWeld.C0 = wepStats.serverOffset
+			* CFrame.new(0, 0, 0.17)
+			* CFrame.Angles(math.rad(2), math.rad(math.random(-10, 10) / 10), 0)
+		tweenService
+			:Create(rig.BaseWeld, TweenInfo.new(0.3, Enum.EasingStyle.Back), { C0 = wepStats.serverOffset })
+			:Play()
 	end
 
 	if rig:FindFirstChild("Weapon") then
@@ -275,7 +288,7 @@ module.FireBullet = function(rig, bulletOrigin, bulletDirection, bulletVelocity,
 	end
 end
 
-module.FireFX = function(playerFired:Player, gunModel, firePointName, muzzleChance)
+module.FireFX = function(playerFired: Player, gunModel, firePointName, muzzleChance)
 	local base = gunModel:FindFirstChild("Grip") or gunModel:FindFirstChild("Base") or gunModel:FindFirstChild("Main")
 	local firePoint = base[firePointName]
 	local humanoidRootPart = playerFired.Character:FindFirstChild("HumanoidRootPart")
@@ -291,7 +304,7 @@ module.FireFX = function(playerFired:Player, gunModel, firePointName, muzzleChan
 		for _, fx in ipairs(firePoint:GetChildren()) do
 			if fx:IsA("ParticleEmitter") then
 				if fx:GetAttribute("EmitNumber") then -- Using emit attribute
-					if string.find(fx.Name,"Flash") then -- Is this a flash particle?
+					if string.find(fx.Name, "Flash") then -- Is this a flash particle?
 						if muzzleChance then
 							fx:Emit(fx:GetAttribute("EmitNumber"))
 						end
@@ -300,7 +313,7 @@ module.FireFX = function(playerFired:Player, gunModel, firePointName, muzzleChan
 					end
 				elseif fx:FindFirstChild("Particles") then -- Using number value
 					local canEmit = false
-					if string.find(fx.Name,"Flash") then -- Is this a flash particle?
+					if string.find(fx.Name, "Flash") then -- Is this a flash particle?
 						if muzzleChance then
 							canEmit = true
 						end
@@ -317,7 +330,9 @@ module.FireFX = function(playerFired:Player, gunModel, firePointName, muzzleChan
 				end
 			elseif fx:IsA("Light") and muzzleChance then
 				fx.Enabled = true
-				task.delay(0.01,function() fx.Enabled = false end)
+				task.delay(0.01, function()
+					fx.Enabled = false
+				end)
 			end
 		end
 
@@ -339,41 +354,49 @@ module.FireFX = function(playerFired:Player, gunModel, firePointName, muzzleChan
 	end
 end
 
-module.MoveBolt = function(gunModel,wepStats,direction,magAmmo)
-	if not gunModel or not gunModel:FindFirstChild("Grip") then return end
+module.MoveBolt = function(gunModel, wepStats, direction, magAmmo)
+	if not gunModel or not gunModel:FindFirstChild("Grip") then
+		return
+	end
 	for _, constraint in ipairs(gunModel.Grip:GetChildren()) do
 		for _, name in ipairs(wepStats.fireMoveParts) do
 			if constraint.Name == name then
 				local m6d = constraint
 				m6d.C1 = CFrame.new()
-				local tInfo = TweenInfo.new(60 / wepStats.fireRate / 2,
+				local tInfo = TweenInfo.new(
+					60 / wepStats.fireRate / 2,
 					Enum.EasingStyle.Linear,
 					Enum.EasingDirection.In,
 					0,
-					not (magAmmo <= 0 and wepStats.emptyLockBolt))
+					not (magAmmo <= 0 and wepStats.emptyLockBolt)
+				)
 				local distance
 				if typeof(direction) == "CFrame" then
 					distance = direction
 				else
-					distance = CFrame.new(0,0,-direction)
+					distance = CFrame.new(0, 0, -direction)
 				end
-				tweenService:Create(m6d, tInfo, {C1 = distance}):Play()
+				tweenService:Create(m6d, tInfo, { C1 = distance }):Play()
 				break
 			end
 		end
 	end
 end
 
-
 caster.LengthChanged:Connect(function(cast, lastPoint, direction, length, segmentVelocity, cosmeticBulletObject)
-	if not cosmeticBulletObject then return end
+	if not cosmeticBulletObject then
+		return
+	end
 	if cast.UserData.Player == player and config.suppressionEffects then
 		ReportSuppressionVictims(cast, lastPoint, direction, length)
 	end
 
 	-- Tracer effects
-	if not cast.UserData.Visible and (config.arcadeBullets or cast.UserData.TracerColor)
-		and (cast.UserData.Origin - cosmeticBulletObject.Position).Magnitude > config.tracerStartDistance then
+	if
+		not cast.UserData.Visible
+		and (config.arcadeBullets or cast.UserData.TracerColor)
+		and (cast.UserData.Origin - cosmeticBulletObject.Position).Magnitude > config.tracerStartDistance
+	then
 		cast.UserData.Visible = true
 		local bullet = cosmeticBulletObject
 		bullet.Transparency = 0
@@ -407,8 +430,7 @@ caster.LengthChanged:Connect(function(cast, lastPoint, direction, length, segmen
 	end
 end)
 
-caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBulletObject:BasePart)
-	
+caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBulletObject: BasePart)
 	if cast.UserData.Player ~= player then
 		-- this is a replicated bullet, we don't want to process it
 		return
@@ -420,7 +442,7 @@ caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBul
 	end
 
 	local hitPart = raycastResult.Instance
-	hitFX.HitEffect(raycastResult.Position,hitPart,raycastResult.Normal)
+	hitFX.HitEffect(raycastResult.Position, hitPart, raycastResult.Normal)
 
 	if cast.UserData.OnHitCallback then
 		cast.UserData.OnHitCallback(cast.UserData, raycastResult)
@@ -440,7 +462,6 @@ caster.RayHit:Connect(function(cast, raycastResult, segmentVelocity, cosmeticBul
 		rayHit = fakeRayResult,
 		bulletCFrame = cosmeticBulletObject.CFrame,
 	})
-
 end)
 
 caster.CastTerminating:Connect(function(cast)

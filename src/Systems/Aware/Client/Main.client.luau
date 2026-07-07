@@ -45,7 +45,9 @@ local mainPingPos = computed(function(): Vector3?
 end)
 
 UIS.InputBegan:Connect(function(input, processed)
-	if processed then return end
+	if processed then
+		return
+	end
 	if input.KeyCode == UserSettings.PingKey() then
 		PingRequester.EvaluatePing(mainPingPos(), UIS:GetMouseLocation())
 	elseif input.KeyCode == UserSettings.ClearPingKey() then

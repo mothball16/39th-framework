@@ -11,7 +11,11 @@ export type LocalEvents = {
 	SwitchFireModeAnimRequested: Signal.Signal<>,
 	StopAllRequested: Signal.Signal<>,
 
-	PlayAnimationRequested: Signal.Signal<string, { [string]: any }?, { key: string?, tag: string, defaultsKey: string? }?>,
+	PlayAnimationRequested: Signal.Signal<
+		string,
+		{ [string]: any }?,
+		{ key: string?, tag: string, defaultsKey: string? }?
+	>,
 	StopAnimationRequested: Signal.Signal<string, number>,
 	BoltActionRequested: Signal.Signal<boolean>,
 	ReloadActionRequested: Signal.Signal<boolean>,
@@ -22,7 +26,7 @@ export type LocalEvents = {
 return function(): LocalEvents
 	return {
 		BulletHit = Signal.new(),
-		
+
 		WeaponEquipRequested = Signal.new(),
 		WeaponIdleRequested = Signal.new(),
 		FireAnimRequested = Signal.new(),

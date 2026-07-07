@@ -20,39 +20,43 @@ type self = {
 }
 export type SelectionService = typeof(setmetatable({} :: self, SelectionService))
 
-function SelectionService.new(
-	state: State.State,
-	settings: Types.Settings
-): SelectionService
-	local self = setmetatable({
-		state = state,
-		settings = settings,
-	} :: self, SelectionService)
+function SelectionService.new(state: State.State, settings: Types.Settings): SelectionService
+	local self = setmetatable(
+		{
+			state = state,
+			settings = settings,
+		} :: self,
+		SelectionService
+	)
 
 	return self
 end
 
-function SelectionService.HandleFactionRequest(self: SelectionService, player: Player, request: {
-	factionId: string,
-}): (boolean, string?)
+function SelectionService.HandleFactionRequest(
+	self: SelectionService,
+	player: Player,
+	request: {
+		factionId: string,
+	}
+): (boolean, string?)
 	local success, msg = StateActions.SetPlayerFaction(self.state, player.UserId, request.factionId)
 
 	return success, msg
 end
 
-function SelectionService.HandleClassVariantRequest(self: SelectionService, player: Player, request: {
-	class: string,
-	variant: string,
-}, itemEquipper: ItemEquipper.ItemEquipper): (boolean, string?)
+function SelectionService.HandleClassVariantRequest(
+	self: SelectionService,
+	player: Player,
+	request: {
+		class: string,
+		variant: string,
+	},
+	itemEquipper: ItemEquipper.ItemEquipper
+): (boolean, string?)
 	local userKey = Utilities.ToPlayerKey(player.UserId)
 	local assignment = self.state.playerAssignmentByUserId()[userKey]
 	local prevVariantId = if assignment then assignment.VariantId else nil
-	local success, msg = StateActions.SetPlayerClassVariant(
-		self.state,
-		player.UserId,
-		request.class,
-		request.variant
-	)
+	local success, msg = StateActions.SetPlayerClassVariant(self.state, player.UserId, request.class, request.variant)
 
 	if not success then
 		return false, msg
@@ -71,9 +75,13 @@ function SelectionService.HandleClassVariantRequest(self: SelectionService, play
 	return true, msg
 end
 
-function SelectionService.HandleVariantApplyRequest(self: SelectionService, player: Player, request: {
-	enable: boolean
-}, itemEquipper: ItemEquipper.ItemEquipper
+function SelectionService.HandleVariantApplyRequest(
+	self: SelectionService,
+	player: Player,
+	request: {
+		enable: boolean,
+	},
+	itemEquipper: ItemEquipper.ItemEquipper
 ): (boolean, string?)
 	local assignment = self.state.playerAssignmentByUserId()[Utilities.ToPlayerKey(player.UserId)]
 	local variantId = if assignment then assignment.VariantId else nil
@@ -129,7 +137,6 @@ function SelectionService.HandleTeamChange(
 		return false, msg
 	end
 
-	
 	if prevVariantId then
 		itemEquipper:UnassignVariantItems(player, prevVariantId)
 	end

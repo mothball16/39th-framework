@@ -33,7 +33,6 @@ end
 
 -- safely creates a getter for class counts. encapsulates logic for setting this signal within the effect scope
 function State.SetupClassCounts(self: State): Charm.Getter<ClassCountByFaction>
-	
 	local getClassCountByFaction, setClassCountByFaction = Charm.signal({} :: ClassCountByFaction)
 
 	self.maid:GiveTask(Charm.effectScope(function()
@@ -65,7 +64,7 @@ function State.SetupClassCounts(self: State): Charm.Getter<ClassCountByFaction>
 			local currentFactionId = Charm.computed(function()
 				return self.playerAssignmentByUserId()[key].FactionId
 			end)
-			
+
 			local undoLastIncrement: (() -> ())? = nil
 			local function incrementClassCount(factionId: string?, classKey: string?, count: number): (() -> ())?
 				-- if the faction or class key isn't set, nothing can be incremented
@@ -85,7 +84,7 @@ function State.SetupClassCounts(self: State): Charm.Getter<ClassCountByFaction>
 					warn(`class count not found for class key {classKey} in faction {factionId}`)
 					return nil
 				end
-				
+
 				setClassCountByFaction(function(state)
 					state = table.clone(state)
 					local nextFactionCounts = table.clone(state[factionId])
@@ -110,7 +109,7 @@ function State.SetupClassCounts(self: State): Charm.Getter<ClassCountByFaction>
 					undoLastIncrement = incrementClassCount(currentFactionId(), currentClassKey(), 1)
 				end)
 			end)
-			
+
 			-- this will run on player leave
 			return function()
 				if undoLastIncrement then
@@ -124,7 +123,6 @@ function State.SetupClassCounts(self: State): Charm.Getter<ClassCountByFaction>
 	return getClassCountByFaction
 end
 
-
 function State:AsVideSources()
 	return {
 		configByFactionId = useAtom(self.configByFactionId),
@@ -136,6 +134,5 @@ end
 function State:Destroy()
 	self.maid:DoCleaning()
 end
-
 
 return State

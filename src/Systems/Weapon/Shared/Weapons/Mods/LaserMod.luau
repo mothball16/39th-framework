@@ -2,7 +2,6 @@
 -- ideally, we should get rid of any controller references and make this a pure module.
 -- WeaponController will just hook this up instead of the weird mod pattern we have now
 
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Packages = ReplicatedStorage:WaitForChild("Packages")
@@ -36,9 +35,10 @@ local MIN_DOT_SIZE = 4
 local MAX_DOT_SIZE = 16
 local DOT_SIZE_LERP_EXPONENT = 0.3
 
-
 local function getLaserAttachment(model)
-	if not model then return nil end
+	if not model then
+		return nil
+	end
 	local grip = model:FindFirstChild("Grip")
 	if grip then
 		return grip:FindFirstChild("Laser")
@@ -63,7 +63,9 @@ function LaserMod.GetLaserPoint()
 end
 
 function LaserMod.UpdateAttachmentsVisibility()
-	if not LaserMod.laserBeamFP or not LaserMod.laserBeamTP then return end
+	if not LaserMod.laserBeamFP or not LaserMod.laserBeamTP then
+		return
+	end
 	if not State.equippedTool() then
 		LaserMod.laserBeamFP.Enabled = false
 		LaserMod.laserBeamTP.Enabled = false
@@ -85,7 +87,9 @@ function LaserMod.UpdateAttachmentsVisibility()
 end
 
 function LaserMod.OnLaserToggled(enabled)
-	if not LaserMod.laserDotGui or not LaserMod.laserDotImage then return end
+	if not LaserMod.laserDotGui or not LaserMod.laserDotImage then
+		return
+	end
 	if not State.equippedTool() then
 		LaserMod.laserDotGui.Enabled = false
 		LaserMod.UpdateAttachmentsVisibility()
@@ -104,7 +108,8 @@ function LaserMod.OnLaserToggled(enabled)
 	if enabled then
 		local lazerbeem = getLaserAttachment(weaponState.gunModel())
 		if lazerbeem then
-			local laserColor = lazerbeem:FindFirstChild("Color") and lazerbeem.Color.Value or Color3.fromRGB(255, 100, 100)
+			local laserColor = lazerbeem:FindFirstChild("Color") and lazerbeem.Color.Value
+				or Color3.fromRGB(255, 100, 100)
 			LaserMod.laserDotImage.ImageColor3 = laserColor
 			if config.laserTrail then
 				LaserMod.laserBeamFP.Color = ColorSequence.new(laserColor)
@@ -205,8 +210,12 @@ local function numLerp(a, b, t)
 end
 
 function LaserMod.UpdateRender(dt)
-	if not weaponState.laserEnabled() then return end
-	if not LaserMod.laserDotPoint then return end
+	if not weaponState.laserEnabled() then
+		return
+	end
+	if not LaserMod.laserDotPoint then
+		return
+	end
 
 	local laserPoint = LaserMod.GetLaserPoint()
 	if not laserPoint then
@@ -230,12 +239,14 @@ function LaserMod.UpdateRender(dt)
 	laserRayParams.FilterDescendantsInstances = ignoreList
 	laserRayParams.RespectCanCollide = true
 	local dist
-	local rayResult = workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * MAX_DIST, laserRayParams)
+	local rayResult =
+		workspace:Raycast(laserPoint.WorldPosition, laserPoint.WorldCFrame.LookVector * MAX_DIST, laserRayParams)
 	if rayResult then
 		LaserMod.laserDotPoint.WorldPosition = rayResult.Position
 		dist = (rayResult.Position - State.Parts.HRP.Position).Magnitude
 	else
-		LaserMod.laserDotPoint.WorldPosition = laserPoint.WorldCFrame.Position + laserPoint.WorldCFrame.LookVector * MAX_DIST
+		LaserMod.laserDotPoint.WorldPosition = laserPoint.WorldCFrame.Position
+			+ laserPoint.WorldCFrame.LookVector * MAX_DIST
 		dist = MAX_DIST
 	end
 

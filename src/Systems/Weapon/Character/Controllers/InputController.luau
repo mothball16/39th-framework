@@ -28,9 +28,12 @@ end
 function InputController.new(params: {
 	callbacks: { [string]: (...any) -> () },
 }): InputController
-	local self = setmetatable({
-		callbacks = params.callbacks,
-	} :: self, InputController)
+	local self = setmetatable(
+		{
+			callbacks = params.callbacks,
+		} :: self,
+		InputController
+	)
 
 	UserInputService.InputChanged:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseWheel then
@@ -69,7 +72,12 @@ function InputController.ClearIntentCallback(self: InputController, actionName: 
 	return true
 end
 
-function InputController.HandleInput(self: InputController, actionName: string, inputState: Enum.UserInputState, inputObject: InputObject)
+function InputController.HandleInput(
+	self: InputController,
+	actionName: string,
+	inputState: Enum.UserInputState,
+	inputObject: InputObject
+)
 	local callback = self.callbacks[actionName]
 	if not callback then
 		warn(`[pearhead] no callback defined for intent key {actionName}`)
@@ -78,7 +86,13 @@ function InputController.HandleInput(self: InputController, actionName: string, 
 	callback(inputState, inputObject)
 end
 
-function InputController.BindInput(self: InputController, actionName: string, touchButton: boolean, priority: number, ...): InputController
+function InputController.BindInput(
+	self: InputController,
+	actionName: string,
+	touchButton: boolean,
+	priority: number,
+	...
+): InputController
 	if not isValidIntent(actionName) then
 		warn(`[pearhead] {actionName} isn't a valid intent in Enums.Intents`)
 	end
@@ -95,8 +109,7 @@ function InputController.UnbindInput(self: InputController, ...)
 end
 
 function InputController.BindGunInputs(self: InputController)
-	self
-		:BindInput(Intents.TRIGGER, false, config.gunInputPriority, unpack(config.fireGun))
+	self:BindInput(Intents.TRIGGER, false, config.gunInputPriority, unpack(config.fireGun))
 		:BindInput(Intents.DROP_GUN, false, config.gunInputPriority, unpack(config.dropKey))
 		:BindInput(Intents.RELOAD, false, config.gunInputPriority, unpack(config.keyReload))
 		:BindInput(Intents.CHAMBER, false, config.gunInputPriority, unpack(config.keyChamber))
@@ -109,8 +122,7 @@ function InputController.BindGunInputs(self: InputController)
 end
 
 function InputController.BindCharacterInputs(self: InputController)
-	self
-		:BindInput(Intents.LEAN_LEFT, false, config.movementInputPriority, unpack(config.leanLeft))
+	self:BindInput(Intents.LEAN_LEFT, false, config.movementInputPriority, unpack(config.leanLeft))
 		:BindInput(Intents.LEAN_RIGHT, false, config.movementInputPriority, unpack(config.leanRight))
 		:BindInput(Intents.SPRINT, false, config.movementInputPriority, unpack(config.keySprint))
 		:BindInput(Intents.STANCE_DOWN, false, config.movementInputPriority, unpack(config.lowerStance))

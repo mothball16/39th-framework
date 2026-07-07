@@ -22,7 +22,6 @@ local hitFX = require(script.Parent.HitFX)
 local GetMaterialType = require(script.Parent.MaterialTypes)
 local config = Access.config
 
-
 local function IsInHumanoid(Inst)
 	while Inst.Parent do
 		if Inst.Parent:FindFirstChild("Humanoid") then
@@ -38,7 +37,7 @@ local function RoundUp(number)
 	return math.floor(number + 0.5)
 end
 
-module.CanPierce = function(cast, rayResult:RaycastResult, segmentVelocity)
+module.CanPierce = function(cast, rayResult: RaycastResult, segmentVelocity)
 	local willPierce = false
 
 	local hitPart = rayResult.Instance
@@ -57,16 +56,23 @@ module.CanPierce = function(cast, rayResult:RaycastResult, segmentVelocity)
 		local player = players:GetPlayerFromCharacter(Humanoid.Parent)
 		if player and cast.UserData.Player == player then
 			willPierce = true
-		elseif hitPart.Parent:IsA("Accoutrement") or (hitPart.Parent:IsA("Model") and hitPart.Parent ~= Humanoid.Parent) then
+		elseif
+			hitPart.Parent:IsA("Accoutrement") or (hitPart.Parent:IsA("Model") and hitPart.Parent ~= Humanoid.Parent)
+		then
 			willPierce = true
 		end
 		--willPierce = false
-	elseif collectionService:HasTag(hitPart,"SPH_Collide") then
+	elseif collectionService:HasTag(hitPart, "SPH_Collide") then
 		willPierce = false
-	elseif collectionService:HasTag(hitPart,"Dragoon_Armor") then -- DD_SPH: Dragoon Tank System Compat
+	elseif collectionService:HasTag(hitPart, "Dragoon_Armor") then -- DD_SPH: Dragoon Tank System Compat
 		willPierce = false
 		-- </DD_SPH>
-	elseif hitPart.Transparency == 1 or not hitPart.CanCollide or hitPart.Name == "Ignore" or collectionService:HasTag(hitPart,"SPH_NoCollide") then
+	elseif
+		hitPart.Transparency == 1
+		or not hitPart.CanCollide
+		or hitPart.Name == "Ignore"
+		or collectionService:HasTag(hitPart, "SPH_NoCollide")
+	then
 		willPierce = true
 	end
 
@@ -84,24 +90,30 @@ module.CanPierce = function(cast, rayResult:RaycastResult, segmentVelocity)
 
 		local ricochetAngles = materialProperties.RicochetAngle
 		local angleNumber = RandomInt(ricochetAngles[1] * 10, ricochetAngles[2] * 10)
-		local reqAngle = RoundUp((angleNumber / 10) * (1 + (cast:GetVelocity().Magnitude)/100000)) -- Ricochet angle
+		local reqAngle = RoundUp((angleNumber / 10) * (1 + cast:GetVelocity().Magnitude / 100000)) -- Ricochet angle
 
 		if angle > reqAngle and segmentVelocity.Magnitude > materialProperties.MinRicochetVelocity and not Humanoid then -- Angle is high enough to bounce, and bullet is traveling fast enough
-
 			hitFX.HitEffect(rayResult.Position, rayResult.Instance, rayResult.Normal)
 
 			willPierce = true
 
-			local newDir = projectile.CFrame.LookVector - (2 * projectile.CFrame.LookVector:Dot(rayResult.Normal) * rayResult.Normal) -- Get the new direction for the bullet
+			local newDir = projectile.CFrame.LookVector
+				- (2 * projectile.CFrame.LookVector:Dot(rayResult.Normal) * rayResult.Normal) -- Get the new direction for the bullet
 
 			local ricochetDeviation = materialProperties.RicochetDeviation
-			local deviationVector = Vector3.new(RandomInt(-ricochetDeviation, ricochetDeviation) / 5000, RandomInt(-ricochetDeviation, ricochetDeviation) / 5000, RandomInt(-ricochetDeviation, ricochetDeviation) / 5000)
+			local deviationVector = Vector3.new(
+				RandomInt(-ricochetDeviation, ricochetDeviation) / 5000,
+				RandomInt(-ricochetDeviation, ricochetDeviation) / 5000,
+				RandomInt(-ricochetDeviation, ricochetDeviation) / 5000
+			)
 
 			newDir = CFrame.fromOrientation(deviationVector.X, deviationVector.Y, deviationVector.Z) * newDir -- Deviate direction
 
 			local velocityMult = materialProperties.VelocityMultiplier
 			cast:SetPosition(rayResult.Position) -- Move cast to hit position
-			cast:SetVelocity(RandomInt(velocityMult[1], velocityMult[2]) / 100 * segmentVelocity.Magnitude * newDir.Unit) -- Point cast in new direction and decrease velocity
+			cast:SetVelocity(
+				RandomInt(velocityMult[1], velocityMult[2]) / 100 * segmentVelocity.Magnitude * newDir.Unit
+			) -- Point cast in new direction and decrease velocity
 
 			local ricochetPart = Instance.new("Part")
 			ricochetPart.Name = "Ricochet Hit Temp"
@@ -125,7 +137,7 @@ module.CanPierce = function(cast, rayResult:RaycastResult, segmentVelocity)
 
 			local pierceRayParams = RaycastParams.new()
 			pierceRayParams.FilterType = Enum.RaycastFilterType.Include
-			pierceRayParams.FilterDescendantsInstances = {hitPart}
+			pierceRayParams.FilterDescendantsInstances = { hitPart }
 
 			local pierceRay = workspace:Raycast(maxDepthPoint, -bulletDirection, pierceRayParams)
 			if pierceRay then

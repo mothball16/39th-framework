@@ -27,12 +27,15 @@ export type ClientRuntime = typeof(setmetatable({} :: self, ClientRuntime))
 
 function ClientRuntime.new(access: Types.Access): ClientRuntime
 	local state = State.new()
-	local self = setmetatable({
-		state = state,
-		access = access,
-		maid = Maid.new(),
-		selectorOpen =  Charm.atom(false),
-	} :: self, ClientRuntime)
+	local self = setmetatable(
+		{
+			state = state,
+			access = access,
+			maid = Maid.new(),
+			selectorOpen = Charm.atom(false),
+		} :: self,
+		ClientRuntime
+	)
 
 	return self
 end

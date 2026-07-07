@@ -58,7 +58,6 @@ end
 
 -- Signed yaw/pitch delta (degrees) between consecutive unit look vectors via dot/cross.
 local function getLookAngularDelta(prevLook: Vector3, currentLook: Vector3): Vector2
-
 	local prevFlat = Vector3.new(prevLook.X, 0, prevLook.Z)
 	local currFlat = Vector3.new(currentLook.X, 0, currentLook.Z)
 	local yawDelta = 0
@@ -76,14 +75,11 @@ local function getLookAngularDelta(prevLook: Vector3, currentLook: Vector3): Vec
 			right = right.Unit
 			local up = refFlat.Unit:Cross(right)
 			pitchDelta = math.deg(
-				math.asin(math.clamp(currentLook:Dot(up), -1, 1))
-					- math.asin(math.clamp(prevLook:Dot(up), -1, 1))
+				math.asin(math.clamp(currentLook:Dot(up), -1, 1)) - math.asin(math.clamp(prevLook:Dot(up), -1, 1))
 			)
 		else
-			pitchDelta = math.deg(
-				math.asin(math.clamp(currentLook.Y, -1, 1))
-					- math.asin(math.clamp(prevLook.Y, -1, 1))
-			)
+			pitchDelta =
+				math.deg(math.asin(math.clamp(currentLook.Y, -1, 1)) - math.asin(math.clamp(prevLook.Y, -1, 1)))
 		end
 	end
 
@@ -104,29 +100,32 @@ function ViewmodelController.new(params: {
 	vmShirt: Shirt,
 	StopAnimation: (string, number) -> (),
 }): ViewmodelController
-	local self = setmetatable({
-		state = params.state,
-		weaponState = params.weaponState,
-		animBase = params.animBase,
-		camera = params.camera,
-		humanoidRootPart = params.humanoidRootPart,
-		weaponRig = params.weaponRig,
-		rayParams = params.rayParams,
-		player = params.player,
-		viewmodelRig = params.viewmodelRig,
-		vmShirt = params.vmShirt,
-		StopAnimation = params.StopAnimation,
-		swaySpring = springMod.new(),
-		moveSpring = springMod.new(),
-		pushbackOffset = 0,
-		hipRotation = Ripple.createSpring(Vector2.zero),
-		prevCameraLook = nil,
-		aimingOffset = CFrame.new(),
-		proneViewmodelOffset = 0,
-		rollAngle = 0,
-		strafeShift = 0,
-		aimTarget = CFrame.new(),
-	} :: self, ViewmodelController)
+	local self = setmetatable(
+		{
+			state = params.state,
+			weaponState = params.weaponState,
+			animBase = params.animBase,
+			camera = params.camera,
+			humanoidRootPart = params.humanoidRootPart,
+			weaponRig = params.weaponRig,
+			rayParams = params.rayParams,
+			player = params.player,
+			viewmodelRig = params.viewmodelRig,
+			vmShirt = params.vmShirt,
+			StopAnimation = params.StopAnimation,
+			swaySpring = springMod.new(),
+			moveSpring = springMod.new(),
+			pushbackOffset = 0,
+			hipRotation = Ripple.createSpring(Vector2.zero),
+			prevCameraLook = nil,
+			aimingOffset = CFrame.new(),
+			proneViewmodelOffset = 0,
+			rollAngle = 0,
+			strafeShift = 0,
+			aimTarget = CFrame.new(),
+		} :: self,
+		ViewmodelController
+	)
 
 	self.grip = Charm.computed(function()
 		local gunModel = self.weaponState.gunModel()
@@ -138,12 +137,12 @@ function ViewmodelController.new(params: {
 
 	self.moveInstability = Charm.computed(function()
 		local ws = self.weaponState.wepStats()
-		
+
 		local aiming = self.state.aiming()
 		if not ws then
 			return 1
 		end
-		
+
 		return if aiming then ws.MoveInstability * ws.AimedInstabilityMultiplier.move else ws.MoveInstability
 	end)
 
@@ -153,8 +152,11 @@ function ViewmodelController.new(params: {
 		if not ws then
 			return Vector2.new(1, 1)
 		end
-		return if aiming 
-			then Vector2.new(ws.DeltaInstability.X * ws.AimedInstabilityMultiplier.delta, ws.DeltaInstability.Y * ws.AimedInstabilityMultiplier.delta) 
+		return if aiming
+			then Vector2.new(
+				ws.DeltaInstability.X * ws.AimedInstabilityMultiplier.delta,
+				ws.DeltaInstability.Y * ws.AimedInstabilityMultiplier.delta
+			)
 			else ws.DeltaInstability
 	end)
 
@@ -255,7 +257,6 @@ function ViewmodelController.UpdateViewmodelPosition(
 	local humanoidRootPart = self.humanoidRootPart
 	local weaponRig = self.weaponRig
 	local rayParams = self.rayParams
-	
 
 	animBase.CFrame = CFrame.new((camera.CFrame * offset).Position)
 
@@ -347,14 +348,18 @@ function ViewmodelController.UpdateViewmodelPosition(
 	end
 	self.rollAngle = lerpNumber(self.rollAngle, targetRollAngle, 0.07 * dt * 60)
 	self.strafeShift = lerpNumber(self.strafeShift, targetStrafeShift, 0.07 * dt * 60)
-	
-	self:ApplyCFrameOffsetFrom(self.grip(), CFrame.Angles(0, math.rad(-self.strafeShift * config.maxStrafeShift), math.rad(self.rollAngle)))
+
+	self:ApplyCFrameOffsetFrom(
+		self.grip(),
+		CFrame.Angles(0, math.rad(-self.strafeShift * config.maxStrafeShift), math.rad(self.rollAngle))
+	)
 	local viewportSize = camera.ViewportSize
 	local mouseDelta = UserInputService:GetMouseDelta() / viewportSize
 	local currentLook = camera.CFrame.LookVector
 
 	local weaponAtReady = self.weaponState.holdStance() == Enums.HoldStance.Ready
-	local offCenterApplies = (config.hipfireMove and not self.state.aiming()) or (self.state.aiming() and config.offCenterAiming)
+	local offCenterApplies = (config.hipfireMove and not self.state.aiming())
+		or (self.state.aiming() and config.offCenterAiming)
 
 	if offCenterApplies and weaponAtReady then
 		local maxX = config.hipfireMoveX
@@ -368,26 +373,29 @@ function ViewmodelController.UpdateViewmodelPosition(
 		local genScale = 0.05
 		local pitchScale = 0.5
 		local speed = config.hipfireMoveSpeed * genScale
-		
+
 		local curHipGoal = self.hipRotation:getGoal()
-		self.hipRotation:setGoal(Vector2.new(
-			math.clamp(curHipGoal.X + angularDelta.X * speed, -maxX, maxX),
-			math.clamp(curHipGoal.Y + angularDelta.Y * speed * pitchScale, -maxY, maxY)
-		))
+		self.hipRotation:setGoal(
+			Vector2.new(
+				math.clamp(curHipGoal.X + angularDelta.X * speed, -maxX, maxX),
+				math.clamp(curHipGoal.Y + angularDelta.Y * speed * pitchScale, -maxY, maxY)
+			)
+		)
 	else
 		self.hipRotation:setGoal(Vector2.zero)
 	end
 	self.prevCameraLook = currentLook
-	animBase.CFrame *= CFrame.Angles(math.rad(self.hipRotation:getPosition().Y), math.rad(self.hipRotation:getPosition().X), 0)
-
-	self.swaySpring:shove(Vector3.new(
-		-mouseDelta.X * self.deltaInstability().X,
-		mouseDelta.Y * self.deltaInstability().Y,
+	animBase.CFrame *= CFrame.Angles(
+		math.rad(self.hipRotation:getPosition().Y),
+		math.rad(self.hipRotation:getPosition().X),
 		0
-	))
+	)
+
+	self.swaySpring:shove(
+		Vector3.new(-mouseDelta.X * self.deltaInstability().X, mouseDelta.Y * self.deltaInstability().Y, 0)
+	)
 	local updatedSway = self.swaySpring:update(dt)
 
-	
 	animBase.CFrame *= CFrame.new(updatedSway.X, updatedSway.Y, 0)
 
 	-- inconsistent based on screensize.
@@ -412,7 +420,10 @@ function ViewmodelController.UpdateViewmodelPosition(
 	end
 
 	if self.weaponState.RecoilRot:getPosition() > 1e-6 then
-		self:ApplyCFrameOffsetFrom(aimPart, CFrame.Angles(0, 0, -math.rad(self.weaponState.RecoilRot:getPosition() * 1.5)))
+		self:ApplyCFrameOffsetFrom(
+			aimPart,
+			CFrame.Angles(0, 0, -math.rad(self.weaponState.RecoilRot:getPosition() * 1.5))
+		)
 	end
 
 	if not self.weaponState.viewmodelVisible() then
@@ -459,20 +470,20 @@ function ViewmodelController.UpdateMovementSway(
 	local instabilityFactor = math.min(velocityMag, config.sprintSpeed)
 
 	if not humanoid.Sit and velocityMag > 0.1 then
-		local moveSway = Vector3.new(
-			getSineOffset(tempBobSpeed),
-			getSineOffset(tempBobSpeed / 2),
-			getSineOffset(tempBobSpeed / 2)
-		)
+		local moveSway =
+			Vector3.new(getSineOffset(tempBobSpeed), getSineOffset(tempBobSpeed / 2), getSineOffset(tempBobSpeed / 2))
 
-		self.moveSpring:shove(moveSway * self.moveInstability() * instabilityFactor / (tempDampening * tempDampening) * dt * 60)
+		self.moveSpring:shove(
+			moveSway * self.moveInstability() * instabilityFactor / (tempDampening * tempDampening) * dt * 60
+		)
 	end
 
 	local updatedMoveSway = self.moveSpring:update(dt)
 
 	if updatedMoveSway.Magnitude > 0.001 then
 		animBase.CFrame = animBase.CFrame:ToWorldSpace(
-			CFrame.new(updatedMoveSway.Y, updatedMoveSway.X, 0) * CFrame.Angles(updatedMoveSway.Y * 0.3, 0, updatedMoveSway.Y * 0.8)
+			CFrame.new(updatedMoveSway.Y, updatedMoveSway.X, 0)
+				* CFrame.Angles(updatedMoveSway.Y * 0.3, 0, updatedMoveSway.Y * 0.8)
 		)
 	end
 end

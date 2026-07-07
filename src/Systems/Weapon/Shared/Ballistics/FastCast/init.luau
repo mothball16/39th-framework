@@ -55,7 +55,7 @@ FastCast.__type = "FastCast" -- For compatibility with TypeMarshaller
 -- Extra stuff
 FastCast.HighFidelityBehavior = {
 	Default = 1,
-	Always = 3
+	Always = 3,
 }
 
 -----------------------------------------------------------
@@ -66,7 +66,8 @@ local Signal = require(script.Signal)
 local table = require(script.Table)
 
 -- Format params: methodName, ctorName
-local ERR_NOT_INSTANCE = "Cannot statically invoke method '%s' - It is an instance method. Call it on an instance of this class created via %s"
+local ERR_NOT_INSTANCE =
+	"Cannot statically invoke method '%s' - It is an instance method. Call it on an instance of this class created via %s"
 
 -- Format params: paramName, expectedType, actualType
 local ERR_INVALID_TYPE = "Invalid type for parameter '%s' (Expected %s, got %s)"
@@ -110,7 +111,7 @@ function FastCast.new()
 		RayHit = Signal.new("RayHit"),
 		RayPierced = Signal.new("RayPierced"),
 		CastTerminating = Signal.new("CastTerminating"),
-		WorldRoot = workspace
+		WorldRoot = workspace,
 	}, FastCast)
 end
 
@@ -128,14 +129,21 @@ function FastCast.newBehavior(): FastCastBehavior
 		CosmeticBulletTemplate = nil,
 		CosmeticBulletProvider = nil,
 		CosmeticBulletContainer = nil,
-		AutoIgnoreContainer = true
+		AutoIgnoreContainer = true,
 	}
 end
 
 local DEFAULT_DATA_PACKET = FastCast.newBehavior()
-function FastCast:Fire(origin: Vector3, direction: Vector3, velocity: Vector3 | number, castDataPacket: FastCastBehavior?): ActiveCast
-	if castDataPacket == nil then castDataPacket = DEFAULT_DATA_PACKET end
-	
+function FastCast:Fire(
+	origin: Vector3,
+	direction: Vector3,
+	velocity: Vector3 | number,
+	castDataPacket: FastCastBehavior?
+): ActiveCast
+	if castDataPacket == nil then
+		castDataPacket = DEFAULT_DATA_PACKET
+	end
+
 	local cast = ActiveCastStatic.new(self, origin, direction, velocity, castDataPacket)
 	cast.RayInfo.WorldRoot = self.WorldRoot
 	return cast

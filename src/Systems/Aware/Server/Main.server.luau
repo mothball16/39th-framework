@@ -13,4 +13,3 @@ SetupServerSync(ServerState)
 
 Events.RequestPing.SetCallback(PingRouter.ProcessRequestPing)
 Events.RequestRemovePing.SetCallback(PingRouter.ProcessRequestRemovePing)
-

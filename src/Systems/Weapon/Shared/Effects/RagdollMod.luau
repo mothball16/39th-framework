@@ -1,15 +1,15 @@
 local module = {}
 
 module.MakeCorpse = function(character)
-	local humanoid:Humanoid = character.Humanoid
+	local humanoid: Humanoid = character.Humanoid
 	local newGroup = Instance.new("Model")
 	newGroup.Parent = workspace
-	newGroup.Name = character.Name.."_Dead"
+	newGroup.Name = character.Name .. "_Dead"
 
 	-- Create ragdoll
 	for _, v in pairs(character:GetDescendants()) do
 		if v:IsA("Motor6D") and (v.Part0.Parent == character or v.Part1.Parent == character) then
-			local a0,a1 = Instance.new("Attachment"),Instance.new("Attachment")
+			local a0, a1 = Instance.new("Attachment"), Instance.new("Attachment")
 			a0.CFrame = v.C0
 			a1.CFrame = v.C1
 			a0.Parent = v.Part0
@@ -17,20 +17,20 @@ module.MakeCorpse = function(character)
 
 			if humanoid.RigType == Enum.HumanoidRigType.R6 then
 				if v.Part1.Name == "Left Leg" then
-					a1.Position -= Vector3.new(-0.5,0,0)
-					a0.Position -= Vector3.new(-0.5,0,0)
+					a1.Position -= Vector3.new(-0.5, 0, 0)
+					a0.Position -= Vector3.new(-0.5, 0, 0)
 				elseif v.Part1.Name == "Right Leg" then
-					a1.Position -= Vector3.new(0.5,0,0)
-					a0.Position -= Vector3.new(0.5,0,0)
+					a1.Position -= Vector3.new(0.5, 0, 0)
+					a0.Position -= Vector3.new(0.5, 0, 0)
 				end
 			else -- DD_SPH: Checks rig type and applies if R15
 				if v.Part1.Name == "LeftUpperLeg" then
-					a1.Position -= Vector3.new(-0.5,0,0)
-					a0.Position -= Vector3.new(-0.5,0,0)
+					a1.Position -= Vector3.new(-0.5, 0, 0)
+					a0.Position -= Vector3.new(-0.5, 0, 0)
 				elseif v.Part1.Name == "RightUpperLeg" then
-					a1.Position -= Vector3.new(0.5,0,0)
-					a0.Position -= Vector3.new(0.5,0,0)
-				end				
+					a1.Position -= Vector3.new(0.5, 0, 0)
+					a0.Position -= Vector3.new(0.5, 0, 0)
+				end
 			end
 
 			local b = Instance.new("BallSocketConstraint")
@@ -44,12 +44,16 @@ module.MakeCorpse = function(character)
 	end
 
 	local shirt = character:FindFirstChild("Shirt")
-	if shirt then shirt.Parent = newGroup end
+	if shirt then
+		shirt.Parent = newGroup
+	end
 
 	local pants = character:FindFirstChild("Pants")
-	if pants then pants.Parent = newGroup end
+	if pants then
+		pants.Parent = newGroup
+	end
 
-	for _,v:BasePart in pairs(character:GetChildren()) do
+	for _, v: BasePart in pairs(character:GetChildren()) do
 		if v:IsA("Part") then
 			v.Parent = newGroup
 			v:SetNetworkOwner()
@@ -78,7 +82,7 @@ module.MakeCorpse = function(character)
 	fakeHumanoid.MaxHealth = 0
 	fakeHumanoid.Parent = character
 
-	for _,v in pairs(character:GetChildren()) do
+	for _, v in pairs(character:GetChildren()) do
 		if v:IsA("Accoutrement") then
 			v.Parent = newGroup
 			humanoid:AddAccessory(v:Clone())
@@ -92,7 +96,7 @@ module.MakeCorpse = function(character)
 		if state == Enum.HumanoidStateType.None then
 			continue
 		else
-			humanoid:SetStateEnabled(state,false)
+			humanoid:SetStateEnabled(state, false)
 		end
 	end
 

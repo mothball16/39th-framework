@@ -19,9 +19,13 @@ local humanoidRootPart = characterState.Parts.HRP
 local animations = characterState.Parts.IsR6 and assets.Animations.R6 or assets.Animations.R15
 
 local camera = workspace.CurrentCamera
-if camera.CameraSubject ~= humanoid then camera.CameraSubject = humanoid end
+if camera.CameraSubject ~= humanoid then
+	camera.CameraSubject = humanoid
+end
 camera.CameraType = Enum.CameraType.Custom
-if camera:FindFirstChild("WeaponRig") then camera.WeaponRig:Destroy() end
+if camera:FindFirstChild("WeaponRig") then
+	camera.WeaponRig:Destroy()
+end
 
 local Controllers = script.Parent:WaitForChild("Controllers")
 local AnimationController = require(Controllers:WaitForChild("AnimationController"))
@@ -59,14 +63,13 @@ local rayParams = RaycastParams.new()
 rayParams.IgnoreWater = true
 rayParams.RespectCanCollide = true
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
-rayParams.FilterDescendantsInstances = {character,camera,shellFolder}
+rayParams.FilterDescendantsInstances = { character, camera, shellFolder }
 
 local function playCharSound(soundType: string)
 	P.PlayCharacterSound.send({ soundType = soundType })
 end
 
-
-local storageCFrame = CFrame.new(1000000,0,0) -- This is used for moving the viewmodel super far away.
+local storageCFrame = CFrame.new(1000000, 0, 0) -- This is used for moving the viewmodel super far away.
 -- Doing this to the viewmodel allows animations to be loaded, played, etc, while still having it out of view.
 
 -- Disable default death sound
@@ -96,31 +99,33 @@ if characterState.Parts.IsR6 then -- DD_SPH: Easy coloring
 		end
 	end
 else
-	local bodyparts = {"LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand"} -- DD_SPH: List of bodyparts for easy iterating
+	local bodyparts = { "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand" } -- DD_SPH: List of bodyparts for easy iterating
 	for i = 1, #bodyparts do
 		rig[bodyparts[i]].Color = character[bodyparts[i]].Color
 	end
 end -- </DD_SPH>
 
 -- Set up an animator
-local vmHuman = Instance.new("Humanoid",rig)
+local vmHuman = Instance.new("Humanoid", rig)
 
 vmHuman.RigType = humanoid.RigType
 
 for _, state in ipairs(Enum.HumanoidStateType:GetEnumItems()) do
-	if state == Enum.HumanoidStateType.None then continue end -- The 'None' state needs to be skipped because it cannot be disabled
-	vmHuman:SetStateEnabled(state,false)
+	if state == Enum.HumanoidStateType.None then
+		continue
+	end -- The 'None' state needs to be skipped because it cannot be disabled
+	vmHuman:SetStateEnabled(state, false)
 end
 
-local vmAnimator = Instance.new("Animator",vmHuman)
-local vmShirt = Instance.new("Shirt",rig)
+local vmAnimator = Instance.new("Animator", vmHuman)
+local vmShirt = Instance.new("Shirt", rig)
 local animBase = rig.AnimBase
 animBase.CFrame = storageCFrame
 
 rig.Parent = camera
 
 local weaponRig = character:FindFirstChild("WeaponRig") or character:WaitForChild("WeaponRig")
-local characterAnimator:Animator = weaponRig:WaitForChild("AnimationController").Animator
+local characterAnimator: Animator = weaponRig:WaitForChild("AnimationController").Animator
 
 local function PlayCharSound(soundType)
 	local soundFolder = assets.Sounds:FindFirstChild(soundType)
@@ -129,7 +134,7 @@ local function PlayCharSound(soundType)
 		local newSound = soundList[math.random(#soundList)]:Clone()
 		newSound.Parent = humanoidRootPart
 		newSound:Play()
-		debris:AddItem(newSound,newSound.TimeLength)
+		debris:AddItem(newSound, newSound.TimeLength)
 		playCharSound(soundType)
 	end
 end
@@ -194,10 +199,7 @@ local replicationController = ReplicationController.new({
 	state = characterState,
 })
 
-local effectManager = EffectManager.new(
-	characterState.suppressionFactor,
-	config.suppressionRecovery
-)
+local effectManager = EffectManager.new(characterState.suppressionFactor, config.suppressionRecovery)
 
 local uiController = UIController.new({
 	state = characterState,
@@ -218,9 +220,13 @@ local function OnScrollIntent(scrollAmount, holdForZoom)
 		if not weaponState.canManipulate() then
 			return
 		end
-		weaponState.holdStance(math.clamp(weaponState.holdStance() + (scrollAmount > 0 and -1 or 1),
-			Enums.HoldStance.High,
-			Enums.HoldStance.Patrol))
+		weaponState.holdStance(
+			math.clamp(
+				weaponState.holdStance() + (scrollAmount > 0 and -1 or 1),
+				Enums.HoldStance.High,
+				Enums.HoldStance.Patrol
+			)
+		)
 	end
 end
 
@@ -274,7 +280,7 @@ local inputController = InputController.new({
 		[Intents.TOGGLE_FLASHLIGHT] = function(inputState, inputObject)
 			weaponController:OnToggleFlashlightIntent(inputState, inputObject)
 		end,
-	}
+	},
 })
 
 local laserMod = LaserMod.new({
@@ -301,19 +307,21 @@ humanoid.Died:Connect(function()
 	inputController:UnbindGunInputs()
 
 	if config.useDeathCameraSubject then
-		repeat task.wait() until humanoid.Parent ~= character
+		repeat
+			task.wait()
+		until humanoid.Parent ~= character
 		camera.CameraSubject = humanoid
 	end
 
-	if rig then rig:Destroy() end
+	if rig then
+		rig:Destroy()
+	end
 	laserMod.Destroy()
 	effectController:Destroy()
 	effectManager:Destroy()
 end)
 
-
-
-runService.RenderStepped:Connect(function(dt:number)
+runService.RenderStepped:Connect(function(dt: number)
 	if math.ceil(1 / dt) < 5 then -- Skip the render stepped function if FPS is lower than 5 to avoid stuttering issues
 		return
 	end
@@ -327,10 +335,9 @@ runService.RenderStepped:Connect(function(dt:number)
 		laserMod.UpdateRender(dt)
 		replicationController:UpdateRender(dt)
 	end
-
 end)
 
-runService.Heartbeat:Connect(function(dt:number)
+runService.Heartbeat:Connect(function(dt: number)
 	movementController:UpdateHeartbeat(dt)
 	weaponController:UpdateHeartbeat(dt)
 	uiController:UpdateHeartbeat(dt)

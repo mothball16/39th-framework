@@ -12,7 +12,7 @@ local function applySoundFolder(grip: Instance, folder: Folder)
 		if gripSound and gripSound:IsA("Sound") then
 			gripSound:Destroy()
 		end
-		
+
 		child:Clone().Parent = grip
 	end
 end
@@ -27,7 +27,9 @@ local function applyFXFolder(grip: Instance, folder: Folder)
 					fx:Clone().Parent = gripAttachment
 				end
 			else
-				warn(`[SPH] useFX failed to apply for {folder.Name} as no attachment found on grip for weapon {grip.Parent and grip.Parent.Name or "unknown"}`)
+				warn(
+					`[SPH] useFX failed to apply for {folder.Name} as no attachment found on grip for weapon {grip.Parent and grip.Parent.Name or "unknown"}`
+				)
 			end
 		end
 	end

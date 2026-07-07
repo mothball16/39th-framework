@@ -15,17 +15,20 @@ type self<T> = {
 export type StatModifier<T> = typeof(setmetatable({} :: self<T>, StatModifier))
 
 function StatModifier.new<T>(base: T): StatModifier<T>
-	return (setmetatable({
-		_base = base,
-		_applied = {},
-		_add = {},
-		_multiply = {},
-		_override = {},
-		_dirty = true,
-	} :: self<T>, StatModifier))
+	return (
+		setmetatable(
+			{
+				_base = base,
+				_applied = {},
+				_add = {},
+				_multiply = {},
+				_override = {},
+				_dirty = true,
+			} :: self<T>,
+			StatModifier
+		)
+	)
 end
-
-
 
 local function setMod(orig: any, mod: any): any
 	if not orig then
@@ -53,8 +56,8 @@ local function applyMod(value, add: any, multiply: any)
 	elseif valueType == "table" then
 		for k: any, v: any in pairs(value :: { [string]: any }) do
 			-- TODO: refactor this, this is a mess lol
-			local addMod = typeof(add) == "number" and add or (add :: {number})[k]
-			local multiplyMod = typeof(multiply) == "number" and multiply or (multiply :: {number})[k]
+			local addMod = typeof(add) == "number" and add or (add :: { number })[k]
+			local multiplyMod = typeof(multiply) == "number" and multiply or (multiply :: { number })[k]
 			value[k] = applyMod(v, addMod, multiplyMod)
 		end
 		return value
@@ -96,7 +99,10 @@ function StatModifier.GetStats<T>(self: StatModifier<T>): { [string]: number }
 	return self._applied
 end
 
-function StatModifier.GetKeyModifiers<T>(self: StatModifier<T>, key: string): {
+function StatModifier.GetKeyModifiers<T>(
+	self: StatModifier<T>,
+	key: string
+): {
 	add: number?,
 	multiply: number?,
 	override: number?,

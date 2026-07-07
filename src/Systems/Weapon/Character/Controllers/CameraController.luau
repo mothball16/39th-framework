@@ -48,16 +48,19 @@ function CameraController.new(params: {
 	weaponState: WeaponStateModule.WeaponState,
 	state: CharacterStateModule.CharacterState,
 }): CameraController
-	local self = setmetatable({
-		camera = params.camera,
-		cameraRollAngle = 0,
-		cameraLeanRotation = 0,
-		cameraOffsetTarget = Vector3.zero,
-		weaponState = params.weaponState,
-		state = params.state,
-		aimFOVTarget = nil :: () -> number,
-		FOVTarget = nil :: () -> number,
-	} :: self, CameraController)
+	local self = setmetatable(
+		{
+			camera = params.camera,
+			cameraRollAngle = 0,
+			cameraLeanRotation = 0,
+			cameraOffsetTarget = Vector3.zero,
+			weaponState = params.weaponState,
+			state = params.state,
+			aimFOVTarget = nil :: () -> number,
+			FOVTarget = nil :: () -> number,
+		} :: self,
+		CameraController
+	)
 
 	self.aimFOVTarget = Charm.computed(function()
 		if not self.weaponState.wepStats() or not self.weaponState.gunModel() then
@@ -119,11 +122,8 @@ function CameraController.UpdateFOV(self: CameraController, dt: number)
 	end
 
 	if not player:GetAttribute(Consts.OVERRIDE_CAMERA_ZOOM) then
-		self.camera.FieldOfView = lerpNumber(
-			self.camera.FieldOfView,
-			self.FOVTarget(),
-			self.weaponState.aimCamLerpFactor() * (dt * 60)
-		)
+		self.camera.FieldOfView =
+			lerpNumber(self.camera.FieldOfView, self.FOVTarget(), self.weaponState.aimCamLerpFactor() * (dt * 60))
 	end
 end
 
@@ -147,9 +147,14 @@ function CameraController.UpdateRender(self: CameraController, dt: number)
 			self.state.Parts.NeckJoint.C1:Lerp(neckCFrame, 1 - math.exp(-config.headRotationSpeed * dt))
 
 		local fpThreshold = 0.6
-		if not self.state.firstPerson() and self.state.Parts.Character.Head.LocalTransparencyModifier >= fpThreshold then
+		if
+			not self.state.firstPerson()
+			and self.state.Parts.Character.Head.LocalTransparencyModifier >= fpThreshold
+		then
 			self.state.firstPerson(true)
-		elseif self.state.firstPerson() and self.state.Parts.Character.Head.LocalTransparencyModifier <= fpThreshold then
+		elseif
+			self.state.firstPerson() and self.state.Parts.Character.Head.LocalTransparencyModifier <= fpThreshold
+		then
 			self.state.firstPerson(false)
 			self.weaponState.viewmodelVisible(false)
 			self.cameraOffsetTarget = Vector3.zero
@@ -157,8 +162,10 @@ function CameraController.UpdateRender(self: CameraController, dt: number)
 	end
 
 	if
-		(self.state.Parts.Humanoid.Sit and not self.state.vehicleSeated() and self.state.firstPerson() or self.state.freeLook())
-		and config.cameraLimitInSeats
+		(
+			self.state.Parts.Humanoid.Sit and not self.state.vehicleSeated() and self.state.firstPerson()
+			or self.state.freeLook()
+		) and config.cameraLimitInSeats
 	then
 		local cameraCFrame = self.state.Parts.HRP.CFrame:ToObjectSpace(self.camera.CFrame)
 		local x, y, z = cameraCFrame:ToOrientation()
@@ -169,8 +176,9 @@ function CameraController.UpdateRender(self: CameraController, dt: number)
 		local xlimit = math.rad(math.clamp(math.deg(x), -60, 60))
 		local ylimit = math.rad(math.clamp(math.deg(y), -60, 60))
 		local zlimit = math.rad(math.clamp(math.deg(z), -60, 60))
-		local limitedCFrame =
-			self.state.Parts.HRP.CFrame:ToWorldSpace(CFrame.new(a, b, c) * CFrame.fromOrientation(xlimit, ylimit, zlimit))
+		local limitedCFrame = self.state.Parts.HRP.CFrame:ToWorldSpace(
+			CFrame.new(a, b, c) * CFrame.fromOrientation(xlimit, ylimit, zlimit)
+		)
 		self.camera.CFrame = CFrame.new(self.camera.CFrame.Position) * (limitedCFrame - limitedCFrame.Position)
 	end
 

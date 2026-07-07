@@ -14,13 +14,18 @@ type self = {
 }
 export type ItemEquipper = typeof(setmetatable({} :: self, ItemEquipper))
 
-
-function ItemEquipper.new(itemProviders: { [string]: Types.VariantItemProvider }, variants: { [string]: Types.Variant }): ItemEquipper
-	local self = setmetatable({
-		_itemProviders = itemProviders,
-		_maid = Maid.new(),
-		_variants = variants,
-	} :: self, ItemEquipper)
+function ItemEquipper.new(
+	itemProviders: { [string]: Types.VariantItemProvider },
+	variants: { [string]: Types.Variant }
+): ItemEquipper
+	local self = setmetatable(
+		{
+			_itemProviders = itemProviders,
+			_maid = Maid.new(),
+			_variants = variants,
+		} :: self,
+		ItemEquipper
+	)
 
 	return self
 end

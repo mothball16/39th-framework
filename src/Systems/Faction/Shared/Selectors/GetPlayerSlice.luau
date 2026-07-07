@@ -45,7 +45,7 @@ return function(state: State.State, userId: string): PlayerSlice
 
 	local classKey = Charm.computed(function()
 		local currentAssignment = assignment()
-		
+
 		return if currentAssignment then currentAssignment.ClassKey else nil
 	end)
 

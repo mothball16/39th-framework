@@ -15,7 +15,9 @@ if not _G.__ZAP then
 elseif not _G.__ZAP["SHARED_STATE"] then
 	_G.__ZAP["SHARED_STATE"] = {}
 elseif _G.__ZAP["SHARED_STATE"]["SHARED_STATE"] ~= nil then
-	error(`There is already an instance of Zap with the same remote_scope of SHARED_STATE, remote_folder of SHARED_STATE and the version of {_G.__ZAP["SHARED_STATE"]["SHARED_STATE"]}. Change the remote_scope or remote_folder option of both Zap instances`)
+	error(
+		`There is already an instance of Zap with the same remote_scope of SHARED_STATE, remote_folder of SHARED_STATE and the version of {_G.__ZAP["SHARED_STATE"]["SHARED_STATE"]}. Change the remote_scope or remote_folder option of both Zap instances`
+	)
 end
 
 _G.__ZAP["SHARED_STATE"]["SHARED_STATE"] = "0.6.29"
@@ -133,10 +135,10 @@ if not RunService:IsRunning() then
 	return table.freeze({
 		SendEvents = noop,
 		SyncState = table.freeze({
-			On = noop
+			On = noop,
 		}),
 		RequestState = table.freeze({
-			Fire = noop
+			Fire = noop,
 		}),
 	}) :: Events
 end
@@ -144,7 +146,6 @@ local remotes = ReplicatedStorage:WaitForChild("SHARED_STATE")
 
 local reliable = remotes:WaitForChild("SHARED_STATE_RELIABLE")
 assert(reliable:IsA("RemoteEvent"), "Expected SHARED_STATE_RELIABLE to be a RemoteEvent")
-
 
 local function SendEvents()
 	if outgoing_used ~= 0 then
@@ -190,7 +191,9 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			else
 				table.insert(reliable_event_queue[0], value)
 				if #reliable_event_queue[0] > 64 then
-					warn(`[ZAP] {#reliable_event_queue[0]} events in queue for SyncState. Did you forget to attach a listener?`)
+					warn(
+						`[ZAP] {#reliable_event_queue[0]} events in queue for SyncState. Did you forget to attach a listener?`
+					)
 				end
 			end
 		else
@@ -204,7 +207,7 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	SendEvents = SendEvents,
 	SyncState = {
-		On = function(Callback: (payload: ((unknown))) -> ())
+		On = function(Callback: (payload: unknown) -> ())
 			table.insert(reliable_events[0], Callback)
 			for _, value in reliable_event_queue[0] do
 				task.spawn(Callback, value)

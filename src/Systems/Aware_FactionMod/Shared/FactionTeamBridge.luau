@@ -17,8 +17,12 @@ if RunService:IsServer() then
 	state = runtime.state
 else
 	local player = game:GetService("Players").LocalPlayer
-	if not player then error("no localplayer found??") end
-	local runtimeLocator = require(player.PlayerScripts:WaitForChild("Systems"):WaitForChild("Faction"):WaitForChild("ClientRuntimeLocator"))
+	if not player then
+		error("no localplayer found??")
+	end
+	local runtimeLocator = require(
+		player.PlayerScripts:WaitForChild("Systems"):WaitForChild("Faction"):WaitForChild("ClientRuntimeLocator")
+	)
 	local runtime = runtimeLocator.GetRuntime()
 	state = runtime.state
 end

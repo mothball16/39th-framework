@@ -19,7 +19,7 @@ return function(props: {
 	manualButton: boolean,
 	isOpen: Vide.Source<boolean>,
 	setSelectorOpen: ((open: boolean) -> ()) -> (),
-	requestClassVariant: ((classKey: string, variantId: string) -> ()),
+	requestClassVariant: (classKey: string, variantId: string) -> (),
 	requestVariantApply: ((enable: boolean) -> ())?,
 	applyVariantMode: string?,
 })
@@ -48,9 +48,7 @@ return function(props: {
 				if #variants == 0 then
 					error(`no variants found for class: {classEntry().Key}`)
 				end
-				local id = if isSelected()
-					then (selector.selectedVariant() or variants[1]).Id
-					else variants[1].Id
+				local id = if isSelected() then (selector.selectedVariant() or variants[1]).Id else variants[1].Id
 				props.requestClassVariant(classEntry().Key, id)
 			end,
 		})
@@ -84,7 +82,9 @@ return function(props: {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 
-		Vide.show(function() return props.manualButton end, function()
+		Vide.show(function()
+			return props.manualButton
+		end, function()
 			return MenuActionButton({
 				AnchorPoint = Vector2.new(0, 1),
 				Position = UDim2.new(0, 5, 1, -5),
@@ -97,7 +97,7 @@ return function(props: {
 				end,
 			})
 		end),
-		
+
 		create "TextButton" {
 			Name = "ModalToggler",
 			Modal = function()
@@ -105,19 +105,21 @@ return function(props: {
 			end,
 		},
 		create "Frame" {
-			Visible = true,--function()
-				--return props.isOpen()
+			Visible = true, --function()
+			--return props.isOpen()
 			--end,
 			Name = "SelectorUI",
-			AnchorPoint = Vide.spring(function() return if props.isOpen() then Vector2.new(0.5, 0.5) else Vector2.new(0.5, 0) end, 0.25),
-			Position = Vide.spring(function() return if props.isOpen() then UDim2.fromScale(0.5, 0.5) else UDim2.fromScale(0.5, 1) end, 0.25),
+			AnchorPoint = Vide.spring(function()
+				return if props.isOpen() then Vector2.new(0.5, 0.5) else Vector2.new(0.5, 0)
+			end, 0.25),
+			Position = Vide.spring(function()
+				return if props.isOpen() then UDim2.fromScale(0.5, 0.5) else UDim2.fromScale(0.5, 1)
+			end, 0.25),
 			Size = UDim2.fromScale(0.4, 1),
 			BackgroundColor3 = Theme.Background,
 			BackgroundTransparency = 0.5,
 			BorderSizePixel = 0,
 			BorderColor3 = Theme.AccentColor,
-			
-			
 
 			create "UIAspectRatioConstraint" {
 				AspectRatio = ASPECT_RATIO,
@@ -270,7 +272,6 @@ return function(props: {
 							return ""
 						end,
 					},
-
 				},
 
 				create "Frame" {
@@ -372,6 +373,6 @@ return function(props: {
 					},
 				},
 			},
-		}
+		},
 	}
 end

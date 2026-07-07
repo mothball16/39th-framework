@@ -84,19 +84,22 @@ function MovementController.new(params: {
 	AdjustMoveAnimSpeed: ((number) -> ())?,
 	PlayCharSound: (string) -> (),
 }): MovementController
-	local self = setmetatable({
-		state = params.state,
-		weaponState = params.weaponState,
-		targetWalkSpeed = nil :: () -> number,
-		tempWalkSpeed = config.walkSpeed,
-		canJump = true,
-		baseCharacterHipHeight = params.humanoid.HipHeight,
-		lastStanceChange = tick(),
-		humanoid = params.humanoid,
-		humanoidRootPart = params.humanoidRootPart,
-		AdjustMoveAnimSpeed = params.AdjustMoveAnimSpeed,
-		PlayCharSound = params.PlayCharSound,
-	} :: self, MovementController)
+	local self = setmetatable(
+		{
+			state = params.state,
+			weaponState = params.weaponState,
+			targetWalkSpeed = nil :: () -> number,
+			tempWalkSpeed = config.walkSpeed,
+			canJump = true,
+			baseCharacterHipHeight = params.humanoid.HipHeight,
+			lastStanceChange = tick(),
+			humanoid = params.humanoid,
+			humanoidRootPart = params.humanoidRootPart,
+			AdjustMoveAnimSpeed = params.AdjustMoveAnimSpeed,
+			PlayCharSound = params.PlayCharSound,
+		} :: self,
+		MovementController
+	)
 
 	Charm.subscribe(self.state.sprinting, function(sprinting)
 		self:SyncSprinting(sprinting)
@@ -146,8 +149,6 @@ function MovementController.OnSeated(self: MovementController, seated: boolean, 
 	end
 end
 
-
-
 function MovementController.OnSprintIntent(self: MovementController, inputState: Enum.UserInputState, _)
 	local notCrawling = self.state.stance() < 2
 	if isInputDown(inputState) and notCrawling and self.state.moving() then
@@ -177,21 +178,25 @@ function MovementController.OnLeanRightIntent(self: MovementController, inputSta
 end
 
 function MovementController.OnStanceDownIntent(self: MovementController, inputState: Enum.UserInputState, _)
-	if not isInputDown(inputState)
+	if
+		not isInputDown(inputState)
 		or tick() - self.lastStanceChange < config.stanceThrottle
 		or (not config.canProne and self.state.stance() == 1)
 		or self.state.stance() >= 2
-		or self.humanoid.Sit then
+		or self.humanoid.Sit
+	then
 		return
 	end
 	self.state.stance(self.state.stance() + 1)
 end
 
 function MovementController.OnStanceUpIntent(self: MovementController, inputState: Enum.UserInputState, _)
-	if not isInputDown(inputState)
+	if
+		not isInputDown(inputState)
 		or tick() - self.lastStanceChange < config.stanceThrottle
 		or self.state.stance() == 0
-		or self.humanoid.Sit then
+		or self.humanoid.Sit
+	then
 		return
 	end
 	self.state.stance(self.state.stance() - 1)
@@ -248,16 +253,20 @@ function MovementController.SyncStance(self: MovementController, stance: number,
 
 	if stance == 0 then
 		self.PlayCharSound("Uncrouch")
-		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), { HipHeight = targetCharacterHeight }):Play()
+		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), { HipHeight = targetCharacterHeight })
+			:Play()
 	elseif stance == 1 then
 		self.state.sprinting(false)
 		self.PlayCharSound(oldStance == 0 and "Crouch" or "Unprone")
-		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), { HipHeight = targetCharacterHeight }):Play()
+		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime), { HipHeight = targetCharacterHeight })
+			:Play()
 	elseif stance == 2 then
 		self.state.lean(0)
 		self.state.sprinting(false)
 		self.PlayCharSound("Prone")
-		TweenService:Create(humanoid, TweenInfo.new(config.stanceChangeTime * 1.5), { HipHeight = targetCharacterHeight }):Play()
+		TweenService
+			:Create(humanoid, TweenInfo.new(config.stanceChangeTime * 1.5), { HipHeight = targetCharacterHeight })
+			:Play()
 	end
 end
 
@@ -275,7 +284,11 @@ function MovementController.UpdateCharacterProneAngle(self: MovementController)
 			self.humanoidRootPart.CFrame.UpVector:Cross(rayResult.Normal)
 		local rotateToFloorCFrame = (dot < -0.99999) and CFrame.fromAxisAngle(Vector3.new(1, 0, 0), math.pi)
 			or CFrame.new(0, 0, 0, uxv.X, uxv.Y, uxv.Z, 1 + dot)
-		self.state.Parts.RootJoint.C0 *= CFrame.Angles(rotateToFloorCFrame.X, rotateToFloorCFrame.Y, rotateToFloorCFrame.Z)
+		self.state.Parts.RootJoint.C0 *= CFrame.Angles(
+			rotateToFloorCFrame.X,
+			rotateToFloorCFrame.Y,
+			rotateToFloorCFrame.Z
+		)
 	end
 end
 
@@ -295,12 +308,14 @@ function MovementController.UpdateRender(self: MovementController, dt: number)
 
 	if self.state.Parts.IsR6 then
 		self.state.Parts.RootJoint.C1 = self.state.Parts.RootJoint.C1:Lerp(
-			CFrame.new(-xOffset / 2, 0, 0) * CFrame.Angles(math.rad(90), math.rad(180) + math.rad(17 * self.state.lean()), 0),
+			CFrame.new(-xOffset / 2, 0, 0)
+				* CFrame.Angles(math.rad(90), math.rad(180) + math.rad(17 * self.state.lean()), 0),
 			0.1 * dt * 60
 		)
 	else
 		self.state.Parts.RootJoint.C1 = self.state.Parts.RootJoint.C1:Lerp(
-			CFrame.new(-xOffset / 2, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0) + math.rad(17 * self.state.lean())),
+			CFrame.new(-xOffset / 2, 0, 0)
+				* CFrame.Angles(math.rad(0), math.rad(0), math.rad(0) + math.rad(17 * self.state.lean())),
 			0.1 * dt * 60
 		)
 	end

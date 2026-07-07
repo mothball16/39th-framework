@@ -68,28 +68,31 @@ local function resolveParts(character: Model): CharacterParts
 end
 
 function CharState.new(character: Model): CharacterState
-	local self = setmetatable({
-		Parts = resolveParts(character),
+	local self = setmetatable(
+		{
+			Parts = resolveParts(character),
 
-		aimFOVTarget = Charm.atom(config.defaultFOV),
+			aimFOVTarget = Charm.atom(config.defaultFOV),
 
-		aiming = Charm.atom(false),
-		equippedTool = Charm.atom(nil),
-		sprinting = Charm.atom(false),
+			aiming = Charm.atom(false),
+			equippedTool = Charm.atom(nil),
+			sprinting = Charm.atom(false),
 
-		firstPerson = Charm.atom(false),
-		dead = Charm.atom(false),
-		stance = Charm.atom(0),
-		lean = Charm.atom(0),
-		moving = Charm.atom(false),
-		seat = Charm.atom(nil),
+			firstPerson = Charm.atom(false),
+			dead = Charm.atom(false),
+			stance = Charm.atom(0),
+			lean = Charm.atom(0),
+			moving = Charm.atom(false),
+			seat = Charm.atom(nil),
 
-		suppressionFactor = Charm.atom(0),
+			suppressionFactor = Charm.atom(0),
 
-		freeLook = Charm.atom(false),
-		freeLookRotation = Charm.atom(CFrame.new()),
-		freeLookOffset = Charm.atom(CFrame.new()),
-	} :: self, CharState)
+			freeLook = Charm.atom(false),
+			freeLookRotation = Charm.atom(CFrame.new()),
+			freeLookOffset = Charm.atom(CFrame.new()),
+		} :: self,
+		CharState
+	)
 
 	self.vehicleSeated = Charm.computed(function()
 		local seat = self.seat()

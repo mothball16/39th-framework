@@ -17,7 +17,7 @@ local function Card(props: {
 	title: () -> string,
 	count: () -> number,
 	limit: () -> number,
-	
+
 	isSelected: () -> boolean,
 	SelectClass: () -> (),
 })
@@ -69,17 +69,17 @@ local function Card(props: {
 			BackgroundTransparency = 1,
 			Size = UDim2.new(1, 0, 1, 0),
 
-
 			create "Frame" {
 				Name = "Divider",
 				AnchorPoint = Vector2.new(0.5, 0),
 				Position = UDim2.new(0.5, 0, 0, 0),
 				Size = UDim2.new(1, 0, 0, 1),
 				BackgroundColor3 = Theme.TextColor,
-				BackgroundTransparency = function() return if not props.isSelected() then 0 else 1 end,
+				BackgroundTransparency = function()
+					return if not props.isSelected() then 0 else 1
+				end,
 				BorderSizePixel = 0,
 			},
-
 		},
 
 		create "Frame" {
@@ -142,7 +142,6 @@ local function Card(props: {
 					return not isFull() or props.isSelected()
 				end,
 				Activated = props.SelectClass,
-
 
 				create "TextLabel" {
 					Name = "SelectText",

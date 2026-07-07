@@ -25,11 +25,14 @@ function ReplicationController.new(params: {
 	character: Model,
 	state: CharacterStateModule.CharacterState,
 }): ReplicationController
-	local self = setmetatable({
-		character = params.character,
-		state = params.state,
-		headRotationEventCooldown = 0,
-	} :: self, ReplicationController)
+	local self = setmetatable(
+		{
+			character = params.character,
+			state = params.state,
+			headRotationEventCooldown = 0,
+		} :: self,
+		ReplicationController
+	)
 
 	Charm.subscribe(self.state.sprinting, function(sprinting)
 		self.character:SetAttribute("Sprinting", sprinting)

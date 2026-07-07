@@ -16,7 +16,6 @@ elseif #_assetPaths > 1 then
 	warn(`{TAG_NAME} tag found {#_assetPaths} times - tag only one assets folder with {TAG_NAME}.`)
 end
 
-
 local access: Types.Access = table.freeze({
 	Assets = AssetPath,
 	Config = require(AssetPath:WaitForChild("GameConfig")) :: Types.Settings,

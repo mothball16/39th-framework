@@ -31,7 +31,12 @@ function SequenceEval.evalColorSequence(sequence: ColorSequence, time: number, b
 	return Color3.new(0, 0, 0)
 end
 
-function SequenceEval.evalNumberSequence(sequence: NumberSequence, time: number, backOffset: number?, blendAlpha: number?)
+function SequenceEval.evalNumberSequence(
+	sequence: NumberSequence,
+	time: number,
+	backOffset: number?,
+	blendAlpha: number?
+)
 	if time == 0 then
 		return sequence.Keypoints[1].Value
 	elseif time == 1 then

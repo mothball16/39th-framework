@@ -1,8 +1,6 @@
 local CollectionService = game:GetService("CollectionService")
 local ConfigurationTypes = require(script.Parent.Core.ConfigurationTypes)
 
-
-
 local function resolveSingleTaggedAsset(tagName: string): Instance
 	local asset = CollectionService:GetTagged(tagName)
 	if #asset == 0 then

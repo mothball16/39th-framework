@@ -23,8 +23,6 @@ function HolosightMod.new(weaponState: WeaponStateModule.WeaponState)
 	return self
 end
 
-
-
 function HolosightMod:SyncActiveSights()
 	self.activeSights = {}
 	local gunModel = self.weaponState.gunModel()
@@ -83,6 +81,5 @@ function HolosightMod:UpdateRender(dt)
 		end
 	end
 end
-
 
 return HolosightMod

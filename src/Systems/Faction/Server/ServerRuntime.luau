@@ -31,23 +31,25 @@ type self = {
 export type ServerRuntime = typeof(setmetatable({} :: self, ServerRuntime))
 
 function ServerRuntime.new(args: {
-	access: Types.Access
+	access: Types.Access,
 })
-	local self = setmetatable({
-		access = args.access,
-		report = args.access.Config.DebugMode and Utilities.Report or function(result: boolean, message: string?, _action: string?)
-			return result, message
-		end,
+	local self = setmetatable(
+		{
+			access = args.access,
+			report = args.access.Config.DebugMode and Utilities.Report
+				or function(result: boolean, message: string?, _action: string?)
+					return result, message
+				end,
 
-		state = State.new(),
-		maid = Maid.new(),
+			state = State.new(),
+			maid = Maid.new(),
 
-		_itemProviders = {},
-		_configByVariantId = {},
-		_configByFactionId = {},
-	} :: self, ServerRuntime)
-
-
+			_itemProviders = {},
+			_configByVariantId = {},
+			_configByFactionId = {},
+		} :: self,
+		ServerRuntime
+	)
 
 	self.itemEquipper = ItemEquipper.new(self._itemProviders, self._configByVariantId)
 	self.selectionService = SelectionService.new(self.state, args.access.Config)
@@ -97,8 +99,6 @@ function ServerRuntime.UnregisterItemProvider(self: ServerRuntime, providerId: s
 	self._itemProviders[providerId] = nil
 end
 
-
-
 -- wires up everything. don't call for tests
 function ServerRuntime.Start(self: ServerRuntime)
 	Players.PlayerAdded:Connect(function(player)
@@ -143,21 +143,26 @@ function ServerRuntime.Start(self: ServerRuntime)
 	end)
 
 	Events.packets.RequestFaction.listen(function(data, player)
-		if not player then return end
+		if not player then
+			return
+		end
 		self.report(self.selectionService:HandleFactionRequest(player, data))
 	end)
 
 	Events.packets.RequestClassVariant.listen(function(data, player)
-		if not player then return end
+		if not player then
+			return
+		end
 		self.report(self.selectionService:HandleClassVariantRequest(player, data, self.itemEquipper))
 	end)
-	
+
 	Events.packets.RequestVariantApply.listen(function(data, player)
-		if not player then return end
+		if not player then
+			return
+		end
 		self.report(self.selectionService:HandleVariantApplyRequest(player, data, self.itemEquipper))
 	end)
 end
-
 
 function ServerRuntime.Destroy(self: ServerRuntime)
 	self.maid:DoCleaning()

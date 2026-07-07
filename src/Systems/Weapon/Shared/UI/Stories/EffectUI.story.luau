@@ -1,4 +1,3 @@
-
 local UILabs = require("@game/ReplicatedStorage/DevPackages/ui-labs")
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local create = Vide.create
@@ -15,9 +14,6 @@ end
 local controls = {
 	Type = UILabs.Choose(typeChoices, 1),
 }
-
-
-
 
 local story = UILabs.CreateVideStory({
 	vide = Vide,

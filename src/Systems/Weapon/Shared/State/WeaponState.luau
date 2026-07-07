@@ -61,43 +61,46 @@ type self = {
 export type WeaponState = typeof(setmetatable({} :: self, WepState))
 
 function WepState.new(): WeaponState
-	local self = setmetatable({
-		wepStats = Charm.atom(nil),
-		equipping = Charm.atom(false),
-		equipped = Charm.atom(false),
+	local self = setmetatable(
+		{
+			wepStats = Charm.atom(nil),
+			equipping = Charm.atom(false),
+			equipped = Charm.atom(false),
 
-		gunModel = Charm.atom(nil),
-		gunAmmo = nil,
-		localAmmo = Charm.atom(0),
+			gunModel = Charm.atom(nil),
+			gunAmmo = nil,
+			localAmmo = Charm.atom(0),
 
-		aimSens = Charm.atom(config.defaultAimSensitivity),
-		sightIndex = Charm.atom(1),
-		viewmodelVisible = Charm.atom(false),
-		reloading = Charm.atom(false),
-		chambering = Charm.atom(false),
-		aimHeld = Charm.atom(false),
-		blocked = Charm.atom(false),
+			aimSens = Charm.atom(config.defaultAimSensitivity),
+			sightIndex = Charm.atom(1),
+			viewmodelVisible = Charm.atom(false),
+			reloading = Charm.atom(false),
+			chambering = Charm.atom(false),
+			aimHeld = Charm.atom(false),
+			blocked = Charm.atom(false),
 
-		laserEnabled = Charm.atom(false),
-		flashlightEnabled = Charm.atom(false),
-		bipodEnabled = Charm.atom(false),
-		fireMode = Charm.atom(0),
-		holdStance = Charm.atom(0),
+			laserEnabled = Charm.atom(false),
+			flashlightEnabled = Charm.atom(false),
+			bipodEnabled = Charm.atom(false),
+			fireMode = Charm.atom(0),
+			holdStance = Charm.atom(0),
 
-		maid = Maid.new(),
-		CameraSpring = legacySpring.new(Vector3.new()),
-		RecoilPos = legacySpring.new(Vector3.new()),
-		RecoilDir = legacySpring.new(Vector3.new()),
-		RecoilUp = legacySpring.new(Vector3.new()),
-		RecoilRot = Ripple.createSpring(0, {
-			tension = 500,
-			mass = 2,
-			friction = 50,
-		}),
-		RecoilCF = CFrame.new(),
-		RecoilFactor = 0,
-		Spread = 0,
-	} :: self, WepState)
+			maid = Maid.new(),
+			CameraSpring = legacySpring.new(Vector3.new()),
+			RecoilPos = legacySpring.new(Vector3.new()),
+			RecoilDir = legacySpring.new(Vector3.new()),
+			RecoilUp = legacySpring.new(Vector3.new()),
+			RecoilRot = Ripple.createSpring(0, {
+				tension = 500,
+				mass = 2,
+				friction = 50,
+			}),
+			RecoilCF = CFrame.new(),
+			RecoilFactor = 0,
+			Spread = 0,
+		} :: self,
+		WepState
+	)
 
 	self.hasAmmoForMode = Charm.computed(function()
 		return self.localAmmo() > 0
@@ -166,7 +169,7 @@ function WepState.Reset(self: WeaponState)
 	self.RecoilDir.d = SP.rd
 	self.CameraSpring.s = SP.cs
 	self.CameraSpring.d = SP.cd
-	
+
 	self.RecoilRot:setPosition(0)
 	self.RecoilCF = CFrame.new()
 	self.RecoilFactor = 0

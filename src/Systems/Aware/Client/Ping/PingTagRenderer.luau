@@ -60,11 +60,11 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 					screenPosition = source(UDim2.new()),
 					visible = source(true),
 					transModifier = source(1),
-					lifetime = 0
+					lifetime = 0,
 				}
 
 				PingTagRenderer.PingStates[key] = state
-				
+
 				local getPingPosition = derive(function(): Vector3
 					return item().position
 				end)
@@ -94,11 +94,14 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 							pingSize.X.Scale * scale,
 							pingSize.X.Offset * scale,
 							pingSize.Y.Scale * scale,
-							pingSize.Y.Offset * scale)
+							pingSize.Y.Offset * scale
+						)
 					end,
 					BackgroundTransparency = 1,
 					Visible = state.visible,
-					GroupTransparency = function() return numLerp(transValue(), 1, 1 - state.transModifier()) end,
+					GroupTransparency = function()
+						return numLerp(transValue(), 1, 1 - state.transModifier())
+					end,
 
 					PingTag({
 						imageId = item().imageId,
@@ -112,7 +115,9 @@ end
 
 function PingTagRenderer.OnRender(dt: number, mouseLocation: Vector2)
 	local camera = workspace.CurrentCamera
-	if not camera then return end
+	if not camera then
+		return
+	end
 	local viewportSize = camera.ViewportSize
 
 	for key, state in pairs(PingTagRenderer.PingStates) do
@@ -123,14 +128,17 @@ function PingTagRenderer.OnRender(dt: number, mouseLocation: Vector2)
 		state.lifetime += dt
 
 		if onScreen then
-
 			if state.lifetime > PING_READY_TIME then
-				local scaleDiff = Vector2.new((mouseLocation.X - screenPoint.X) / viewportSize.X, (mouseLocation.Y - screenPoint.Y) / viewportSize.Y)
+				local scaleDiff = Vector2.new(
+					(mouseLocation.X - screenPoint.X) / viewportSize.X,
+					(mouseLocation.Y - screenPoint.Y) / viewportSize.Y
+				)
 				-- expo. decrease transparency so that the intended transparency effect fully applies faster than just at the very center
-				local proximityTransFactor = (1 - math.clamp(scaleDiff.Magnitude / UserSettings.HidePingDistance(), 0, 1)) ^ 0.5
+				local proximityTransFactor = (
+					1 - math.clamp(scaleDiff.Magnitude / UserSettings.HidePingDistance(), 0, 1)
+				) ^ 0.5
 				state.transModifier(numLerp(1, UserSettings.HidePingTransModifier(), proximityTransFactor))
 			end
-
 		end
 	end
 end

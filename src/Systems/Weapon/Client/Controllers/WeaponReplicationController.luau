@@ -38,15 +38,21 @@ function WeaponReplicationController.Initialize()
 end
 
 function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: CFrame, tracer: boolean)
-	if not player.Character then return end
+	if not player.Character then
+		return
+	end
 	local tool = player.Character:FindFirstChildWhichIsA("Tool")
 	if tool and CollectionService:HasTag(tool, "SPH_Weapon") then
 		local rig = player.Character:FindFirstChild("WeaponRig")
-		if not rig then return end
-		
+		if not rig then
+			return
+		end
+
 		local gunModel = rig:FindFirstChild("Weapon") and rig.Weapon:FindFirstChildWhichIsA("Model")
-		if not gunModel then return end
-		
+		if not gunModel then
+			return
+		end
+
 		local wepStats = weaponStatLocator.getWeaponStats(tool)
 		local gunAmmo = tool:FindFirstChild("Ammo")
 
@@ -62,8 +68,10 @@ function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: 
 		bulletHandler.FireFX(player, fxTarget, "Muzzle", muCh)
 
 		local muzzle = gunModel:FindFirstChild("Grip") and gunModel.Grip:FindFirstChild("Muzzle")
-		if not muzzle then return end
-		
+		if not muzzle then
+			return
+		end
+
 		local bulletOrigin = muzzle.WorldCFrame.Position
 		local bulletDirection = muzzle.WorldCFrame.LookVector
 
@@ -74,12 +82,18 @@ function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: 
 		local possibleTracerColor = wepStats.tracerColor
 		local tracerColor = nil
 
-		if wepStats.tracers and gunAmmo and gunAmmo:FindFirstChild("MagAmmo") and TrTi and gunAmmo.MagAmmo.Value % TrTi == 0 then
+		if
+			wepStats.tracers
+			and gunAmmo
+			and gunAmmo:FindFirstChild("MagAmmo")
+			and TrTi
+			and gunAmmo.MagAmmo.Value % TrTi == 0
+		then
 			tracerColor = possibleTracerColor
 		end
 
 		if tracerColor == "Random" then
-			tracerColor = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
+			tracerColor = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
 		end
 
 		bulletHandler.FireBullet(rig, bulletOrigin, bulletDirection, bulletVelocity, tool, player, tracerColor)
@@ -89,16 +103,23 @@ function WeaponReplicationController.OnReplicateFire(player: Player, firePoint: 
 				shellEjection.ejectShell(player, tool, gunModel)
 			end
 		end
-	end 
+	end
 end
 
 function WeaponReplicationController.OnReplicateSound(player: Player, soundToPlay: Sound, dupeSound: boolean)
-	if not soundToPlay then return end
+	if not soundToPlay then
+		return
+	end
 
 	if not dupeSound then
 		soundToPlay:Play()
 	else
-		if not player.Character or (not player.Character:FindFirstChild("Torso") and not player.Character:FindFirstChild("UpperTorso")) then return end
+		if
+			not player.Character
+			or (not player.Character:FindFirstChild("Torso") and not player.Character:FindFirstChild("UpperTorso"))
+		then
+			return
+		end
 		local newSound = soundToPlay:Clone()
 		if not soundToPlay.Parent or not soundToPlay.Parent:IsA("BasePart") then
 			newSound.Parent = player.Character:FindFirstChild("HumanoidRootPart")
@@ -106,7 +127,7 @@ function WeaponReplicationController.OnReplicateSound(player: Player, soundToPla
 			newSound.Parent = soundToPlay.Parent
 		end
 		newSound:Play()
-		
+
 		local soundLength = math.max(newSound.TimeLength, 1)
 		Debris:AddItem(newSound, soundLength)
 	end
@@ -121,13 +142,17 @@ function WeaponReplicationController.OnReplicateHit(tool: Tool, raycastResult: R
 end
 
 function WeaponReplicationController.OnReplicateBolt(player: Player, direction, magAmmo)
-	if not player.Character or not player.Character:FindFirstChild("WeaponRig") then return end
-	
+	if not player.Character or not player.Character:FindFirstChild("WeaponRig") then
+		return
+	end
+
 	local rig = player.Character.WeaponRig
 	local gunModel = rig:FindFirstChild("Weapon") and rig.Weapon:FindFirstChildWhichIsA("Model")
 	local tool = player.Character:FindFirstChildWhichIsA("Tool")
-	if not tool or not gunModel then return end
-	
+	if not tool or not gunModel then
+		return
+	end
+
 	local wepStats = weaponStatLocator.getWeaponStats(tool)
 	local boltData = {
 		fireMoveParts = wepStats.fireMoveParts,
@@ -158,7 +183,9 @@ function WeaponReplicationController.OnReplicateMagGrab(magPart: BasePart)
 	if magPart then
 		magPart.LocalTransparencyModifier = 0
 		for _, part in ipairs(magPart:GetDescendants()) do
-			if part:IsA("BasePart") then part.LocalTransparencyModifier = 0 end
+			if part:IsA("BasePart") then
+				part.LocalTransparencyModifier = 0
+			end
 		end
 	end
 end

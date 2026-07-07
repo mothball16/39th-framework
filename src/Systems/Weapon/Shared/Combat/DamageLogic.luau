@@ -53,7 +53,12 @@ function DamageLogic.getDamage(damageStats: any, hitPartName: string, distance: 
 		local low = math.min(z.Min, z.Max)
 		local high = math.max(z.Min, z.Max)
 
-		if typeof(weaponRange) ~= "table" or typeof(weaponRange.Min) ~= "number" or typeof(weaponRange.Max) ~= "number" or distance == nil then
+		if
+			typeof(weaponRange) ~= "table"
+			or typeof(weaponRange.Min) ~= "number"
+			or typeof(weaponRange.Max) ~= "number"
+			or distance == nil
+		then
 			return low
 		end
 		local r0 = math.min(weaponRange.Min, weaponRange.Max)

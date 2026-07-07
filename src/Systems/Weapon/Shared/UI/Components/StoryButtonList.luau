@@ -46,5 +46,4 @@ local function StoryButtonList(props: {
 	}
 end
 
-
 return StoryButtonList

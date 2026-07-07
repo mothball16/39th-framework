@@ -1,7 +1,6 @@
 local CollectionService = game:GetService("CollectionService")
 local Types = require("./Core/Types")
 
-
 local function resolveSingleTaggedAsset(tagName: string): Instance
 	local asset = CollectionService:GetTagged(tagName)
 	if #asset == 0 then

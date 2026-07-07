@@ -17,7 +17,9 @@ if not _G.__ZAP then
 elseif not _G.__ZAP["ZAP"] then
 	_G.__ZAP["ZAP"] = {}
 elseif _G.__ZAP["ZAP"]["PING"] ~= nil then
-	error(`There is already an instance of Zap with the same remote_scope of PING, remote_folder of ZAP and the version of {_G.__ZAP["ZAP"]["PING"]}. Change the remote_scope or remote_folder option of both Zap instances`)
+	error(
+		`There is already an instance of Zap with the same remote_scope of PING, remote_folder of ZAP and the version of {_G.__ZAP["ZAP"]["PING"]}. Change the remote_scope or remote_folder option of both Zap instances`
+	)
 end
 
 _G.__ZAP["ZAP"]["PING"] = "0.6.29"
@@ -135,24 +137,24 @@ if not RunService:IsRunning() then
 	return table.freeze({
 		SendEvents = noop,
 		RequestRemovePing = table.freeze({
-			SetCallback = noop
+			SetCallback = noop,
 		}),
 		RequestPing = table.freeze({
-			SetCallback = noop
+			SetCallback = noop,
 		}),
 		ReportRemovePing = table.freeze({
 			Fire = noop,
 			FireAll = noop,
 			FireExcept = noop,
 			FireList = noop,
-			FireSet = noop
+			FireSet = noop,
 		}),
 		ReportPing = table.freeze({
 			Fire = noop,
 			FireAll = noop,
 			FireExcept = noop,
 			FireList = noop,
-			FireSet = noop
+			FireSet = noop,
 		}),
 	}) :: Events
 end
@@ -184,17 +186,17 @@ end
 Players.PlayerRemoving:Connect(function(player)
 	player_map[player] = nil
 end)
-export type RequestPingPayload = ({
-	["position"]: (Vector3),
-})
-export type ReportPingPayload = ({
-	["owner"]: (Player),
-	["position"]: (Vector3),
-	["name"]: (string),
-})
-export type ReportRemovePingPayload = ({
-	["owner"]: (Player),
-})
+export type RequestPingPayload = {
+	["position"]: Vector3,
+}
+export type ReportPingPayload = {
+	["owner"]: Player,
+	["position"]: Vector3,
+	["name"]: string,
+}
+export type ReportRemovePingPayload = {
+	["owner"]: Player,
+}
 
 local function SendEvents()
 	for player, outgoing in player_map do
@@ -230,8 +232,12 @@ reliable.OnServerEvent:Connect(function(player, buff, inst)
 			end
 		elseif id == 0 then -- RequestPing
 			local value
-			value = {  }
-			value["position"] = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
+			value = {}
+			value["position"] = Vector3.new(
+				buffer.readf32(incoming_buff, read(4)),
+				buffer.readf32(incoming_buff, read(4)),
+				buffer.readf32(incoming_buff, read(4))
+			)
 			if reliable_events[0] then
 				task.spawn(reliable_events[0], player, value)
 			end
@@ -254,9 +260,9 @@ local returns = {
 		end,
 	},
 	RequestPing = {
-		SetCallback = function(Callback: (Player: Player, payload: ({
-			["position"]: (Vector3),
-		})) -> ()): () -> ()
+		SetCallback = function(Callback: (Player: Player, payload: {
+			["position"]: Vector3,
+		}) -> ()): () -> ()
 			reliable_events[0] = Callback
 			return function()
 				reliable_events[0] = nil
@@ -264,9 +270,12 @@ local returns = {
 		end,
 	},
 	ReportRemovePing = {
-		Fire = function(Player: Player, payload: ({
-			["owner"]: (Player),
-		}))
+		Fire = function(
+			Player: Player,
+			payload: {
+				["owner"]: Player,
+			}
+		)
 			load_player(Player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
@@ -274,9 +283,9 @@ local returns = {
 			table.insert(outgoing_inst, payload["owner"])
 			player_map[Player] = save()
 		end,
-		FireAll = function(payload: ({
-			["owner"]: (Player),
-		}))
+		FireAll = function(payload: {
+			["owner"]: Player,
+		})
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
@@ -291,9 +300,12 @@ local returns = {
 				player_map[player] = save()
 			end
 		end,
-		FireExcept = function(Except: Player, payload: ({
-			["owner"]: (Player),
-		}))
+		FireExcept = function(
+			Except: Player,
+			payload: {
+				["owner"]: Player,
+			}
+		)
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
@@ -310,9 +322,12 @@ local returns = {
 				end
 			end
 		end,
-		FireList = function(List: { [unknown]: Player }, payload: ({
-			["owner"]: (Player),
-		}))
+		FireList = function(
+			List: { [unknown]: Player },
+			payload: {
+				["owner"]: Player,
+			}
+		)
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
@@ -327,9 +342,12 @@ local returns = {
 				player_map[player] = save()
 			end
 		end,
-		FireSet = function(Set: { [Player]: any }, payload: ({
-			["owner"]: (Player),
-		}))
+		FireSet = function(
+			Set: { [Player]: any },
+			payload: {
+				["owner"]: Player,
+			}
+		)
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
@@ -346,11 +364,14 @@ local returns = {
 		end,
 	},
 	ReportPing = {
-		Fire = function(Player: Player, payload: ({
-			["owner"]: (Player),
-			["position"]: (Vector3),
-			["name"]: (string),
-		}))
+		Fire = function(
+			Player: Player,
+			payload: {
+				["owner"]: Player,
+				["position"]: Vector3,
+				["name"]: string,
+			}
+		)
 			load_player(Player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
@@ -370,11 +391,11 @@ local returns = {
 			buffer.writestring(outgoing_buff, outgoing_apos, payload["name"], len_1)
 			player_map[Player] = save()
 		end,
-		FireAll = function(payload: ({
-			["owner"]: (Player),
-			["position"]: (Vector3),
-			["name"]: (string),
-		}))
+		FireAll = function(payload: {
+			["owner"]: Player,
+			["position"]: Vector3,
+			["name"]: string,
+		})
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
@@ -401,11 +422,14 @@ local returns = {
 				player_map[player] = save()
 			end
 		end,
-		FireExcept = function(Except: Player, payload: ({
-			["owner"]: (Player),
-			["position"]: (Vector3),
-			["name"]: (string),
-		}))
+		FireExcept = function(
+			Except: Player,
+			payload: {
+				["owner"]: Player,
+				["position"]: Vector3,
+				["name"]: string,
+			}
+		)
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
@@ -434,11 +458,14 @@ local returns = {
 				end
 			end
 		end,
-		FireList = function(List: { [unknown]: Player }, payload: ({
-			["owner"]: (Player),
-			["position"]: (Vector3),
-			["name"]: (string),
-		}))
+		FireList = function(
+			List: { [unknown]: Player },
+			payload: {
+				["owner"]: Player,
+				["position"]: Vector3,
+				["name"]: string,
+			}
+		)
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
@@ -465,11 +492,14 @@ local returns = {
 				player_map[player] = save()
 			end
 		end,
-		FireSet = function(Set: { [Player]: any }, payload: ({
-			["owner"]: (Player),
-			["position"]: (Vector3),
-			["name"]: (string),
-		}))
+		FireSet = function(
+			Set: { [Player]: any },
+			payload: {
+				["owner"]: Player,
+				["position"]: Vector3,
+				["name"]: string,
+			}
+		)
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)

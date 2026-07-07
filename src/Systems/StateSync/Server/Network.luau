@@ -17,7 +17,9 @@ if not _G.__ZAP then
 elseif not _G.__ZAP["SHARED_STATE"] then
 	_G.__ZAP["SHARED_STATE"] = {}
 elseif _G.__ZAP["SHARED_STATE"]["SHARED_STATE"] ~= nil then
-	error(`There is already an instance of Zap with the same remote_scope of SHARED_STATE, remote_folder of SHARED_STATE and the version of {_G.__ZAP["SHARED_STATE"]["SHARED_STATE"]}. Change the remote_scope or remote_folder option of both Zap instances`)
+	error(
+		`There is already an instance of Zap with the same remote_scope of SHARED_STATE, remote_folder of SHARED_STATE and the version of {_G.__ZAP["SHARED_STATE"]["SHARED_STATE"]}. Change the remote_scope or remote_folder option of both Zap instances`
+	)
 end
 
 _G.__ZAP["SHARED_STATE"]["SHARED_STATE"] = "0.6.29"
@@ -139,10 +141,10 @@ if not RunService:IsRunning() then
 			FireAll = noop,
 			FireExcept = noop,
 			FireList = noop,
-			FireSet = noop
+			FireSet = noop,
 		}),
 		RequestState = table.freeze({
-			On = noop
+			On = noop,
 		}),
 	}) :: Events
 end
@@ -219,7 +221,7 @@ table.freeze(polling_queues_unreliable)
 local returns = {
 	SendEvents = SendEvents,
 	SyncState = {
-		Fire = function(Player: Player, payload: ((unknown)))
+		Fire = function(Player: Player, payload: unknown)
 			load_player(Player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
@@ -232,7 +234,7 @@ local returns = {
 			buffer.writeu8(outgoing_buff, bool_1_pos_1, bool_1)
 			player_map[Player] = save()
 		end,
-		FireAll = function(payload: ((unknown)))
+		FireAll = function(payload: unknown)
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
@@ -252,7 +254,7 @@ local returns = {
 				player_map[player] = save()
 			end
 		end,
-		FireExcept = function(Except: Player, payload: ((unknown)))
+		FireExcept = function(Except: Player, payload: unknown)
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
@@ -274,7 +276,7 @@ local returns = {
 				end
 			end
 		end,
-		FireList = function(List: { [unknown]: Player }, payload: ((unknown)))
+		FireList = function(List: { [unknown]: Player }, payload: unknown)
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)
@@ -294,7 +296,7 @@ local returns = {
 				player_map[player] = save()
 			end
 		end,
-		FireSet = function(Set: { [Player]: any }, payload: ((unknown)))
+		FireSet = function(Set: { [Player]: any }, payload: unknown)
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 0)

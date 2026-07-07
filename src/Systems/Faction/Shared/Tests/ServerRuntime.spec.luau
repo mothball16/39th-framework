@@ -83,7 +83,6 @@ return function()
 		return runtime.state.playerAssignmentByUserId()[Utilities.ToPlayerKey(player.UserId)]
 	end
 
-
 	afterAll(function()
 		globalMaid:DoCleaning()
 	end)
@@ -119,8 +118,6 @@ return function()
 		afterEach(function()
 			runtime:Destroy()
 		end)
-
-
 
 		describe("SelectionService", function()
 			describe("HandleFactionRequest", function()

@@ -65,13 +65,19 @@ local function resolveDefaultsKey(weaponAnim: { key: string?, tag: string, defau
 	return weaponAnim.defaultsKey or weaponAnim.key
 end
 
-local function resolvePlayParams(weaponAnim: { key: string?, tag: string, defaultsKey: string? }?, parameters: { [string]: any }?)
+local function resolvePlayParams(
+	weaponAnim: { key: string?, tag: string, defaultsKey: string? }?,
+	parameters: { [string]: any }?
+)
 	local defaultsKey = resolveDefaultsKey(weaponAnim)
 	local defaults = defaultsKey and ANIM_DEFAULTS[defaultsKey]
 	local p = parameters or {}
 	return {
 		looped = if p.looped ~= nil then p.looped elseif defaults then defaults.looped else false,
-		priority = if p.priority ~= nil then p.priority elseif defaults then defaults.priority else Enum.AnimationPriority.Action,
+		priority = if p.priority ~= nil
+			then p.priority
+			elseif defaults then defaults.priority
+			else Enum.AnimationPriority.Action,
 		transSpeed = p.transSpeed,
 		speed = p.speed,
 	}
@@ -89,7 +95,13 @@ local function clearTweenForTrack(self: AnimationController, track: AnimationTra
 	self.activeTweens[track] = nil
 end
 
-local function fadeTrack(self: AnimationController, track: AnimationTrack, targetWeight: number, fadeTime: number?, speed: number?)
+local function fadeTrack(
+	self: AnimationController,
+	track: AnimationTrack,
+	targetWeight: number,
+	fadeTime: number?,
+	speed: number?
+)
 	if targetWeight == 0 and not track.IsPlaying then
 		return
 	end
@@ -124,7 +136,11 @@ local function fadeTrack(self: AnimationController, track: AnimationTrack, targe
 		track:AdjustWeight(w, 0)
 	end)
 
-	local tween = TweenService:Create(val, TweenInfo.new(fadeTime, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), { Value = targetWeight })
+	local tween = TweenService:Create(
+		val,
+		TweenInfo.new(fadeTime, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out),
+		{ Value = targetWeight }
+	)
 
 	local onEnd = tween.Completed:Once(function()
 		if self.activeTweens[track] == nil then
@@ -148,7 +164,12 @@ local function fadeTrack(self: AnimationController, track: AnimationTrack, targe
 	tween:Play()
 end
 
-local function loadHumanoidAnim(self: AnimationController, animation: Animation, looped: boolean, priority: Enum.AnimationPriority)
+local function loadHumanoidAnim(
+	self: AnimationController,
+	animation: Animation,
+	looped: boolean,
+	priority: Enum.AnimationPriority
+)
 	local anim = self.state.Parts.Humanoid.Animator:LoadAnimation(animation)
 	anim.Looped = looped
 	anim.Priority = priority
@@ -182,7 +203,11 @@ local function resolveAnimationAsset(path: Instance, animName: string)
 	return path:FindFirstChild(animName)
 end
 
-local function getOrCreateTracks(self: AnimationController, animName: string, playParams: { looped: boolean, priority: Enum.AnimationPriority })
+local function getOrCreateTracks(
+	self: AnimationController,
+	animName: string,
+	playParams: { looped: boolean, priority: Enum.AnimationPriority }
+)
 	local cached = self.loadedAnims[animName]
 	if cached then
 		cached.vm.Looped = playParams.looped
@@ -249,27 +274,32 @@ function AnimationController.new(params: {
 	state: CharacterStateModule.CharacterState,
 	events: LocalEvents.LocalEvents,
 }): AnimationController
-	local self = setmetatable({
-		loadedAnims = {},
-		activeTweens = {},
-		vmAnimator = params.vmAnimator,
-		characterAnimator = params.characterAnimator,
-		animationsFolder = params.animationsFolder,
-		crouchIdleAnim = nil :: AnimationTrack,
-		crouchMoveAnim = nil :: AnimationTrack,
-		proneIdleAnim = nil :: AnimationTrack,
-		proneMoveAnim = nil :: AnimationTrack,
-		moveAnim = nil,
-		holdAnimKey = nil,
-		weaponState = params.weaponState,
-		state = params.state,
-		events = params.events,	
-	} :: self, AnimationController)
+	local self = setmetatable(
+		{
+			loadedAnims = {},
+			activeTweens = {},
+			vmAnimator = params.vmAnimator,
+			characterAnimator = params.characterAnimator,
+			animationsFolder = params.animationsFolder,
+			crouchIdleAnim = nil :: AnimationTrack,
+			crouchMoveAnim = nil :: AnimationTrack,
+			proneIdleAnim = nil :: AnimationTrack,
+			proneMoveAnim = nil :: AnimationTrack,
+			moveAnim = nil,
+			holdAnimKey = nil,
+			weaponState = params.weaponState,
+			state = params.state,
+			events = params.events,
+		} :: self,
+		AnimationController
+	)
 
 	self.crouchIdleAnim = loadHumanoidAnim(self, params.animationsFolder.Crouch_Idle, true, Enum.AnimationPriority.Idle)
-	self.crouchMoveAnim = loadHumanoidAnim(self, params.animationsFolder.Crouch_Move, true, Enum.AnimationPriority.Movement)
+	self.crouchMoveAnim =
+		loadHumanoidAnim(self, params.animationsFolder.Crouch_Move, true, Enum.AnimationPriority.Movement)
 	self.proneIdleAnim = loadHumanoidAnim(self, params.animationsFolder.Prone_Idle, true, Enum.AnimationPriority.Idle)
-	self.proneMoveAnim = loadHumanoidAnim(self, params.animationsFolder.Prone_Move, true, Enum.AnimationPriority.Movement)
+	self.proneMoveAnim =
+		loadHumanoidAnim(self, params.animationsFolder.Prone_Move, true, Enum.AnimationPriority.Movement)
 
 	Charm.subscribe(self.state.sprinting, function(sprinting)
 		self:SyncSprinting(sprinting)
@@ -323,26 +353,26 @@ end
 
 function AnimationController.SyncStance(self: AnimationController, stance)
 	if self.moveAnim then
-		fadeTrack(self,self.moveAnim, 0, config.stanceChangeTime)
+		fadeTrack(self, self.moveAnim, 0, config.stanceChangeTime)
 	end
 
 	if stance == Enums.Stance.Standing then
 		self.moveAnim = nil
-		fadeTrack(self,self.crouchIdleAnim, 0, config.stanceChangeTime)
-		fadeTrack(self,self.proneIdleAnim, 0, config.stanceChangeTime)
+		fadeTrack(self, self.crouchIdleAnim, 0, config.stanceChangeTime)
+		fadeTrack(self, self.proneIdleAnim, 0, config.stanceChangeTime)
 	elseif stance == Enums.Stance.Crouching then
 		self.moveAnim = self.crouchMoveAnim
 		if self.state.moving() then
-			fadeTrack(self,self.moveAnim, 1, config.stanceChangeTime)
+			fadeTrack(self, self.moveAnim, 1, config.stanceChangeTime)
 		end
-		fadeTrack(self,self.proneIdleAnim, 0, config.stanceChangeTime)
-		fadeTrack(self,self.crouchIdleAnim, 1, config.stanceChangeTime)
+		fadeTrack(self, self.proneIdleAnim, 0, config.stanceChangeTime)
+		fadeTrack(self, self.crouchIdleAnim, 1, config.stanceChangeTime)
 	elseif stance == Enums.Stance.Crawling then
 		self.moveAnim = self.proneMoveAnim
-		fadeTrack(self,self.crouchIdleAnim, 0, config.stanceChangeTime)
-		fadeTrack(self,self.proneIdleAnim, 1, config.stanceChangeTime)
+		fadeTrack(self, self.crouchIdleAnim, 0, config.stanceChangeTime)
+		fadeTrack(self, self.proneIdleAnim, 1, config.stanceChangeTime)
 		if self.state.moving() then
-			fadeTrack(self,self.moveAnim, 1, config.stanceChangeTime)
+			fadeTrack(self, self.moveAnim, 1, config.stanceChangeTime)
 		end
 	end
 end
@@ -352,9 +382,9 @@ function AnimationController.SyncMoving(self: AnimationController, moving)
 		return
 	end
 	if moving then
-		fadeTrack(self,self.moveAnim, 1, config.stanceChangeTime)
+		fadeTrack(self, self.moveAnim, 1, config.stanceChangeTime)
 	else
-		fadeTrack(self,self.moveAnim, 0, config.stanceChangeTime)
+		fadeTrack(self, self.moveAnim, 0, config.stanceChangeTime)
 	end
 end
 
@@ -374,8 +404,8 @@ end
 function AnimationController.StopAnimation(self: AnimationController, animName: string, transTime: number)
 	local tracks = self.loadedAnims[animName]
 	if tracks then
-		fadeTrack(self,tracks.vm, 0, transTime)
-		fadeTrack(self,tracks.tp, 0, transTime)
+		fadeTrack(self, tracks.vm, 0, transTime)
+		fadeTrack(self, tracks.tp, 0, transTime)
 	end
 end
 
@@ -400,8 +430,8 @@ function AnimationController.PlayAnimation(
 	local transSpeed = merged.transSpeed
 	local speed = merged.speed or 1
 
-	fadeTrack(self,tracks.vm, 1, transSpeed, speed)
-	fadeTrack(self,tracks.tp, 1, transSpeed, speed)
+	fadeTrack(self, tracks.vm, 1, transSpeed, speed)
+	fadeTrack(self, tracks.tp, 1, transSpeed, speed)
 
 	return tracks.vm
 end
@@ -410,7 +440,7 @@ function AnimationController.StopAll(self: AnimationController)
 	for _, animator in { self.vmAnimator, self.characterAnimator } do
 		if animator then
 			for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-				fadeTrack(self,track, 0, 0)
+				fadeTrack(self, track, 0, 0)
 			end
 		end
 	end
@@ -500,7 +530,8 @@ function AnimationController.SyncChambering(self: AnimationController, value)
 		return
 	end
 
-	local useChamber = self.state.equippedTool().BoltReady.Value or self.weaponState.fireMode() == Enums.FireModes.Manual
+	local useChamber = self.state.equippedTool().BoltReady.Value
+		or self.weaponState.fireMode() == Enums.FireModes.Manual
 	local weaponAnim = if useChamber then Enums.WeaponAnim.BoltChamber else Enums.WeaponAnim.BoltClose
 	local animName = weaponAnimationName(stats, weaponAnim.key)
 
@@ -539,20 +570,27 @@ local function playBoltOpenReloadSequence(self: AnimationController, lastGunMode
 			return
 		end
 		local cap = stats.clipSize or stats.magazineCapacity
-		local canFullClip =
-			stats.magType == Enums.MagType.Manual
+		local canFullClip = stats.magType == Enums.MagType.Manual
 			and (gunAmmo.MagAmmo.MaxValue - gunAmmo.MagAmmo.Value) >= cap
 			and gunAmmo.ArcadeAmmoPool.Value >= cap
 
 		if canFullClip then
 			local clipName = weaponAnimationName(stats, Enums.WeaponAnim.ClipReload.key)
 			if clipName then
-				self:PlayAnimation(clipName, { looped = true, speed = animSpeed, transSpeed = 0.17 }, Enums.WeaponAnim.ClipReload)
+				self:PlayAnimation(
+					clipName,
+					{ looped = true, speed = animSpeed, transSpeed = 0.17 },
+					Enums.WeaponAnim.ClipReload
+				)
 			end
 			return
 		end
 
-		if lastGunModelName and self.weaponState.gunModel() and lastGunModelName ~= self.weaponState.gunModel().Name then
+		if
+			lastGunModelName
+			and self.weaponState.gunModel()
+			and lastGunModelName ~= self.weaponState.gunModel().Name
+		then
 			return
 		end
 		local reloadName = weaponAnimationName(stats, Enums.WeaponAnim.Reload.key)
@@ -579,11 +617,14 @@ function AnimationController.WeaponReload(self: AnimationController, lastGunMode
 
 	local reloadName = weaponAnimationName(stats, Enums.WeaponAnim.Reload.key)
 	if reloadName then
-		self:PlayAnimation(reloadName, { speed = animSpeed, priority = Enum.AnimationPriority.Action3, transSpeed = 0.17 }, Enums.WeaponAnim.Reload)
+		self:PlayAnimation(
+			reloadName,
+			{ speed = animSpeed, priority = Enum.AnimationPriority.Action3, transSpeed = 0.17 },
+			Enums.WeaponAnim.Reload
+		)
 	else
 		warn(`no reload anim for {tool.Name}`)
 	end
-	
 end
 
 function AnimationController.PlayBoltAction(self: AnimationController, boltReady)

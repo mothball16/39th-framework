@@ -31,7 +31,7 @@ type self = {
 	weaponState: WeaponStateModule.WeaponState,
 	effectManager: EffectManager.EffectManager,
 	panelPositionSource: Vide.source<UDim2>,
-	
+
 	maid: Maid.Maid,
 
 	_colorCorrection: ColorCorrectionEffect,
@@ -45,32 +45,35 @@ type self = {
 export type EffectController = typeof(setmetatable({} :: self, EffectController))
 
 local WHIZ_SOUNDS = {
-"189916243",
-"189916269",
-"4927234432",
-"4927234734",
-"4927235094",
-"4927236859",
-"5303772965",}
-
+	"189916243",
+	"189916269",
+	"4927234432",
+	"4927234734",
+	"4927235094",
+	"4927236859",
+	"5303772965",
+}
 
 function EffectController.new(params: {
 	state: CharacterStateModule.CharacterState,
 	weaponState: WeaponStateModule.WeaponState,
 	effectManager: EffectManager.EffectManager,
 }): EffectController
-	local self = setmetatable({
-		state = params.state,
-		weaponState = params.weaponState,
-		effectManager = params.effectManager,
-		panelPositionSource = nil :: Vide.source<UDim2>,
-		maid = Maid.new(),
-		_lastSuppressionTick = tick(),
-		_lastAimPunchTick = tick(),
-	} :: self, EffectController)
+	local self = setmetatable(
+		{
+			state = params.state,
+			weaponState = params.weaponState,
+			effectManager = params.effectManager,
+			panelPositionSource = nil :: Vide.source<UDim2>,
+			maid = Maid.new(),
+			_lastSuppressionTick = tick(),
+			_lastAimPunchTick = tick(),
+		} :: self,
+		EffectController
+	)
 
 	self.panelPositionSource = Vide.source(self:GetForwardPanelPosition())
-	
+
 	self._colorCorrection = game.Lighting:FindFirstChild("SuppressionColorCorrection")
 
 	if not self._colorCorrection then
@@ -121,7 +124,6 @@ function EffectController.new(params: {
 end
 
 function EffectController.Wire(self: EffectController, events: LocalEvents.LocalEvents)
-
 	self.maid:GiveTask(events.BulletHit:Connect(function(...)
 		self:OnBulletHit(...)
 	end))
@@ -145,7 +147,12 @@ function EffectController.OnReportSuppression(self: EffectController, data: Netw
 	self.effectManager:PushSuppression(data.level, data.factor, data.limit)
 end
 
-function EffectController.OnBulletHit(self: EffectController, wepStats: Types.WeaponStats, bulletOrigin: Vector3, raycastResult: RaycastResult)
+function EffectController.OnBulletHit(
+	self: EffectController,
+	wepStats: Types.WeaponStats,
+	bulletOrigin: Vector3,
+	raycastResult: RaycastResult
+)
 	if not raycastResult.Instance or not Access.config.hitmarkers then
 		return
 	end
@@ -160,11 +167,12 @@ function EffectController.OnBulletHit(self: EffectController, wepStats: Types.We
 	end
 	local distance = (bulletOrigin - raycastResult.Position).Magnitude
 	local hitmarkerInstance = HitmarkerTypes[hitmarkerRegion]()
-	local estimatedDamage = DamageLogic.getDamage(wepStats.damage, raycastResult.Instance.Name, distance, wepStats.range)
+	local estimatedDamage =
+		DamageLogic.getDamage(wepStats.damage, raycastResult.Instance.Name, distance, wepStats.range)
 
 	local screenPoint = workspace.CurrentCamera:WorldToViewportPoint(raycastResult.Position)
 	hitmarkerInstance.Position(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
-	
+
 	-- do the hitmarker stuff
 	if Access.config.damageIndicators == "incremental" then
 		self.effectManager:PushDamage(estimatedDamage)
@@ -174,7 +182,7 @@ function EffectController.OnBulletHit(self: EffectController, wepStats: Types.We
 		if Access.config.damageIndicators == "flash" then
 			self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position, estimatedDamage)
 		else
-			self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position)--, estimatedDamage)
+			self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position) --, estimatedDamage)
 		end
 	end
 
@@ -198,7 +206,7 @@ function EffectController.ApplySuppressionAimPunch(self: EffectController, facto
 end
 
 local function numLerp(a: number, b: number, t: number)
-    return a + (b - a) * math.clamp(t, 0, 1)
+	return a + (b - a) * math.clamp(t, 0, 1)
 end
 
 function EffectController.SyncSuppressionFactor(self: EffectController, value: number, oldValue: number)
@@ -240,7 +248,8 @@ function EffectController.GetForwardPanelPosition(self: EffectController): UDim2
 		return UDim2.fromScale(0.5, 0.5)
 	end
 
-	local screenPoint = workspace.CurrentCamera:WorldToViewportPoint((muzzle.WorldCFrame * CFrame.new(0, 0, -50)).Position)
+	local screenPoint =
+		workspace.CurrentCamera:WorldToViewportPoint((muzzle.WorldCFrame * CFrame.new(0, 0, -50)).Position)
 	return UDim2.fromOffset(screenPoint.X, screenPoint.Y)
 end
 

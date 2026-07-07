@@ -78,27 +78,30 @@ function UIController.new(params: {
 	local attachmentFrame = ammoUI:WaitForChild("AttachmentFrame")
 	local aimSens = ammoUI.FiremodeFrame.Sens
 
-	attachmentFrame.Flashlight.KeybindText.Text =
-		"[" .. UserInputService:GetStringForKeyCode(config.toggleFlashlight[1]) .. "]"
-	attachmentFrame.Laser.KeybindText.Text =
-		"[" .. UserInputService:GetStringForKeyCode(config.toggleLaser[1]) .. "]"
+	attachmentFrame.Flashlight.KeybindText.Text = "["
+		.. UserInputService:GetStringForKeyCode(config.toggleFlashlight[1])
+		.. "]"
+	attachmentFrame.Laser.KeybindText.Text = "[" .. UserInputService:GetStringForKeyCode(config.toggleLaser[1]) .. "]"
 
 	if UserInputService.TouchEnabled then
 		ammoUI.Position = UDim2.new(1, -30, 1, -100)
 	end
 
-	local self = setmetatable({
-		weaponState = params.weaponState,
-		state = params.state,
-		ammoUI = ammoUI,
-		ammoCounter = ammoCounter,
-		ammoPoolUI = ammoPoolUI,
-		bulletType = bulletType,
-		fireMode = fireMode,
-		chambered = chambered,
-		attachmentFrame = attachmentFrame,
-		aimSens = aimSens,
-	} :: self, UIController)
+	local self = setmetatable(
+		{
+			weaponState = params.weaponState,
+			state = params.state,
+			ammoUI = ammoUI,
+			ammoCounter = ammoCounter,
+			ammoPoolUI = ammoPoolUI,
+			bulletType = bulletType,
+			fireMode = fireMode,
+			chambered = chambered,
+			attachmentFrame = attachmentFrame,
+			aimSens = aimSens,
+		} :: self,
+		UIController
+	)
 
 	Charm.subscribe(self.state.equippedTool, function(tool)
 		self:SyncEquippedTool(tool)
@@ -140,8 +143,17 @@ function UIController.UpdateHeartbeat(self: UIController, _dt: number)
 	local wepStats = self.weaponState.wepStats()
 	local magAmmo = self.weaponState.gunAmmo and self.weaponState.gunAmmo:FindFirstChild("MagAmmo")
 
-	if tool and wepStats and (tool:FindFirstChild("Chambered") or wepStats.openBolt) and magAmmo and not self.state.dead() then
-		if self.state.Parts.Humanoid.SeatPart ~= nil and self.state.Parts.Humanoid.SeatPart.ClassName == "VehicleSeat" then
+	if
+		tool
+		and wepStats
+		and (tool:FindFirstChild("Chambered") or wepStats.openBolt)
+		and magAmmo
+		and not self.state.dead()
+	then
+		if
+			self.state.Parts.Humanoid.SeatPart ~= nil
+			and self.state.Parts.Humanoid.SeatPart.ClassName == "VehicleSeat"
+		then
 			return
 		end
 		self.ammoUI.Visible = true

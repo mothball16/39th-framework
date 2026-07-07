@@ -71,7 +71,11 @@ function StateActions.RemoveFaction(state: State.State, idToRemove: string): (bo
 	return true, nil
 end
 
-function StateActions.SetPlayerFaction(state: State.State, userId: number | string, factionId: string): (boolean, string?)
+function StateActions.SetPlayerFaction(
+	state: State.State,
+	userId: number | string,
+	factionId: string
+): (boolean, string?)
 	userId = Utilities.ToPlayerKey(userId)
 
 	if not state.configByFactionId()[factionId] then
@@ -86,7 +90,12 @@ function StateActions.SetPlayerFaction(state: State.State, userId: number | stri
 	return StateActions.SetPlayerToDefaultClassVariant(state, userId, factionId)
 end
 
-function StateActions.SetPlayerClassVariant(state: State.State, userId: number | string, classKey: string?, variantId: string?): (boolean, string?)
+function StateActions.SetPlayerClassVariant(
+	state: State.State,
+	userId: number | string,
+	classKey: string?,
+	variantId: string?
+): (boolean, string?)
 	userId = Utilities.ToPlayerKey(userId)
 	local assignment = state.playerAssignmentByUserId()[userId]
 	-- either intentionally or accidentally empty, remove everything cause
@@ -95,7 +104,6 @@ function StateActions.SetPlayerClassVariant(state: State.State, userId: number |
 		classKey = nil
 		variantId = nil
 	else
-
 		local playerFactionId = if assignment then assignment.FactionId else nil
 		local factionConfig = state.configByFactionId()[playerFactionId]
 		local currentClassKey = if assignment then assignment.ClassKey else nil
@@ -112,7 +120,7 @@ function StateActions.SetPlayerClassVariant(state: State.State, userId: number |
 		if not factionConfig then
 			return false, `denied: faction {playerFactionId} is not a valid faction`
 		end
-	
+
 		if not factionConfig.Classes[classKey] then
 			return false, `denied: class key {classKey} is not a valid class of faction {playerFactionId}`
 		end
@@ -126,7 +134,8 @@ function StateActions.SetPlayerClassVariant(state: State.State, userId: number |
 		end
 
 		if not foundConfig then
-			return false, `denied: variant id {variantId} is not a valid variant of class {classKey} of faction {playerFactionId}`
+			return false,
+				`denied: variant id {variantId} is not a valid variant of class {classKey} of faction {playerFactionId}`
 		end
 
 		if foundConfig.AccessCheck and not foundConfig.AccessCheck(tonumber(userId) :: number) then
@@ -157,15 +166,17 @@ function StateActions.RemovePlayerClassVariant(state: State.State, userId: numbe
 	return StateActions.SetPlayerClassVariant(state, userId, nil, nil)
 end
 
-
 function StateActions.RemovePlayerFaction(state: State.State, userId: number | string): (boolean, string?)
 	userId = Utilities.ToPlayerKey(userId)
 	_updateMapValue(state.playerAssignmentByUserId, userId, nil)
 	return true, nil
 end
 
-
-function StateActions.SetPlayerToDefaultClassVariant(state: State.State, userId: number | string, factionId: string): (boolean, string?)
+function StateActions.SetPlayerToDefaultClassVariant(
+	state: State.State,
+	userId: number | string,
+	factionId: string
+): (boolean, string?)
 	userId = Utilities.ToPlayerKey(userId)
 	local factionConfig = state.configByFactionId()[factionId]
 	local msg = ""
@@ -193,6 +204,5 @@ function StateActions.SetPlayerToDefaultClassVariant(state: State.State, userId:
 	})
 	return true, msg
 end
-
 
 return StateActions

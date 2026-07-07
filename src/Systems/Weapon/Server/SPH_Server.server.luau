@@ -28,7 +28,6 @@ physicsService:CollisionGroupSetCollidable("SuppressionTargets", "Default", fals
 game:GetService("SoundService").RespectFilteringEnabled = true
 require(script.Parent.CreateSoundGroups)()
 
-
 local Framework = replicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
 local assets = Access.assets
@@ -65,7 +64,6 @@ explosionOverlapParams.MaxParts = 500
 local net = NetworkEvents
 
 local naughtyList = {}
-
 
 local mainFolder = Instance.new("Folder", workspace)
 mainFolder.Name = "SPH_Workspace"
@@ -204,7 +202,12 @@ local function holsterWeapon(player, holsterPart, tool, holsterCFrame)
 		holsterModel.Middle.Name = "Grip"
 		holsterModel.Grip.Transparency = 1
 	end
-	if tool:FindFirstChild("Chambered") and holsterModel and holsterModel:FindFirstChild(wepStats.projectile) and not tool.Chambered.Value then
+	if
+		tool:FindFirstChild("Chambered")
+		and holsterModel
+		and holsterModel:FindFirstChild(wepStats.projectile)
+		and not tool.Chambered.Value
+	then
 		local projectile = holsterModel:FindFirstChild(wepStats.projectile)
 		projectile:Destroy()
 	end
@@ -220,7 +223,8 @@ local function checkHolster(player, tool)
 		if wepStats.holsterPart_R15 and player.Character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
 			holsterPart = player.Character:FindFirstChild(wepStats.holsterPart_R15)
 		end
-		if player.Character
+		if
+			player.Character
 			and not player.Character:FindFirstChild("Holster_" .. tool.Name)
 			and not player.Character:FindFirstChild(tool.Name)
 			and holsterPart
@@ -229,7 +233,6 @@ local function checkHolster(player, tool)
 		end
 	end
 end
-
 
 local function equipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 	if tool.Parent == rig.Parent and assets.WeaponModels:FindFirstChild(tool.Name) then
@@ -240,7 +243,7 @@ local function equipGun(rig: Model, tool: Tool, rigType: Enum.HumanoidRigType)
 
 		local gun = assets.WeaponModels[tool.Name]:Clone()
 		WeaponSetup.apply(gun, wepStats, assets.Sounds, assets.Effects)
-		
+
 		weldMod.WeldModel(gun, gun.Grip, false)
 
 		for _, partName in ipairs(wepStats.rigParts) do
@@ -477,7 +480,13 @@ local function initializePlayerLifecycle()
 				newChar.Humanoid:UnequipTools()
 				local robloxDamageTag = newChar.Humanoid:FindFirstChildWhichIsA("ObjectValue")
 				local killer = newChar:FindFirstChild("Killer")
-				if killer and robloxDamageTag and robloxDamageTag.Value and robloxDamageTag.Value:IsA("Player") and config.rblxDamageTags then
+				if
+					killer
+					and robloxDamageTag
+					and robloxDamageTag.Value
+					and robloxDamageTag.Value:IsA("Player")
+					and config.rblxDamageTags
+				then
 					killer = robloxDamageTag
 				end
 				newRig:Destroy()
@@ -560,7 +569,10 @@ local function initializePlayerLifecycle()
 			rightFoot.RollOffMaxDistance = 100
 			task.wait()
 			for _, existingGui in ipairs(newPlayer.PlayerGui:GetChildren()) do
-				if existingGui.Name == mainui.Name or (config.deathScreen and existingGui.Name == assets.HUD.DeathScreen.Name) then
+				if
+					existingGui.Name == mainui.Name
+					or (config.deathScreen and existingGui.Name == assets.HUD.DeathScreen.Name)
+				then
 					existingGui:Destroy()
 				end
 			end
@@ -682,24 +694,63 @@ local function onBulletHit(player: Player, tool: Tool, raycastResult: RaycastRes
 				local aoePen = expPen * 0.5
 				local aoePlrDmg = math.abs(expRadius / 1.5 / dist * 100)
 				local aoeShellForce = (1 - math.map(dist, 0, expRadius * 2, 0, 1)) * wepStats.bulletForce
-				local aoeKnockback = (config.useBulletForce and (originPos - hitPart.Position).Unit * -aoeShellForce) or nil
+				local aoeKnockback = (config.useBulletForce and (originPos - hitPart.Position).Unit * -aoeShellForce)
+					or nil
 				local vehicle: Model = atmod.TagCheck(hitPart, "Vehicles")
 				local prop: Model = atmod.TagCheck(hitPart, "Props")
 				local vehiclePrimary = vehicle and vehicle.PrimaryPart
-				if vehicle and vehiclePrimary and hitPart:HasTag("Dragoon_Armor") and not table.find(vehiclesHit, vehicle) then
-					local result =
-						workspace:Raycast(originPos + Vector3.new(0, 1, 0), (vehiclePrimary.Position - originPos).Unit * expRadius, explosionRayParams)
-					if not config.explosionRaycast or (result and result.Instance and result.Instance:IsDescendantOf(vehicle)) then
+				if
+					vehicle
+					and vehiclePrimary
+					and hitPart:HasTag("Dragoon_Armor")
+					and not table.find(vehiclesHit, vehicle)
+				then
+					local result = workspace:Raycast(
+						originPos + Vector3.new(0, 1, 0),
+						(vehiclePrimary.Position - originPos).Unit * expRadius,
+						explosionRayParams
+					)
+					if
+						not config.explosionRaycast
+						or (result and result.Instance and result.Instance:IsDescendantOf(vehicle))
+					then
 						table.insert(vehiclesHit, vehicle)
 						atmod.DamageVehicle(player, hitPart, aoePen, aoeDmg, aoeKnockback, false)
 					end
-					atmod.DamageMisc(player, hitPart, hitPart.Position, originPos, aoePen, aoeDmg, aoePlrDmg, nil, false)
+					atmod.DamageMisc(
+						player,
+						hitPart,
+						hitPart.Position,
+						originPos,
+						aoePen,
+						aoeDmg,
+						aoePlrDmg,
+						nil,
+						false
+					)
 				elseif not vehicle then
-					atmod.DamageMisc(player, hitPart, hitPart.Position, originPos, aoePen, aoeDmg, aoePlrDmg, aoeKnockback, false)
+					atmod.DamageMisc(
+						player,
+						hitPart,
+						hitPart.Position,
+						originPos,
+						aoePen,
+						aoeDmg,
+						aoePlrDmg,
+						aoeKnockback,
+						false
+					)
 				end
 				if prop and not table.find(propsHit, prop) then
-					local result = workspace:Raycast(originPos + Vector3.new(0, 1, 0), (prop.WorldPivot.Position - originPos).Unit * expRadius, explosionRayParams)
-					if not config.explosionRaycast or (result and result.Instance and result.Instance:IsDescendantOf(prop)) then
+					local result = workspace:Raycast(
+						originPos + Vector3.new(0, 1, 0),
+						(prop.WorldPivot.Position - originPos).Unit * expRadius,
+						explosionRayParams
+					)
+					if
+						not config.explosionRaycast
+						or (result and result.Instance and result.Instance:IsDescendantOf(prop))
+					then
 						table.insert(propsHit, prop)
 						atmod.DamageProp(player, hitPart, aoePen, aoeDmg, aoeKnockback, false)
 					end
@@ -710,7 +761,10 @@ local function onBulletHit(player: Player, tool: Tool, raycastResult: RaycastRes
 	else
 		local position = raycastResult.Position
 		local U, P = NetUtil, net.packets
-		P.ReplicateHit.sendToList({ toolData = tool, rayHit = raycastResult }, U.playersInRangeExcept(U.asBlacklist(player), position, config.maxHitDistance))
+		P.ReplicateHit.sendToList(
+			{ toolData = tool, rayHit = raycastResult },
+			U.playersInRangeExcept(U.asBlacklist(player), position, config.maxHitDistance)
+		)
 	end
 	local hitInst = raycastResult.Instance
 	if not hitInst or not hitInst:IsA("BasePart") or not hitInst.Parent then
@@ -786,7 +840,10 @@ local function playerFireHandler(player: Player, firePoint: CFrame)
 	local point = rootPart.Position
 	local dist = config.fireEffectDistance
 	local U, P = NetUtil, net.packets
-	P.ReplicateFire.sendToList({ shooter = player, firePoint = firePoint }, U.playersInRangeExcept(U.asBlacklist(player), point, dist))
+	P.ReplicateFire.sendToList(
+		{ shooter = player, firePoint = firePoint },
+		U.playersInRangeExcept(U.asBlacklist(player), point, dist)
+	)
 end
 
 local function initializeCombat()
@@ -962,7 +1019,11 @@ local function initializeServerReplication()
 			return
 		end
 		local char = player.Character
-		if char and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")) and char.Humanoid.Health > 0 then
+		if
+			char
+			and (char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso"))
+			and char.Humanoid.Health > 0
+		then
 			char:SetAttribute("BodyRot", data.neckC1)
 		end
 	end)
@@ -998,7 +1059,10 @@ local function initializeServerReplication()
 			end
 		end
 		if soundToPlay then
-			P.ReplicateSound.sendToList({ shooter = player, sound = soundToPlay }, U.playersAllExcept(U.asBlacklist(player)))
+			P.ReplicateSound.sendToList(
+				{ shooter = player, sound = soundToPlay },
+				U.playersAllExcept(U.asBlacklist(player))
+			)
 		end
 	end)
 	P.PlayCharacterSound.listen(function(data, player: Player?)
@@ -1006,7 +1070,10 @@ local function initializeServerReplication()
 			return
 		end
 		if assets.Sounds:FindFirstChild(data.soundType) then
-			P.ReplicateCharacterSound.sendToList({ shooter = player, soundType = data.soundType }, U.playersAllExcept(U.asBlacklist(player)))
+			P.ReplicateCharacterSound.sendToList(
+				{ shooter = player, soundType = data.soundType },
+				U.playersAllExcept(U.asBlacklist(player))
+			)
 		end
 	end)
 	P.FallDamage.listen(function(data, player: Player?)
@@ -1060,10 +1127,7 @@ local function initializeServerReplication()
 		if typeof(target) ~= "Instance" or not target:IsA("Player") then
 			return
 		end
-		P.ReportSuppression.sendToList(
-			{ level = data.level, factor = data.factor, limit = data.limit },
-			{ target }
-		)
+		P.ReportSuppression.sendToList({ level = data.level, factor = data.factor, limit = data.limit }, { target })
 	end)
 end
 
@@ -1073,7 +1137,11 @@ local function initializeWeaponEquip()
 			return
 		end
 		local tool = data.tool
-		if player.Character and player.Character:FindFirstChild("WeaponRig") and player.Character.Humanoid.Health > 0 then
+		if
+			player.Character
+			and player.Character:FindFirstChild("WeaponRig")
+			and player.Character.Humanoid.Health > 0
+		then
 			local rig = player.Character.WeaponRig
 			local curWeapon = player.Character.WeaponRig.Weapon:FindFirstChildWhichIsA("Model")
 			local rigType = player.Character.Humanoid.RigType
@@ -1139,7 +1207,10 @@ local function initializeInteraction()
 					local arcadeAmmoPool = tool.Ammo.ArcadeAmmoPool
 					if wepStats.infiniteAmmo then
 						continue
-					elseif arcadeAmmoPool.Value < arcadeAmmoPool.MaxValue and (wepStats.ammoType == ammoType or ammoType == "Universal") then
+					elseif
+						arcadeAmmoPool.Value < arcadeAmmoPool.MaxValue
+						and (wepStats.ammoType == ammoType or ammoType == "Universal")
+					then
 						ammoTaken = true
 						local ammoNeeded = arcadeAmmoPool.MaxValue - arcadeAmmoPool.Value
 						if ammoPool.Value > ammoNeeded then
@@ -1169,11 +1240,15 @@ local function initializeInteraction()
 			local promptCfg = prompt.SPH_PromptConfig
 			local gunName = prompt:GetAttribute("ToolToGive") or prompt:FindFirstChildWhichIsA("Tool").Name
 			local gunPool = promptCfg.GunPool
-			if not promptCfg.AllowDupes.Value and (player.Character:FindFirstChild(gunName) or player.Backpack:FindFirstChild(gunName)) then
+			if
+				not promptCfg.AllowDupes.Value
+				and (player.Character:FindFirstChild(gunName) or player.Backpack:FindFirstChild(gunName))
+			then
 				return
 			end
 			if gunPool.Value > 0 or promptCfg.InfGuns.Value then
-				local newGun = prompt:FindFirstChildWhichIsA("Tool") or Access.assets.ToolStorage:FindFirstChild(gunName)
+				local newGun = prompt:FindFirstChildWhichIsA("Tool")
+					or Access.assets.ToolStorage:FindFirstChild(gunName)
 				if not newGun then
 					return
 				else
@@ -1192,7 +1267,12 @@ local function initializeInteraction()
 					end)
 				end
 				local gunModels = prompt.Parent.Parent:FindFirstChild("GunModels")
-				if not promptCfg.InfGuns.Value and promptCfg.RemoveModels.Value and gunModels and #gunModels:GetChildren() > gunPool.Value then
+				if
+					not promptCfg.InfGuns.Value
+					and promptCfg.RemoveModels.Value
+					and gunModels
+					and #gunModels:GetChildren() > gunPool.Value
+				then
 					gunModels:GetChildren()[1]:Destroy()
 				end
 				if prompt.Parent:FindFirstChild("TakeGun") then
@@ -1236,7 +1316,10 @@ local function initializeInteraction()
 		local grip = weaponModel.Grip
 		local P, U = net.packets, NetUtil
 		if attachmentType == 0 and grip:FindFirstChild("Flashlight") then
-			P.ReplicateToggleAttachment.sendToList({ attachment = grip.Flashlight, enabled = toggle, character = nil }, U.playersAllExcept(U.asBlacklist(player)))
+			P.ReplicateToggleAttachment.sendToList(
+				{ attachment = grip.Flashlight, enabled = toggle, character = nil },
+				U.playersAllExcept(U.asBlacklist(player))
+			)
 		elseif attachmentType == 1 and grip:FindFirstChild("Laser") then
 			P.ReplicateToggleAttachment.sendToList(
 				{ attachment = grip.Laser, enabled = toggle, character = player.Character },
@@ -1299,7 +1382,8 @@ local function initializeInteraction()
 			end
 			local weaponModel = player.Character.WeaponRig.Weapon:FindFirstChildWhichIsA("Model")
 			local wepStats = WeaponStatLocator.getWeaponStats(tool)
-			local magPart: BasePart = wepStats.projectile ~= "Bullet" and weaponModel[wepStats.projectile] or weaponModel:FindFirstChild("Mag")
+			local magPart: BasePart = wepStats.projectile ~= "Bullet" and weaponModel[wepStats.projectile]
+				or weaponModel:FindFirstChild("Mag")
 			if magPart then
 				local P, U = net.packets, NetUtil
 				P.ReplicateMagGrab.sendToList({ magPart = magPart }, U.playersAllExcept(U.asBlacklist(player)))
