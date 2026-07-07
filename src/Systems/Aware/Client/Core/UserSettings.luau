@@ -20,8 +20,8 @@ local UserSettings: UserSettings = {
 	PingKey = atom(Enum.KeyCode.Z),
 	ClearPingKey = atom(Enum.KeyCode.N),
 
-	PingSize = atom(UDim2.fromOffset(40, 40)),
-	UseDeadzone = atom(false),
+	PingSize = atom(UDim2.fromOffset(55, 55)),
+	UseDeadzone = atom(true),
 	PingClearDeadzone = atom(0.03),
 	HidePingDistance = atom(0.03),
 	HidePingTransModifier = atom(0.25),
