@@ -4,14 +4,17 @@ require("@game/ReplicatedStorage/Packages/Charm").flags.frozen = false
 
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 local localPlayer = Players.LocalPlayer
 
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 local UserSettings = require("./Core/UserSettings")
 local PingRequester = require("./Ping/PingRequester")
+local PingTagRenderer = require("./Ping/PingTagRenderer")
+local GetTeamPings = require("./Selectors/GetTeamPings")
 local ClientState = require("./Core/ClientState")
-local GetPlayerSlice = require("@game/ReplicatedStorage/Systems/Aware/Selectors/GetPlayerSlice")
+local playerSlice = require("@game/ReplicatedStorage/Systems/Aware/Selectors/GetPlayerSlice")(localPlayer, ClientState)
 
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 local computed = Charm.computed
@@ -19,10 +22,8 @@ local computed = Charm.computed
 local SetupClientSync = require("./Net/SetupClientSync")
 SetupClientSync(ClientState)
 
-local PingStateSync = require("./Ping/PingStateSync")
-PingStateSync(localPlayer, ClientState)
-
-local playerSlice = GetPlayerSlice(localPlayer, ClientState)
+local teamPings = GetTeamPings(playerSlice.teamValues)
+PingTagRenderer.Mount(teamPings, localPlayer:WaitForChild("PlayerGui"))
 
 local ownedValues = computed(function(): Types.OwnedValues?
 	return ClientState.valuesByPlayer()[playerSlice.playerKey]
@@ -50,4 +51,9 @@ UIS.InputBegan:Connect(function(input, processed)
 	elseif input.KeyCode == UserSettings.ClearPingKey() then
 		PingRequester.EvaluateRemovePing(ownedPings(), UIS:GetMouseLocation())
 	end
+end)
+
+RunService.RenderStepped:Connect(function(dt)
+	local mouseLocation = UIS:GetMouseLocation()
+	PingTagRenderer.OnRender(dt, mouseLocation)
 end)

@@ -20,7 +20,7 @@ return function(player: Player, state: Types.State)
     end)
 
     -- stable list of owned values for the player's current team
-    local teamValues = computed(function(): { [string]: Types.OwnedValues }
+    local teamValues = computed(function(): Types.OwnedValuesByKey
         local team = playerTeam()
         return if not team then {} else state.valuesByTeam()[team] or {}
     end)

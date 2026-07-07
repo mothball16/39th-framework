@@ -34,10 +34,12 @@ export type OwnedValues = {
     Pings: { [string]: PingInfo },
 }
 
+export type OwnedValuesByKey = { [string]: OwnedValues }
+
 
 export type State = {
-    valuesByPlayer: Charm.Atom<{ [string]: OwnedValues }>,
-    valuesByTeam: Charm.Getter<{ [string]: { [string]: OwnedValues } }>,
+    valuesByPlayer: Charm.Atom<OwnedValuesByKey>,
+    valuesByTeam: Charm.Getter<{ [string]: OwnedValuesByKey }>,
 }
 
 return Types
