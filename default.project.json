@@ -58,9 +58,6 @@
         "Aware": {
           "$path": "src/Systems/Aware/Server"
         },
-        "Aware_FactionMod": {
-          "$path": "src/Systems/Aware_FactionMod/Server"
-        },
         "Radio": {
           "$path": "src/Systems/Radio/Server"
         },
