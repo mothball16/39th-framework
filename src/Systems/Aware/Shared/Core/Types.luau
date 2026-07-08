@@ -71,9 +71,7 @@ export type UserSettings = {
 	NameTagSize: Charm.Atom<number>,
 	NameTagTransparency: Charm.Atom<number>,
 	ShowOwnNameTag: Charm.Atom<boolean>,
-
-	DefaultNameDisplayType: Charm.Atom<DisplayType>,
-	DefaultHealthDisplayType: Charm.Atom<DisplayType>,
+	HideDefaultDisplay: Charm.Atom<boolean>,
 }
 
 return Types

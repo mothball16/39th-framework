@@ -42,35 +42,16 @@ local function getPlayerHeadPos(player: Player): Vector3?
 	return headPart.Position
 end
 
-local function hookHealth(player: Player, health: Vide.source<number>, maxHealth: Vide.source<number>): () -> ()
+local function hookCharacter(player: Player, onAdd: (character: Model) -> (), onRemove: () -> ()): () -> ()
 	local maid = Maid.new()
 
-	local function hookHumanoid(humanoid: Humanoid)
-		health(humanoid.Health)
-		maxHealth(humanoid.MaxHealth)
-
-		humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-			health(humanoid.Health)
-		end)
-		humanoid:GetPropertyChangedSignal("MaxHealth"):Connect(function()
-			maxHealth(humanoid.MaxHealth)
-		end)
-	end
-
-	maid:GiveTask(player.CharacterAdded:Connect(function(char)
-		hookHumanoid(char:WaitForChild("Humanoid") :: Humanoid)
-	end))
-
+	maid:GiveTask(player.CharacterAdded:Connect(onAdd))
 	maid:GiveTask(player.CharacterRemoving:Connect(function()
-		health(0)
-		maxHealth(100)
+		onRemove()
 	end))
 
 	if player.Character then
-		local humanoid = player.Character:FindFirstChild("Humanoid") :: Humanoid?
-		if humanoid then
-			hookHumanoid(humanoid)
-		end
+		onAdd(player.Character)
 	end
 
 	return function()
@@ -84,6 +65,7 @@ function NameTagRenderer.Mount(teamValues: TeamValuesGetter, parent: Instance)
         local nameTagSize = useAtom(UserSettings.NameTagSize)
         local nameTagTransparency = useAtom(UserSettings.NameTagTransparency)
         local showOwnNameTag = useAtom(UserSettings.ShowOwnNameTag)
+        local hideDefaultDisplay = useAtom(UserSettings.HideDefaultDisplay)
 
 		return create "ScreenGui" {
 			Name = "AwareNameTags",
@@ -114,11 +96,37 @@ function NameTagRenderer.Mount(teamValues: TeamValuesGetter, parent: Instance)
 
 				local health = source(100)
 				local maxHealth = source(100)
-				local unhookHealth = hookHealth(player, health, maxHealth)
+                local lastDisplayDistanceType: Enum.HumanoidDisplayDistanceType? 
+
+				local unhookCharacter = hookCharacter(player, function(character)
+					local humanoid = character:WaitForChild("Humanoid") :: Humanoid
+					health(humanoid.Health)
+					maxHealth(humanoid.MaxHealth)
+
+					humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+						health(humanoid.Health)
+					end)
+					humanoid:GetPropertyChangedSignal("MaxHealth"):Connect(function()
+						maxHealth(humanoid.MaxHealth)
+					end)
+
+                    if hideDefaultDisplay() then
+                        lastDisplayDistanceType = humanoid.DisplayDistanceType
+                        humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+                    end
+				end, function()
+					health(0)
+					maxHealth(100)
+				end)
 
 				cleanup(function()
-					unhookHealth()
+                    unhookCharacter()
 					NameTagRenderer.NameTagStates[playerKey] = nil
+
+                    local humanoid = player.Character and player.Character:FindFirstChild("Humanoid") :: Humanoid?
+                    if hideDefaultDisplay() and humanoid then
+                        humanoid.DisplayDistanceType = lastDisplayDistanceType or Enum.HumanoidDisplayDistanceType.Viewer
+                    end
 				end)
 
 

@@ -19,10 +19,8 @@ local UserSettings: Types.UserSettings = {
 	NameTagSize = atom(14),
 	NameTagTransparency = atom(0.25),
 	ShowOwnNameTag = atom(false),
-
-	-- WIP
-	DefaultNameDisplayType = atom("enemies" :: Types.DisplayType),
-	DefaultHealthDisplayType = atom("enemies" :: Types.DisplayType),
+	HideDefaultDisplay = atom(true),
+	
 }
 
 return UserSettings
