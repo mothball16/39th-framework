@@ -3,20 +3,10 @@
 temporarily hardcoded client-side settings, will be replaced with a config system later
 ]]
 local Charm = require("@game/ReplicatedStorage/Packages/Charm")
+local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 local atom = Charm.atom
-export type UserSettings = {
-	PingKey: Charm.Atom<Enum.KeyCode>,
-	ClearPingKey: Charm.Atom<Enum.KeyCode>,
 
-	PingSize: Charm.Atom<UDim2>,
-	UseDeadzone: Charm.Atom<boolean>,
-	PingClearDeadzone: Charm.Atom<number>,
-
-	HidePingDistance: Charm.Atom<number>,
-	HidePingTransModifier: Charm.Atom<number>,
-}
-
-local UserSettings: UserSettings = {
+local UserSettings: Types.UserSettings = {
 	PingKey = atom(Enum.KeyCode.Z),
 	ClearPingKey = atom(Enum.KeyCode.N),
 
@@ -25,6 +15,14 @@ local UserSettings: UserSettings = {
 	PingClearDeadzone = atom(0.03),
 	HidePingDistance = atom(0.03),
 	HidePingTransModifier = atom(0.25),
+
+	NameTagSize = atom(14),
+	NameTagTransparency = atom(0.25),
+	ShowOwnNameTag = atom(false),
+
+	-- WIP
+	DefaultNameDisplayType = atom("enemies" :: Types.DisplayType),
+	DefaultHealthDisplayType = atom("enemies" :: Types.DisplayType),
 }
 
 return UserSettings

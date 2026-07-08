@@ -26,6 +26,14 @@ export type PingTagProps = {
 	name: () -> string,
 }
 
+-- properties for the visual display of a name tag
+export type NameTagProps = {
+	nameTag: () -> string,
+	health: () -> number,
+	maxHealth: () -> number,
+	textSize: () -> number,
+}
+
 -- information stored within the state for a ping
 export type PingInfo = {
 	imageId: string,
@@ -45,6 +53,27 @@ export type OwnedValuesByKey = { [string]: OwnedValues }
 export type State = {
 	valuesByPlayer: Charm.Atom<OwnedValuesByKey>,
 	valuesByTeam: Charm.Getter<{ [string]: OwnedValuesByKey }>,
+}
+
+export type DisplayType = "enemies" | "all" | "none"
+
+export type UserSettings = {
+	PingKey: Charm.Atom<Enum.KeyCode>,
+	ClearPingKey: Charm.Atom<Enum.KeyCode>,
+
+	PingSize: Charm.Atom<UDim2>,
+	UseDeadzone: Charm.Atom<boolean>,
+	PingClearDeadzone: Charm.Atom<number>,
+
+	HidePingDistance: Charm.Atom<number>,
+	HidePingTransModifier: Charm.Atom<number>,
+
+	NameTagSize: Charm.Atom<number>,
+	NameTagTransparency: Charm.Atom<number>,
+	ShowOwnNameTag: Charm.Atom<boolean>,
+
+	DefaultNameDisplayType: Charm.Atom<DisplayType>,
+	DefaultHealthDisplayType: Charm.Atom<DisplayType>,
 }
 
 return Types

@@ -135,11 +135,12 @@ function PingTagRenderer.OnRender(dt: number, mouseLocation: Vector2)
 	for key, state in pairs(PingTagRenderer.PingStates) do
 		local info = state.getPingInfo()
 		local screenPoint, onScreen = camera:WorldToViewportPoint(info.position)
-		state.screenPosition(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
-		state.visible(onScreen)
+		--state.visible(onScreen)
 		state.lifetime += dt
 
 		if onScreen then
+			state.screenPosition(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
+
 			if state.lifetime > PING_READY_TIME then
 				local scaleDiff = Vector2.new(
 					(mouseLocation.X - screenPoint.X) / viewportSize.X,
@@ -151,6 +152,12 @@ function PingTagRenderer.OnRender(dt: number, mouseLocation: Vector2)
 				) ^ 0.5
 				state.transModifier(numLerp(1, UserSettings.HidePingTransModifier(), proximityTransFactor))
 			end
+		else
+			if screenPoint.Z <= 0 then
+				screenPoint *= -1
+			end
+			state.screenPosition(UDim2.fromOffset(math.clamp(screenPoint.X, 0, viewportSize.X), math.clamp(screenPoint.Y, 0, viewportSize.Y)))
+			state.transModifier(0.75)
 		end
 	end
 end

@@ -1,14 +1,12 @@
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local create = Vide.create
-local source = Vide.source
 local UILabs = require("@game/ReplicatedStorage/DevPackages/ui-labs")
-local ShortenName = require("../Logic/ShortenName")
 local NameTag = require("../Roots/NameTag")
 
 local controls = {
 	Health = UILabs.Slider(100, -50, 150),
 	MaxHealth = UILabs.Slider(100, -50, 150),
-	PlayerKey = UILabs.String("88451868"),
+	NameTag = UILabs.String("[R] moth"),
 }
 
 local story = UILabs.CreateVideStory({
@@ -21,8 +19,10 @@ local story = UILabs.CreateVideStory({
 		NameTag({
 			health = props.controls.Health,
 			maxHealth = props.controls.MaxHealth,
-			playerKey = props.controls.PlayerKey,
-			shortenName = ShortenName,
+			nameTag = props.controls.NameTag,
+			textSize = function()
+				return 14
+			end,
 		}),
 	}
 end)
