@@ -135,6 +135,13 @@ local function makeCharacterRig(char: Model)
 	return rig
 end
 
+local function createLeaderboardStat(leaderstats: Folder, name: string): IntValue
+	local stat = Instance.new("IntValue")
+	stat.Name = name
+	stat.Parent = leaderstats
+	return stat
+end
+
 local function removeHolster(player, toolName)
 	if player.Character then
 		local holsterModel = player.Character:FindFirstChild("Holster_" .. toolName)
@@ -446,16 +453,20 @@ local function initializePlayerLifecycle()
 		local deaths
 		if config.leaderboard then
 			local leaderstats = newPlayer:FindFirstChild("leaderstats")
+			local shouldParentLeaderstats = false
 			if not leaderstats then
-				leaderstats = Instance.new("Folder", newPlayer)
+				leaderstats = Instance.new("Folder")
 				leaderstats.Name = "leaderstats"
+				shouldParentLeaderstats = true
 			end
-			local kills = Instance.new("IntValue", leaderstats)
-			kills.Name = config.leaderboardKillStat
-			deaths = Instance.new("IntValue", leaderstats)
-			deaths.Name = config.leaderboardDeathStat
-			local teamKills = Instance.new("IntValue", leaderstats)
-			teamKills.Name = config.leaderboardTKStat
+			createLeaderboardStat(leaderstats, config.leaderboardKillStat)
+			deaths = createLeaderboardStat(leaderstats, config.leaderboardDeathStat)
+			if config.teamKill then
+				createLeaderboardStat(leaderstats, config.leaderboardTKStat)
+			end
+			if shouldParentLeaderstats then
+				leaderstats.Parent = newPlayer
+			end
 		end
 		newPlayer.CharacterAdded:Connect(function(newChar: Model)
 			newChar.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
