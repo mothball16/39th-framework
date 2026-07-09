@@ -14,6 +14,7 @@ local hitFX = require(Framework.Ballistics.HitFX)
 local WeaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
 local NetworkEvents = require(Framework.Network.NetworkEvents)
 local P = NetworkEvents.packets
+local TagObserver = require("@game/ReplicatedStorage/Packages/tag-observer")
 
 local sphWorkspace = workspace:WaitForChild("SPH_Workspace")
 local bulletContainer = sphWorkspace:WaitForChild("Projectiles")
@@ -50,12 +51,38 @@ suppressionOverlapParams.FilterType = Enum.RaycastFilterType.Exclude
 suppressionOverlapParams.FilterDescendantsInstances = {}
 suppressionOverlapParams.CollisionGroup = "SuppressionTargets"
 
-local player, character
+local player, playerCharacter
+local rayFilter = { workspace.CurrentCamera }
+rayParams.FilterDescendantsInstances = rayFilter
+
+TagObserver.new("BulletIgnore", {
+	onCreated = function(instance)
+		table.insert(rayFilter, instance)
+	end,
+	onDestroyed = function(instance)
+		local index = table.find(rayFilter, instance)
+		if index then
+			table.remove(rayFilter, index)
+		end
+	end,
+}):Init()
+
 module.Initialize = function(newPlayer)
 	player = newPlayer
-	character = newPlayer.Character
-	rayParams.FilterDescendantsInstances = { character, workspace.CurrentCamera }
-	suppressionOverlapParams.FilterDescendantsInstances = { character }
+
+	if playerCharacter then
+		local index = table.find(rayFilter, playerCharacter)
+		if index then
+			table.remove(rayFilter, index)
+		end
+	end
+
+	playerCharacter = newPlayer.Character
+	if playerCharacter then
+		table.insert(rayFilter, playerCharacter)
+	end
+
+	suppressionOverlapParams.FilterDescendantsInstances = if playerCharacter then { playerCharacter } else {}
 end
 
 local function segmentPointToPartDistance(segStart: Vector3, segDir: Vector3, t: number, part: BasePart): number
@@ -226,6 +253,8 @@ module.FireBullet = function(
 )
 	local wepStats = WeaponStatLocator.getWeaponStats(tool)
 
+
+	bulletBehavior.RaycastParams.FilterDescendantsInstances = rayFilter
 	bulletBehavior.Acceleration = config.bulletAcceleration
 
 	if not wepStats.bulletDrop then
