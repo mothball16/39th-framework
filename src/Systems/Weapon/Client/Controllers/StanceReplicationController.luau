@@ -22,7 +22,7 @@ local LocalPlayer = game.Players.LocalPlayer
 
 local Framework = ReplicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
-local config = Access.config
+local config = Access.Config
 
 --------------------------------------------------------------------------------
 -- Attribute handler definitions

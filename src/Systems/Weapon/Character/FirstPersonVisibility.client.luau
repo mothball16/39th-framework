@@ -3,7 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local Framework = ReplicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
-local config = Access.config
+local config = Access.Config
 local dead = false
 local vehicleSeated
 

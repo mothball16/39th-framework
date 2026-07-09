@@ -7,7 +7,7 @@ local Charm = require(Packages.Charm)
 
 local Framework = ReplicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
-local config = Access.config
+local config = Access.Config
 local Enums = require(Framework.Core.Enums)
 local WeaponStateModule = require(Framework.State.WeaponState)
 local CharacterStateModule = require(Framework.State.CharacterState)

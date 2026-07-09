@@ -115,7 +115,7 @@ function EffectController.new(params: {
 				activeHitmarkers = self.effectManager.activeHitmarkers,
 				suppressionFactor = useAtom(self.state.suppressionFactor),
 				panelPosition = self.panelPositionSource,
-				suppressionLimit = Access.config.suppressionVignetteLimit,
+				suppressionLimit = Access.Config.suppressionVignetteLimit,
 			}),
 		}
 	end, Player.PlayerGui))
@@ -140,7 +140,7 @@ function EffectController.OnReportSuppression(self: EffectController, data: Netw
 		return
 	end
 
-	if tick() - self._lastSuppressionTick < Access.config.suppressionThrottle then
+	if tick() - self._lastSuppressionTick < Access.Config.suppressionThrottle then
 		return
 	end
 	self._lastSuppressionTick = tick()
@@ -153,7 +153,7 @@ function EffectController.OnBulletHit(
 	bulletOrigin: Vector3,
 	raycastResult: RaycastResult
 )
-	if not raycastResult.Instance or not Access.config.hitmarkers then
+	if not raycastResult.Instance or not Access.Config.hitmarkers then
 		return
 	end
 	local zone = DamageLogic.getZone(raycastResult.Instance.Name)
@@ -174,29 +174,29 @@ function EffectController.OnBulletHit(
 	hitmarkerInstance.Position(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
 
 	-- do the hitmarker stuff
-	if Access.config.damageIndicators == "incremental" then
+	if Access.Config.damageIndicators == "incremental" then
 		self.effectManager:PushDamage(estimatedDamage)
 	end
 
-	if Access.config.hitmarkers then
-		if Access.config.damageIndicators == "flash" then
+	if Access.Config.hitmarkers then
+		if Access.Config.damageIndicators == "flash" then
 			self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position, estimatedDamage)
 		else
 			self.effectManager:PushHitmarker(hitmarkerInstance, raycastResult.Position) --, estimatedDamage)
 		end
 	end
 
-	local soundList = Access.assets.Sounds.Hitmarkers[hitmarkerRegion]:GetChildren() :: { Sound }
+	local soundList = Access.Assets.Sounds.Hitmarkers[hitmarkerRegion]:GetChildren() :: { Sound }
 	local sound = soundList[math.random(#soundList)]
 	SoundService:PlayLocalSound(sound)
 end
 
 function EffectController.ApplySuppressionAimPunch(self: EffectController, factor: number)
-	if not Access.config.suppressionEffects or Access.config.suppressionAimPunchFactor <= 0 then
+	if not Access.Config.suppressionEffects or Access.Config.suppressionAimPunchFactor <= 0 then
 		return
 	end
 
-	local punchScale = Access.config.suppressionAimPunchFactor * 50 * factor
+	local punchScale = Access.Config.suppressionAimPunchFactor * 50 * factor
 	local vr = punchScale * (0.75 + math.random() * 0.5) / 1000
 	local hr = (math.random() - 0.5) * 2 * punchScale / 1000
 
@@ -223,7 +223,7 @@ function EffectController.SyncSuppressionFactor(self: EffectController, value: n
 	SoundService:PlayLocalSound(Som)
 	game.Debris:AddItem(Som, Som.TimeLength)
 
-	if tick() - self._lastAimPunchTick > Access.config.suppressionAimPunchThrottle then
+	if tick() - self._lastAimPunchTick > Access.Config.suppressionAimPunchThrottle then
 		if self._blurTween then
 			self._blurTween:Cancel()
 			self._blurTween = nil

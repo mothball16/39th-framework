@@ -11,8 +11,8 @@ local Charm = require(Packages.Charm)
 
 local Framework = ReplicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
-local assets = Access.assets
-local config = Access.config
+local assets = Access.Assets
+local config = Access.Config
 
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)

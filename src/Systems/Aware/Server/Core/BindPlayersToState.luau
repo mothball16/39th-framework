@@ -22,8 +22,8 @@ return function(state: Types.State)
 		state.valuesByPlayer(function(previous)
 			local next = table.clone(previous)
 			next[PlayerKey.ToPlayerKey(player)] = {
-				Team = Access.config.GetTeamValue(player),
-				NameTag = Access.config.ShortenName(PlayerKey.ToPlayerKey(player)),
+				Team = Access.Config.GetTeamValue(player),
+				NameTag = Access.Config.ShortenName(PlayerKey.ToPlayerKey(player)),
 				Pings = {} :: { [string]: Types.PingInfo },
 			}
 			return next
@@ -45,20 +45,20 @@ return function(state: Types.State)
 
 	maid:GiveTask(spawnDisconnectable(function()
 		-- polling loop to update teams per player
-		while task.wait(Access.config.TeamUpdateInterval) do
+		while task.wait(Access.Config.TeamUpdateInterval) do
 			local updates: { [string]: Types.OwnedValues } = {}
 			for playerKey, ownedValues in state.valuesByPlayer() do
 				local player = PlayerKey.FromPlayerKey(playerKey)
 				if not player then
 					continue
 				end
-				
+
 				-- check diffs
-				local team = Access.config.GetTeamValue(player)
+				local team = Access.Config.GetTeamValue(player)
 				local diffTeam = team ~= ownedValues.Team
-				local nameTag = Access.config.ShortenName(playerKey)
+				local nameTag = Access.Config.ShortenName(playerKey)
 				local diffNameTag = nameTag ~= ownedValues.NameTag
-				
+
 				if not diffTeam and not diffNameTag then
 					continue
 				end
@@ -67,7 +67,7 @@ return function(state: Types.State)
 
 				entry.Team = team
 				entry.NameTag = nameTag
-				
+
 				updates[playerKey] = entry
 			end
 

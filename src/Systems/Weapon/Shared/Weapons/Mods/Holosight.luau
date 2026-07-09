@@ -4,7 +4,7 @@ local Packages = ReplicatedStorage:WaitForChild("Packages")
 local Charm = require(Packages.Charm)
 local Access = require(Framework.Access)
 local WeaponStateModule = require(Framework.State.WeaponState)
-local config = Access.config
+local config = Access.Config
 local Camera = workspace.CurrentCamera
 
 local HolosightMod = {}

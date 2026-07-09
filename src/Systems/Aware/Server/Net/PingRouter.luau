@@ -34,7 +34,7 @@ end
 function PingRouter.ProcessRequestPing(player: Player, inbound: NetworkTypes.RequestPingPayload)
 	setMainPing(player, function(owned)
 		return {
-			imageId = Access.config.PingImageId,
+			imageId = Access.Config.PingImageId,
 			name = owned.NameTag,
 			position = inbound.position,
 			owner = player,

@@ -6,7 +6,7 @@ local Framework = ReplicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
 local CharacterStateModule = require(Framework.State.CharacterState)
 
-local config = Access.config
+local config = Access.Config
 local NetworkEvents = require(Framework.Network.NetworkEvents)
 local P = NetworkEvents.packets
 

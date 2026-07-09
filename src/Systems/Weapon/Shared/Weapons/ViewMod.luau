@@ -1,7 +1,7 @@
 local weldMod = require(script.Parent.WeldMod)
 local Framework = script:FindFirstAncestor("Weapon")
 local Access = require(Framework.Access)
-local assets = Access.assets
+local assets = Access.Assets
 local callbacks = require(assets.Mods)
 local models = assets.Arms
 

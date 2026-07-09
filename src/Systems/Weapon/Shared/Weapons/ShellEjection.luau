@@ -2,9 +2,9 @@ local debris = game:GetService("Debris")
 
 local Framework = script:FindFirstAncestor("Weapon")
 local Access = require(Framework.Access)
-local assets = Access.assets
+local assets = Access.Assets
 local WeaponStatLocator = require(script.Parent.WeaponStatLocator)
-local config = Access.config
+local config = Access.Config
 
 local ammoTypes = assets.Ammo
 local storageFolder = workspace:WaitForChild("SPH_Workspace"):FindFirstChild("Shells")

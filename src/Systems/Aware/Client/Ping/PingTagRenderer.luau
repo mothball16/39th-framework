@@ -12,7 +12,7 @@ local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local VideRipple = require("@game/ReplicatedStorage/Packages/vide-ripple")
 local Access = require("@game/ReplicatedStorage/Systems/Aware/Access")
 
-local fx = Access.assets:FindFirstChild("FX") :: Folder
+local fx = Access.Assets:FindFirstChild("FX") :: Folder
 local pingSound = fx:FindFirstChild("PingSound") :: Sound
 
 local source = Vide.source
@@ -60,7 +60,6 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 			DisplayOrder = 10,
 
 			indexes(pings, function(item: () -> Types.PingInfo, key: string)
-
 				local state: PingRenderState = {
 					getPingInfo = item,
 					screenPosition = source(UDim2.new()),
@@ -156,7 +155,12 @@ function PingTagRenderer.OnRender(dt: number, mouseLocation: Vector2)
 			if screenPoint.Z <= 0 then
 				screenPoint *= -1
 			end
-			state.screenPosition(UDim2.fromOffset(math.clamp(screenPoint.X, 0, viewportSize.X), math.clamp(screenPoint.Y, 0, viewportSize.Y)))
+			state.screenPosition(
+				UDim2.fromOffset(
+					math.clamp(screenPoint.X, 0, viewportSize.X),
+					math.clamp(screenPoint.Y, 0, viewportSize.Y)
+				)
+			)
 			state.transModifier(0.75)
 		end
 	end

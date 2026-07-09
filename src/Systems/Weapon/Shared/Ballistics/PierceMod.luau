@@ -7,7 +7,7 @@ local debrisservice = game:GetService("Debris")
 
 local Framework = script:FindFirstAncestor("Weapon")
 local Access = require(Framework.Access)
-local Assets = Access.assets
+local Assets = Access.Assets
 local Sounds = Assets:WaitForChild("Sounds")
 local RicoSound = Sounds:WaitForChild("Ricochet"):GetChildren()
 local WeaponStatLocator = require(Framework.Weapons.WeaponStatLocator)
@@ -20,7 +20,7 @@ end
 
 local hitFX = require(script.Parent.HitFX)
 local GetMaterialType = require(script.Parent.MaterialTypes)
-local config = Access.config
+local config = Access.Config
 
 local function IsInHumanoid(Inst)
 	while Inst.Parent do

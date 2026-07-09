@@ -9,9 +9,9 @@ local Charm = require(Packages.Charm)
 
 local Framework = ReplicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
-local assets = Access.assets
+local assets = Access.Assets
 local Enums = require(Framework.Core.Enums)
-local config = Access.config
+local config = Access.Config
 local NetworkEvents = require(Framework.Network.NetworkEvents)
 local P = NetworkEvents.packets
 local weaponPrefsClient = require(Framework.Weapons.WeaponPrefsClient)

@@ -30,8 +30,8 @@ require(script.Parent.CreateSoundGroups)()
 
 local Framework = replicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
-local assets = Access.assets
-local config = Access.config
+local assets = Access.Assets
+local config = Access.Config
 local mainui = assets.HUD.SPH_UI
 
 require(Utility.TestRunner)(Framework.Tests)
@@ -156,8 +156,8 @@ local function setupTool(tool: Tool, wepStats: Types.WeaponStats)
 		magAmmo.Value = wepStats.magazineAmmo or magAmmo.MaxValue
 		local arcadeAmmoPool = Instance.new("DoubleConstrainedValue", ammoFolder)
 		arcadeAmmoPool.Name = "ArcadeAmmoPool"
-		arcadeAmmoPool.MaxValue = Access.config.infiniteReserve and math.huge or wepStats.maxAmmoPool
-		arcadeAmmoPool.Value = Access.config.infiniteReserve and math.huge or wepStats.startAmmoPool
+		arcadeAmmoPool.MaxValue = Access.Config.infiniteReserve and math.huge or wepStats.maxAmmoPool
+		arcadeAmmoPool.Value = Access.Config.infiniteReserve and math.huge or wepStats.startAmmoPool
 		if not wepStats.openBolt then
 			local chambered = Instance.new("BoolValue", tool)
 			chambered.Value = wepStats.startChambered
@@ -1248,7 +1248,7 @@ local function initializeInteraction()
 			end
 			if gunPool.Value > 0 or promptCfg.InfGuns.Value then
 				local newGun = prompt:FindFirstChildWhichIsA("Tool")
-					or Access.assets.ToolStorage:FindFirstChild(gunName)
+					or Access.Assets.ToolStorage:FindFirstChild(gunName)
 				if not newGun then
 					return
 				else

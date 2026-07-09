@@ -1,6 +1,6 @@
 local Framework = script:FindFirstAncestor("Weapon")
 local Access = require(Framework.Access)
-local assets = Access.assets
+local assets = Access.Assets
 local configs = assets:WaitForChild("Configurations")
 
 local Types = require("@game/ReplicatedStorage/Systems/Weapon/Core/ConfigurationTypes")

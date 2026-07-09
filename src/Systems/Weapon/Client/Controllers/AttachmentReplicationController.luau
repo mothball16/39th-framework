@@ -1,8 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Framework = ReplicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
-local config = Access.config
-local assets = Access.assets
+local config = Access.Config
+local assets = Access.Assets
 local NetworkEvents = require(Framework.Network.NetworkEvents)
 local P = NetworkEvents.packets
 

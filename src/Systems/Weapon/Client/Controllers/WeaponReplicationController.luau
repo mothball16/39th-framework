@@ -4,8 +4,8 @@ local CollectionService = game:GetService("CollectionService")
 
 local Framework = ReplicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
-local assets = Access.assets
-local config = Access.config
+local assets = Access.Assets
+local config = Access.Config
 local hitFX = require(Framework.Ballistics.HitFX)
 local shellEjection = require(Framework.Weapons.ShellEjection)
 local bulletHandler = require(Framework.Ballistics.BulletHandler)

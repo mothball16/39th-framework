@@ -14,7 +14,7 @@ type GroupInfo = {
 	rank: number,
 }
 
-local GroupInfoByPlayer: { [Player]: { GroupInfo } } = {}
+local GroupInfoByPlayer: { [Player]: { [number]: GroupInfo } } = {}
 -- table is weak-keyed for auto cleanup
 setmetatable(GroupInfoByPlayer, { __mode = "k" })
 
@@ -56,28 +56,30 @@ local function getGroupInfo(player: Player, groupId: number): GroupInfo
 	end
 
 	local groupInfo = info[groupId]
-	if not groupInfo then
-		groupInfo = {
-			isMember = false,
-			roles = {},
-			roleIds = {},
-			rank = 0,
-		}
-
-		local data: { isMember: boolean, roles: { { Id: number, Name: string, Rank: number } } } =
-			GroupService:GetRolesInGroupAsync(player.UserId, groupId)
-
-		groupInfo.isMember = data.isMember
-
-		for _, role in ipairs(data.roles) do
-			groupInfo.rank = math.max(groupInfo.rank, role.Rank)
-			table.insert(groupInfo.roles, role.Name)
-			table.insert(groupInfo.roleIds, role.Id)
-		end
-		info[groupId] = groupInfo
+	if groupInfo then
+		return groupInfo
 	end
 
-	return groupInfo
+	local nextGroupInfo: GroupInfo = {
+		isMember = false,
+		roles = {},
+		roleIds = {},
+		rank = 0,
+	}
+
+	local data: { IsMember: boolean, Roles: { { Id: number, Name: string, Rank: number } } } =
+		GroupService:GetRolesInGroupAsync(player.UserId, groupId)
+
+	nextGroupInfo.isMember = data.IsMember
+
+	for _, role in ipairs(data.Roles) do
+		nextGroupInfo.rank = math.max(nextGroupInfo.rank, role.Rank)
+		table.insert(nextGroupInfo.roles, role.Name)
+		table.insert(nextGroupInfo.roleIds, role.Id)
+	end
+
+	info[groupId] = nextGroupInfo
+	return nextGroupInfo
 end
 
 function AccessChecks.InGroup(groupIds: { number })
@@ -97,16 +99,19 @@ function AccessChecks.InGroup(groupIds: { number })
 	end
 end
 
-function AccessChecks.HasRoleInGroup(groupIds: { [number]: number }): Types.AccessCheck
+function AccessChecks.HasRoleInGroup(groupIds: { [number]: number | string }): Types.AccessCheck
 	return function(userId: number)
 		local player = Players:GetPlayerByUserId(userId)
 		if not player then
 			return false
 		end
 
-		for groupId, role in ipairs(groupIds) do
+		for groupId, role in pairs(groupIds) do
 			local groupInfo = getGroupInfo(player, groupId)
-			if table.find(groupInfo.roleIds, role) then
+			if type(role) == "number" and table.find(groupInfo.roleIds, role) then
+				return true
+			end
+			if type(role) == "string" and table.find(groupInfo.roles, role) then
 				return true
 			end
 		end
@@ -121,7 +126,7 @@ function AccessChecks.AboveRankInGroup(groupIds: { [number]: number }): Types.Ac
 			return false
 		end
 
-		for groupId, rank in ipairs(groupIds) do
+		for groupId, rank in pairs(groupIds) do
 			local groupInfo = getGroupInfo(player, groupId)
 			if groupInfo.rank >= rank then
 				return true

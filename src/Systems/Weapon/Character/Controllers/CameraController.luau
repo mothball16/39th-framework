@@ -7,7 +7,7 @@ local TweenService = game:GetService("TweenService")
 
 local Framework = ReplicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
-local config = Access.config
+local config = Access.Config
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
 local WeaponPrefs = require(Framework.Weapons.WeaponPrefsClient)

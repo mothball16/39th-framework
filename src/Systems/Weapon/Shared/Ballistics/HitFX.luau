@@ -1,8 +1,8 @@
 local Debris = game:GetService("Debris")
 local Framework = script:FindFirstAncestor("Weapon")
 local Access = require(Framework.Access)
-local config = Access.config
-local assets = Access.assets
+local config = Access.Config
+local assets = Access.Assets
 
 -- Impact sounds
 local Glass = { "1565824613", "1565825075" }

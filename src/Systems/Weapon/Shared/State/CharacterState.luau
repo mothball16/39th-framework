@@ -2,7 +2,7 @@ local Framework = script:FindFirstAncestor("Weapon")
 local Access = require(Framework.Access)
 local Packages = game:GetService("ReplicatedStorage"):WaitForChild("Packages")
 local Charm = require(Packages.Charm)
-local config = Access.config
+local config = Access.Config
 
 local CharState = {}
 CharState.__index = CharState

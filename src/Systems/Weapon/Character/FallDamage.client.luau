@@ -1,7 +1,7 @@
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local Framework = replicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
-local config = Access.config
+local config = Access.Config
 local dead = false
 
 if config.fallDamage then

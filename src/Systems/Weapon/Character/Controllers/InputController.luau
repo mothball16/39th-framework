@@ -5,7 +5,7 @@ local Framework = ReplicatedStorage.Systems.Weapon
 local Access = require(Framework.Access)
 local Enums = require(Framework.Core.Enums)
 local Intents = Enums.Intents
-local config = Access.config
+local config = Access.Config
 
 local InputController = {}
 InputController.__index = InputController

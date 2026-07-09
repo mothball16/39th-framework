@@ -11,7 +11,7 @@ local localPlayer = Players.LocalPlayer
 local Network = require("../Net/Network")
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 local Access = require("@game/ReplicatedStorage/Systems/Aware/Access")
-local Config = Access.config
+local Config = Access.Config
 local UserSettings = require("../Core/UserSettings")
 
 local PingRequester = {}

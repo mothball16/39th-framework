@@ -3,7 +3,7 @@ local players = game:GetService("Players")
 
 local Framework = script:FindFirstAncestor("Weapon")
 local Access = require(Framework.Access)
-local config = Access.config
+local config = Access.Config
 
 local explosionOverlapParams = OverlapParams.new()
 explosionOverlapParams.MaxParts = 500
@@ -16,7 +16,7 @@ explosionRayParams.RespectCanCollide = true
 local explosionSounds = { 287390459, 287390954, 287391087, 287391197, 287391361, 287391499, 287391567, 8226406520 }
 
 local dts = game.ReplicatedStorage:FindFirstChild("DTS_Assets") -- DD_SPH: Checks if DTS is present
-local effectsFolder = Access.assets.Effects.Explosions
+local effectsFolder = Access.Assets.Effects.Explosions
 
 local function Explode(explosionOrigin: Vector3, blastRadius: number, explosionType: string, attackingPlayer: Player) -- DD_SPH: Check which player issued this explosion
 	local effects = effectsFolder:FindFirstChild(explosionType)
