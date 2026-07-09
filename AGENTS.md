@@ -7,3 +7,5 @@
 - Avoid using the Roblox Studio MCP `execute_luau` command; it often stalls. Prefer non-executing Studio MCP inspection/search tools or filesystem checks.
 - Treat this codebase as greenfield unless told otherwise: prefer the new intended shape over compatibility fallbacks for old Roblox Studio objects or tags.
 - Prefer Luau string interpolation with backticks (for example, `{value}` inside a string) over `string.format` when composing strings.
+- Prefer `Charm.listen` for reacting to Charm state unless skipping the initial callback is explicitly necessary.
+- Prefer string-based `require` paths, such as `require("@game/ReplicatedStorage/...")`, over instance traversal when importing modules.
