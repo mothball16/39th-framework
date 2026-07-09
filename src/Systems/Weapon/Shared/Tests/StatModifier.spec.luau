@@ -96,6 +96,29 @@ return function()
 			expect(stats.Damage.Torso).to.equal((50 + 5) * 1.1)
 		end)
 
+		it("does not mutate nested base stats when modifiers are applied", function()
+			local base = { Damage = { Head = 100, Torso = 50 } }
+			local sm = StatModifier.new(base)
+			sm:Add({ Damage = { Head = 10 } })
+
+			local stats = sm:GetStats()
+
+			expect(stats.Damage.Head).to.equal(110)
+			expect(stats.Damage.Torso).to.equal(50)
+			expect(base.Damage.Head).to.equal(100)
+			expect(base.Damage.Torso).to.equal(50)
+		end)
+
+		it("treats missing nested Add/Multiply entries as zero", function()
+			local sm = StatModifier.new({ Damage = { Head = 100, Torso = 50 } })
+			sm:Add({ Damage = { Head = 10 } })
+			sm:Multiply({ Damage = { Torso = 0.5 } })
+
+			local stats = sm:GetStats()
+			expect(stats.Damage.Head).to.equal(110)
+			expect(stats.Damage.Torso).to.equal(75)
+		end)
+
 		it("GetRaw returns the original base reference", function()
 			local base = { Damage = 10 }
 			local sm = StatModifier.new(base)

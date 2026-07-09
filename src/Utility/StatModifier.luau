@@ -49,18 +49,20 @@ local function setMod(orig: any, mod: any): any
 	end
 end
 
-local function applyMod(value, add: any, multiply: any)
+local function applyMod(value: any, add: any, multiply: any): any
 	local valueType = typeof(value)
 	if valueType == "number" then
-		return ((value :: number) + add) * (1 + multiply)
+		local addValue = if typeof(add) == "number" then add else 0
+		local multiplyValue = if typeof(multiply) == "number" then multiply else 0
+		return ((value :: number) + addValue) * (1 + multiplyValue)
 	elseif valueType == "table" then
+		local result = {}
 		for k: any, v: any in pairs(value :: { [string]: any }) do
-			-- TODO: refactor this, this is a mess lol
-			local addMod = typeof(add) == "number" and add or (add :: { number })[k]
-			local multiplyMod = typeof(multiply) == "number" and multiply or (multiply :: { number })[k]
-			value[k] = applyMod(v, addMod, multiplyMod)
+			local addMod = if typeof(add) == "table" then add[k] else add
+			local multiplyMod = if typeof(multiply) == "table" then multiply[k] else multiply
+			result[k] = applyMod(v, addMod, multiplyMod)
 		end
-		return value
+		return result
 	else
 		return value
 	end
@@ -73,13 +75,13 @@ local function modifyTable(tbl: { [string]: any }, mod: { [string]: any })
 end
 
 function StatModifier.Add<T>(self: StatModifier<T>, mod: T): StatModifier<T>
-	modifyTable(self._add, mod)
+	modifyTable(self._add, mod :: any)
 	self._dirty = true
 	return self
 end
 
 function StatModifier.Multiply<T>(self: StatModifier<T>, mod: T): StatModifier<T>
-	modifyTable(self._multiply, mod)
+	modifyTable(self._multiply, mod :: any)
 	self._dirty = true
 	return self
 end
