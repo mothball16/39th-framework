@@ -96,6 +96,7 @@ local function rigEcho(grip: Instance)
 		echo = fire:Clone()
 		echo.Name = "Echo"
 		echo.SoundGroup = SoundGroups.fireEcho
+		echo.Parent = grip
 	end
 end
 
