@@ -47,7 +47,7 @@ local ReplicatedAttributes = {
 			return { joint = joint, targetC1 = joint.C1 }
 		end,
 		onChanged = function(state, value)
-			if state.joint and value then
+			if state.joint and state.joint.Parent and value then
 				local dist = (workspace.CurrentCamera.CFrame.Position - state.joint.Parent.Position).Magnitude
 				state.targetC1 = value
 				-- just snap if its beyond smooth render distance
