@@ -6,3 +6,4 @@
 - Do not manually edit generated `Network.luau` files.
 - Avoid using the Roblox Studio MCP `execute_luau` command; it often stalls. Prefer non-executing Studio MCP inspection/search tools or filesystem checks.
 - Treat this codebase as greenfield unless told otherwise: prefer the new intended shape over compatibility fallbacks for old Roblox Studio objects or tags.
+- Prefer Luau string interpolation with backticks (for example, `{value}` inside a string) over `string.format` when composing strings.
