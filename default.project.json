@@ -38,9 +38,6 @@
         },
         "StateSync": {
           "$path": "src/Systems/StateSync/Shared"
-        },
-        "Objective": {
-          "$path": "src/Systems/Objective/Shared"
         }
       }
     },
@@ -66,9 +63,6 @@
         },
         "StateSync": {
           "$path": "src/Systems/StateSync/Server"
-        },
-        "Objective": {
-          "$path": "src/Systems/Objective/Server"
         }
       }
     },
