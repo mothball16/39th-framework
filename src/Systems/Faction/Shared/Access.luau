@@ -7,6 +7,7 @@ local AccessUtility = require("@game/ReplicatedStorage/Utility/Access")
 local Types = require("./Core/Types")
 
 local access = AccessUtility.create({
+	assetsTag = "Faction_Assets",
 	configTag = "Faction_GameConfig",
 }) :: Types.Access
 

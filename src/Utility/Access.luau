@@ -5,6 +5,7 @@ local CollectionService = game:GetService("CollectionService")
 local DEFAULT_WAIT_TIMEOUT = 5
 
 export type CreateOptions = {
+	assetsTag: string,
 	configTag: string,
 	waitTimeout: number?,
 }
@@ -30,10 +31,10 @@ function Access.resolveSingleTaggedInstance(tagName: string, waitTimeout: number
 
 	if #instances == 0 then
 		local suffix = if timeout > 0 then ` after {timeout}s` else ""
-		error(`{tagName} tag not found{suffix} - tag your config module with {tagName}`)
+		error(`{tagName} tag not found{suffix}`)
 	end
 	if #instances > 1 then
-		warn(`{tagName} tag found {#instances} times - tag only one config module with {tagName}.`)
+		warn(`{tagName} tag found {#instances} times - tag only one instance with {tagName}.`)
 	end
 
 	return instances[1]
@@ -45,9 +46,9 @@ function Access.create<TConfig>(options: CreateOptions): Access<TConfig>
 		error(`{options.configTag} tag must resolve to a ModuleScript`)
 	end
 
-	local assets = configModule.Parent
-	if not assets or not assets:IsA("Folder") then
-		error(`{options.configTag} config module must be parented under an assets folder`)
+	local assets = Access.resolveSingleTaggedInstance(options.assetsTag, options.waitTimeout)
+	if not assets:IsA("Folder") then
+		error(`{options.assetsTag} tag must resolve to a Folder`)
 	end
 
 	return table.freeze({
