@@ -87,6 +87,12 @@ local function getLookAngularDelta(prevLook: Vector3, currentLook: Vector3): Vec
 	return Vector2.new(yawDelta, pitchDelta)
 end
 
+local function resetVectorSpring(spring)
+	spring.Target = Vector3.zero
+	spring.Position = Vector3.zero
+	spring.Velocity = Vector3.zero
+end
+
 function ViewmodelController.new(params: {
 	animBase: BasePart,
 	camera: Camera,
@@ -185,7 +191,7 @@ function ViewmodelController.SyncEquippedTool(self: ViewmodelController, tool: T
 	if not tool then
 		return
 	end
-	self:ResetHipRotation()
+	self:ResetEquipMotion()
 end
 
 function ViewmodelController.RefreshViewmodel(self: ViewmodelController)
@@ -232,6 +238,19 @@ function ViewmodelController.ResetHipRotation(self: ViewmodelController)
 	self.hipRotation:setPosition(Vector2.zero)
 	self.hipRotation:setGoal(Vector2.zero)
 	self.prevCameraLook = nil
+end
+
+function ViewmodelController.ResetEquipMotion(self: ViewmodelController)
+	self:ResetHipRotation()
+	resetVectorSpring(self.swaySpring)
+	resetVectorSpring(self.moveSpring)
+	self.pushbackOffset = 0
+	self.aimingOffset = CFrame.new()
+	self.proneViewmodelOffset = 0
+	self.rollAngle = 0
+	self.strafeShift = 0
+	self.aimTarget = CFrame.new()
+	self.state.freeLookOffset(CFrame.new())
 end
 
 function ViewmodelController.ApplyCFrameOffsetFrom(self: ViewmodelController, part: BasePart, offset: CFrame)
