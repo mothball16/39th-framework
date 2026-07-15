@@ -489,8 +489,6 @@ function WeaponController.Equip(self: WeaponController, newChild)
 
 	self.weaponState:Reset()
 	self.weaponState.equipping(true)
-
-	self.state.equippedTool(newChild)
 	self.weaponState.wepStats(ws)
 
 	self.cycled = true
@@ -548,30 +546,34 @@ function WeaponController.Equip(self: WeaponController, newChild)
 	self.localEvents.WeaponEquipRequested:Fire()
 	self.localEvents.WeaponIdleRequested:Fire()
 
-	if not ws then
-		return
-	end
-	if ws.openBolt or not self.state.equippedTool():WaitForChild("Chambered").Value then
-		self:SetProjectileTransparency(self.weaponState.gunModel(), 1)
+	local chambered = newChild:WaitForChild("Chambered")
+	local ammo = newChild:WaitForChild("Ammo")
+	local boltReady = newChild:WaitForChild("BoltReady")
+	local fireMode = newChild:WaitForChild("FireMode")
+
+	if ws.openBolt or not chambered.Value then
+		self:SetProjectileTransparency(gun, 1)
 	end
 
-	self.weaponState.gunAmmo = self.state.equippedTool():WaitForChild("Ammo")
-	self.weaponState.localAmmo(self.weaponState.gunAmmo.MagAmmo.Value)
+	self.weaponState.gunAmmo = ammo
+	self.weaponState.localAmmo(ammo.MagAmmo.Value)
 
-	if not self.state.equippedTool():WaitForChild("BoltReady").Value then
+	if not boltReady.Value then
 		self:MoveBolt(ws.boltDist, true)
 	end
 
-	local equippedFireMode = self.state.equippedTool():WaitForChild("FireMode").Value
+	local equippedFireMode = fireMode.Value
 	if equippedFireMode == Enums.FireModes.UBGL then
 		equippedFireMode = ws.fireMode
-		self.state.equippedTool().FireMode.Value = equippedFireMode
+		fireMode.Value = equippedFireMode
 	end
+
 	self.weaponState.fireMode(equippedFireMode)
 	self.weaponState.holdStance(Enums.HoldStance.Ready)
 
 	self:_applyPersistedWeaponPrefs(newChild.Name)
 	self.weaponState.equipped(true)
+	self.state.equippedTool(newChild)
 
 	task.delay(1, function()
 		self.lastGunModel = newChild
