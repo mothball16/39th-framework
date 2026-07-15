@@ -25,7 +25,8 @@ SetupClientSync(ClientState)
 
 local teamPings = GetTeamPings(playerSlice.teamValues)
 local playerGui = localPlayer:WaitForChild("PlayerGui")
-PingTagRenderer.Mount(teamPings, playerGui)
+local pingClientStates: Types.PingClientStates = {}
+PingTagRenderer.Mount(teamPings, playerGui, pingClientStates)
 NameTagRenderer.Mount(playerSlice.teamValues, playerGui)
 
 local ownedValues = computed(function(): Types.OwnedValues?
@@ -60,6 +61,6 @@ end)
 
 RunService.RenderStepped:Connect(function(dt)
 	local mouseLocation = UIS:GetMouseLocation()
-	PingTagRenderer.OnRender(dt, mouseLocation)
+	PingTagRenderer.OnRender(dt, mouseLocation, pingClientStates)
 	NameTagRenderer.OnRender()
 end)

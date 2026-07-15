@@ -15,6 +15,7 @@ local UserSettings: Types.UserSettings = {
 	PingClearDeadzone = atom(0.03),
 	HidePingDistance = atom(0.03),
 	HidePingTransModifier = atom(0.25),
+	HidePingsAfterTime = atom(5),
 
 	NameTagSize = atom(14),
 	NameTagTransparency = atom(0.25),

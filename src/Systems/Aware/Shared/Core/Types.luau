@@ -42,6 +42,17 @@ export type PingInfo = {
 	owner: Player,
 }
 
+-- per-ping client presentation state owned outside the renderer
+export type PingRenderState = {
+	getPingInfo: () -> PingInfo,
+	screenPosition: Charm.Atom<UDim2>,
+	visible: Charm.Atom<boolean>,
+	transModifier: Charm.Atom<number>,
+	lifetime: number,
+}
+
+export type PingClientStates = { [string]: PingRenderState }
+
 export type OwnedValues = {
 	Team: string?,
 	NameTag: string,
@@ -67,6 +78,8 @@ export type UserSettings = {
 
 	HidePingDistance: Charm.Atom<number>,
 	HidePingTransModifier: Charm.Atom<number>,
+	-- seconds before a ping is hidden (resets when position updates)
+	HidePingsAfterTime: Charm.Atom<number>,
 
 	NameTagSize: Charm.Atom<number>,
 	NameTagTransparency: Charm.Atom<number>,

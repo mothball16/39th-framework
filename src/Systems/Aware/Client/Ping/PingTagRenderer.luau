@@ -6,6 +6,7 @@ presentation is handled in the PingTag component
 local SoundService = game:GetService("SoundService")
 
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
+local Charm = require("@game/ReplicatedStorage/Packages/Charm")
 
 local useAtom = require("@game/ReplicatedStorage/Packages/vide-charm").useAtom
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
@@ -15,7 +16,7 @@ local Access = require("@game/ReplicatedStorage/Systems/Aware/Access")
 local fx = Access.Assets:FindFirstChild("FX") :: Folder
 local pingSound = fx:FindFirstChild("PingSound") :: Sound
 
-local source = Vide.source
+local atom = Charm.atom
 local create = Vide.create
 local mount = Vide.mount
 local indexes = Vide.indexes
@@ -28,27 +29,17 @@ local PingTag = require("../UI/Roots/PingTag")
 
 type PingsGetter = () -> { [string]: Types.PingInfo }
 
-export type PingRenderState = {
-	getPingInfo: () -> Types.PingInfo,
-	screenPosition: Vide.source<UDim2>,
-	visible: Vide.source<boolean>,
-	transModifier: Vide.source<number>,
-	lifetime: number,
-}
-
 local TRANSPARENCY_GOAL = 0.25
 local SCALE_GOAL = 1
 local PING_READY_TIME = 0.5
 
-local PingTagRenderer = {
-	PingStates = {} :: { [string]: PingRenderState },
-}
+local PingTagRenderer = {}
 
 local function numLerp(a: number, b: number, t: number)
 	return a + (b - a) * t
 end
 
-function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
+function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance, pingClientStates: Types.PingClientStates)
 	mount(function()
 		local pingSize = useAtom(UserSettings.PingSize)
 		pings = useAtom(pings)
@@ -60,15 +51,15 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 			DisplayOrder = 10,
 
 			indexes(pings, function(item: () -> Types.PingInfo, key: string)
-				local state: PingRenderState = {
+				local state: Types.PingRenderState = {
 					getPingInfo = item,
-					screenPosition = source(UDim2.new()),
-					visible = source(true),
-					transModifier = source(1),
+					screenPosition = atom(UDim2.new()),
+					visible = atom(true),
+					transModifier = atom(1),
 					lifetime = 0,
 				}
 
-				PingTagRenderer.PingStates[key] = state
+				pingClientStates[key] = state
 
 				local getPingPosition = derive(function(): Vector3
 					return item().position
@@ -80,24 +71,31 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 
 				local scaleValue, scaleSpring = VideRipple.useSpring(1)
 				local transValue, transSpring = VideRipple.useSpring(1)
+				local getScreenPosition = useAtom(state.screenPosition)
+				local getVisible = useAtom(state.visible)
+				local getTransModifier = useAtom(state.transModifier)
+
 				effect(function()
 					getPingPosition()
 					state.lifetime = 0
 					SoundService:PlayLocalSound(pingSound)
 					transSpring:setPosition(1)
-					transSpring:setGoal(TRANSPARENCY_GOAL)
 					scaleSpring:setPosition(2)
 					scaleSpring:setGoal(SCALE_GOAL)
 				end)
 
+				effect(function()
+					transSpring:setGoal(numLerp(TRANSPARENCY_GOAL, 1, 1 - getTransModifier()))
+				end)
+
 				cleanup(function()
-					PingTagRenderer.PingStates[key] = nil
+					pingClientStates[key] = nil
 				end)
 
 				return create "CanvasGroup" {
 					Name = "PingTag",
 					AnchorPoint = Vector2.new(0.5, 0.5),
-					Position = state.screenPosition,
+					Position = getScreenPosition,
 					Size = function()
 						local pingSize = pingSize()
 						local scale = scaleValue()
@@ -109,10 +107,8 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 						)
 					end,
 					BackgroundTransparency = 1,
-					Visible = state.visible,
-					GroupTransparency = function()
-						return numLerp(transValue(), 1, 1 - state.transModifier())
-					end,
+					Visible = getVisible,
+					GroupTransparency = transValue,
 
 					PingTag({
 						imageId = item().imageId,
@@ -124,45 +120,44 @@ function PingTagRenderer.Mount(pings: PingsGetter, parent: Instance)
 	end, parent)
 end
 
-function PingTagRenderer.OnRender(dt: number, mouseLocation: Vector2)
+function PingTagRenderer.OnRender(dt: number, mouseLocation: Vector2, pingClientStates: Types.PingClientStates)
 	local camera = workspace.CurrentCamera
 	if not camera then
 		return
 	end
 	local viewportSize = camera.ViewportSize
 
-	for key, state in pairs(PingTagRenderer.PingStates) do
+	for _, state in pairs(pingClientStates) do
 		local info = state.getPingInfo()
+		local transparencyModifier = 1
 		local screenPoint, onScreen = camera:WorldToViewportPoint(info.position)
-		--state.visible(onScreen)
 		state.lifetime += dt
 
-		if onScreen then
-			state.screenPosition(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
-
-			if state.lifetime > PING_READY_TIME then
-				local scaleDiff = Vector2.new(
-					(mouseLocation.X - screenPoint.X) / viewportSize.X,
-					(mouseLocation.Y - screenPoint.Y) / viewportSize.Y
-				)
-				-- expo. decrease transparency so that the intended transparency effect fully applies faster than just at the very center
-				local proximityTransFactor = (
-					1 - math.clamp(scaleDiff.Magnitude / UserSettings.HidePingDistance(), 0, 1)
-				) ^ 0.5
-				state.transModifier(numLerp(1, UserSettings.HidePingTransModifier(), proximityTransFactor))
-			end
-		else
-			if screenPoint.Z <= 0 then
-				screenPoint *= -1
-			end
-			state.screenPosition(
-				UDim2.fromOffset(
-					math.clamp(screenPoint.X, 0, viewportSize.X),
-					math.clamp(screenPoint.Y, 0, viewportSize.Y)
-				)
-			)
-			state.transModifier(0.75)
+		state.visible(onScreen)
+		if not onScreen then
+			continue
 		end
+
+		state.screenPosition(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
+
+		if state.lifetime > UserSettings.HidePingsAfterTime() then
+			transparencyModifier = 0
+		end
+
+		if state.lifetime > PING_READY_TIME then
+			local scaleDiff = Vector2.new(
+				(mouseLocation.X - screenPoint.X) / viewportSize.X,
+				(mouseLocation.Y - screenPoint.Y) / viewportSize.Y
+			)
+			-- expo. decrease transparency so that the intended transparency effect fully applies faster than just at the very center
+			local proximityTransFactor = (
+				1 - math.clamp(scaleDiff.Magnitude / UserSettings.HidePingDistance(), 0, 1)
+			) ^ 0.5
+
+			transparencyModifier *= numLerp(1, UserSettings.HidePingTransModifier(), proximityTransFactor)
+		end
+
+		state.transModifier(transparencyModifier)
 	end
 end
 
