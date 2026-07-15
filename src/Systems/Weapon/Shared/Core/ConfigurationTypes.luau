@@ -26,6 +26,11 @@ export type WeaponStats = {
 	-- model recovery speed
 	PunchRecover: number,
 
+	-- recoil multiplier while crouching
+	CrouchedRecoilMultiplier: number,
+	-- recoil multiplier while crawling
+	CrawlRecoilMultiplier: number,
+
 	-- divide RecoilPunch by this when aiming
 	AimBackwardPunchReduction: number,
 	-- divide VPunch/HPunch/DPunch by this while aiming

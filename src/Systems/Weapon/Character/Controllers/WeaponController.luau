@@ -62,6 +62,7 @@ type self = {
 	viewmodelRig: Model,
 	thirdPersonRig: Model,
 	holosightMod: any,
+	stanceRecoilMultiplier: Charm.Getter<number>,
 }
 
 export type WeaponController = typeof(setmetatable({} :: self, WeaponController))
@@ -125,6 +126,22 @@ function WeaponController.new(params: {
 		} :: self,
 		WeaponController
 	)
+
+	self.stanceRecoilMultiplier = Charm.computed(function()
+		local wepStats = self.weaponState.wepStats()
+		if not wepStats then
+			return 1
+		end
+
+		local stance = self.state.stance()
+		if stance == Enums.Stance.Crouching then
+			return wepStats.CrouchedRecoilMultiplier
+		elseif stance == Enums.Stance.Crawling then
+			return wepStats.CrawlRecoilMultiplier
+		end
+
+		return 1
+	end)
 
 	self.character.ChildAdded:Connect(function(child)
 		self:Equip(child)
@@ -762,6 +779,8 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 		hP = PunchCalc(wepStats.HPunchBase, wepStats.HPunchDir, "Side")
 		dP = PunchCalc(wepStats.DPunchBase, wepStats.DPunchDir, "Side")
 
+		local recoilPower = self.weaponState.RecoilFactor * self.stanceRecoilMultiplier()
+
 		if self.state.aiming() then
 			tr /= numLerp(1, wepStats.AimRecoilReduction, 0.5)
 			vr /= wepStats.AimRecoilReduction
@@ -785,7 +804,7 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 			self.weaponState.RecoilCF = RecoilModule.BipodRecoil(
 				self.weaponState.RecoilCF,
 				finalRecoilPunch,
-				self.weaponState.RecoilFactor,
+				recoilPower,
 				vP,
 				hP,
 				dP
@@ -794,16 +813,14 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 			self.weaponState.RecoilCF = RecoilModule.Recoil(
 				self.weaponState.RecoilCF,
 				finalRecoilPunch,
-				self.weaponState.RecoilFactor,
+				recoilPower,
 				vP,
 				hP,
 				dP
 			)
 		end
 
-		self.weaponState.RecoilRot:impulse(tr * self.weaponState.RecoilFactor)
-
-		local recoilPower = self.weaponState.RecoilFactor
+		self.weaponState.RecoilRot:impulse(tr * recoilPower)
 		vr *= recoilPower
 		hr *= recoilPower
 
