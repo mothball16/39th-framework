@@ -372,9 +372,9 @@ function ViewmodelController.UpdateViewmodelPosition(
 		self.grip(),
 		CFrame.Angles(0, math.rad(-self.strafeShift * config.maxStrafeShift), math.rad(self.rollAngle))
 	)
-	local viewportSize = camera.ViewportSize
-	local mouseDelta = UserInputService:GetMouseDelta() / viewportSize
+
 	local currentLook = camera.CFrame.LookVector
+	local angularDelta = getLookAngularDelta(self.prevCameraLook or currentLook, currentLook)
 
 	local weaponAtReady = self.weaponState.holdStance() == Enums.HoldStance.Ready
 	local offCenterApplies = (config.hipfireMove and not self.state.aiming())
@@ -387,7 +387,6 @@ function ViewmodelController.UpdateViewmodelPosition(
 			maxX /= 4
 			maxY /= 4
 		end
-		local angularDelta = getLookAngularDelta(self.prevCameraLook or currentLook, currentLook)
 		-- ponytail: pitchScale matches prior mouseDelta yaw:pitch ratio (500:250)
 		local genScale = 0.05
 		local pitchScale = 0.5
@@ -411,7 +410,7 @@ function ViewmodelController.UpdateViewmodelPosition(
 	)
 
 	self.swaySpring:shove(
-		Vector3.new(-mouseDelta.X * self.deltaInstability().X, mouseDelta.Y * self.deltaInstability().Y, 0)
+		Vector3.new(angularDelta.X * 0.002 * self.deltaInstability().X, angularDelta.Y * -0.002 * self.deltaInstability().Y, 0)
 	)
 	local updatedSway = self.swaySpring:update(dt)
 
