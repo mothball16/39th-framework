@@ -44,7 +44,7 @@ type self = {
 	RecoilDir: Spring,
 	RecoilUp: Spring,
 	RecoilCF: CFrame,
-	RecoilRot: Ripple.Spring,
+	RecoilRot: Ripple.Spring<number>,
 
 	RecoilFactor: number,
 	Spread: number,

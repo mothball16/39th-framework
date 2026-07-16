@@ -306,6 +306,9 @@ humanoid.Died:Connect(function()
 
 	inputController:UnbindGunInputs()
 
+	-- Unregister camera zoom before death-camera wait; respawn can start CharacterClient first.
+	cameraController:Destroy()
+
 	if config.useDeathCameraSubject then
 		repeat
 			task.wait()

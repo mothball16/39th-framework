@@ -10,6 +10,7 @@ local Access = require(Framework.Access)
 local config = Access.Config
 local CharacterStateModule = require(Framework.State.CharacterState)
 local WeaponStateModule = require(Framework.State.WeaponState)
+local CameraZoomManager = require("@game/ReplicatedStorage/Utility/CameraZoomManager")
 local WeaponPrefs = require(Framework.Weapons.WeaponPrefsClient)
 local player = game:GetService("Players").LocalPlayer
 
@@ -27,6 +28,8 @@ type self = {
 	state: CharacterStateModule.CharacterState,
 	aimFOVTarget: () -> number,
 	FOVTarget: () -> number,
+	zoomDistance: () -> number,
+	weaponZoomCleanup: () -> (),
 }
 
 export type CameraController = typeof(setmetatable({} :: self, CameraController))
@@ -58,6 +61,8 @@ function CameraController.new(params: {
 			state = params.state,
 			aimFOVTarget = nil :: () -> number,
 			FOVTarget = nil :: () -> number,
+			zoomDistance = nil :: () -> number,
+			weaponZoomCleanup = function() end,
 		} :: self,
 		CameraController
 	)
@@ -91,9 +96,32 @@ function CameraController.new(params: {
 			else config.playerZoomDistance
 	end)
 
-	Charm.effect(function()
-		player.CameraMaxZoomDistance = self.zoomDistance()
-	end)
+	self.weaponZoomCleanup = CameraZoomManager.Register("Weapon", 0, {
+		fieldOfView = function()
+			if player:GetAttribute(Consts.OVERRIDE_CAMERA_ZOOM) then
+				return nil
+			end
+			return self.FOVTarget()
+		end,
+		fieldOfViewLerpSpeed = function()
+			if player:GetAttribute(Consts.OVERRIDE_CAMERA_ZOOM) then
+				return nil
+			end
+			return self.weaponState.aimCamLerpFactor() * 60
+		end,
+		maxZoomDistance = function()
+			return self.zoomDistance()
+		end,
+		mouseDeltaSensitivity = function()
+			if player:GetAttribute(Consts.OVERRIDE_CAMERA_SENS) then
+				return nil
+			end
+
+			local camSensFactor = self.camera.FieldOfView / config.defaultFOV
+			return if self.state.aiming() then WeaponPrefs.getGlobal("aimSens") * camSensFactor else 1 * camSensFactor
+		end,
+	})
+
 	return self
 end
 
@@ -108,22 +136,6 @@ function CameraController.OnFreelookIntent(self: CameraController, inputState: E
 		local freeLookOffset = self.state.freeLookRotation():ToObjectSpace(self.camera.CFrame)
 		self.state.freeLookOffset(freeLookOffset - freeLookOffset.Position)
 		self.state.Parts.Humanoid.AutoRotate = true
-	end
-end
-
-function CameraController.UpdateFOV(self: CameraController, dt: number)
-	if not player:GetAttribute(Consts.OVERRIDE_CAMERA_SENS) then
-		local camSensFactor = self.camera.FieldOfView / config.defaultFOV
-		if self.state.aiming() then
-			UserInputService.MouseDeltaSensitivity = WeaponPrefs.getGlobal("aimSens") * camSensFactor
-		else
-			UserInputService.MouseDeltaSensitivity = 1 * camSensFactor
-		end
-	end
-
-	if not player:GetAttribute(Consts.OVERRIDE_CAMERA_ZOOM) then
-		self.camera.FieldOfView =
-			lerpNumber(self.camera.FieldOfView, self.FOVTarget(), self.weaponState.aimCamLerpFactor() * (dt * 60))
 	end
 end
 
@@ -285,7 +297,10 @@ function CameraController.UpdateRender(self: CameraController, dt: number)
 	self.weaponState.CameraSpring.p = Vector3.new()
 
 	self.camera.CFrame *= CFrame.Angles(0, 0, math.rad(self.weaponState.RecoilRot:getPosition()))
-	self:UpdateFOV(dt)
+end
+
+function CameraController.Destroy(self: CameraController)
+	self.weaponZoomCleanup()
 end
 
 function CameraController.ChangeDoF(_self: CameraController, fInt: number, fDist: number, fRad: number, nInt: number)

@@ -100,9 +100,20 @@ local function rigEcho(grip: Instance)
 	end
 end
 
+local function setMassAndCollisions(gun: Model)
+	for _, child in gun:GetDescendants() do
+		if child:IsA("BasePart") or child:IsA("MeshPart") or child:IsA("UnionOperation") then
+			child.Massless = true
+			child.CanCollide = false
+			child.CanQuery = false
+		end
+	end
+end
+
 local WeaponSetup = {}
 
 function WeaponSetup.apply(gun: Model, wepStats: Types.WeaponStats, soundsRoot: Folder, fxRoot: Folder)
+	setMassAndCollisions(gun)
 	local grip = gun:WaitForChild("Grip")
 
 	if wepStats.useSound then
