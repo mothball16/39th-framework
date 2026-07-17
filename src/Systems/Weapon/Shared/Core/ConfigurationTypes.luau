@@ -31,12 +31,10 @@ export type WeaponStats = {
 	-- recoil multiplier while crawling
 	CrawlRecoilMultiplier: number,
 
-	-- divide RecoilPunch by this when aiming
-	AimBackwardPunchReduction: number,
-	-- divide VPunch/HPunch/DPunch by this while aiming
-	AimRotationalPunchReduction: number,
-	-- divide VRecoil/HRecoil by this while aiming
-	AimRecoilReduction: number,
+	-- divide RecoilPunch (b) / VPunch (v) / HPunch (h) / DPunch (d) while aiming
+	AimedPunchReduction: { b: number, v: number, h: number, d: number },
+	-- divide VRecoil (v) / HRecoil (h) / TRecoil (t) while aiming
+	AimedCamRecoilReduction: { v: number, h: number, t: number },
 
 	-- minimum recoil multiplier: should really be one in most cases
 	MinRecoilFactor: number,

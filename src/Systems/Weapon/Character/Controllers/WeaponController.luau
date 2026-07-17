@@ -769,11 +769,6 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 		local HRecoil = RANDF(wepStats.HRecoil[1], wepStats.HRecoil[2]) / 1000
 		local finalRecoilPunch = wepStats.RecoilPunch
 
-		-- if self.state.aiming() then
-		-- 	VRecoil /= wepStats.AimRecoilReduction
-		-- 	HRecoil /= wepStats.AimRecoilReduction
-		-- end
-
 		vr = RecoilCalc(VRecoil, wepStats.VRecoilDir, "Up")
 		hr = RecoilCalc(HRecoil, wepStats.HRecoilDir, "Side")
 
@@ -784,13 +779,15 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 		local recoilPower = self.weaponState.RecoilFactor * self.stanceRecoilMultiplier()
 
 		if self.state.aiming() then
-			tr /= numLerp(1, wepStats.AimRecoilReduction, 0.5)
-			vr /= wepStats.AimRecoilReduction
-			hr /= wepStats.AimRecoilReduction
-			vP /= wepStats.AimRotationalPunchReduction
-			hP /= wepStats.AimRotationalPunchReduction
-			dP /= wepStats.AimRotationalPunchReduction
-			finalRecoilPunch /= wepStats.AimBackwardPunchReduction
+			local punch = wepStats.AimedPunchReduction
+			local cam = wepStats.AimedCamRecoilReduction
+			tr /= numLerp(1, cam.t, 0.5)
+			vr /= cam.v
+			hr /= cam.h
+			vP /= punch.v
+			hP /= punch.h
+			dP /= punch.d
+			finalRecoilPunch /= punch.b
 		end
 
 		if self.weaponState.bipodEnabled() then
