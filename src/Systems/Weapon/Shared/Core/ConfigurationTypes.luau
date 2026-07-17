@@ -307,6 +307,8 @@ export type MainGameSettings = {
 	bobSpeed: number,
 	bobDampening: number,
 	aimBobDampening: number,
+	-- scales rotational walk bob relative to translational sway; 0 = translation only, 1 = default feel
+	bobRotation: number,
 
 	cameraTilting: boolean,
 	cameraLimitInSeats: boolean,

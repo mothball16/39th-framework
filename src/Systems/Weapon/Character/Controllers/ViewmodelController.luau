@@ -355,13 +355,16 @@ function ViewmodelController.UpdateViewmodelPosition(
 
 	local relativeVelocity = humanoidRootPart.CFrame:VectorToObjectSpace(humanoidRootPart.Velocity)
 	local targetRollAngle = math.clamp(-relativeVelocity.X, -config.maxStrafeRoll, config.maxStrafeRoll)
+	local applyRollAngleTo = self.state.aiming() and aimPart or self.grip()
 	local targetStrafeShift = math.clamp(-relativeVelocity.X / config.sprintSpeed, -1, 1)
 
+
 	if self.state.aiming() then
-		targetRollAngle = 0
+		targetRollAngle /= 2
 		targetStrafeShift *= config.strafeShiftAimMult
 	end
 
+	-- todo: investigate??
 	if config.cameraTilting then
 		targetRollAngle /= 2
 	end
@@ -369,7 +372,7 @@ function ViewmodelController.UpdateViewmodelPosition(
 	self.strafeShift = lerpNumber(self.strafeShift, targetStrafeShift, 0.07 * dt * 60)
 
 	self:ApplyCFrameOffsetFrom(
-		self.grip(),
+		applyRollAngleTo,
 		CFrame.Angles(0, math.rad(-self.strafeShift * config.maxStrafeShift), math.rad(self.rollAngle))
 	)
 
@@ -489,7 +492,7 @@ function ViewmodelController.UpdateMovementSway(
 
 	if not humanoid.Sit and velocityMag > 0.1 then
 		local moveSway =
-			Vector3.new(getSineOffset(tempBobSpeed), getSineOffset(tempBobSpeed / 2), getSineOffset(tempBobSpeed / 2))
+			Vector3.new(getSineOffset(tempBobSpeed / 2), getSineOffset(tempBobSpeed), getSineOffset(tempBobSpeed))
 
 		self.moveSpring:shove(
 			moveSway * self.moveInstability() * instabilityFactor / (tempDampening * tempDampening) * dt * 60
@@ -499,10 +502,14 @@ function ViewmodelController.UpdateMovementSway(
 	local updatedMoveSway = self.moveSpring:update(dt)
 
 	if updatedMoveSway.Magnitude > 0.001 then
+		local bobRotation = config.bobRotation
 		animBase.CFrame = animBase.CFrame:ToWorldSpace(
-			CFrame.new(updatedMoveSway.Y, updatedMoveSway.X, 0)
-				* CFrame.Angles(updatedMoveSway.Y * 0.3, 0, updatedMoveSway.Y * 0.8)
+			CFrame.new(-updatedMoveSway.X * 0.8, updatedMoveSway.Y * 0.3, 0)
+				* CFrame.Angles(updatedMoveSway.Y * 0.3 * bobRotation, updatedMoveSway.X * 0.5 * bobRotation, 0)--updatedMoveSway.X * 0.8 * bobRotation, 0)
 		)
+		if self.grip() then
+			self:ApplyCFrameOffsetFrom(self.grip(), CFrame.Angles(0, 0, updatedMoveSway.X * -0.8 * bobRotation))
+		end
 	end
 end
 
