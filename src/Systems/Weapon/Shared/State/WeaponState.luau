@@ -26,7 +26,6 @@ type self = {
 
 	aimSens: Charm.Atom<number>,
 	sightIndex: Charm.Atom<number>,
-	viewmodelVisible: Charm.Atom<boolean>,
 	reloading: Charm.Atom<boolean>,
 	chambering: Charm.Atom<boolean>,
 	aimHeld: Charm.Atom<boolean>,
@@ -73,7 +72,6 @@ function WepState.new(): WeaponState
 
 			aimSens = Charm.atom(config.defaultAimSensitivity),
 			sightIndex = Charm.atom(1),
-			viewmodelVisible = Charm.atom(false),
 			reloading = Charm.atom(false),
 			chambering = Charm.atom(false),
 			aimHeld = Charm.atom(false),
@@ -107,8 +105,7 @@ function WepState.new(): WeaponState
 	end)
 
 	self.canManipulate = Charm.computed(function()
-		return self.viewmodelVisible()
-			and not self.reloading()
+		return not self.reloading()
 			and not self.chambering()
 			and not self.equipping()
 			and self.wepStats()
@@ -183,7 +180,6 @@ function WepState.Reset(self: WeaponState)
 	self.localAmmo(0)
 	self.aimSens(config.defaultAimSensitivity)
 	self.sightIndex(1)
-	self.viewmodelVisible(false)
 	self.reloading(false)
 	self.chambering(false)
 	self.aimHeld(false)

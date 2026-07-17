@@ -168,7 +168,6 @@ function CameraController.UpdateRender(self: CameraController, dt: number)
 			self.state.firstPerson() and self.state.Parts.Character.Head.LocalTransparencyModifier <= fpThreshold
 		then
 			self.state.firstPerson(false)
-			self.weaponState.viewmodelVisible(false)
 			self.cameraOffsetTarget = Vector3.zero
 		end
 	end

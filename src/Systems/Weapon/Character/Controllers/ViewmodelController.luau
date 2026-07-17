@@ -196,7 +196,6 @@ end
 
 function ViewmodelController.RefreshViewmodel(self: ViewmodelController)
 	if self.state.firstPerson() then
-		self.weaponState.viewmodelVisible(true)
 		self.state.sprinting(false)
 	end
 
@@ -446,10 +445,6 @@ function ViewmodelController.UpdateViewmodelPosition(
 			CFrame.Angles(0, 0, -math.rad(self.weaponState.RecoilRot:getPosition() * 1.5))
 		)
 	end
-
-	if not self.weaponState.viewmodelVisible() then
-		animBase.CFrame *= STORAGE_CFRAME
-	end
 end
 
 function ViewmodelController.UpdateHeartbeat(self: ViewmodelController, dt: number)
@@ -462,8 +457,6 @@ function ViewmodelController.UpdateRender(self: ViewmodelController, dt: number)
 		local ws = self.weaponState.wepStats()
 		local currentOffset = ws and ws.viewmodelOffset or CFrame.new()
 		self:UpdateViewmodelPosition(dt, currentOffset, self.weaponState.sightIndex())
-	elseif self.weaponState.viewmodelVisible() and not self.weaponState.equipping() then
-		self.weaponState.viewmodelVisible(false)
 	end
 end
 

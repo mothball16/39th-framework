@@ -301,7 +301,6 @@ humanoid.Died:Connect(function()
 		weaponController:Unequip(characterState.equippedTool())
 	end
 	userInputService.MouseIconEnabled = true
-	weaponState.viewmodelVisible(false)
 	animBase.CFrame = storageCFrame
 
 	inputController:UnbindGunInputs()
