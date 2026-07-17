@@ -199,7 +199,7 @@ viewMod.RigModel = function(player, forceDefault, attachTo)
 	--end
 
 	if attachTo then
-		local baseWeld = weldMod.BlankWeld(attachTo, newRig.AnimBase)
+		local baseWeld = weldMod.BlankM6D(attachTo, newRig.AnimBase)
 		baseWeld.Name = "BaseWeld"
 		baseWeld.Parent = newRig
 	end

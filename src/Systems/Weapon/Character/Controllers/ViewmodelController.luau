@@ -187,10 +187,24 @@ function ViewmodelController.new(params: {
 	return self
 end
 
+function ViewmodelController.RelinquishArmAuthority(self: ViewmodelController)
+	assert(self.state.Parts.IsR6, "RelinquishArmAuthority only supports R6")
+
+	local character = self.state.Parts.Character
+	local rig = self.weaponRig
+	character.Torso["Left Shoulder"].Enabled = true
+	character.Torso["Right Shoulder"].Enabled = true
+	rig.law.Enabled = false
+	rig.raw.Enabled = false
+end
+
 function ViewmodelController.SyncEquippedTool(self: ViewmodelController, tool: Tool?)
 	if not tool then
+		self:RelinquishArmAuthority()
+		self.weaponRig.Parent = game.Lighting
 		return
 	end
+	self.weaponRig.Parent = self.state.Parts.Character
 	self:ResetEquipMotion()
 end
 

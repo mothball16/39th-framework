@@ -125,7 +125,7 @@ animBase.CFrame = storageCFrame
 rig.Parent = camera
 
 local weaponRig = character:FindFirstChild("WeaponRig") or character:WaitForChild("WeaponRig")
-local characterAnimator: Animator = weaponRig:WaitForChild("AnimationController").Animator
+local characterAnimator: Animator = weaponRig:WaitForChild("AnimationController"):WaitForChild("Animator")
 
 local function PlayCharSound(soundType)
 	local soundFolder = assets.Sounds:FindFirstChild(soundType)

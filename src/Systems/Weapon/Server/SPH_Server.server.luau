@@ -193,9 +193,9 @@ local function holsterWeapon(player, holsterPart, tool, holsterCFrame)
 		holsterModel = assets.WeaponModels:FindFirstChild(tool.Name):Clone()
 		holsterModel.Name = "Holster_" .. tool.Name
 		weldMod.WeldModel(holsterModel, holsterModel.Grip)
+		holsterModel.Grip.CFrame = holsterPart.CFrame * holsterCFrame
 		local holsterWeld = weldMod.BlankWeld(holsterPart, holsterModel.Grip)
 		holsterWeld.Name = "HolsterWeld"
-		holsterWeld.C0 = holsterCFrame
 		holsterWeld.Parent = holsterModel
 		holsterModel.Parent = player.Character
 	else
