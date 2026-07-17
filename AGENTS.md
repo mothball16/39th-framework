@@ -5,7 +5,9 @@
 - Use the Stylua version pinned in `rokit.toml` and `stylua.toml` when formatting. If the `stylua` Rokit shim fails in this shell, call the pinned binary from Rokit tool storage directly with `--config-path stylua.toml` instead of retrying the shim.
 - Do not manually edit generated `Network.luau` files.
 - Avoid using the Roblox Studio MCP `execute_luau` command; it often stalls. Prefer non-executing Studio MCP inspection/search tools or filesystem checks.
+- When asked to make changes using the Roblox Studio MCP where there are multiple instances open, use the "Pearhead Testing" instance unless otherwise specified.
 - Treat this codebase as greenfield unless told otherwise: prefer the new intended shape over compatibility fallbacks for old Roblox Studio objects or tags.
 - Prefer Luau string interpolation with backticks (for example, `{value}` inside a string) over `string.format` when composing strings.
 - Prefer `Charm.listen` for reacting to Charm state unless skipping the initial callback is explicitly necessary.
 - Prefer string-based `require` paths, such as `require("@game/ReplicatedStorage/...")`, over instance traversal when importing modules.
+
