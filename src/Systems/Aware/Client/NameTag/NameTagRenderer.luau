@@ -17,7 +17,7 @@ local source = Vide.source
 
 local PlayerKey = require("@game/ReplicatedStorage/Systems/Aware/Core/PlayerKey")
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
-local NameTag = require("../UI/Roots/NameTag")
+local NameTag = require("../UI/Components/NameTag")
 local UserSettings = require("../Core/UserSettings")
 
 type TeamValuesGetter = () -> Types.OwnedValuesByKey

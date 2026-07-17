@@ -3,9 +3,6 @@ local create = Vide.create
 local Types = require("@game/ReplicatedStorage/Systems/Aware/Core/Types")
 
 return function(props: Types.PingTagProps)
-
-
-
 	return create "Frame" {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,

@@ -25,7 +25,7 @@ local derive = Vide.derive
 local cleanup = Vide.cleanup
 
 local UserSettings = require("../Core/UserSettings")
-local PingTag = require("../UI/Roots/PingTag")
+local PingTag = require("../UI/Components/PingTag")
 
 type PingsGetter = () -> { [string]: Types.PingInfo }
 
@@ -138,11 +138,15 @@ function PingTagRenderer.OnRender(dt: number, mouseLocation: Vector2, pingClient
 			continue
 		end
 
+		-- if pings are stale, just hide them immediately
+		if state.lifetime > UserSettings.HidePingsAfterTime() then
+			state.transModifier(0)
+			continue
+		end
+
 		state.screenPosition(UDim2.fromOffset(screenPoint.X, screenPoint.Y))
 
-		if state.lifetime > UserSettings.HidePingsAfterTime() then
-			transparencyModifier = 0
-		end
+
 
 		if state.lifetime > PING_READY_TIME then
 			local scaleDiff = Vector2.new(

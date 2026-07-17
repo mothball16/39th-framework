@@ -1,7 +1,7 @@
 local Vide = require("@game/ReplicatedStorage/Packages/Vide")
 local create = Vide.create
 local UILabs = require("@game/ReplicatedStorage/DevPackages/ui-labs")
-local NameTag = require("../Roots/NameTag")
+local NameTag = require("../Components/NameTag")
 
 local controls = {
 	Health = UILabs.Slider(100, -50, 150),
