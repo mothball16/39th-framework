@@ -475,7 +475,6 @@ function WeaponController.Equip(self: WeaponController, newChild)
 		not CollectionService:HasTag(newChild, "SPH_Weapon")
 		or not assets.WeaponModels:FindFirstChild(newChild.Name)
 		or self.state.dead()
-		or (self.humanoid.Sit and not self.state.vehicleSeated())
 	then
 		return
 	end
@@ -977,8 +976,6 @@ function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
 	if not ws then
 		return
 	end
-
-	-- General state checks: prevents execution if sprinting, reloading, chambering, or not holding M1
 	if self.state.sprinting() or self.weaponState.reloading() or self.weaponState.chambering() then
 		return
 	end

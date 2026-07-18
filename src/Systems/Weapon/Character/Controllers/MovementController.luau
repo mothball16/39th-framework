@@ -127,9 +127,10 @@ function MovementController.new(params: {
 		return speed
 	end)
 
-	-- reset lean when seated
+	-- Reset character stance and lean when seated.
 	Charm.effect(function()
 		if self.state.seat() then
+			self.state.stance(Enums.Stance.Standing)
 			self.state.lean(0)
 		end
 	end)
