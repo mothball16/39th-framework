@@ -10,7 +10,10 @@
         attribute  — The attribute name set on the character instance.
         resolve    — Returns per-character state for this handler, or nil to skip.
         onChanged  — Called when the attribute value changes.
-        onRender   — (optional) Per-frame update, typically for lerping joints.
+        onRender   — (optional) Per-frame update (state, dt, cameraPos),
+                     typically for lerping joints. Handlers set state.settled
+                     once the joint reaches its target so idle characters cost
+                     nothing per frame.
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -28,6 +31,40 @@ local config = Access.Config
 -- Attribute handler definitions
 --------------------------------------------------------------------------------
 
+-- Convergence thresholds: below these the joint snaps to target and the
+-- handler stops writing C1 entirely until the attribute changes again.
+local SETTLE_ANGLE = 0.005 -- radians (~0.3 degrees)
+local SETTLE_DISTANCE = 0.005 -- studs
+
+-- Lerps joint.C1 toward state.targetC1, snapping (and marking settled) when
+-- beyond render distance or within the convergence thresholds.
+-- ponytail: lean reuses headRotationDistance as its cull distance rather than
+-- adding a separate config knob; split it if lean ever needs its own range.
+local function lerpJointToward(state, dt: number, cameraPos: Vector3, speed: number)
+	local joint = state.joint
+	if state.settled or not joint or not joint.Parent or not state.targetC1 then
+		return
+	end
+
+	local target = state.targetC1
+	local dist = (cameraPos - joint.Parent.Position).Magnitude
+	if dist > config.headRotationDistance then
+		joint.C1 = target
+		state.settled = true
+		return
+	end
+
+	local newC1 = joint.C1:Lerp(target, 1 - math.exp(-speed * dt))
+	local delta = newC1:ToObjectSpace(target)
+	local _, angle = delta:ToAxisAngle()
+	if math.abs(angle) < SETTLE_ANGLE and delta.Position.Magnitude < SETTLE_DISTANCE then
+		joint.C1 = target
+		state.settled = true
+	else
+		joint.C1 = newC1
+	end
+end
+
 local ReplicatedAttributes = {
 	-- Body rotation (head / neck joint)
 	{
@@ -44,25 +81,16 @@ local ReplicatedAttributes = {
 			if not joint then
 				return nil
 			end
-			return { joint = joint, targetC1 = joint.C1 }
+			return { joint = joint, targetC1 = joint.C1, settled = true }
 		end,
 		onChanged = function(state, value)
-			if state.joint and state.joint.Parent and value then
-				local dist = (workspace.CurrentCamera.CFrame.Position - state.joint.Parent.Position).Magnitude
+			if state.joint and value then
 				state.targetC1 = value
-				-- just snap if its beyond smooth render distance
-				if dist > config.headRotationDistance then
-					state.joint.C1 = value
-				end
+				state.settled = false
 			end
 		end,
-		onRender = function(state, dt)
-			if state.joint and state.joint.Parent and state.targetC1 then
-				local dist = (workspace.CurrentCamera.CFrame.Position - state.joint.Parent.Position).Magnitude
-				if dist <= config.headRotationDistance then
-					state.joint.C1 = state.joint.C1:Lerp(state.targetC1, 1 - math.exp(-12 * dt))
-				end
-			end
+		onRender = function(state, dt, cameraPos)
+			lerpJointToward(state, dt, cameraPos, 12)
 		end,
 	},
 
@@ -84,6 +112,7 @@ local ReplicatedAttributes = {
 			return {
 				joint = joint,
 				targetC1 = joint.C1,
+				settled = true,
 				isR6 = (humanoid.RigType == Enum.HumanoidRigType.R6),
 				defaultC1Position = joint.C1.Position,
 			}
@@ -100,11 +129,10 @@ local ReplicatedAttributes = {
 				local pos = state.defaultC1Position
 				state.targetC1 = CFrame.new(pos.X, pos.Y, pos.Z) * CFrame.Angles(0, 0, math.rad(17 * lean))
 			end
+			state.settled = false
 		end,
-		onRender = function(state, dt)
-			if state.joint and state.joint.Parent and state.targetC1 then
-				state.joint.C1 = state.joint.C1:Lerp(state.targetC1, 1 - math.exp(-8 * dt))
-			end
+		onRender = function(state, dt, cameraPos)
+			lerpJointToward(state, dt, cameraPos, 8)
 		end,
 	},
 
@@ -192,6 +220,7 @@ function SRC.ConnectChar(character: Instance)
 					-- For joint-driven handlers, apply immediately (skip first-frame lerp)
 					if state.joint and state.targetC1 then
 						state.joint.C1 = state.targetC1
+						state.settled = true
 					end
 				end
 			end
@@ -213,13 +242,14 @@ end
 
 function SRC.UpdateRender(dt)
 	debug.profilebegin("SPH.StanceReplication.UpdateRender")
+	local cameraPos = workspace.CurrentCamera.CFrame.Position
 	for character, entry in pairs(SRC.data) do
 		if not character.Parent then
 			SRC.DisconnectChar(character)
 		else
 			for _, handlerEntry in pairs(entry.attrState) do
 				if handlerEntry.handler.onRender then
-					handlerEntry.handler.onRender(handlerEntry.state, dt)
+					handlerEntry.handler.onRender(handlerEntry.state, dt, cameraPos)
 				end
 			end
 		end
