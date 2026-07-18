@@ -44,9 +44,10 @@ type self = {
 	weaponState: WeaponStateModule.WeaponState,
 	localEvents: LocalEvents.LocalEvents,
 
-	holdingM1: boolean,
-	cycled: boolean,
-	canFire: boolean,
+	holdingM1: Charm.Atom<boolean>,
+	cycled: Charm.Atom<boolean>,
+	canFire: Charm.Atom<boolean>,
+	canFireShot: Charm.Getter<boolean?>,
 	canBipod: boolean,
 	bipodRayIgnore: { Instance },
 	ejected: boolean,
@@ -104,9 +105,9 @@ function WeaponController.new(params: {
 		{
 			state = params.state,
 			weaponState = params.weaponState,
-			holdingM1 = false,
-			cycled = true,
-			canFire = true,
+			holdingM1 = Charm.atom(false),
+			cycled = Charm.atom(true),
+			canFire = Charm.atom(true),
 			canBipod = false,
 			bipodRayIgnore = { params.character },
 			ejected = true,
@@ -141,6 +142,35 @@ function WeaponController.new(params: {
 		end
 
 		return 1
+	end)
+
+	self.canFireShot = Charm.computed(function()
+		local ws = self.weaponState.wepStats()
+		if
+			not self.state.equippedTool()
+			or self.state.dead()
+			or not ws
+			or self.state.sprinting()
+			or self.weaponState.reloading()
+			or self.weaponState.chambering()
+			or not self.holdingM1()
+			or not self.cycled()
+		then
+			return nil
+		end
+
+		local freeLook = self.state.freeLook()
+		local blocked = self.weaponState.blocked()
+		local fireMode = self.weaponState.fireMode()
+
+		-- nil means the heartbeat has no active fire attempt to process.
+		return self.canFire()
+			and not blocked
+			and self.weaponState.holdStance() == Enums.HoldStance.Ready
+			and self:IsLoaded()
+			and fireMode > 0
+			and (config.fireWithFreelook or not freeLook)
+			and not self.weaponState.equipping()
 	end)
 
 	self.character.ChildAdded:Connect(function(child)
@@ -292,7 +322,7 @@ function WeaponController.SyncSprinting(self: WeaponController, sprinting)
 	if sprinting then
 		self.state.aiming(false)
 		self.weaponState.holdStance(Enums.HoldStance.Ready)
-		self.holdingM1 = false
+		self.holdingM1(false)
 	end
 end
 
@@ -490,7 +520,7 @@ function WeaponController.Equip(self: WeaponController, newChild)
 	self.weaponState.equipping(true)
 	self.weaponState.wepStats(ws)
 
-	self.cycled = true
+	self.cycled(true)
 	P.SwitchWeapon.send({ tool = newChild })
 
 	if ws and ws.PunchSpeed then
@@ -584,7 +614,7 @@ function WeaponController.OnTriggerIntent(self: WeaponController, inputState, in
 	if inputState == inputBegan then
 		self.cancelReload = true
 		if not (self.state.sprinting() or self.weaponState.reloading()) then
-			self.holdingM1 = true
+			self.holdingM1(true)
 			if
 				not self:IsLoaded()
 				and not (
@@ -596,8 +626,8 @@ function WeaponController.OnTriggerIntent(self: WeaponController, inputState, in
 			end
 		end
 	else
-		self.holdingM1 = false
-		self.canFire = true
+		self.holdingM1(false)
+		self.canFire(true)
 		self.bulletsCurrentlyFired = 0
 	end
 end
@@ -612,7 +642,7 @@ end
 
 function WeaponController.OnReloadIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
-	if inputState ~= inputBegan or not self.weaponState.canManipulate() or not self.cycled then
+	if inputState ~= inputBegan or not self.weaponState.canManipulate() or not self.cycled() then
 		return
 	end
 	self.weaponState.holdStance(Enums.HoldStance.Ready)
@@ -644,7 +674,7 @@ end
 
 function WeaponController.OnChamberIntent(self: WeaponController, inputState, inputObject)
 	local inputBegan = Enum.UserInputState.Begin
-	if inputState == inputBegan and self.weaponState.canManipulate() and self.cycled then
+	if inputState == inputBegan and self.weaponState.canManipulate() and self.cycled() then
 		self.weaponState.chambering(true)
 	end
 end
@@ -864,11 +894,11 @@ function WeaponController.FireShot(self: WeaponController, ws: Types.WeaponStats
 		or fireMode == Enums.FireModes.Manual
 		or (fireMode == Enums.FireModes.Burst and self.bulletsCurrentlyFired >= currentStats.burstNumber)
 	then
-		self.canFire = false
-		self.holdingM1 = false
+		self.canFire(false)
+		self.holdingM1(false)
 	end
 
-	self.cycled = false
+	self.cycled(false)
 	local curModel = self.weaponState.gunModel()
 
 	if fireMode ~= Enums.FireModes.Manual then
@@ -966,43 +996,21 @@ function WeaponController.FireShot(self: WeaponController, ws: Types.WeaponStats
 		self.weaponState.holdStance(Enums.HoldStance.Ready)
 		self.weaponState.chambering(true)
 	end
-	self.cycled = true
+	self.cycled(true)
 end
 function WeaponController.UpdateHeartbeat(self: WeaponController, dt)
-	if not self.state.equippedTool() or self.state.dead() then
-		return
-	end
 	local ws = self.weaponState.wepStats()
-	if not ws then
-		return
-	end
-	if self.state.sprinting() or self.weaponState.reloading() or self.weaponState.chambering() then
-		return
-	end
-	if not self.holdingM1 or not self.cycled then
-		return
-	end
-
-	local freeLook = self.state.freeLook()
-	local blocked = self.weaponState.blocked()
 	local fireMode = self.weaponState.fireMode()
+	local canFireShot = self.canFireShot()
 
-	local canFireShot = self.canFire
-		and not blocked
-		and self.weaponState.holdStance() == Enums.HoldStance.Ready
-		and self:IsLoaded()
-		and fireMode > 0
-		and (config.fireWithFreelook or not freeLook)
-		and not self.weaponState.equipping()
-
-	if canFireShot then
+	if canFireShot and ws then
 		self:FireShot(ws, fireMode)
-	else
+	elseif canFireShot == false and ws then
 		if not self:IsLoaded() then
 			if fireMode == Enums.FireModes.Manual and self.weaponState.gunAmmo.MagAmmo.Value > 0 then
 				self.weaponState.holdStance(Enums.HoldStance.Ready)
 				self.weaponState.chambering(true)
-				self.holdingM1 = false
+				self.holdingM1(false)
 			end
 		elseif ws.emptyCloseBolt then
 			P.PlayerChamber.send({ _ = 0 })
