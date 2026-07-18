@@ -83,9 +83,9 @@ weldMod.AutoWeldModel = function(model, base, noCol, ignoreParts)
 	end
 end
 
--- Constrains two parts with a WeldConstraint (toggleable via .Enabled)
+-- Creates a blank weld with no c0 or c1
 weldMod.BlankWeld = function(p0, p1)
-	local newWeld = Instance.new("WeldConstraint")
+	local newWeld = Instance.new("Weld")
 	newWeld.Part0 = p0
 	newWeld.Part1 = p1
 	newWeld.Name = p0.Name .. "_" .. p1.Name
