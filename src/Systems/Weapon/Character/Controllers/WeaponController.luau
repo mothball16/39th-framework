@@ -371,8 +371,10 @@ end
 
 function WeaponController.IsLoaded(self: WeaponController)
 	local currentStats = self.weaponState.wepStats()
-	return not currentStats.openBolt and self.state.equippedTool().Chambered.Value
-		or currentStats.openBolt and self.weaponState.gunAmmo.MagAmmo.Value > 0
+	if currentStats.useChamberedRound then
+		return self.state.equippedTool().Chambered.Value
+	end
+	return self.weaponState.gunAmmo.MagAmmo.Value > 0
 end
 
 function WeaponController.GetMuzzlePoint(self: WeaponController, gunModel)
@@ -575,12 +577,11 @@ function WeaponController.Equip(self: WeaponController, newChild)
 	self.localEvents.WeaponEquipRequested:Fire()
 	self.localEvents.WeaponIdleRequested:Fire()
 
-	local chambered = newChild:WaitForChild("Chambered")
 	local ammo = newChild:WaitForChild("Ammo")
 	local boltReady = newChild:WaitForChild("BoltReady")
 	local fireMode = newChild:WaitForChild("FireMode")
 
-	if ws.openBolt or not chambered.Value then
+	if not ws.useChamberedRound or not newChild:WaitForChild("Chambered").Value then
 		self:SetProjectileTransparency(gun, 1)
 	end
 
@@ -652,13 +653,23 @@ function WeaponController.OnReloadIntent(self: WeaponController, inputState, inp
 		return
 	end
 	if ws.infiniteAmmo or self.weaponState.gunAmmo.ArcadeAmmoPool.Value > 0 then
-		if ws.openBolt and self.weaponState.gunAmmo.MagAmmo.Value < self.weaponState.gunAmmo.MagAmmo.MaxValue then
+		if
+			not ws.useChamberedRound
+			and self.weaponState.gunAmmo.MagAmmo.Value < self.weaponState.gunAmmo.MagAmmo.MaxValue
+		then
 			self.cancelReload = false
 			self.localEvents.ReloadRequested:Fire(self.lastGunModel and self.lastGunModel.Name)
 		else
 			if
-				(ws.operationType == Enums.OperationType.NonReciprocating and self.state.equippedTool().Chambered.Value)
-				or (ws.operationType == Enums.OperationType.ManualCycleAlways and self.weaponState.gunAmmo.MagAmmo.Value + 1 >= self.weaponState.gunAmmo.MagAmmo.MaxValue)
+				(
+					ws.useChamberedRound
+					and ws.operationType == Enums.OperationType.NonReciprocating
+					and self.state.equippedTool().Chambered.Value
+				)
+				or (
+					ws.operationType == Enums.OperationType.ManualCycleAlways 
+					and self.weaponState.gunAmmo.MagAmmo.Value + 1 >= self.weaponState.gunAmmo.MagAmmo.MaxValue
+				)
 				or (
 					ws.operationType == Enums.OperationType.OpenBoltOnEmpty
 					and self.weaponState.gunAmmo.MagAmmo.Value >= self.weaponState.gunAmmo.MagAmmo.MaxValue
@@ -829,23 +840,11 @@ function WeaponController.PerformRecoil(self: WeaponController, wepStats)
 			hP = hP / 2.5
 			dP = dP / 2.5
 
-			self.weaponState.RecoilCF = RecoilModule.BipodRecoil(
-				self.weaponState.RecoilCF,
-				finalRecoilPunch,
-				recoilPower,
-				vP,
-				hP,
-				dP
-			)
+			self.weaponState.RecoilCF =
+				RecoilModule.BipodRecoil(self.weaponState.RecoilCF, finalRecoilPunch, recoilPower, vP, hP, dP)
 		else
-			self.weaponState.RecoilCF = RecoilModule.Recoil(
-				self.weaponState.RecoilCF,
-				finalRecoilPunch,
-				recoilPower,
-				vP,
-				hP,
-				dP
-			)
+			self.weaponState.RecoilCF =
+				RecoilModule.Recoil(self.weaponState.RecoilCF, finalRecoilPunch, recoilPower, vP, hP, dP)
 		end
 
 		self.weaponState.RecoilRot:impulse(tr * recoilPower)
@@ -1092,7 +1091,8 @@ function WeaponController.OnAnimationEventReached(self: WeaponController, animNa
 	if eventName == "MagIn" then
 		if
 			self.state.equippedTool()
-			and (not self.state.equippedTool().Chambered.Value or ws.openBolt)
+			and ws.useChamberedRound
+			and not self.state.equippedTool().Chambered.Value
 			and ws.autoChamber
 		then
 			self.weaponState.reloading(true)
@@ -1122,7 +1122,7 @@ function WeaponController.OnAnimationEventReached(self: WeaponController, animNa
 					return
 				end
 				self.localEvents.StopAnimationRequested:Fire(newAnim.Name)
-				if not self.state.equippedTool().BoltReady.Value or ws.openBolt then
+				if not self.state.equippedTool().BoltReady.Value or not ws.useChamberedRound then
 					self.localEvents.BoltActionRequested:Fire(false)
 				else
 					self.weaponState.reloading(false)
@@ -1137,7 +1137,11 @@ function WeaponController.OnAnimationEventReached(self: WeaponController, animNa
 					return
 				end
 				self.localEvents.StopAnimationRequested:Fire(newAnim.Name)
-				if not self.state.equippedTool().BoltReady.Value or ws.operationType == 3 or ws.openBolt then
+				if
+					not self.state.equippedTool().BoltReady.Value
+					or ws.operationType == 3
+					or not ws.useChamberedRound
+				then
 					self.localEvents.BoltActionRequested:Fire(false)
 				else
 					self.weaponState.reloading(false)
@@ -1166,7 +1170,12 @@ function WeaponController.OnAnimationEventReached(self: WeaponController, animNa
 		P.PlayerChamber.send({ _ = 0 })
 		self.weaponState.reloading(false)
 		self:MoveBolt(CFrame.new(), true)
-	elseif eventName == "SlidePull" and self.state.equippedTool() and self.state.equippedTool().Chambered.Value then
+	elseif
+		eventName == "SlidePull"
+		and ws.useChamberedRound
+		and self.state.equippedTool()
+		and self.state.equippedTool().Chambered.Value
+	then
 		self:EjectShell()
 	elseif eventName == "Switch" and not self.weaponState.reloading() then
 		self:SwitchFireMode()
@@ -1185,7 +1194,8 @@ end
 function WeaponController.OnAnimationStopped(self: WeaponController, animName, newAnim, animType)
 	if animType == Enums.WeaponAnim.Reload.tag then
 		self.weaponState.reloading(false)
-		if self.state.equippedTool() and self.state.equippedTool().Chambered.Value then
+		local ws = self.weaponState.wepStats()
+		if ws and ws.useChamberedRound and self.state.equippedTool() and self.state.equippedTool().Chambered.Value then
 			self:SetProjectileTransparency(self.weaponState.gunModel(), 0)
 		end
 	end

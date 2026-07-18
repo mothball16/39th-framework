@@ -146,7 +146,7 @@ function UIController.UpdateHeartbeat(self: UIController, _dt: number)
 	if
 		tool
 		and wepStats
-		and (tool:FindFirstChild("Chambered") or wepStats.openBolt)
+		and (not wepStats.useChamberedRound or tool:FindFirstChild("Chambered"))
 		and magAmmo
 		and not self.state.dead()
 	then
@@ -159,7 +159,7 @@ function UIController.UpdateHeartbeat(self: UIController, _dt: number)
 		self.ammoUI.Visible = true
 
 		local fireModeVal = self.weaponState.fireMode()
-		local chamberedVal = tool:FindFirstChild("Chambered") and tool.Chambered.Value
+		local chamberedVal = wepStats.useChamberedRound and tool:FindFirstChild("Chambered") and tool.Chambered.Value
 
 		if wepStats.operationType == 4 and chamberedVal then
 			local digits = splitNumber(magAmmo.Value + 1)
@@ -189,7 +189,7 @@ function UIController.UpdateHeartbeat(self: UIController, _dt: number)
 
 		if fireModeVal == 0 then
 			self.ammoCounter.TextColor3 = Color3.new(0.5, 0.5, 0.5)
-		elseif chamberedVal or (wepStats.openBolt and magAmmo.Value > 1) then
+		elseif chamberedVal or (not wepStats.useChamberedRound and magAmmo.Value > 1) then
 			if wepStats.operationType < 4 then
 				self.chambered.TextTransparency = 0
 			end

@@ -165,7 +165,8 @@ local function setupTool(tool: Tool, wepStats: Types.WeaponStats)
 		arcadeAmmoPool.Name = "ArcadeAmmoPool"
 		arcadeAmmoPool.MaxValue = Access.Config.infiniteReserve and math.huge or wepStats.maxAmmoPool
 		arcadeAmmoPool.Value = Access.Config.infiniteReserve and math.huge or wepStats.startAmmoPool
-		if not wepStats.openBolt then
+
+		if wepStats.useChamberedRound then
 			local chambered = Instance.new("BoolValue", tool)
 			chambered.Value = wepStats.startChambered
 			chambered.Name = "Chambered"
@@ -177,6 +178,7 @@ local function setupTool(tool: Tool, wepStats: Types.WeaponStats)
 				end
 			end
 		end
+
 		local boltReady = Instance.new("BoolValue", tool)
 		boltReady.Value = true
 		boltReady.Name = "BoltReady"
@@ -210,7 +212,8 @@ local function holsterWeapon(player, holsterPart, tool, holsterCFrame)
 		holsterModel.Grip.Transparency = 1
 	end
 	if
-		tool:FindFirstChild("Chambered")
+		wepStats.useChamberedRound
+		and tool:FindFirstChild("Chambered")
 		and holsterModel
 		and holsterModel:FindFirstChild(wepStats.projectile)
 		and not tool.Chambered.Value
@@ -620,7 +623,10 @@ end
 local function isGunLoaded(tool)
 	local wepStats = WeaponStatLocator.getWeaponStats(tool)
 	local gunAmmo = tool.Ammo
-	return not wepStats.openBolt and tool.Chambered.Value or wepStats.openBolt and gunAmmo.MagAmmo.Value > 0
+	if wepStats.useChamberedRound then
+		return tool.Chambered.Value
+	end
+	return gunAmmo.MagAmmo.Value > 0
 end
 
 local function teamKillCheck(player1: Player, player2: Player)
@@ -816,7 +822,7 @@ local function playerFireHandler(player: Player, firePoint: CFrame)
 	local magAmmo = gunAmmo.MagAmmo
 	local currentFireMode = tool.FireMode.Value
 	if currentFireMode == 5 then
-		if not wepStats.openBolt then
+		if wepStats.useChamberedRound then
 			tool.Chambered.Value = false
 		end
 		tool.BoltReady.Value = false
@@ -828,13 +834,13 @@ local function playerFireHandler(player: Player, firePoint: CFrame)
 			return
 		end
 	else
-		if not wepStats.openBolt then
+		if wepStats.useChamberedRound then
 			tool.Chambered.Value = false
 		end
 		tool.BoltReady.Value = not wepStats.emptyLockBolt
 		if magAmmo.Value > 0 then
 			magAmmo.Value -= 1
-			if not wepStats.openBolt then
+			if wepStats.useChamberedRound then
 				tool.Chambered.Value = true
 			end
 			tool.BoltReady.Value = true
@@ -965,7 +971,7 @@ local function initializeAmmo()
 				end
 			end
 		end
-		if wepStats.operationType == 4 and not tool.Chambered.Value then
+		if wepStats.useChamberedRound and wepStats.operationType == 4 and not tool.Chambered.Value then
 			tool.Chambered.Value = true
 			magAmmo.Value -= 1
 		end
@@ -975,8 +981,12 @@ local function initializeAmmo()
 			return
 		end
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
-		if tool and tool.Parent == player.Character then
+		local wepStats = tool and WeaponStatLocator.getWeaponStats(tool)
+		if tool and tool.Parent == player.Character and wepStats then
 			tool.BoltReady.Value = true
+			if not wepStats.useChamberedRound then
+				return
+			end
 			if tool:FindFirstChild("Chambered") then
 				tool.Chambered.Value = false
 			end
@@ -991,9 +1001,10 @@ local function initializeAmmo()
 			return
 		end
 		local tool = player.Character:FindFirstChildWhichIsA("Tool")
-		if tool and tool.Parent == player.Character then
+		local wepStats = tool and WeaponStatLocator.getWeaponStats(tool)
+		if tool and tool.Parent == player.Character and wepStats then
 			tool.BoltReady.Value = false
-			if tool:FindFirstChild("Chambered") then
+			if wepStats.useChamberedRound and tool:FindFirstChild("Chambered") then
 				tool.Chambered.Value = false
 			end
 		end

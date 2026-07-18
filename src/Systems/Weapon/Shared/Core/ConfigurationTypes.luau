@@ -138,6 +138,7 @@ export type WeaponStats = {
 	maxAmmoPool: number,
 	infiniteAmmo: boolean,
 	startChambered: boolean,
+	useChamberedRound: boolean,
 
 	bulletDrop: boolean,
 	bulletForce: number,
